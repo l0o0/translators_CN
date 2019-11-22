@@ -32,3 +32,8 @@
 + [Scaffold 使用说明](https://www.zotero.org/support/dev/translators/scaffold)，官方出品，便于创建 translator 的工具
 + [MDN Javascript 中文教程](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/A_re-introduction_to_JavaScript)  
 + [Zotero 条目类型说明](https://aurimasv.github.io/z2csl/typeMap.xml)
+
+
+## 🎈问题交流
+
+如果有问题的，可以加群 913637964，一起交流。
