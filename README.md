@@ -14,7 +14,9 @@
 + [百度学术](http://xueshu.baidu.com/) 
 + [Bilibili 视频网站](https://www.bilibili.com/) 
 + [谷粉学术-谷歌学术](https://gfsoso.99lb.net/) -> [GFSOSO.js](./translators/GFSOSO.js)
-  - [x] 修改了网页匹配，识别抓取代码抄自Google Scholar。从搜索结果页识别搜索结果，引文信息正常，部分文献的PDF下载可能会有问题。安装Adblock插件的朋友，注意下将谷粉学术`*.glgoo.top`添加到白名单
+  - [x] 修改了网页匹配，识别抓取代码抄自Google Scholar。从搜索结果页识别搜索结果，引文信息正常
+  - [ ] 部分文献的PDF下载可能会有问题，谷粉搜搜上可能没有相应的下载链接
+  - [ ] 安装Adblock插件的朋友，注意下将谷粉学术`*.glgoo.top`添加到白名单
 
 
 
