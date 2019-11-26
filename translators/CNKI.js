@@ -1,7 +1,7 @@
 {
 	"translatorID": "5c95b67b-41c5-4f55-b71a-48d5d7183063",
 	"label": "CNKI",
-	"creator": "lin xingzhong",
+	"creator": "Aurimas Vinckevicius, Xingzhong Lin",
 	"target": "^https?://([^/]+\\.)?cnki\\.net",
 	"minVersion": "3.0",
 	"maxVersion": "",
@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2019-11-18 01:34:23"
+	"lastUpdated": "2019-11-25 07:11:26"
 }
 
 /*
@@ -39,32 +39,32 @@
 // fetches Refworks record for provided IDs and calls next with resulting text
 // ids should be in the form [{dbname: "CDFDLAST2013", filename: "1013102302.nh"}]
 function getRefworksByID(ids, next) {
-	var postData = "";
-	for (var i=0, n=ids.length; i<n; i++) {
+	for(var i = 0; i < ids.length; i++) {
+		var postData = "";
 		postData += ids[i].dbname + "!" + ids[i].filename + "!1!0,";
+		postData = "formfilenames=" + encodeURIComponent(postData);
+		postData += '&hid_kLogin_headerUrl=/KLogin/Request/GetKHeader.ashx%3Fcallback%3D%3F';
+		postData += '&hid_KLogin_FooterUrl=/KLogin/Request/GetKHeader.ashx%3Fcallback%3D%3F';
+		postData += '&CookieName=FileNameS';
+		
+		ZU.doPost('https://kns.cnki.net/kns/ViewPage/viewsave.aspx?displayMode=Refworks', postData, 
+			function(text) {
+				var parser = new DOMParser();
+				var html = parser.parseFromString(text, "text/html")
+				var text = ZU.xpath(html, "//table[@class='mainTable']//td")[0].innerHTML;
+				var text = text.replace(/<br>/g, '\n');
+				text = text.replace(/^RT\s+Dissertation\/Thesis/gmi, 'RT Dissertation');
+				text = text.replace(/^(A[1-4]|U2)\s*([^\r\n]+)/gm, 
+						function(m, tag, authors) {
+							var authors = authors.split(/\s*[;，,]\s*/); //that's a special comma
+							if (!authors[authors.length-1].trim()) authors.pop();
+							return tag + ' ' + authors.join('\n' + tag + ' ');
+						}
+					);
+				next(text);
+			}
+		);
 	}
-	postData = "formfilenames=" + encodeURIComponent(postData);
-	postData += '&hid_kLogin_headerUrl=/KLogin/Request/GetKHeader.ashx%3Fcallback%3D%3F';
-	postData += '&hid_KLogin_FooterUrl=/KLogin/Request/GetKHeader.ashx%3Fcallback%3D%3F';
-	postData += '&CookieName=FileNameS';
-	
-	ZU.doGet('https://kns.cnki.net/kns/ViewPage/viewsave.aspx?displayMode=Refworks' + '&' +  postData, 
-		function(text) {
-			var parser = new DOMParser();
-			var html = parser.parseFromString(text, "text/html")
-			var text = ZU.xpath(html, "//table[@class='mainTable']//td")[0].innerHTML;
-			var text = text.replace(/<br>/g, '\n');
-			text = text.replace(/^RT\s+Dissertation\/Thesis/gmi, 'RT Dissertation');
-			text = text.replace(/^(A[1-4]|U2)\s*([^\r\n]+)/gm, 
-					function(m, tag, authors) {
-						var authors = authors.split(/\s*[;，,]\s*/); //that's a special comma
-						if (!authors[authors.length-1].trim()) authors.pop();
-						return tag + ' ' + authors.join('\n' + tag + ' ');
-					}
-				);
-			next(text);
-		}
-	);
 }
 
 function getIDFromURL(url) {
@@ -135,31 +135,28 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 
 	if (!links.length) {
 		return false;
-	} else {
-		var items = {};
-		for (var i = 0, n = links.length; i < n; i++) {
-			// Z.debug(links[i].innerHTML)
-			var a = ZU.xpath(links[i], aXpath)[0];
-			var title = ZU.xpathText(a, './node()[not(name()="SCRIPT")]', null, '');
-			if (title) title = ZU.trimInternal(title);
-			var id = getIDFromURL(a.href);
-			// pre-released item can not get ID from URL, try to get ID from element.value
-			if (!id) {
-				var td1 = ZU.xpath(links[i], './td')[0];
-				var tmp = td1.value.split('!');
-				id = { dbname: tmp[0], filename: tmp[1], url: a.href };
-			}
-			Z.debug('links' + i);
-			if (!title || !id) continue;
-
-			if (itemInfo) {
-				itemInfo[a.href] = { id: id };
-			}
-			items[a.href] = title;
+	} 
+	var items = {};
+	for (var i = 0, n = links.length; i < n; i++) {
+		// Z.debug(links[i].innerHTML)
+		var a = ZU.xpath(links[i], aXpath)[0];
+		var title = ZU.xpathText(a, './node()[not(name()="SCRIPT")]', null, '');
+		if (title) title = ZU.trimInternal(title);
+		var id = getIDFromURL(a.href);
+		// pre-released item can not get ID from URL, try to get ID from element.value
+		if (!id) {
+			var td1 = ZU.xpath(links[i], './td')[0];
+			var tmp = td1.value.split('!');
+			id = { dbname: tmp[0], filename: tmp[1], url: a.href };
 		}
-
-		return items;
+		Z.debug('links' + i);
+		if (!title || !id) continue;
+		if (itemInfo) {
+			itemInfo[a.href] = { id: id };
+		}
+		items[a.href] = title;
 	}
+	return items;
 }
 
 function detectWeb(doc, url) {
@@ -200,10 +197,6 @@ function doWeb(doc, url) {
 
 function scrape(ids, doc, url, itemInfo) {
 	getRefworksByID(ids, function(text, ids) {
-		var resultNum = 'single';
-		if (ids && ids.length > 1) {
-			resultNum = 'multiple';
-		}
 		var translator = Z.loadTranslator('import');
 		translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86'); //Refworks
 		text = text.replace(/IS (\d+)\nvo/, "IS $1\nVO");
@@ -255,16 +248,10 @@ function scrape(ids, doc, url, itemInfo) {
 				newItem.callNumber = "";
 			}
 			// don't download PDF/CAJ on searchResult(multiple)
-			if (resultNum == 'single'){
+			var webType = detectWeb(doc, url);
+			if (webType && webType != 'multiple') {
 				newItem.attachments = getAttachments(doc, newItem);
-			} else if (resultNum == 'multiple') {
-				newItem.attachments = [{
-					url: newItem.url,
-					title: newItem.title,
-					mimeType: "text/html",
-					snapshot: true
-				}];
-			}
+			} 
 			newItem.complete();
 		});
 		
@@ -273,8 +260,13 @@ function scrape(ids, doc, url, itemInfo) {
 }
 
 // get pdf download link
-function getPDF(doc) {
-	var pdf = ZU.xpath(doc, "//a[@name='pdfDown']");
+function getPDF(doc, itemType) {
+	// retrieve PDF links from CNKI oversea
+	if (itemType == 'thesis') {
+		var pdf = ZU.xpath(doc, "//div[@id='DownLoadParts']/a[contains(text(), 'PDF')]");
+	} else {
+		var pdf = ZU.xpath(doc, "//a[@name='pdfDown']");
+	}
 	return pdf.length ? pdf[0].href : false;
 }
 
@@ -284,20 +276,15 @@ function getCAJ(doc, itemType) {
 	if (itemType == 'thesis') {
 		var caj = ZU.xpath(doc, "//div[@id='DownLoadParts']/a");
 	} else {
-		caj = ZU.xpath(doc, "//a[@name='cajDown']");
+		var caj = ZU.xpath(doc, "//a[@name='cajDown']");
 	}
 	return caj.length ? caj[0].href : false;
 }
 
 // add pdf or caj to attachments, default is pdf
 function getAttachments(doc, item) {
-	var attachments = [{
-		url: item.url,
-		title: item.title,
-		mimeType: "text/html",
-		snapshot: true
-	}];
-	var pdfurl = getPDF(doc);
+	var attachments = [];
+	var pdfurl = getPDF(doc, item.itemType);
 	var cajurl = getCAJ(doc, item.itemType);
 	// Z.debug('pdf' + pdfurl);
 	// Z.debug('caj' + cajurl);
@@ -375,13 +362,7 @@ var testCases = [
 				"publicationTitle": "色谱",
 				"url": "http://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFQ&dbname=CJFDLAST2015&filename=SPZZ201412003&v=MTU2MzMzcVRyV00xRnJDVVJMS2ZidVptRmkva1ZiL09OajNSZExHNEg5WE5yWTlGWjRSOGVYMUx1eFlTN0RoMVQ=",
 				"volume": "32",
-				"attachments": [
-					{
-						"title": "基于部分酸水解-亲水作用色谱-质谱的黄芪多糖结构表征",
-						"mimeType": "text/html",
-						"snapshot": true
-					}
-				],
+				"attachments": [],
 				"tags": [
 					{
 						"tag": "Astragalus"
@@ -443,13 +424,7 @@ var testCases = [
 				"thesisType": "硕士",
 				"university": "南京农业大学",
 				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CMFD&dbname=CMFD201701&filename=1017045605.nh&v=MDc3ODZPZVorVnZGQ3ZrV3JyT1ZGMjZHYk84RzlmTXFwRWJQSVI4ZVgxTHV4WVM3RGgxVDNxVHJXTTFGckNVUkw=",
-				"attachments": [
-					{
-						"title": "黄瓜共表达基因模块的识别及其特点分析",
-						"mimeType": "text/html",
-						"snapshot": true
-					}
-				],
+				"attachments": [],
 				"tags": [
 					{
 						"tag": "co-expression"
@@ -474,6 +449,59 @@ var testCases = [
 					},
 					{
 						"tag": "黄瓜"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "http://new.gb.oversea.cnki.net/KCMS/detail/detail.aspx?dbcode=CMFD&dbname=CMFDTEMP&filename=1019926131.nh&v=MTA5MjM2RjdxNkdORFBycEViUElSOGVYMUx1eFlTN0RoMVQzcVRyV00xRnJDVVJMT2VadVJxRnkzblY3dkJWRjI=",
+		"items": [
+			{
+				"itemType": "thesis",
+				"title": "商业银行个人住房不良资产证券化多元回归定价方法研究",
+				"creators": [
+					{
+						"lastName": "张",
+						"firstName": "雪",
+						"creatorType": "author"
+					}
+				],
+				"date": "2019",
+				"abstractNote": "不良资产证券化是一种新型的不良资产处置方式,其拓宽了商业银行处理不良资产的手段,特别适用于单户金额小、户数多的个人不良资产批量处置,而且这种市场化处置方式将银行不良资产处置和资本市场证券产品发行两个不同领域联接在一起,提高了不良资产的价值。本文以个人住房不良资产证券化为研究对象,确定资产池内不良资产未来回收价值。综合对比市场常用的定价方法,在此基础上提出建立多元回归定价模型的思路。利用YN银行个人住房不良贷款历史数据,分析得出影响不良资产定价的因素,建立定价方程,并对拟证券化的虚拟资产池计算整体回收价值,证明多元回归定价模型的有效性。本文提出的定价模型规避了传统资产定价方法效率低、评估结果不严...",
+				"language": "中文;",
+				"libraryCatalog": "CNKI",
+				"thesisType": "硕士",
+				"university": "浙江大学",
+				"url": "http://new.gb.oversea.cnki.net/KCMS/detail/detail.aspx?dbcode=CMFD&dbname=CMFDTEMP&filename=1019926131.nh&v=MTA5MjM2RjdxNkdORFBycEViUElSOGVYMUx1eFlTN0RoMVQzcVRyV00xRnJDVVJMT2VadVJxRnkzblY3dkJWRjI=",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "Asset pool pricing"
+					},
+					{
+						"tag": "Multiple regression pricing model"
+					},
+					{
+						"tag": "Non-performing asset securitization"
+					},
+					{
+						"tag": "Personal housing loan"
+					},
+					{
+						"tag": "不良资产证券化"
+					},
+					{
+						"tag": "个人住房贷款"
+					},
+					{
+						"tag": "多元回归定价模型"
+					},
+					{
+						"tag": "资产池定价"
 					}
 				],
 				"notes": [],

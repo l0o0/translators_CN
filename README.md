@@ -4,11 +4,12 @@
 
 ## 🎯 目标网站
 
-+ [知网](https://cnki.net/) -> [CNKI.js](./translators/CNKI.js)  
++ [知网或知网海外](https://cnki.net/) -> [CNKI.js](./translators/CNKI.js)  
   - [x] 默认保存网页快照  
   - [x] 下载PDF或CAJ文件，学位论文默认保存CAJ 
   - [x] 修改旧版本将知网导出`refworks`中`CN`字段保存为期刊条目中的 `call number`，修改后`CN`字段不保留
   - [x] 修改了拉取知网`refworks`格式引文的网址，新网址提供的摘要字数最多为500字
+  - [x] 知网海外版PDF和CAJ附件下载支持
 + [万方数据](http://www.wanfangdata.com.cn/index.html)
 + [维普](http://www.cqvip.com/)  
 + [百度学术](http://xueshu.baidu.com/) 
@@ -16,7 +17,7 @@
 + [谷粉学术-谷歌学术](https://gfsoso.99lb.net/) -> [GFSOSO.js](./translators/GFSOSO.js)
   - [x] 修改了网页匹配，识别抓取代码抄自Google Scholar。从搜索结果页识别搜索结果，引文信息正常
   - [ ] 部分文献的PDF下载可能会有问题，谷粉搜搜上可能没有相应的下载链接
-  - [ ] 安装Adblock插件的朋友，注意下将谷粉学术`*.glgoo.top`添加到白名单
+  - 安装Adblock插件的朋友请注意下将谷粉学术`*.glgoo.top`添加到白名单，不然可能会出现问题
 
 
 
