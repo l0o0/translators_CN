@@ -9,8 +9,12 @@
   - [x] 下载PDF或CAJ文件，学位论文默认保存CAJ 
   - [x] 修改旧版本将知网导出`refworks`中`CN`字段保存为期刊条目中的 `call number`，修改后`CN`字段不保留
   - [x] 修改了拉取知网`refworks`格式引文的网址，新网址提供的摘要字数最多为500字
-  - [x] 知网海外版PDF和CAJ附件下载支持
-+ [万方数据](http://www.wanfangdata.com.cn/index.html)
+  - [x] 知网海外版PDF和CAJ附件下载支持  
+  - [x] 支持文献类型：期刊，学位论文，会议论文，报纸
++ [万方数据](http://www.wanfangdata.com.cn/index.html) -> [WanFang.js](./translators/WanFang.js)
+  - [x] 抓取引文信息  
+  - [x] 支持文献类型：期刊，学位论文，专利，会议论文
+  - [ ] PDF附件下载
 + [维普](http://www.cqvip.com/)  
 + [百度学术](http://xueshu.baidu.com/) 
 + [Bilibili 视频网站](https://www.bilibili.com/) 
