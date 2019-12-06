@@ -11,6 +11,7 @@
   - [x] 修改了拉取知网`refworks`格式引文的网址，新网址提供的摘要字数最多为500字
   - [x] 知网海外版PDF和CAJ附件下载支持  
   - [x] 支持文献类型：期刊，学位论文，会议论文，报纸
+  - [x] 已同步到官方版本库中
 + [万方数据](http://www.wanfangdata.com.cn/index.html) -> [WanFang.js](./translators/WanFang.js)
   - [x] 抓取引文信息  
   - [x] 支持文献类型：期刊，学位论文，专利，会议论文

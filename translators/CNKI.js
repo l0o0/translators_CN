@@ -1,15 +1,15 @@
 {
 	"translatorID": "5c95b67b-41c5-4f55-b71a-48d5d7183063",
+	"translatorType": 4,
 	"label": "CNKI",
 	"creator": "Aurimas Vinckevicius, Xingzhong Lin",
 	"target": "^https?://([^/]+\\.)?cnki\\.net",
 	"minVersion": "3.0",
-	"maxVersion": "",
+	"maxVersion": null,
 	"priority": 100,
 	"inRepository": true,
-	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2019-11-25 07:11:26"
+	"lastUpdated": "2019-12-05 08:50:00"
 }
 
 /*
@@ -36,35 +36,37 @@
 	***** END LICENSE BLOCK *****
 */
 
-// fetches Refworks record for provided IDs and calls next with resulting text
+// Fetches RefWorks records for provided IDs and calls onDataAvailable with resulting text
 // ids should be in the form [{dbname: "CDFDLAST2013", filename: "1013102302.nh"}]
-function getRefworksByID(ids, next) {
-	for(var i = 0; i < ids.length; i++) {
-		var postData = "";
-		postData += ids[i].dbname + "!" + ids[i].filename + "!1!0,";
-		postData = "formfilenames=" + encodeURIComponent(postData);
-		postData += '&hid_kLogin_headerUrl=/KLogin/Request/GetKHeader.ashx%3Fcallback%3D%3F';
-		postData += '&hid_KLogin_FooterUrl=/KLogin/Request/GetKHeader.ashx%3Fcallback%3D%3F';
-		postData += '&CookieName=FileNameS';
-		
-		ZU.doPost('https://kns.cnki.net/kns/ViewPage/viewsave.aspx?displayMode=Refworks', postData, 
-			function(text) {
-				var parser = new DOMParser();
-				var html = parser.parseFromString(text, "text/html")
-				var text = ZU.xpath(html, "//table[@class='mainTable']//td")[0].innerHTML;
-				var text = text.replace(/<br>/g, '\n');
-				text = text.replace(/^RT\s+Dissertation\/Thesis/gmi, 'RT Dissertation');
-				text = text.replace(/^(A[1-4]|U2)\s*([^\r\n]+)/gm, 
-						function(m, tag, authors) {
-							var authors = authors.split(/\s*[;，,]\s*/); //that's a special comma
-							if (!authors[authors.length-1].trim()) authors.pop();
-							return tag + ' ' + authors.join('\n' + tag + ' ');
-						}
-					);
-				next(text);
+function getRefWorksByID(ids, onDataAvailable) {
+	if (!ids.length) return;
+	var { dbname, filename } = ids.shift();
+	var postData = "formfilenames=" + encodeURIComponent(dbname + "!" + filename + "!1!0,")
+		+ '&hid_kLogin_headerUrl=/KLogin/Request/GetKHeader.ashx%3Fcallback%3D%3F'
+		+ '&hid_KLogin_FooterUrl=/KLogin/Request/GetKHeader.ashx%3Fcallback%3D%3F'
+		+ '&CookieName=FileNameS';
+	ZU.doPost('https://kns.cnki.net/kns/ViewPage/viewsave.aspx?displayMode=Refworks', postData,
+		function (text) {
+			var parser = new DOMParser();
+			var html = parser.parseFromString(text, "text/html")
+			var text = ZU.xpath(html, "//table[@class='mainTable']//td")[0].innerHTML;
+			var text = text.replace(/<br>/g, '\n');
+			text = text.replace(/^RT\s+Dissertation\/Thesis/gmi, 'RT Dissertation');
+			text = text.replace(
+				/^(A[1-4]|U2)\s*([^\r\n]+)/gm,
+				function (m, tag, authors) {
+					var authors = authors.split(/\s*[;，,]\s*/); //that's a special comma
+					if (!authors[authors.length-1].trim()) authors.pop();
+					return tag + ' ' + authors.join('\n' + tag + ' ');
+				}
+			);
+			onDataAvailable(text);
+			// If more results, keep going
+			if (ids.length) {
+				getRefWorksByID(ids, onDataAvailable);
 			}
-		);
-	}
+		}
+	)
 }
 
 function getIDFromURL(url) {
@@ -84,12 +86,11 @@ function getIDFromRef(doc, url) {
 	var func = ZU.xpath(doc, '//div[@class="link"]/a');
 	if (!func.length) {
 		return false;
-	} else {
-		func = func[0].onclick + '';
-		var tmp = func.split(',')[1].split('!');
-		// Z.debug(func + tmp[0].slice(1));
-		return { dbname: tmp[0].slice(1), filename: tmp[1], url: url };
 	}
+	func = func[0].getAttribute('onclick');
+	var tmp = func.split(',')[1].split('!');
+	// Z.debug(func + tmp[0].slice(1));
+	return { dbname: tmp[0].slice(1), filename: tmp[1], url: url };
 }
 
 function getIDFromPage(doc, url) {
@@ -149,7 +150,6 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 			var tmp = td1.value.split('!');
 			id = { dbname: tmp[0], filename: tmp[1], url: a.href };
 		}
-		Z.debug('links' + i);
 		if (!title || !id) continue;
 		if (itemInfo) {
 			itemInfo[a.href] = { id: id };
@@ -164,7 +164,6 @@ function detectWeb(doc, url) {
 	var ab = ZU.xpath(doc, "//span[@id='ChDivSummary']")[0]
 	var id = getIDFromPage(doc, url);
 	var items = getItemsFromSearchResults(doc, url);
-	Z.debug(id);
 	if (id) {
 		return getTypeFromDBName(id.dbname);
 	} else if (items) {
@@ -196,9 +195,9 @@ function doWeb(doc, url) {
 }
 
 function scrape(ids, doc, url, itemInfo) {
-	getRefworksByID(ids, function(text, ids) {
+	getRefWorksByID(ids, function (text) {
 		var translator = Z.loadTranslator('import');
-		translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86'); //Refworks
+		translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86'); // RefWorks Tagged
 		text = text.replace(/IS (\d+)\nvo/, "IS $1\nVO");
 		translator.setString(text);
 		
