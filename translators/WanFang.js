@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcs",
-	"lastUpdated": "2019-11-20 05:35:20"
+	"lastUpdated": "2019-11-26 07:59:14"
 }
 
 /*
@@ -159,7 +159,11 @@ function scrape(ids, doc, url, itemInfo) {
 		translator.setString(text);
 		translator.setHandler('itemDone', function(obj, newItem) {
 			// split names
-			var authors = newItem.creators[0]['lastName'];
+			var authors = "";
+			for (var i = 0; i < newItem.creators.length; i++) {
+				authors = authors + newItem.creators[i]['lastName'] + ';';
+			}
+			authors = authors.slice(0, authors.length-1);
 			// remove [names in PINYIN]
 			var authors = authors.replace(/[\s;]\[.*\]/g, '');
 			if (newItem.itemType == "conferencePaper"){
