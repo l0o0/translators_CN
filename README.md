@@ -6,12 +6,12 @@
 
 + [知网或知网海外](https://cnki.net/) -> [CNKI.js](./translators/CNKI.js)  
   - [x] 默认保存网页快照  
-  - [x] 下载PDF或CAJ文件，学位论文默认保存CAJ 
+  - [x] 文章格式都为PDF，学位论文的CAJ链接已经替换为PDF，注意学位论文的PDF应该是没有目录信息的。如果想要下载CAJ格式的学位论文，将`CNKI.js`中两处`keepPDF`改为`false`
   - [x] 修改旧版本将知网导出`refworks`中`CN`字段保存为期刊条目中的 `call number`，修改后`CN`字段不保留
   - [x] 修改了拉取知网`refworks`格式引文的网址，新网址提供的摘要字数最多为500字
   - [x] 知网海外版PDF和CAJ附件下载支持  
   - [x] 支持文献类型：期刊，学位论文，会议论文，报纸
-  - [x] 已同步到官方版本库中
+  - [ ] 已同步到官方版本库中
 + [万方数据](http://www.wanfangdata.com.cn/index.html) -> [WanFang.js](./translators/WanFang.js)
   - [x] 抓取引文信息  
   - [x] 支持文献类型：期刊，学位论文，专利，会议论文
@@ -23,6 +23,7 @@
   - [x] 修改了网页匹配，识别抓取代码抄自Google Scholar。从搜索结果页识别搜索结果，引文信息正常
   - [ ] 部分文献的PDF下载可能会有问题，谷粉搜搜上可能没有相应的下载链接
   - 安装Adblock插件的朋友请注意下将谷粉学术`*.glgoo.top`添加到白名单，不然可能会出现问题
++ [专利搜索网站Soopat](http://www.soopat.com/) -> [Snnopat.js](./translators/Soopat.js)
 
 
 

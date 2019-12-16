@@ -1,15 +1,15 @@
 {
 	"translatorID": "5c95b67b-41c5-4f55-b71a-48d5d7183063",
-	"translatorType": 4,
 	"label": "CNKI",
 	"creator": "Aurimas Vinckevicius, Xingzhong Lin",
 	"target": "^https?://([^/]+\\.)?cnki\\.net",
 	"minVersion": "3.0",
-	"maxVersion": null,
+	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
+	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2019-12-05 08:50:00"
+	"lastUpdated": "2019-12-16 06:58:16"
 }
 
 /*
@@ -45,7 +45,7 @@ function getRefWorksByID(ids, onDataAvailable) {
 		+ '&hid_kLogin_headerUrl=/KLogin/Request/GetKHeader.ashx%3Fcallback%3D%3F'
 		+ '&hid_KLogin_FooterUrl=/KLogin/Request/GetKHeader.ashx%3Fcallback%3D%3F'
 		+ '&CookieName=FileNameS';
-	ZU.doPost('https://kns.cnki.net/kns/ViewPage/viewsave.aspx?displayMode=Refworks', postData,
+	ZU.doPost('/kns/ViewPage/viewsave.aspx?displayMode=Refworks', postData,
 		function (text) {
 			var parser = new DOMParser();
 			var html = parser.parseFromString(text, "text/html")
@@ -150,11 +150,31 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 			var tmp = td1.value.split('!');
 			id = { dbname: tmp[0], filename: tmp[1], url: a.href };
 		}
+		// download link in search result
+		var filelink = ZU.xpath(links[i], "./td[8]/a");
+		var pubYear = ZU.xpath(links[i], "./td[5]")[0].innerText.slice(0, 4);
 		if (!title || !id) continue;
 		if (itemInfo) {
+			var fatTitle = title + " " + pubYear;
 			itemInfo[a.href] = { id: id };
+			if (filelink.length) {
+				var filelink = filelink[0].href;
+				if (filelink.indexOf('&dflag=') > 0) {
+					// replace CAJ with PDF
+					var keepPDF = true;
+					if (keepPDF) {
+						filelink = filelink.replace('&dflag=nhdown', '&dflag=pdfdown');
+					}
+				} else {
+					filelink += "&dflag=pdfdown";
+				}
+				itemInfo[fatTitle] = filelink;
+			}
 		}
-		items[a.href] = title;
+		var authors = ZU.xpath(links[i], "./td[3]")[0].innerText;
+		var pub = ZU.xpath(links[i], "./td[4]")[0].innerText
+		items[a.href] = title +"， " + authors + "《" + pub + "》";
+		//items[a.href] = title + (itemInfo ? itemInfo[a.href]['downlink'] : " E");
 	}
 	return items;
 }
@@ -177,24 +197,23 @@ function doWeb(doc, url) {
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
+		// Z.debug(itemInfo);
 		Z.selectItems(items, function(selectedItems) {
 			if (!selectedItems) return true;
 			
-			var itemInfoByTitle = {};
+			var itemInfoByFatTitle = {};
 			var ids = [];
 			for (var url in selectedItems) {
 				ids.push(itemInfo[url].id);
-				itemInfoByTitle[selectedItems[url]] = itemInfo[url];
-				itemInfoByTitle[selectedItems[url]].url = url;
 			}
-			scrape(ids, doc, url, itemInfoByTitle);
+			scrape(ids, doc, url, itemInfo, 'multiple');
 		});
 	} else {
-		scrape([getIDFromPage(doc, url)], doc, url);
+		scrape([getIDFromPage(doc, url)], doc, url, 'single');
 	}
 }
 
-function scrape(ids, doc, url, itemInfo) {
+function scrape(ids, doc, url, itemInfo, webType) {
 	getRefWorksByID(ids, function (text) {
 		var translator = Z.loadTranslator('import');
 		translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86'); // RefWorks Tagged
@@ -227,30 +246,30 @@ function scrape(ids, doc, url, itemInfo) {
 			for (var j = 0, l = newItem.tags.length; j < l; j++) {
 				newItem.tags[j] = newItem.tags[j].replace(/:\d+$/, '');
 			}
-			
-			newItem.title = ZU.trimInternal(newItem.title);
-			if (itemInfo) {
-				var info = itemInfo[newItem.title];
-				if (!info) {
-					Z.debug('No item info for "' + newItem.title + '"');
-				} else {
-					newItem.url = info.url;
-				}
-			} else {
+			// url in search result is invalid
+			if (webType != 'multiple') {
 				newItem.url = url;
 			}
-
+			newItem.title = ZU.trimInternal(newItem.title);
+			
 			// CN 中国刊物编号，非refworks中的callNumber
 			// CN in CNKI refworks format explains Chinese version of ISSN
 			if (newItem.callNumber){
 			//	newItem.extra = 'CN ' + newItem.callNumber;
 				newItem.callNumber = "";
 			}
-			// don't download PDF/CAJ on searchResult(multiple)
-			var webType = detectWeb(doc, url);
-			if (webType && webType != 'multiple') {
+			// add PDF/CAJ attachments
+			var loginStatus = loginDetect(doc);
+			var fatTitle = newItem.title + " " + newItem.date;
+			if (webType == 'single') {
 				newItem.attachments = getAttachments(doc, newItem);
-			} 
+			} else if (webType == 'multiple' && itemInfo && loginStatus) {
+				newItem.attachments = [{
+					title: "Full Text PDF",
+					mimeType: "application/pdf",
+					url: itemInfo[fatTitle]
+				}];
+			}
 			newItem.complete();
 		});
 		
@@ -282,16 +301,21 @@ function getCAJ(doc, itemType) {
 
 // add pdf or caj to attachments, default is pdf
 function getAttachments(doc, item) {
+	// keep caj or pdf
+	var keepPDF = true;
 	var attachments = [];
 	var pdfurl = getPDF(doc, item.itemType);
 	var cajurl = getCAJ(doc, item.itemType);
+	if (keepPDF && item.itemType == "thesis") {
+		pdfurl = cajurl.replace('&dflag=nhdown', '&dflag=pdfdown');
+	}
 	// Z.debug('pdf' + pdfurl);
 	// Z.debug('caj' + cajurl);
-	var loginUser = ZU.xpath(doc, "//input[@id='loginuserid']");
+	var loginStatus = loginDetect(doc);
 	// Z.debug(doc.body.innerHTML);
 	// Z.debug(loginUser[0].value);
 	// Z.debug(loginUser.length);
-	if (loginUser.length && loginUser[0].value) { 
+	if (loginStatus) { 
 		if (pdfurl) {
 			attachments.push({
 				title: "Full Text PDF",
@@ -310,6 +334,16 @@ function getAttachments(doc, item) {
 	return attachments;
 }
 
+
+// detect login status
+function loginDetect(doc) {
+	var loginUser = ZU.xpath(doc, "//input[(@id='loginuserid') or (@id='userid')]");
+	if (loginUser.length && loginUser[0].value) {
+		return true
+	} else {
+		return false
+	}
+} 
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -359,7 +393,6 @@ var testCases = [
 				"libraryCatalog": "CNKI",
 				"pages": "1306-1312",
 				"publicationTitle": "色谱",
-				"url": "http://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFQ&dbname=CJFDLAST2015&filename=SPZZ201412003&v=MTU2MzMzcVRyV00xRnJDVVJMS2ZidVptRmkva1ZiL09OajNSZExHNEg5WE5yWTlGWjRSOGVYMUx1eFlTN0RoMVQ=",
 				"volume": "32",
 				"attachments": [],
 				"tags": [
