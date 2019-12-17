@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2019-12-16 06:58:16"
+	"lastUpdated": "2019-12-17 08:50:32"
 }
 
 /*
@@ -161,10 +161,7 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 				var filelink = filelink[0].href;
 				if (filelink.indexOf('&dflag=') > 0) {
 					// replace CAJ with PDF
-					var keepPDF = true;
-					if (keepPDF) {
-						filelink = filelink.replace('&dflag=nhdown', '&dflag=pdfdown');
-					}
+					filelink = filelink.replace('&dflag=nhdown', '&dflag=pdfdown');
 				} else {
 					filelink += "&dflag=pdfdown";
 				}
@@ -174,14 +171,14 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 		var authors = ZU.xpath(links[i], "./td[3]")[0].innerText;
 		var pub = ZU.xpath(links[i], "./td[4]")[0].innerText
 		items[a.href] = title +"， " + authors + "《" + pub + "》";
-		//items[a.href] = title + (itemInfo ? itemInfo[a.href]['downlink'] : " E");
 	}
 	return items;
 }
 
 function detectWeb(doc, url) {
 	// Z.debug(doc);
-	var ab = ZU.xpath(doc, "//span[@id='ChDivSummary']")[0]
+	// Z.monitorDOMChanges(ZU.xpath(doc, "//div[@id='HeaderDiv']")[0]);
+	var ab = ZU.xpath(doc, "//span[@id='ChDivSummary']")[0];
 	var id = getIDFromPage(doc, url);
 	var items = getItemsFromSearchResults(doc, url);
 	if (id) {
@@ -206,14 +203,14 @@ function doWeb(doc, url) {
 			for (var url in selectedItems) {
 				ids.push(itemInfo[url].id);
 			}
-			scrape(ids, doc, url, itemInfo, 'multiple');
+			scrape(ids, doc, url, itemInfo);
 		});
 	} else {
-		scrape([getIDFromPage(doc, url)], doc, url, 'single');
+		scrape([getIDFromPage(doc, url)], doc, url);
 	}
 }
 
-function scrape(ids, doc, url, itemInfo, webType) {
+function scrape(ids, doc, url, itemInfo) {
 	getRefWorksByID(ids, function (text) {
 		var translator = Z.loadTranslator('import');
 		translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86'); // RefWorks Tagged
@@ -240,6 +237,8 @@ function scrape(ids, doc, url, itemInfo, webType) {
 			
 			if (newItem.abstractNote) {
 				newItem.abstractNote = newItem.abstractNote.replace(/\s*[\r\n]\s*/g, '\n');
+				// remove tag in abstract
+				newItem.abstractNote = newItem.abstractNote.replace(/&lt;.*?&gt;/, "");
 			}
 			
 			// clean up tags. Remove numbers from end
@@ -247,7 +246,7 @@ function scrape(ids, doc, url, itemInfo, webType) {
 				newItem.tags[j] = newItem.tags[j].replace(/:\d+$/, '');
 			}
 			// url in search result is invalid
-			if (webType != 'multiple') {
+			if (!itemInfo) {
 				newItem.url = url;
 			}
 			newItem.title = ZU.trimInternal(newItem.title);
@@ -258,17 +257,20 @@ function scrape(ids, doc, url, itemInfo, webType) {
 			//	newItem.extra = 'CN ' + newItem.callNumber;
 				newItem.callNumber = "";
 			}
+			
 			// add PDF/CAJ attachments
 			var loginStatus = loginDetect(doc);
+			// var loginStatus = true;
 			var fatTitle = newItem.title + " " + newItem.date;
-			if (webType == 'single') {
-				newItem.attachments = getAttachments(doc, newItem);
-			} else if (webType == 'multiple' && itemInfo && loginStatus) {
+			// Z.debug('loginStatus: '+loginStatus);
+			if (itemInfo && loginStatus) { // search result 
 				newItem.attachments = [{
 					title: "Full Text PDF",
 					mimeType: "application/pdf",
 					url: itemInfo[fatTitle]
 				}];
+			} else if (loginStatus && (!itemInfo)) { // detail page
+				newItem.attachments = getAttachments(doc, newItem);
 			}
 			newItem.complete();
 		});
@@ -311,31 +313,26 @@ function getAttachments(doc, item) {
 	}
 	// Z.debug('pdf' + pdfurl);
 	// Z.debug('caj' + cajurl);
-	var loginStatus = loginDetect(doc);
-	// Z.debug(doc.body.innerHTML);
-	// Z.debug(loginUser[0].value);
-	// Z.debug(loginUser.length);
-	if (loginStatus) { 
-		if (pdfurl) {
-			attachments.push({
-				title: "Full Text PDF",
-				mimeType: "application/pdf",
-				url: pdfurl
-			});
-		} else if (cajurl) {
-			attachments.push({
-				title: "Full Text CAJ",
-				mimeType: "application/caj",
-				url: cajurl
-			});
-		}
+
+	if (pdfurl) {
+		attachments.push({
+			title: "Full Text PDF",
+			mimeType: "application/pdf",
+			url: pdfurl
+		});
+	} else if (cajurl) {
+		attachments.push({
+			title: "Full Text CAJ",
+			mimeType: "application/caj",
+			url: cajurl
+		});
 	}
-	
 	return attachments;
 }
 
 
 // detect login status
+// loginState in search result, -1 means logout
 function loginDetect(doc) {
 	var loginUser = ZU.xpath(doc, "//input[(@id='loginuserid') or (@id='userid')]");
 	if (loginUser.length && loginUser[0].value) {
@@ -344,6 +341,7 @@ function loginDetect(doc) {
 		return false
 	}
 } 
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
