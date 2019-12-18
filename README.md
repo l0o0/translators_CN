@@ -12,11 +12,14 @@
   - [x] 知网海外版PDF和CAJ附件下载支持  
   - [x] 支持文献类型：期刊，学位论文，会议论文，报纸
   - [ ] 已同步到官方版本库中
-+ [万方数据](http://www.wanfangdata.com.cn/index.html) -> [WanFang.js](./translators/WanFang.js)
++ [万方数据](http://www.wanfangdata.com.cn/index.html) -> [WanFang.js](./translators/WanFang.js) ❗
   - [x] 抓取引文信息  
   - [x] 支持文献类型：期刊，学位论文，专利，会议论文
   - [ ] PDF附件下载
-+ [维普](http://www.cqvip.com/)  
++ [维普](http://www.cqvip.com/) -> [WeiPu.js](./translators/WeiPu.js) ❗
+  - [x] 抓取引文信息  
+  - [x] 支持文献类型：期刊
+  - [ ] PDF附件下载
 + [百度学术](http://xueshu.baidu.com/) 
 + [Bilibili 视频网站](https://www.bilibili.com/) 
 + [谷粉学术-谷歌学术](https://gfsoso.99lb.net/) -> [GFSOSO.js](./translators/GFSOSO.js)
