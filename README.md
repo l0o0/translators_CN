@@ -27,6 +27,8 @@
   - [ ] 部分文献的PDF下载可能会有问题，谷粉搜搜上可能没有相应的下载链接
   - 安装Adblock插件的朋友请注意下将谷粉学术`*.glgoo.top`添加到白名单，不然可能会出现问题
 + [专利搜索网站Soopat](http://www.soopat.com/) -> [Snnopat.js](./translators/Soopat.js)
+  - [x] 搜索页面和单个专利页面信息抓取
+  - [x] PDF附件下载（需要登录，网站验证码可能会导致PDF下载失败）
 
 
 
