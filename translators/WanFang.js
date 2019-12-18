@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcs",
-	"lastUpdated": "2019-11-26 07:59:14"
+	"lastUpdated": "2019-12-16 07:18:39"
 }
 
 /*
@@ -54,7 +54,7 @@ function getRefworksByID(ids, next) {
 	
 	var postData = "r=" + r + "&exportType=refWorks&isHtml5=true&isHtml5Value=" + isHtml5Value;
 	// Z.debug(postData);
-	ZU.doPost('http://www.wanfangdata.com.cn/export/getExportJson.do', postData, 
+	ZU.doPost('/export/getExportJson.do', postData, 
 		function(text) {
 			var text = JSON.parse(text)['exportHtml'];
 			var text = text.replace(/<br>/g, '\n');
