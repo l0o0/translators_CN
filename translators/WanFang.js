@@ -15,7 +15,7 @@
 /*
 	***** BEGIN LICENSE BLOCK *****
 
-	Copyright © 2019 Xingzhong Lin, linxzh1989@gmail.com
+	Copyright © 2019 Xingzhong Lin, https://github.com/Zotero-CN/translators_CN
 	
 	This file is part of Zotero.
 
