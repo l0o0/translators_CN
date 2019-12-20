@@ -23,7 +23,9 @@
 + [百度学术](http://xueshu.baidu.com/) -> [Baidu Scholar.js](./translators/Baidu&#32;Scholar.js)
   - [x] 修复抓取图书时错误
   - [x] 修复中文作者姓，名问题
-+ [Bilibili 视频网站](https://www.bilibili.com/) 
++ [Bilibili 视频网站](https://www.bilibili.com/) -> [BiliBili.js](./translators/BiliBili.js)
+  - [x] 视频页抓取信息，包括Up主，标签，上传日期，视频选集
+  - [x] 搜索页面信息抓取，包括Up主，上传日期，标题，抓取信息比较少
 + [谷粉学术-谷歌学术](https://gfsoso.99lb.net/) -> [GFSOSO.js](./translators/GFSOSO.js)
   - [x] 修改了网页匹配，识别抓取代码抄自Google Scholar。从搜索结果页识别搜索结果，引文信息正常
   - [ ] 部分文献的PDF下载可能会有问题，谷粉搜搜上可能没有相应的下载链接
