@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gc",
-	"lastUpdated": "2019-12-20 09:23:15"
+	"lastUpdated": "2019-12-23 03:19:58"
 }
 
 /*
@@ -38,10 +38,10 @@
 
 function detectWeb(doc, url) {
   if (url.includes('/video/av')) {
-    return "videoRecording";
+	return "videoRecording";
   } else
   if (getSearchResults(doc, true)) {
-    return "multiple";
+	return "multiple";
   }
   return false;
 }
@@ -51,15 +51,15 @@ function getSearchResults(doc, checkOnly, itemInfos) {
   var found = false;
   var rows = ZU.xpath(doc, "//ul[contains(@class, 'video-list')]/li");
   for (let row of rows) {
-    let href = row.getElementsByTagName('a')[0].href;
-    let title = ZU.trimInternal(row.getElementsByTagName('a')[0].title);
-    if (!href || !title) continue;
-    if (checkOnly) return true;
-    found = true;
-    items[href] = title;
-    if (itemInfos) {
-    	itemInfos[href] = row;
-    }
+	let href = row.getElementsByTagName('a')[0].href;
+	let title = ZU.trimInternal(row.getElementsByTagName('a')[0].title);
+	if (!href || !title) continue;
+	if (checkOnly) return true;
+	found = true;
+	items[href] = title;
+	if (itemInfos) {
+		itemInfos[href] = row;
+	}
   }
   return found ? items : false;
 }
@@ -68,16 +68,16 @@ function doWeb(doc, url) {
   if (detectWeb(doc, url) == "multiple") {
   	var itemInfos = {};
   	var items = getSearchResults(doc, false, itemInfos);
-    Zotero.selectItems(items, function (selectedItems) {
-      for (url in selectedItems) {
-      	// Z.debug(url);
-      	selectedRow = itemInfos[item];
-      	scrape(selectedRow, url);
-      }
-    });
+	Zotero.selectItems(items, function (selectedItems) {
+	  for (url in selectedItems) {
+	  	// Z.debug(url);
+	  	selectedRow = itemInfos[item];
+	  	scrape(selectedRow, url);
+	  }
+	});
   } else
   {
-    scrape(doc, url);
+	scrape(doc, url);
   }
 }
 
@@ -115,7 +115,7 @@ function scrape(doc, url) {
 		fieldMode: 1
 	});
 	
-	var description = ZU.xpath(doc, "//div[@class='info open']");
+	var description = ZU.xpath(doc, "//div[@id='v_desc']/div[contains(@class, 'info')]");
 	if (description.length) {
 		item.abstractNote = ZU.cleanTags(description[0].innerText);
 	}
