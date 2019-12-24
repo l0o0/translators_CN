@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2019-12-17 08:50:32"
+	"lastUpdated": "2019-12-24 03:39:37"
 }
 
 /*
@@ -152,10 +152,10 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 		}
 		// download link in search result
 		var filelink = ZU.xpath(links[i], "./td[8]/a");
-		var pubYear = ZU.xpath(links[i], "./td[5]")[0].innerText.slice(0, 4);
+		var author = ZU.xpath(links[i], "./td[3]")[0].innerText.split(';')[0].replace(/\s/g, '');
 		if (!title || !id) continue;
 		if (itemInfo) {
-			var fatTitle = title + " " + pubYear;
+			var fatTitle = title + " " + author;
 			itemInfo[a.href] = { id: id };
 			if (filelink.length) {
 				var filelink = filelink[0].href;
@@ -180,10 +180,10 @@ function detectWeb(doc, url) {
 	// Z.monitorDOMChanges(ZU.xpath(doc, "//div[@id='HeaderDiv']")[0]);
 	var ab = ZU.xpath(doc, "//span[@id='ChDivSummary']")[0];
 	var id = getIDFromPage(doc, url);
-	var items = getItemsFromSearchResults(doc, url);
+	// var items = getItemsFromSearchResults(doc, url);
 	if (id) {
 		return getTypeFromDBName(id.dbname);
-	} else if (items) {
+	} else if (url.match(/kns\/brief\/(Default_Result|result)\.aspx/i)) {
 		return "multiple";
 	} else {
 		return false;
@@ -194,11 +194,10 @@ function doWeb(doc, url) {
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
-		// Z.debug(itemInfo);
+		Z.debug(itemInfo);
+		if (!items) return false;  // no items
 		Z.selectItems(items, function(selectedItems) {
 			if (!selectedItems) return true;
-			
-			var itemInfoByFatTitle = {};
 			var ids = [];
 			for (var url in selectedItems) {
 				ids.push(itemInfo[url].id);
@@ -218,6 +217,21 @@ function scrape(ids, doc, url, itemInfo) {
 		translator.setString(text);
 		
 		translator.setHandler('itemDone', function(obj, newItem) {
+			// add PDF/CAJ attachments
+			// var loginStatus = loginDetect(doc);
+			var loginStatus = true;
+			var fatTitle = newItem.title + " " + newItem.creators[0].lastName.replace(/\s/g, '');
+			Z.debug(fatTitle);
+			// Z.debug('loginStatus: '+loginStatus);
+			if (itemInfo && loginStatus) { // search result 
+				newItem.attachments = [{
+					title: "Full Text PDF",
+					mimeType: "application/pdf",
+					url: itemInfo[fatTitle]
+				}];
+			} else if (loginStatus && (!itemInfo)) { // detail page
+				newItem.attachments = getAttachments(doc, newItem);
+			}
 			// split names
 			for (var i = 0, n = newItem.creators.length; i < n; i++) {
 				var creator = newItem.creators[i];
@@ -235,12 +249,6 @@ function scrape(ids, doc, url, itemInfo) {
 				}
 			}
 			
-			if (newItem.abstractNote) {
-				newItem.abstractNote = newItem.abstractNote.replace(/\s*[\r\n]\s*/g, '\n');
-				// remove tag in abstract
-				newItem.abstractNote = newItem.abstractNote.replace(/&lt;.*?&gt;/, "");
-			}
-			
 			// clean up tags. Remove numbers from end
 			for (var j = 0, l = newItem.tags.length; j < l; j++) {
 				newItem.tags[j] = newItem.tags[j].replace(/:\d+$/, '');
@@ -248,6 +256,16 @@ function scrape(ids, doc, url, itemInfo) {
 			// url in search result is invalid
 			if (!itemInfo) {
 				newItem.url = url;
+				var moreClick = ZU.xpath(doc, "//span/a[@id='ChDivSummaryMore']");
+				if (moreClick.length) {
+					moreClick[0].click();
+					newItem.abstractNote = ZU.xpath(doc, "//span[@id='ChDivSummary']")[0].innerText;		
+				}
+			}
+			if (newItem.abstractNote) {
+				newItem.abstractNote = newItem.abstractNote.replace(/\s*[\r\n]\s*/g, '\n');
+				// remove tag in abstract
+				newItem.abstractNote = newItem.abstractNote.replace(/&lt;.*?&gt;/, "");
 			}
 			newItem.title = ZU.trimInternal(newItem.title);
 			
@@ -256,21 +274,6 @@ function scrape(ids, doc, url, itemInfo) {
 			if (newItem.callNumber){
 			//	newItem.extra = 'CN ' + newItem.callNumber;
 				newItem.callNumber = "";
-			}
-			
-			// add PDF/CAJ attachments
-			var loginStatus = loginDetect(doc);
-			// var loginStatus = true;
-			var fatTitle = newItem.title + " " + newItem.date;
-			// Z.debug('loginStatus: '+loginStatus);
-			if (itemInfo && loginStatus) { // search result 
-				newItem.attachments = [{
-					title: "Full Text PDF",
-					mimeType: "application/pdf",
-					url: itemInfo[fatTitle]
-				}];
-			} else if (loginStatus && (!itemInfo)) { // detail page
-				newItem.attachments = getAttachments(doc, newItem);
 			}
 			newItem.complete();
 		});
@@ -341,7 +344,6 @@ function loginDetect(doc) {
 		return false
 	}
 } 
-
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -391,8 +393,14 @@ var testCases = [
 				"libraryCatalog": "CNKI",
 				"pages": "1306-1312",
 				"publicationTitle": "色谱",
+				"url": "http://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFQ&dbname=CJFDLAST2015&filename=SPZZ201412003&v=MTU2MzMzcVRyV00xRnJDVVJMS2ZidVptRmkva1ZiL09OajNSZExHNEg5WE5yWTlGWjRSOGVYMUx1eFlTN0RoMVQ=",
 				"volume": "32",
-				"attachments": [],
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					}
+				],
 				"tags": [
 					{
 						"tag": "Astragalus"
@@ -448,13 +456,18 @@ var testCases = [
 					}
 				],
 				"date": "2015",
-				"abstractNote": "黄瓜(Cucumis sativus L.)是我国最大的保护地栽培蔬菜作物,也是植物性别发育和维管束运输研究的重要模式植物。黄瓜基因组序列图谱已经构建完成,并且在此基础上又完成了全基因组SSR标记开发和涵盖330万个变异位点变异组图谱,成为黄瓜功能基因研究的重要平台和工具,相关转录组研究也有很多报道,不过共表达网络研究还是空白。本实验以温室型黄瓜9930为研究对象,选取10个不同组织,进行转录组测序,获得10份转录组原始数据。在对原始数据去除接头与低质量读段后,将高质量读段用Tophat2回贴到已经发表的栽培黄瓜基因组序列上。用Cufflinks对回贴后的数据计算FPKM值,获得10份组织的2...",
+				"abstractNote": "黄瓜(Cucumis sativus L.)是我国最大的保护地栽培蔬菜作物,也是植物性别发育和维管束运输研究的重要模式植物。黄瓜基因组序列图谱已经构建完成,并且在此基础上又完成了全基因组SSR标记开发和涵盖330万个变异位点变异组图谱,成为黄瓜功能基因研究的重要平台和工具,相关转录组研究也有很多报道,不过共表达网络研究还是空白。本实验以温室型黄瓜9930为研究对象,选取10个不同组织,进行转录组测序,获得10份转录组原始数据。在对原始数据去除接头与低质量读段后,将高质量读段用Tophat2回贴到已经发表的栽培黄瓜基因组序列上。用Cufflinks对回贴后的数据计算FPKM值,获得10份组织的24274基因的表达量数据。计算结果中的回贴率比较理想,不过有些基因的表达量过低。为了防止表达量低的基因对结果的影响,将10份组织中表达量最大小于5的基因去除,得到16924个基因,进行下一步分析。共表达网络的构建过程是将上步获得的表达量数据,利用R语言中WGCNA(weighted gene co-expression network analysis)包构建共表达网络。结果得到的共表达网络包括1134个模块。这些模块中的基因表达模式类似,可以认为是共表达关系。不过结果中一些模块内基因间相关性同其他模块相比比较低,在分析过程中,将模块中基因相关性平均值低于0.9的模块都去除,最终得到839个模块,一共11,844个基因。共表达的基因因其表达模式类似而聚在一起,这些基因可能与10份组织存在特异性关联。为了计算模块与组织间的相关性,首先要对每个模块进行主成分分析(principle component analysis,PCA),获得特征基因(module eigengene,ME),特征基因可以表示这个模块所有基因共有的表达趋势。通过计算特征基因与组织间的相关性,从而挑选出组织特异性模块,这些模块一共有323个。利用topGO功能富集分析的结果表明这些特异性模块所富集的功能与组织相关。共表达基因在染色体上的物理位置经常是成簇分布的。按照基因间隔小于25kb为标准。分别对839个模块进行分析,结果发现在71个模块中共有220个cluster,这些cluster 一般有2～5个基因,cluster中的基因在功能上也表现出一定的联系。共表达基因可能受到相同的转录调控,这些基因在启动子前2kb可能会存在有相同的motif以供反式作用元件的结合起到调控作用。对839个模块中的基因,提取启动子前2kb的序列,上传到PLACE网站进行motif分析。显著性分析的结果表明一共有367个motif存在富集,其中6个motif已经证实在黄瓜属植物中发挥作用。最后结合已经发表的黄瓜苦味生物合成途径研究,找到了 3个模块,已经找到的11个基因中,有10个基因在这4个模块中。这些模块的功能富集也显示与苦味合成相关,同时这些参与合成的基因在染色体上也成簇分布。本论文所描述的方法结合了转录组测序与网络分析方法,发现了黄瓜中的共表达基因模块,为黄瓜基因的共表达分析提供了非常重要的研究基础和数据支持。",
 				"language": "中文;",
 				"libraryCatalog": "CNKI",
 				"thesisType": "硕士",
 				"university": "南京农业大学",
 				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CMFD&dbname=CMFD201701&filename=1017045605.nh&v=MDc3ODZPZVorVnZGQ3ZrV3JyT1ZGMjZHYk84RzlmTXFwRWJQSVI4ZVgxTHV4WVM3RGgxVDNxVHJXTTFGckNVUkw=",
-				"attachments": [],
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					}
+				],
 				"tags": [
 					{
 						"tag": "co-expression"
@@ -501,13 +514,18 @@ var testCases = [
 					}
 				],
 				"date": "2019",
-				"abstractNote": "不良资产证券化是一种新型的不良资产处置方式,其拓宽了商业银行处理不良资产的手段,特别适用于单户金额小、户数多的个人不良资产批量处置,而且这种市场化处置方式将银行不良资产处置和资本市场证券产品发行两个不同领域联接在一起,提高了不良资产的价值。本文以个人住房不良资产证券化为研究对象,确定资产池内不良资产未来回收价值。综合对比市场常用的定价方法,在此基础上提出建立多元回归定价模型的思路。利用YN银行个人住房不良贷款历史数据,分析得出影响不良资产定价的因素,建立定价方程,并对拟证券化的虚拟资产池计算整体回收价值,证明多元回归定价模型的有效性。本文提出的定价模型规避了传统资产定价方法效率低、评估结果不严...",
+				"abstractNote": "不良资产证券化是一种新型的不良资产处置方式,其拓宽了商业银行处理不良资产的手段,特别适用于单户金额小、户数多的个人不良资产批量处置,而且这种市场化处置方式将银行不良资产处置和资本市场证券产品发行两个不同领域联接在一起,提高了不良资产的价值。本文以个人住房不良资产证券化为研究对象,确定资产池内不良资产未来回收价值。综合对比市场常用的定价方法,在此基础上提出建立多元回归定价模型的思路。利用YN银行个人住房不良贷款历史数据,分析得出影响不良资产定价的因素,建立定价方程,并对拟证券化的虚拟资产池计算整体回收价值,证明多元回归定价模型的有效性。本文提出的定价模型规避了传统资产定价方法效率低、评估结果不严谨等缺点,采用数理统计的方法,借助分析软件,使定价结果更加科学、准确,为商业银行提供了定价的新途径,也以此为契机建议商业银行成立完备的不良资产处置数据系统,为高效开展资产证券化工作提供数据和技术支持。",
 				"language": "中文;",
 				"libraryCatalog": "CNKI",
 				"thesisType": "硕士",
 				"university": "浙江大学",
 				"url": "http://new.gb.oversea.cnki.net/KCMS/detail/detail.aspx?dbcode=CMFD&dbname=CMFDTEMP&filename=1019926131.nh&v=MTA5MjM2RjdxNkdORFBycEViUElSOGVYMUx1eFlTN0RoMVQzcVRyV00xRnJDVVJMT2VadVJxRnkzblY3dkJWRjI=",
-				"attachments": [],
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					}
+				],
 				"tags": [
 					{
 						"tag": "Asset pool pricing"
