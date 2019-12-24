@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2019-12-24 03:39:37"
+	"lastUpdated": "2019-12-24 07:35:29"
 }
 
 /*
@@ -152,19 +152,13 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 		}
 		// download link in search result
 		var filelink = ZU.xpath(links[i], "./td[8]/a");
-		var author = ZU.xpath(links[i], "./td[3]")[0].innerText.split(';')[0].replace(/\s/g, '');
+		var author = ZU.xpath(links[i], "./td[3]")[0].innerText.split(';')[0];
 		if (!title || !id) continue;
 		if (itemInfo) {
-			var fatTitle = title + " " + author;
+			var fatTitle = (title + "-" + author).replace(/\s/g, '');
 			itemInfo[a.href] = { id: id };
 			if (filelink.length) {
 				var filelink = filelink[0].href;
-				if (filelink.indexOf('&dflag=') > 0) {
-					// replace CAJ with PDF
-					filelink = filelink.replace('&dflag=nhdown', '&dflag=pdfdown');
-				} else {
-					filelink += "&dflag=pdfdown";
-				}
 				itemInfo[fatTitle] = filelink;
 			}
 		}
@@ -178,12 +172,10 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 function detectWeb(doc, url) {
 	// Z.debug(doc);
 	// Z.monitorDOMChanges(ZU.xpath(doc, "//div[@id='HeaderDiv']")[0]);
-	var ab = ZU.xpath(doc, "//span[@id='ChDivSummary']")[0];
 	var id = getIDFromPage(doc, url);
-	// var items = getItemsFromSearchResults(doc, url);
 	if (id) {
 		return getTypeFromDBName(id.dbname);
-	} else if (url.match(/kns\/brief\/(Default_Result|result)\.aspx/i)) {
+	} else if (url.match(/kns\/brief\/(default_)?result\.aspx/i)) {
 		return "multiple";
 	} else {
 		return false;
@@ -215,22 +207,30 @@ function scrape(ids, doc, url, itemInfo) {
 		translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86'); // RefWorks Tagged
 		text = text.replace(/IS (\d+)\nvo/, "IS $1\nVO");
 		translator.setString(text);
-		
 		translator.setHandler('itemDone', function(obj, newItem) {
 			// add PDF/CAJ attachments
 			// var loginStatus = loginDetect(doc);
 			var loginStatus = true;
-			var fatTitle = newItem.title + " " + newItem.creators[0].lastName.replace(/\s/g, '');
+			// If you want CAJ instead of PDF, set keepPDF = false
+			// 如果你想将PDF文件替换为CAJ文件，将下面一行 keepPDF 设为 false
+			var keepPDF = true;
+			var fatTitle = (newItem.title + "-" + newItem.creators[0].lastName).replace(/\s/g, '');
 			Z.debug(fatTitle);
 			// Z.debug('loginStatus: '+loginStatus);
 			if (itemInfo && loginStatus) { // search result 
+				if (itemInfo[fatTitle].includes('&dflag=') && keepPDF) {
+					// replace CAJ with PDF
+					var fileUrl = itemInfo[fatTitle].replace('&dflag=nhdown', '&dflag=pdfdown');
+				} else {
+					var fileUrl = itemInfo[fatTitle] + "&dflag=pdfdown";
+				} 
 				newItem.attachments = [{
 					title: "Full Text PDF",
 					mimeType: "application/pdf",
-					url: itemInfo[fatTitle]
+					url: fileUrl
 				}];
 			} else if (loginStatus && (!itemInfo)) { // detail page
-				newItem.attachments = getAttachments(doc, newItem);
+				newItem.attachments = getAttachments(doc, newItem, keepPDF);
 			}
 			// split names
 			for (var i = 0, n = newItem.creators.length; i < n; i++) {
@@ -305,9 +305,7 @@ function getCAJ(doc, itemType) {
 }
 
 // add pdf or caj to attachments, default is pdf
-function getAttachments(doc, item) {
-	// keep caj or pdf
-	var keepPDF = true;
+function getAttachments(doc, item, keepPDF) {
 	var attachments = [];
 	var pdfurl = getPDF(doc, item.itemType);
 	var cajurl = getCAJ(doc, item.itemType);
@@ -316,7 +314,6 @@ function getAttachments(doc, item) {
 	}
 	// Z.debug('pdf' + pdfurl);
 	// Z.debug('caj' + cajurl);
-
 	if (pdfurl) {
 		attachments.push({
 			title: "Full Text PDF",
