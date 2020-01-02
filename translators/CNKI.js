@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2019-12-24 07:35:29"
+	"lastUpdated": "2020-01-02 03:03:54"
 }
 
 /*
@@ -51,7 +51,9 @@ function getRefWorksByID(ids, onDataAvailable) {
 			var html = parser.parseFromString(text, "text/html")
 			var text = ZU.xpath(html, "//table[@class='mainTable']//td")[0].innerHTML;
 			var text = text.replace(/<br>/g, '\n');
-			text = text.replace(/^RT\s+Dissertation\/Thesis/gmi, 'RT Dissertation');
+			text = text.replace(/^RT\s+Dissertation\/Thesis/gmi, 'RT Dissertation')
+					.replace("Conference Proceeding", "Conference Proceedings");
+			test = text.replace('')
 			text = text.replace(
 				/^(A[1-4]|U2)\s*([^\r\n]+)/gm,
 				function (m, tag, authors) {
@@ -144,9 +146,11 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 		var title = ZU.xpathText(a, './node()[not(name()="SCRIPT")]', null, '');
 		if (title) title = ZU.trimInternal(title);
 		var id = getIDFromURL(a.href);
+		Z.debug(id);
 		// pre-released item can not get ID from URL, try to get ID from element.value
 		if (!id) {
-			var td1 = ZU.xpath(links[i], './td')[0];
+			var td1 = ZU.xpath(links[i], './td/input')[0];
+			Z.debug(td1.value);
 			var tmp = td1.value.split('!');
 			id = { dbname: tmp[0], filename: tmp[1], url: a.href };
 		}
