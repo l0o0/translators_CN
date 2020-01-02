@@ -9,31 +9,8 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsv",
-	"lastUpdated": "2019-12-18 07:05:01"
+	"lastUpdated": "2019-12-30 05:46:30"
 }
-
-/*
-	***** BEGIN LICENSE BLOCK *****
-
-	Copyright © 2019 Xingzhong Lin, https://github.com/Zotero-CN/translators_CN
-	
-	This file is part of Zotero.
-
-	Zotero is free software: you can redistribute it and/or modify
-	it under the terms of the GNU Affero General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	Zotero is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-	GNU Affero General Public License for more details.
-
-	You should have received a copy of the GNU Affero General Public License
-	along with Zotero. If not, see <http://www.gnu.org/licenses/>.
-
-	***** END LICENSE BLOCK *****
-*/
 
 function detectWeb(doc, url) {
 	var items = getSearchItems(doc);
@@ -41,7 +18,7 @@ function detectWeb(doc, url) {
 	if (items && url.indexOf("Patent") == -1) {
 		return "multiple";
 	} else if (url.indexOf("Patent") != -1) {
-		return "Patent";
+		return "patent";
 	}
 }
 function scrape(doc, url, loginStatus) {
