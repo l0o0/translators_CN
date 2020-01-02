@@ -44,7 +44,7 @@
 + [Zotero JavaScript API](https://www.zotero.org/support/dev/client_coding/javascript_api)  
 + [Translator 中可能用到的函数](https://www.zotero.org/support/dev/translators/functions)  
 + [Wiki-Create translator](https://www.mediawiki.org/wiki/Citoid/Creating_Zotero_translators)，了解基本HTML结构，CSS选择器，javascript基本语法等
-+ [refworks 引文格式](https://www.refworks.com/refworks/help/refworks_tagged_format.htm)，有些学术网站可以将引文导出为 refworks 格式
++ [refworks 引文格式](./data/refworks.pdf)，有些学术网站可以将引文导出为 refworks 格式
 + [Scaffold 使用说明](https://www.zotero.org/support/dev/translators/scaffold)，官方出品，便于创建 translator 的工具
 + [MDN Javascript 中文教程](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/A_re-introduction_to_JavaScript)  
 + [Zotero 条目类型说明](https://aurimasv.github.io/z2csl/typeMap.xml)
