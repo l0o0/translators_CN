@@ -93,14 +93,12 @@ function scrape(doc, _url) {
 	var sign = attr(doc, 'a.sc_q', 'data-sign');
 	var risUrl = "http://xueshu.baidu.com/u/citation?&url=" + encodeURIComponent(dataUrl) + "&sign=" + sign + "&diversion=" + diversion + "&t=ris";
 	var title = doc.title.replace('_百度学术', '');
-
 	var tags = [];
 	doc.querySelectorAll('p.kw_main span a').forEach(e => tags.push(ZU.trimInternal(e.textContent)));
 	ZU.doGet(risUrl, function (ris) {
 		// Z.debug({ ris });
 		// delete parenthesis in pages information, e.g. SP  - 5-7(3)
 		ris = ris.replace(/(SP\s+-\s\d+-\d+)\(\d+\)$/m, "$1");
-
 		var translator = Zotero.loadTranslator("import");
 		translator.setTranslator("32d59d2d-b65a-4da4-b0a3-bdd3cfb979e7");
 		// Z.debug('***'+ris);
@@ -127,14 +125,12 @@ function scrape(doc, _url) {
 				doc.querySelectorAll('p.author_text a').forEach((e) => {
 					var creator = ZU.cleanAuthor(e.textContent, 'author', true);
 					item.creators.push(creator);
-					var lastSpace = creator.lastName.lastIndexOf(' ');
-					if (creator.lastName.search(/[A-Za-z]/) == -1 && lastSpace == -1) {
+					if (creator.lastName.search(/[A-Za-z]/) == -1 && !creator.lastName.includes(' ')) {
 						// Chinese name. first character is last name, the rest are first name
 						creator.firstName = creator.lastName.substr(1);
 						creator.lastName = creator.lastName.charAt(0);
 					}
 				});
-				
 			}
 			if (!item.publicationTitle) {
 				item.publicationTitle = attr(doc, 'a.journal_title', 'title');
