@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2020-01-02 03:03:54"
+	"lastUpdated": "2020-01-04 13:49:03"
 }
 
 /*
@@ -40,41 +40,41 @@
 // ids should be in the form [{dbname: "CDFDLAST2013", filename: "1013102302.nh"}]
 function getRefWorksByID(ids, onDataAvailable) {
 	if (!ids.length) return;
-	var { dbname, filename } = ids.shift();
+	var { dbname, filename, url } = ids.shift();
 	var postData = "formfilenames=" + encodeURIComponent(dbname + "!" + filename + "!1!0,")
 		+ '&hid_kLogin_headerUrl=/KLogin/Request/GetKHeader.ashx%3Fcallback%3D%3F'
 		+ '&hid_KLogin_FooterUrl=/KLogin/Request/GetKHeader.ashx%3Fcallback%3D%3F'
 		+ '&CookieName=FileNameS';
-	ZU.doPost('/kns/ViewPage/viewsave.aspx?displayMode=Refworks', postData,
+	ZU.doPost('https://kns.cnki.net/kns/ViewPage/viewsave.aspx?displayMode=Refworks', postData,
 		function (text) {
 			var parser = new DOMParser();
-			var html = parser.parseFromString(text, "text/html")
-			var text = ZU.xpath(html, "//table[@class='mainTable']//td")[0].innerHTML;
-			var text = text.replace(/<br>/g, '\n');
-			text = text.replace(/^RT\s+Dissertation\/Thesis/gmi, 'RT Dissertation')
-					.replace("Conference Proceeding", "Conference Proceedings");
-			test = text.replace('')
-			text = text.replace(
-				/^(A[1-4]|U2)\s*([^\r\n]+)/gm,
-				function (m, tag, authors) {
-					var authors = authors.split(/\s*[;，,]\s*/); //that's a special comma
-					if (!authors[authors.length-1].trim()) authors.pop();
-					return tag + ' ' + authors.join('\n' + tag + ' ');
-				}
-			);
-			onDataAvailable(text);
+			var html = parser.parseFromString(text, "text/html");
+			var data = ZU.xpath(html, "//table[@class='mainTable']//td")[0].innerHTML
+				.replace(/<br>/g, '\n')
+				.replace(/^RT\s+Conference Proceeding/gmi, 'RT Conference Proceedings')
+				.replace(/^RT\s+Dissertation\/Thesis/gmi, 'RT Dissertation')
+				.replace(
+					/^(A[1-4]|U2)\s*([^\r\n]+)/gm,
+					function (m, tag, authors) {
+						authors = authors.split(/\s*[;，,]\s*/); // that's a special comma
+						if (!authors[authors.length - 1].trim()) authors.pop();
+						return tag + ' ' + authors.join('\n' + tag + ' ');
+					}
+				);
+			onDataAvailable(data, url);
 			// If more results, keep going
 			if (ids.length) {
 				getRefWorksByID(ids, onDataAvailable);
 			}
 		}
-	)
+	);
 }
+
 
 function getIDFromURL(url) {
 	if (!url) return false;
-	
-	var dbname = url.match(/[?&]dbname=([^&#]*)/i);
+	// add regex for navi.cnki.net
+	var dbname = url.match(/[?&](?:db|table)[nN]ame=([^&#]*)/i);
 	var filename = url.match(/[?&]filename=([^&#]*)/i);
 	if (!dbname || !dbname[1] || !filename || !filename[1]) return false;
 	
@@ -115,60 +115,62 @@ function getTypeFromDBName(dbname) {
 	var db = dbname.substr(0, 4).toUpperCase();
 	if (dbType[db]) {
 		return dbType[db];
-	} else {
+	}
+	else {
 		return false;
 	}
 }
 
 function getItemsFromSearchResults(doc, url, itemInfo) {
-	var iframe = doc.getElementById('iframeResult');
-	if (iframe) {
-		var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
-		if (innerDoc) {
-			doc = innerDoc;
+	var links, aXpath, fileXpath = '';
+	if (url.includes('JournalDetail')) { // for journal detail page
+		links = ZU.xpath(doc, "//dl[@id='CataLogContent']/dd");
+		aXpath = "./span/a";
+		fileXpath = "./ul/li/a";
+	}
+	else { // for search result page
+		var iframe = doc.getElementById('iframeResult');
+		if (iframe) {
+			var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+			if (innerDoc) {
+				doc = innerDoc;
+			}
 		}
+		links = ZU.xpath(doc, '//tr[not(.//tr) and .//a[@class="fz14"]]');
+		aXpath = './/a[@class="fz14"]';
+		if (!links.length) {
+			links = ZU.xpath(doc, '//table[@class="GridTableContent"]/tbody/tr[./td[2]/a]');
+			aXpath = './td[2]/a';
+		}
+		fileXpath = "./td[8]/a";
 	}
-	
-	var links = ZU.xpath(doc, '//tr[not(.//tr) and .//a[@class="fz14"]]');
-	var aXpath = './/a[@class="fz14"]';
-	if (!links.length) {
-		links = ZU.xpath(doc, '//table[@class="GridTableContent"]/tbody/tr[./td[2]/a]');
-		aXpath = './td[2]/a';
-	}
-
 	if (!links.length) {
 		return false;
-	} 
+	}
 	var items = {};
 	for (var i = 0, n = links.length; i < n; i++) {
 		// Z.debug(links[i].innerHTML)
 		var a = ZU.xpath(links[i], aXpath)[0];
-		var title = ZU.xpathText(a, './node()[not(name()="SCRIPT")]', null, '');
+		var title = a.innerText;
 		if (title) title = ZU.trimInternal(title);
 		var id = getIDFromURL(a.href);
-		Z.debug(id);
 		// pre-released item can not get ID from URL, try to get ID from element.value
 		if (!id) {
 			var td1 = ZU.xpath(links[i], './td/input')[0];
-			Z.debug(td1.value);
 			var tmp = td1.value.split('!');
 			id = { dbname: tmp[0], filename: tmp[1], url: a.href };
 		}
 		// download link in search result
-		var filelink = ZU.xpath(links[i], "./td[8]/a");
-		var author = ZU.xpath(links[i], "./td[3]")[0].innerText.split(';')[0];
+		var filelink = ZU.xpath(links[i], fileXpath);
 		if (!title || !id) continue;
 		if (itemInfo) {
-			var fatTitle = (title + "-" + author).replace(/\s/g, '');
 			itemInfo[a.href] = { id: id };
 			if (filelink.length) {
-				var filelink = filelink[0].href;
-				itemInfo[fatTitle] = filelink;
+				filelink = filelink[0].href;
+				itemInfo[a.href].filelink = filelink;
 			}
 		}
-		var authors = ZU.xpath(links[i], "./td[3]")[0].innerText;
-		var pub = ZU.xpath(links[i], "./td[4]")[0].innerText
-		items[a.href] = title +"， " + authors + "《" + pub + "》";
+		items[a.href] = links[i].innerText;
 	}
 	return items;
 }
@@ -179,9 +181,11 @@ function detectWeb(doc, url) {
 	var id = getIDFromPage(doc, url);
 	if (id) {
 		return getTypeFromDBName(id.dbname);
-	} else if (url.match(/kns\/brief\/(default_)?result\.aspx/i)) {
+	}
+	else if (url.match(/kns\/brief\/(default_)?result\.aspx/i) || url.includes('JournalDetail')) {
 		return "multiple";
-	} else {
+	}
+	else {
 		return false;
 	}
 }
@@ -191,49 +195,51 @@ function doWeb(doc, url) {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
 		Z.debug(itemInfo);
-		if (!items) return false;  // no items
-		Z.selectItems(items, function(selectedItems) {
-			if (!selectedItems) return true;
+		if (!items) return false;// no items
+		Z.selectItems(items, function (selectedItems) {
+			if (!selectedItems) return;
 			var ids = [];
 			for (var url in selectedItems) {
 				ids.push(itemInfo[url].id);
 			}
 			scrape(ids, doc, url, itemInfo);
 		});
-	} else {
+	}
+	else {
 		scrape([getIDFromPage(doc, url)], doc, url);
 	}
 }
 
 function scrape(ids, doc, url, itemInfo) {
-	getRefWorksByID(ids, function (text) {
+	getRefWorksByID(ids, function (text, url) {
 		var translator = Z.loadTranslator('import');
 		translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86'); // RefWorks Tagged
 		text = text.replace(/IS (\d+)\nvo/, "IS $1\nVO");
 		translator.setString(text);
-		translator.setHandler('itemDone', function(obj, newItem) {
+		translator.setHandler('itemDone', function (obj, newItem) {
 			// add PDF/CAJ attachments
 			// var loginStatus = loginDetect(doc);
 			var loginStatus = true;
 			// If you want CAJ instead of PDF, set keepPDF = false
 			// 如果你想将PDF文件替换为CAJ文件，将下面一行 keepPDF 设为 false
 			var keepPDF = true;
-			var fatTitle = (newItem.title + "-" + newItem.creators[0].lastName).replace(/\s/g, '');
-			Z.debug(fatTitle);
 			// Z.debug('loginStatus: '+loginStatus);
-			if (itemInfo && loginStatus) { // search result 
-				if (itemInfo[fatTitle].includes('&dflag=') && keepPDF) {
+			if (itemInfo && loginStatus && itemInfo[url].filelink) { // search result
+				var fileUrl = '';
+				if (itemInfo[url].filelink.includes('&dflag=') && keepPDF) {
 					// replace CAJ with PDF
-					var fileUrl = itemInfo[fatTitle].replace('&dflag=nhdown', '&dflag=pdfdown');
-				} else {
-					var fileUrl = itemInfo[fatTitle] + "&dflag=pdfdown";
-				} 
+					fileUrl = itemInfo[url].filelink.replace('&dflag=nhdown', '&dflag=pdfdown');
+				}
+				else {
+					fileUrl = itemInfo[url].filelink + "&dflag=pdfdown";
+				}
 				newItem.attachments = [{
 					title: "Full Text PDF",
 					mimeType: "application/pdf",
 					url: fileUrl
 				}];
-			} else if (loginStatus && (!itemInfo)) { // detail page
+			}
+			else if (loginStatus && (!itemInfo)) { // detail page
 				newItem.attachments = getAttachments(doc, newItem, keepPDF);
 			}
 			// split names
@@ -244,9 +250,10 @@ function scrape(ids, doc, url, itemInfo) {
 				var lastSpace = creator.lastName.lastIndexOf(' ');
 				if (creator.lastName.search(/[A-Za-z]/) !== -1 && lastSpace !== -1) {
 					// western name. split on last space
-					creator.firstName = creator.lastName.substr(0,lastSpace);
+					creator.firstName = creator.lastName.substr(0, lastSpace);
 					creator.lastName = creator.lastName.substr(lastSpace + 1);
-				} else {
+				}
+				else {
 					// Chinese name. first character is last name, the rest are first name
 					creator.firstName = creator.lastName.substr(1);
 					creator.lastName = creator.lastName.charAt(0);
@@ -262,20 +269,18 @@ function scrape(ids, doc, url, itemInfo) {
 				newItem.url = url;
 				var moreClick = ZU.xpath(doc, "//span/a[@id='ChDivSummaryMore']");
 				if (moreClick.length) {
-					moreClick[0].click();
-					newItem.abstractNote = ZU.xpath(doc, "//span[@id='ChDivSummary']")[0].innerText;		
+					moreClick[0].click();// click to get a full abstract in a single article page
+					newItem.abstractNote = ZU.xpath(doc, "//span[@id='ChDivSummary']")[0].innerText;
 				}
 			}
 			if (newItem.abstractNote) {
-				newItem.abstractNote = newItem.abstractNote.replace(/\s*[\r\n]\s*/g, '\n');
-				// remove tag in abstract
-				newItem.abstractNote = newItem.abstractNote.replace(/&lt;.*?&gt;/, "");
+				newItem.abstractNote = newItem.abstractNote.replace(/\s*[\r\n]\s*/g, '\n')
+															.replace(/&lt;.*?&gt;/g, "");
 			}
 			newItem.title = ZU.trimInternal(newItem.title);
-			
 			// CN 中国刊物编号，非refworks中的callNumber
 			// CN in CNKI refworks format explains Chinese version of ISSN
-			if (newItem.callNumber){
+			if (newItem.callNumber) {
 			//	newItem.extra = 'CN ' + newItem.callNumber;
 				newItem.callNumber = "";
 			}
@@ -289,10 +294,12 @@ function scrape(ids, doc, url, itemInfo) {
 // get pdf download link
 function getPDF(doc, itemType) {
 	// retrieve PDF links from CNKI oversea
+	var pdf = '';
 	if (itemType == 'thesis') {
-		var pdf = ZU.xpath(doc, "//div[@id='DownLoadParts']/a[contains(text(), 'PDF')]");
-	} else {
-		var pdf = ZU.xpath(doc, "//a[@name='pdfDown']");
+		pdf = ZU.xpath(doc, "//div[@id='DownLoadParts']/a[contains(text(), 'PDF')]");
+	}
+	else {
+		pdf = ZU.xpath(doc, "//a[@name='pdfDown']");
 	}
 	return pdf.length ? pdf[0].href : false;
 }
@@ -300,10 +307,12 @@ function getPDF(doc, itemType) {
 // caj download link, default is the whole article for thesis.
 function getCAJ(doc, itemType) {
 	// //div[@id='DownLoadParts']
+	var caj = '';
 	if (itemType == 'thesis') {
-		var caj = ZU.xpath(doc, "//div[@id='DownLoadParts']/a");
-	} else {
-		var caj = ZU.xpath(doc, "//a[@name='cajDown']");
+		caj = ZU.xpath(doc, "//div[@id='DownLoadParts']/a");
+	}
+	else {
+		caj = ZU.xpath(doc, "//a[@name='cajDown']");
 	}
 	return caj.length ? caj[0].href : false;
 }
@@ -324,7 +333,8 @@ function getAttachments(doc, item, keepPDF) {
 			mimeType: "application/pdf",
 			url: pdfurl
 		});
-	} else if (cajurl) {
+	}
+	else if (cajurl) {
 		attachments.push({
 			title: "Full Text CAJ",
 			mimeType: "application/caj",
@@ -337,14 +347,16 @@ function getAttachments(doc, item, keepPDF) {
 
 // detect login status
 // loginState in search result, -1 means logout
-function loginDetect(doc) {
-	var loginUser = ZU.xpath(doc, "//input[(@id='loginuserid') or (@id='userid')]");
-	if (loginUser.length && loginUser[0].value) {
-		return true
-	} else {
-		return false
-	}
-} 
+// function loginDetect(doc) {
+// 	var loginUser = ZU.xpath(doc, "//input[(@id='loginuserid') or (@id='userid')]");
+// 	if (loginUser.length && loginUser[0].value) {
+// 		return true;
+// 	}
+// 	else {
+// 		return false;
+// 	}
+// }
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -551,6 +563,74 @@ var testCases = [
 					},
 					{
 						"tag": "资产池定价"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CPFD&dbname=CPFD9908&filename=OYDD199010001004&v=MDI5NTRITnI0OUZaZXNQQ0JOS3VoZGhuajk4VG5qcXF4ZEVlTU9VS3JpZlplWnZGeW5tVTdqSkpWb1RLalRQYXJLeEY5",
+		"items": [
+			{
+				"itemType": "conferencePaper",
+				"title": "辽西区新石器时代考古学文化纵横",
+				"creators": [
+					{
+						"lastName": "朱",
+						"firstName": "延平",
+						"creatorType": "author"
+					}
+				],
+				"date": "1990",
+				"abstractNote": "<正>辽西区的范围从大兴安岭南缘到渤海北岸,西起燕山西段,东止辽河平原,基本上包括内蒙古的赤峰市(原昭乌达盟)、哲里木盟西半部,辽宁省西部和河北省的承德、唐山、廊坊及其邻近的北京、天津等地区。这一地区的古人类遗存自旧石器时代晚期起,就与同属东北的辽东区有着明显的不同,在后来的发展中,构成自具特色的一个考古学文化区,对我国东北部起过不可忽视的作用。以下就辽西地区新石器时代的考古学文化序列、编年、谱系",
+				"language": "中文;",
+				"libraryCatalog": "CNKI",
+				"pages": "6",
+				"proceedingsTitle": "内蒙古东部区考古学文化研究文集",
+				"publisher": "中国社会科学院考古研究所、内蒙古文物考古研究所、赤峰市文化局",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CPFD&dbname=CPFD9908&filename=OYDD199010001004&v=MDI5NTRITnI0OUZaZXNQQ0JOS3VoZGhuajk4VG5qcXF4ZEVlTU9VS3JpZlplWnZGeW5tVTdqSkpWb1RLalRQYXJLeEY5",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					}
+				],
+				"tags": [
+					{
+						"tag": "之字纹"
+					},
+					{
+						"tag": "兴隆洼文化"
+					},
+					{
+						"tag": "富河文化"
+					},
+					{
+						"tag": "小河沿文化"
+					},
+					{
+						"tag": "庙底沟文化"
+					},
+					{
+						"tag": "泥质陶"
+					},
+					{
+						"tag": "红山文化"
+					},
+					{
+						"tag": "细泥陶"
+					},
+					{
+						"tag": "考古学文化"
+					},
+					{
+						"tag": "赤峰第一期文化"
+					},
+					{
+						"tag": "赵宝沟文化"
 					}
 				],
 				"notes": [],
