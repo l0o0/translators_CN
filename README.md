@@ -5,12 +5,13 @@
 ## 🎯 目标网站
 
 + [知网或知网海外](https://cnki.net/) -> [CNKI.js](./translators/CNKI.js)  
-  - [x] 默认保存网页快照  
+  - [x] 搜索页面PDF附件下载
+  - [x] 期刊详细页面的信息收集  
   - [x] 文章格式都为PDF，学位论文的CAJ链接已经替换为PDF，注意学位论文的PDF应该是没有目录信息的。如果想要下载CAJ格式的学位论文，将`CNKI.js`中两处`keepPDF`改为`false`
   - [x] 修改旧版本将知网导出`refworks`中`CN`字段保存为期刊条目中的 `call number`，修改后`CN`字段不保留
   - [x] 修改了拉取知网`refworks`格式引文的网址，新网址提供的摘要字数最多为500字
   - [x] 知网海外版PDF和CAJ附件下载支持  
-  - [x] 支持文献类型：期刊，学位论文，会议论文，报纸
+  - [x] 支持文献类型：期刊，学位论文，会议论文，报纸，修改知网refworks会议论文类型错误的问题
   - [ ] 已同步到官方版本库中
 + [万方数据](http://www.wanfangdata.com.cn/index.html) -> [WanFang.js](./translators/WanFang.js) ❗
   - [x] 抓取引文信息  
@@ -48,6 +49,7 @@
 + [Scaffold 使用说明](https://www.zotero.org/support/dev/translators/scaffold)，官方出品，便于创建 translator 的工具
 + [MDN Javascript 中文教程](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/A_re-introduction_to_JavaScript)  
 + [Zotero 条目类型说明](https://aurimasv.github.io/z2csl/typeMap.xml)
++ [How to write a Zotero translator](https://niche-canada.org/member-projects/zotero-guide/about.html)
 
 
 ## 🎈问题交流
