@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2020-01-04 13:49:03"
+	"lastUpdated": "2020-03-05 06:16:10"
 }
 
 /*
@@ -76,7 +76,7 @@ function getIDFromURL(url) {
 	// add regex for navi.cnki.net
 	var dbname = url.match(/[?&](?:db|table)[nN]ame=([^&#]*)/i);
 	var filename = url.match(/[?&]filename=([^&#]*)/i);
-	if (!dbname || !dbname[1] || !filename || !filename[1]) return false;
+	if (!dbname || !dbname[1] || !filename || !filename[1] || dbname[1].match("TEMP$")) return false;
 	
 	return { dbname: dbname[1], filename: filename[1], url: url };
 }
@@ -106,6 +106,9 @@ function getTypeFromDBName(dbname) {
 		CJFQ: "journalArticle",
 		CJFD: "journalArticle",
 		CAPJ: "journalArticle",
+		SJES: "journalArticle",
+		SJPD: "journalArticle",
+		SSJD: "journalArticle",
 		CDFD: "thesis",
 		CMFD: "thesis",
 		CLKM: "thesis",
@@ -226,16 +229,20 @@ function scrape(ids, doc, url, itemInfo) {
 			// Z.debug('loginStatus: '+loginStatus);
 			if (itemInfo && loginStatus && itemInfo[url].filelink) { // search result
 				var fileUrl = '';
+				var fileTitle =  "Full Text PDF"
+				var mimeType = "application/pdf";
 				if (itemInfo[url].filelink.includes('&dflag=') && keepPDF) {
 					// replace CAJ with PDF
 					fileUrl = itemInfo[url].filelink.replace('&dflag=nhdown', '&dflag=pdfdown');
 				}
 				else {
-					fileUrl = itemInfo[url].filelink + "&dflag=pdfdown";
+					fileUrl = itemInfo[url].filelink;
+					mimeType = "application/caj";
+					fileTitle = "Full Text CAJ"
 				}
 				newItem.attachments = [{
-					title: "Full Text PDF",
-					mimeType: "application/pdf",
+					title:fileTitle,
+					mimeType: mimeType,
 					url: fileUrl
 				}];
 			}
@@ -267,6 +274,10 @@ function scrape(ids, doc, url, itemInfo) {
 			// url in search result is invalid
 			if (!itemInfo) {
 				newItem.url = url;
+				var doi = doc.querySelector("#catalog_DOI"); // add DOI
+				if (doi) {
+					newItem.DOI = doi.nextSibling.text;
+				}
 				var moreClick = ZU.xpath(doc, "//span/a[@id='ChDivSummaryMore']");
 				if (moreClick.length) {
 					moreClick[0].click();// click to get a full abstract in a single article page
@@ -631,6 +642,72 @@ var testCases = [
 					},
 					{
 						"tag": "赵宝沟文化"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=SJES&dbname=SJESTEMP_U&filename=SJES28B3C7256407805E8A3E8AA55386597D&v=MDY1NDVJMUFZdThQQzNRNXltTWJtendJUUE2VHFSYzJjYlNSVEwzckNKVWFGMXVRVXIvUEpsY1NibUtDR1lDR1FsZkJyTFUyNXRoaHc3MjV3YXc9TmlmT2ZiR3diTksvcQ==",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "Transcriptome analysis of the immune response of silkworm at the early stage of Bombyx mori bidensovirus infection",
+				"creators": [
+					{
+						"lastName": "Sun",
+						"firstName": "Qiang",
+						"creatorType": "author"
+					},
+					{
+						"lastName": "Guo",
+						"firstName": "Huizhen",
+						"creatorType": "author"
+					},
+					{
+						"lastName": "Xia",
+						"firstName": "Qingyou",
+						"creatorType": "author"
+					},
+					{
+						"lastName": "Jiang",
+						"firstName": "Liang",
+						"creatorType": "author"
+					},
+					{
+						"lastName": "Zhao",
+						"firstName": "Ping",
+						"creatorType": "author"
+					}
+				],
+				"date": "2020 vo 106",
+				"DOI": "10.1016/j.dci.2019.103601",
+				"abstractNote": "Abstract(#br)Bombyx mori bidensovirus (BmBDV) infects silkworm midgut and causes chronic flacherie disease; however, the interaction between BmBDV and silkworm is unclear. Twenty-four hours after BmBDV infection, the midgut was extracted for RNA-seq to analyze the factors associated with BmBDV-invasion and the early antiviral immune response in silkworms. The total reads from each sample were more than 16100000 and the number of expressed genes exceeded 8200. There were 334 upregulated and 272 downregulated differentially expressed genes (DEGs). Gene ontology analysis of DEGs showed that structural constituents of cuticle, antioxidant, and immune system processes were upregulated. Further analysis revealed BmBDV-mediated induction of BmorCPR23 and BmorCPR44 , suggesting possible involvement in viral invasion. Antioxidant genes that protect host cells from virus-induced oxidative stress, were significantly upregulated after BmBDV infection. Several genes related to peroxisomes, apoptosis, and autophagy—which may be involved in antiviral immunity—were induced by BmBDV. These results provide insights into the mechanism of BmBDV infection and host defense.",
+				"libraryCatalog": "CNKI",
+				"publicationTitle": "Developmental and Comparative Immunology",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=SJES&dbname=SJESTEMP_U&filename=SJES28B3C7256407805E8A3E8AA55386597D&v=MDY1NDVJMUFZdThQQzNRNXltTWJtendJUUE2VHFSYzJjYlNSVEwzckNKVWFGMXVRVXIvUEpsY1NibUtDR1lDR1FsZkJyTFUyNXRoaHc3MjV3YXc9TmlmT2ZiR3diTksvcQ==",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "Bidensovirus"
+					},
+					{
+						"tag": "Bombyx mori"
+					},
+					{
+						"tag": "Immune system"
+					},
+					{
+						"tag": "Midgut"
+					},
+					{
+						"tag": "Silkworm"
+					},
+					{
+						"tag": "Transcriptome"
 					}
 				],
 				"notes": [],
