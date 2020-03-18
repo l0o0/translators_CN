@@ -9,9 +9,8 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsv",
-	"lastUpdated": "2020-01-02 07:04:38"
+	"lastUpdated": "2020-03-18 06:28:12"
 }
-
 
 /*
 	***** BEGIN LICENSE BLOCK *****
@@ -187,7 +186,8 @@ function getItemsFromSearch(urls, itemInfos, loginStatus) {
 		newItem.applicationNumber = headers[3];
 		newItem.filingDate = ZU.xpath(patent, ".//span[@class='PatentAuthorBlock']")[0].innerText.split(/[\s：]/)[4];
 		newItem.abstractNote = ZU.xpath(patent, ".//span[@class='PatentContentBlock']")[0].innerText.replace('摘要:', '');
-		newItem.place = ZU.xpath(patent, ".//span[@class='PatentAuthorBlock']/a")[0].innerText;
+		newItem.place = ZU.xpath(doc, "//b[contains(text(), '申请人：')]/parent::td/a")
+		  .map(item => item.innerText).join(';');
 		newItem.legalStatus = ZU.xpath(patent, ".//h2[@class='PatentTypeBlock']")[0].innerText.split(/\s/).slice(4, -1).join(',');
 		var downlink = ZU.xpath(patent, ".//span[@class='PatentBottomBlock']/a[3]")[0].getAttribute('onclick').split("'")[1];
 		if (loginStatus){
@@ -244,6 +244,7 @@ var testCases = [
 				"filingDate": "2017-12-04",
 				"legalStatus": "审中-实审",
 				"place": "南京农业大学",
+				"url": "http://www.soopat.com/Patent/201711256672",
 				"attachments": [],
 				"tags": [],
 				"notes": [
@@ -273,6 +274,7 @@ var testCases = [
 				"filingDate": "2015-12-01",
 				"legalStatus": "有权,权利转移",
 				"place": "深圳市丹明科技有限公司",
+				"url": "http://www.soopat.com/Patent/201510870162?lx=FMSQ",
 				"attachments": [],
 				"tags": [],
 				"notes": [
