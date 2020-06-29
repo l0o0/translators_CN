@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2020-03-05 06:16:10"
+	"lastUpdated": "2020-06-29 06:10:11"
 }
 
 /*
@@ -231,13 +231,17 @@ function scrape(ids, doc, url, itemInfo) {
 				var fileUrl = '';
 				var fileTitle =  "Full Text PDF"
 				var mimeType = "application/pdf";
-				if (itemInfo[url].filelink.includes('&dflag=') && keepPDF) {
+				if (keepPDF) {
 					// replace CAJ with PDF
-					fileUrl = itemInfo[url].filelink.replace('&dflag=nhdown', '&dflag=pdfdown');
+					if (itemInfo[url].filelink.includes('&dflag=nhdown')) {
+						fileUrl = itemInfo[url].filelink.replace('&dflag=nhdown', '&dflag=pdfdown');
+					} else {
+						fileUrl = itemInfo[url].filelink + "&dflag=pdfdown";
+					}
 				}
 				else {
 					fileUrl = itemInfo[url].filelink;
-					mimeType = "application/caj";
+					mimeType = null;
 					fileTitle = "Full Text CAJ"
 				}
 				newItem.attachments = [{
@@ -291,10 +295,7 @@ function scrape(ids, doc, url, itemInfo) {
 			newItem.title = ZU.trimInternal(newItem.title);
 			// CN 中国刊物编号，非refworks中的callNumber
 			// CN in CNKI refworks format explains Chinese version of ISSN
-			if (newItem.callNumber) {
-			//	newItem.extra = 'CN ' + newItem.callNumber;
-				newItem.callNumber = "";
-			}
+			newItem.callNumber = null;
 			newItem.complete();
 		});
 		
@@ -348,7 +349,6 @@ function getAttachments(doc, item, keepPDF) {
 	else if (cajurl) {
 		attachments.push({
 			title: "Full Text CAJ",
-			mimeType: "application/caj",
 			url: cajurl
 		});
 	}
