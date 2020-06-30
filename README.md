@@ -36,7 +36,6 @@
   - [x] PDF附件下载（需要登录，网站验证码可能会导致PDF下载失败）
 
 ## 📢 如何使用  
-<<<<<<< HEAD
 
 **1 下载插件文件**  
 
@@ -57,17 +56,22 @@ Chrome 浏览器按照下面信息找到更新按钮
 **更新时请多点几下，根据我的经验，Chrome 浏览器更新比较快，Firefox 会比较慢**   
 
 如果你使用学校的 VPN 来登录知网，可以参考这个[链接](https://zhuanlan.zhihu.com/p/111857132)进行设置。设置过程不复杂，就是用特殊符号把网址中的字符替换掉。
-=======
->>>>>>> 5c42a7cc8d0fffe906c476a3a23d5af79f4b4e9a
 
-**1 下载插件文件**
+**1 下载插件文件**  
+
 ![](data/howto1.png)
+
 **2 解压下载的压缩包，找到**translators**目录，将目录中的文件复制到 Zotero 的 translators 目录**
+
 ![](data/howto2.png)  
 ![](data/howto3.png)
+
 **3 更新 translator 信息，Firefox 和 Chrome 浏览器操作类似。下面以 Firefox 为例**
+
 ![](data/howto4.webp)
+
 Chrome 浏览器按照下面信息找到更新按钮
+
 ![](data/howto5.png)
 
 **更新时请多点几下，根据我的经验，Chrome 浏览器更新比较快，Firefox 会比较慢**
