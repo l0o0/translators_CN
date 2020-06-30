@@ -4,7 +4,7 @@
 
 ## 🎯 目标网站
 
-+ [知网或知网海外](https://cnki.net/) -> [CNKI.js](./translators/CNKI.js)  
++ [知网或知网海外](https://cnki.net/) -> [CNKI.js](./translators/CNKI.js)  Update: 20200629
   - [x] 搜索页面PDF附件下载
   - [x] 期刊详细页面的信息收集  
   - [x] 文章格式都为PDF，学位论文的CAJ链接已经替换为PDF，注意学位论文的PDF应该是没有目录信息的。如果想要下载CAJ格式的学位论文，将`CNKI.js`中两处`keepPDF`改为`false`
@@ -35,7 +35,21 @@
   - [x] 搜索页面和单个专利页面信息抓取
   - [x] PDF附件下载（需要登录，网站验证码可能会导致PDF下载失败）
 
+## 📢 如何使用  
 
+**1 下载插件文件**
+![](data/howto1.png)
+**2 解压下载的压缩包，找到**translators**目录，将目录中的文件复制到 Zotero 的 translators 目录**
+![](data/howto2.png)  
+![](data/howto3.png)
+**3 更新 translator 信息，Firefox 和 Chrome 浏览器操作类似。下面以 Firefox 为例**
+![](data/howto4.webp)
+Chrome 浏览器按照下面信息找到更新按钮
+![](data/howto5.png)
+
+**更新时请多点几下，根据我的经验，Chrome 浏览器更新比较快，Firefox 会比较慢**
+
+如果你使用学校的 VPN 来登录知网，可以参考这个[链接](https://zhuanlan.zhihu.com/p/111857132)进行设置。设置过程不复杂，就是用特殊符号把网址中的字符替换掉。
 
 ## 📄 相关材料  
 
@@ -54,4 +68,4 @@
 
 ## 🎈问题交流
 
-如果有问题的，可以加群 913637964，一起交流。
+如果有问题的，可以加QQ群 913637964，一起交流。
