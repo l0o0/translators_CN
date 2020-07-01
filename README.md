@@ -4,7 +4,7 @@
 
 ## 🎯 目标网站
 
-+ [知网或知网海外](https://cnki.net/) -> [CNKI.js](./translators/CNKI.js)  Update: 20200629
++ [知网或知网海外](https://cnki.net/) -> [CNKI.js](./translators/CNKI.js)  Update: 20200701
   - [x] 搜索页面PDF附件下载
   - [x] 期刊详细页面的信息收集  
   - [x] 文章格式都为PDF，学位论文的CAJ链接已经替换为PDF，注意学位论文的PDF应该是没有目录信息的。如果想要下载CAJ格式的学位论文，将`CNKI.js`中两处`keepPDF`改为`false`

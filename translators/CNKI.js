@@ -140,7 +140,7 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 			links = ZU.xpath(doc, '//table[@class="GridTableContent"]/tbody/tr[./td[2]/a]');
 			aXpath = './td[2]/a';
 		}
-		fileXpath = "./td[8]/a";
+		fileXpath = "./td/a[@class='briefDl_Y']";
 	}
 	if (!links.length) {
 		return false;
