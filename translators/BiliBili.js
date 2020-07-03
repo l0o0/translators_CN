@@ -9,13 +9,13 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gc",
-	"lastUpdated": "2019-12-23 03:19:58"
+	"lastUpdated": "2020-07-03 11:38:55"
 }
 
 /*
 	***** BEGIN LICENSE BLOCK *****
 
-	Copyright © 2019 YOUR_NAME <- TODO
+	Copyright © 2020 Xingzhong Lin
 	
 	This file is part of Zotero.
 
@@ -37,7 +37,7 @@
 
 
 function detectWeb(doc, url) {
-  if (url.includes('/video/av')) {
+  if (/\/video\/(BV|bv|av)/.test(url)) {
 	return "videoRecording";
   } else
   if (getSearchResults(doc, true)) {
@@ -71,7 +71,7 @@ function doWeb(doc, url) {
 	Zotero.selectItems(items, function (selectedItems) {
 	  for (url in selectedItems) {
 	  	// Z.debug(url);
-	  	selectedRow = itemInfos[item];
+	  	selectedRow = itemInfos[url];
 	  	scrape(selectedRow, url);
 	  }
 	});
