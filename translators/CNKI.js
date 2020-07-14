@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2020-06-29 06:10:11"
+	"lastUpdated": "2020-07-14 08:20:51"
 }
 
 /*
@@ -47,6 +47,8 @@ function getRefWorksByID(ids, onDataAvailable) {
 				.replace(/<br>/g, '\n')
 				.replace(/^RT\s+Conference Proceeding/gmi, 'RT Conference Proceedings')
 				.replace(/^RT\s+Dissertation\/Thesis/gmi, 'RT Dissertation')
+				.replace(/;;/g, ';') // 保留作者中一个英文分号
+				.replace(/\n{2,}/g, '') // 去除多个换行符
 				.replace(
 					/^(A[1-4]|U2)\s*([^\r\n]+)/gm,
 					function (m, tag, authors) {
@@ -65,14 +67,23 @@ function getRefWorksByID(ids, onDataAvailable) {
 }
 
 
-function getIDFromURL(url) {
+function getIDFromURL (url) {
 	if (!url) return false;
 	// add regex for navi.cnki.net
 	var dbname = url.match(/[?&](?:db|table)[nN]ame=([^&#]*)/i);
 	var filename = url.match(/[?&]filename=([^&#]*)/i);
-	if (!dbname || !dbname[1] || !filename || !filename[1] || dbname[1].match("TEMP$")) return false;
-	
-	return { dbname: dbname[1], filename: filename[1], url: url };
+	var dbcode = url.match(/[?&]dbcode=([^&#]*)/i);
+	if (
+		!dbname ||
+		!dbname[1] ||
+		!filename ||
+		!filename[1] ||
+		!dbcode ||
+		!dbcode[1] ||
+		dbname[1].match("TEMP_U$") // For EN articles.
+	)
+		return false;
+	return { dbname: dbname[1], filename: filename[1], dbcode: dbcode[1] };
 }
 
 
@@ -140,7 +151,7 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 			links = ZU.xpath(doc, '//table[@class="GridTableContent"]/tbody/tr[./td[2]/a]');
 			aXpath = './td[2]/a';
 		}
-		fileXpath = "./td/a[@class='briefDl_Y']";
+		fileXpath = "./td/a[contains(@class, 'briefDl')]";
 	}
 	if (!links.length) {
 		return false;
@@ -152,23 +163,30 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 		var title = a.innerText;
 		if (title) title = ZU.trimInternal(title);
 		var id = getIDFromURL(a.href);
+		var itemUrl = "";
 		// pre-released item can not get ID from URL, try to get ID from element.value
 		if (!id) {
 			var td1 = ZU.xpath(links[i], './td/input')[0];
 			var tmp = td1.value.split('!');
-			id = { dbname: tmp[0], filename: tmp[1], url: a.href };
+			var urlID  = url.match(/[?&]URLID=([^&#]*)/i);
+			itemUrl = `https://kns.cnki.net/KCMS/detail/${urlID[1]}`;
+			id = { dbname: tmp[0], filename: tmp[1], url: itemUrl};
+		} else {
+			itemUrl = `https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=${id.dbcode}&dbname=${id.dbname}&filename=${id.filename}&v=`;
+			id.url =  itemUrl;
 		}
+
 		// download link in search result
 		var filelink = ZU.xpath(links[i], fileXpath);
 		if (!title || !id) continue;
 		if (itemInfo) {
-			itemInfo[a.href] = { id: id };
+			itemInfo[itemUrl] = { id: id };
 			if (filelink.length) {
 				filelink = filelink[0].href;
-				itemInfo[a.href].filelink = filelink;
+				itemInfo[itemUrl].filelink = filelink;
 			}
 		}
-		items[a.href] = links[i].innerText;
+		items[itemUrl] = links[i].innerText;
 	}
 	return items;
 }
@@ -212,7 +230,7 @@ function scrape(ids, doc, url, itemInfo) {
 	getRefWorksByID(ids, function (text, url) {
 		var translator = Z.loadTranslator('import');
 		translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86'); // RefWorks Tagged
-		text = text.replace(/IS (\d+)\nvo/, "IS $1\nVO");
+		text = text.replace(/vo (\d+)\n/, "VO $1\n");
 		translator.setString(text);
 		translator.setHandler('itemDone', function (obj, newItem) {
 			// add PDF/CAJ attachments
@@ -270,9 +288,8 @@ function scrape(ids, doc, url, itemInfo) {
 			for (var j = 0, l = newItem.tags.length; j < l; j++) {
 				newItem.tags[j] = newItem.tags[j].replace(/:\d+$/, '');
 			}
-			// url in search result is invalid
+			newItem.url = url;
 			if (!itemInfo) {
-				newItem.url = url;
 				var doi = doc.querySelector("#catalog_DOI"); // add DOI
 				if (doi) {
 					newItem.DOI = doi.nextSibling.text;
