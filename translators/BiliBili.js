@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gc",
-	"lastUpdated": "2020-07-03 02:45:01"
+	"lastUpdated": "2020-07-03 11:38:55"
 }
 
 /*
@@ -37,7 +37,7 @@
 
 
 function detectWeb(doc, url) {
-  if (url.includes('/video/BV')) {
+  if (/\/video\/(BV|bv|av)/.test(url)) {
 	return "videoRecording";
   } else
   if (getSearchResults(doc, true)) {
