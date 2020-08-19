@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2020-07-14 08:20:51"
+	"lastUpdated": "2020-08-19 06:24:46"
 }
 
 /*
@@ -34,6 +34,7 @@
 // ids should be in the form [{dbname: "CDFDLAST2013", filename: "1013102302.nh"}]
 function getRefWorksByID(ids, onDataAvailable) {
 	if (!ids.length) return;
+	Z.debug(ids);
 	var { dbname, filename, url } = ids.shift();
 	var postData = "formfilenames=" + encodeURIComponent(dbname + "!" + filename + "!1!0,")
 		+ '&hid_kLogin_headerUrl=/KLogin/Request/GetKHeader.ashx%3Fcallback%3D%3F'
@@ -44,11 +45,13 @@ function getRefWorksByID(ids, onDataAvailable) {
 			var parser = new DOMParser();
 			var html = parser.parseFromString(text, "text/html");
 			var data = ZU.xpath(html, "//table[@class='mainTable']//td")[0].innerHTML
+				.replace(/\n/g, '<br>')
+				.replace(/<br> /g, ' ')
 				.replace(/<br>/g, '\n')
 				.replace(/^RT\s+Conference Proceeding/gmi, 'RT Conference Proceedings')
 				.replace(/^RT\s+Dissertation\/Thesis/gmi, 'RT Dissertation')
 				.replace(/;;/g, ';') // 保留作者中一个英文分号
-				.replace(/\n{2,}/g, '') // 去除多个换行符
+				.replace(/\n{2,}/g, '\n') // 去除多个换行符
 				.replace(
 					/^(A[1-4]|U2)\s*([^\r\n]+)/gm,
 					function (m, tag, authors) {
@@ -57,6 +60,7 @@ function getRefWorksByID(ids, onDataAvailable) {
 						return tag + ' ' + authors.join('\n' + tag + ' ');
 					}
 				);
+			// Z.debug(data);
 			onDataAvailable(data, url);
 			// If more results, keep going
 			if (ids.length) {
@@ -83,7 +87,7 @@ function getIDFromURL (url) {
 		dbname[1].match("TEMP_U$") // For EN articles.
 	)
 		return false;
-	return { dbname: dbname[1], filename: filename[1], dbcode: dbcode[1] };
+	return { dbname: dbname[1], filename: filename[1], dbcode: dbcode[1], url: url };
 }
 
 
@@ -207,10 +211,11 @@ function detectWeb(doc, url) {
 }
 
 function doWeb(doc, url) {
+	Z.debug("----------------CNKI 20200829---------------------");
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
-		Z.debug(itemInfo);
+		//Z.debug(itemInfo);
 		if (!items) return false;// no items
 		Z.selectItems(items, function (selectedItems) {
 			if (!selectedItems) return;
@@ -218,29 +223,28 @@ function doWeb(doc, url) {
 			for (var url in selectedItems) {
 				ids.push(itemInfo[url].id);
 			}
-			scrape(ids, doc, url, itemInfo);
+			scrape(ids, doc, itemInfo);
 		});
 	}
 	else {
-		scrape([getIDFromPage(doc, url)], doc, url);
+		scrape([getIDFromPage(doc, url)], doc);
 	}
 }
 
-function scrape(ids, doc, url, itemInfo) {
+function scrape(ids, doc, itemInfo) {
 	getRefWorksByID(ids, function (text, url) {
 		var translator = Z.loadTranslator('import');
 		translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86'); // RefWorks Tagged
 		text = text.replace(/vo (\d+)\n/, "VO $1\n");
 		translator.setString(text);
 		translator.setHandler('itemDone', function (obj, newItem) {
-			// add PDF/CAJ attachments
-			// var loginStatus = loginDetect(doc);
-			var loginStatus = true;
-			// If you want CAJ instead of PDF, set keepPDF = false
-			// 如果你想将PDF文件替换为CAJ文件，将下面一行 keepPDF 设为 false
-			var keepPDF = true;
-			// Z.debug('loginStatus: '+loginStatus);
-			if (itemInfo && loginStatus && itemInfo[url].filelink) { // search result
+			// If you want CAJ instead of PDF, set translators.CNKIPDF = false
+			// 如果你想将PDF文件替换为CAJ文件，将Zotero Connector中添加translators.CNKIPDF=false
+			var keepPDF = Z.getHiddenPref('CNKIPDF');
+			if (keepPDF === undefined) {
+				keepPDF = true;
+			}
+			if (itemInfo && itemInfo[url].filelink) { // search result
 				var fileUrl = '';
 				var fileTitle =  "Full Text PDF"
 				var mimeType = "application/pdf";
@@ -263,10 +267,14 @@ function scrape(ids, doc, url, itemInfo) {
 					url: fileUrl
 				}];
 			}
-			else if (loginStatus && (!itemInfo)) { // detail page
+			else if (!itemInfo) { // detail page
 				newItem.attachments = getAttachments(doc, newItem, keepPDF);
 			}
-			// split names
+			// split names, Chinese name split depends on Zotero Connector preference translators.zhnamesplit
+			var zhnamesplit = Z.getHiddenPref('zhnamesplit');
+			if (zhnamesplit === undefined) {
+				zhnamesplit = true;
+			}
 			for (var i = 0, n = newItem.creators.length; i < n; i++) {
 				var creator = newItem.creators[i];
 				if (creator.firstName) continue;
@@ -277,8 +285,9 @@ function scrape(ids, doc, url, itemInfo) {
 					creator.firstName = creator.lastName.substr(0, lastSpace);
 					creator.lastName = creator.lastName.substr(lastSpace + 1);
 				}
-				else {
+				else if (zhnamesplit) {
 					// Chinese name. first character is last name, the rest are first name
+					// zhnamesplit is true, split firstname and lastname
 					creator.firstName = creator.lastName.substr(1);
 					creator.lastName = creator.lastName.charAt(0);
 				}
@@ -335,7 +344,7 @@ function getCAJ(doc, itemType) {
 	if (itemType == 'thesis') {
 		caj = ZU.xpath(doc, "//div[@id='DownLoadParts']/a");
 	}
-	else {
+	if (!caj.length) {
 		caj = ZU.xpath(doc, "//a[@name='cajDown']");
 	}
 	return caj.length ? caj[0].href : false;
@@ -695,12 +704,13 @@ var testCases = [
 						"creatorType": "author"
 					}
 				],
-				"date": "2020 vo 106",
+				"date": "2020",
 				"DOI": "10.1016/j.dci.2019.103601",
-				"abstractNote": "Abstract(#br)Bombyx mori bidensovirus (BmBDV) infects silkworm midgut and causes chronic flacherie disease; however, the interaction between BmBDV and silkworm is unclear. Twenty-four hours after BmBDV infection, the midgut was extracted for RNA-seq to analyze the factors associated with BmBDV-invasion and the early antiviral immune response in silkworms. The total reads from each sample were more than 16100000 and the number of expressed genes exceeded 8200. There were 334 upregulated and 272 downregulated differentially expressed genes (DEGs). Gene ontology analysis of DEGs showed that structural constituents of cuticle, antioxidant, and immune system processes were upregulated. Further analysis revealed BmBDV-mediated induction of BmorCPR23 and BmorCPR44 , suggesting possible involvement in viral invasion. Antioxidant genes that protect host cells from virus-induced oxidative stress, were significantly upregulated after BmBDV infection. Several genes related to peroxisomes, apoptosis, and autophagy—which may be involved in antiviral immunity—were induced by BmBDV. These results provide insights into the mechanism of BmBDV infection and host defense.",
+				"abstractNote": "Bombyx mori bidensovirus (BmBDV) infects silkworm midgut and causes chronic flacherie disease; however, the interaction between BmBDV and silkworm is unclear. Twenty-four hours after BmBDV infection, the midgut was extracted for RNA-seq to analyze the factors associated with BmBDV-invasion and the early antiviral immune response in silkworms. The total reads from each sample were more than 16100000 and the number of expressed genes exceeded 8200. There were 334 upregulated and 272 downregulated differentially expressed genes (DEGs). Gene ontology analysis of DEGs showed that structural constituents of cuticle, antioxidant, and immune system processes were upregulated. Further analysis revealed BmBDV-mediated induction of BmorCPR23 and BmorCPR44 , suggesting possible involvement in viral invasion. Antioxidant genes that protect host cells from virus-induced oxidative stress, were significantly upregulated after BmBDV infection. Several genes related to peroxisomes, apoptosis, and autophagy—which may be involved in antiviral immunity—were induced by BmBDV. These results provide insights into the mechanism of BmBDV infection and host defense.",
 				"libraryCatalog": "CNKI",
 				"publicationTitle": "Developmental and Comparative Immunology",
 				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=SJES&dbname=SJESTEMP_U&filename=SJES28B3C7256407805E8A3E8AA55386597D&v=MDY1NDVJMUFZdThQQzNRNXltTWJtendJUUE2VHFSYzJjYlNSVEwzckNKVWFGMXVRVXIvUEpsY1NibUtDR1lDR1FsZkJyTFUyNXRoaHc3MjV3YXc9TmlmT2ZiR3diTksvcQ==",
+				"volume": "106",
 				"attachments": [],
 				"tags": [
 					{
