@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2020-08-19 06:24:46"
+	"lastUpdated": "2020-08-28 08:27:04"
 }
 
 /*
@@ -34,7 +34,6 @@
 // ids should be in the form [{dbname: "CDFDLAST2013", filename: "1013102302.nh"}]
 function getRefWorksByID(ids, onDataAvailable) {
 	if (!ids.length) return;
-	Z.debug(ids);
 	var { dbname, filename, url } = ids.shift();
 	var postData = "formfilenames=" + encodeURIComponent(dbname + "!" + filename + "!1!0,")
 		+ '&hid_kLogin_headerUrl=/KLogin/Request/GetKHeader.ashx%3Fcallback%3D%3F'
@@ -46,12 +45,13 @@ function getRefWorksByID(ids, onDataAvailable) {
 			var html = parser.parseFromString(text, "text/html");
 			var data = ZU.xpath(html, "//table[@class='mainTable']//td")[0].innerHTML
 				.replace(/\n/g, '<br>')
-				.replace(/<br> /g, ' ')
-				.replace(/<br>/g, '\n')
+				.replace(/<br>\s+/g, ';')
+				.replace(/(<br>)+/g, '\n')
 				.replace(/^RT\s+Conference Proceeding/gmi, 'RT Conference Proceedings')
 				.replace(/^RT\s+Dissertation\/Thesis/gmi, 'RT Dissertation')
 				.replace(/;;/g, ';') // 保留作者中一个英文分号
-				.replace(/\n{2,}/g, '\n') // 去除多个换行符
+				.replace(/^ AB/g, 'AB') // 去除AB前空格
+				.replace(/vo (\d+)\n/, "VO $1\n")  // 修改vo 大小写
 				.replace(
 					/^(A[1-4]|U2)\s*([^\r\n]+)/gm,
 					function (m, tag, authors) {
@@ -60,7 +60,6 @@ function getRefWorksByID(ids, onDataAvailable) {
 						return tag + ' ' + authors.join('\n' + tag + ' ');
 					}
 				);
-			// Z.debug(data);
 			onDataAvailable(data, url);
 			// If more results, keep going
 			if (ids.length) {
@@ -87,7 +86,7 @@ function getIDFromURL (url) {
 		dbname[1].match("TEMP_U$") // For EN articles.
 	)
 		return false;
-	return { dbname: dbname[1], filename: filename[1], dbcode: dbcode[1], url: url };
+	return { dbname: dbname[1], filename: filename[1], dbcode: dbcode[1] };
 }
 
 
@@ -124,6 +123,7 @@ function getTypeFromDBName(dbname) {
 		CLKM: "thesis",
 		CCND: "newspaperArticle",
 		CPFD: "conferencePaper",
+		SCPD: "patent"
 	};
 	var db = dbname.substr(0, 4).toUpperCase();
 	if (dbType[db]) {
@@ -142,20 +142,10 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 		fileXpath = "./ul/li/a";
 	}
 	else { // for search result page
-		var iframe = doc.getElementById('iframeResult');
-		if (iframe) {
-			var innerDoc = iframe.contentDocument || iframe.contentWindow.document;
-			if (innerDoc) {
-				doc = innerDoc;
-			}
-		}
-		links = ZU.xpath(doc, '//tr[not(.//tr) and .//a[@class="fz14"]]');
-		aXpath = './/a[@class="fz14"]';
-		if (!links.length) {
-			links = ZU.xpath(doc, '//table[@class="GridTableContent"]/tbody/tr[./td[2]/a]');
-			aXpath = './td[2]/a';
-		}
-		fileXpath = "./td/a[contains(@class, 'briefDl')]";
+		var result = doc.querySelector('table.result-table-list');
+		links = doc.querySelectorAll("table.result-table-list tbody tr");
+		aXpath = './td/a[@class="fz14"]';
+		fileXpath = "./td[@class='operat']/a[contains(@class, 'downloadlink')]";
 	}
 	if (!links.length) {
 		return false;
@@ -168,18 +158,20 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 		if (title) title = ZU.trimInternal(title);
 		var id = getIDFromURL(a.href);
 		var itemUrl = "";
-		// pre-released item can not get ID from URL, try to get ID from element.value
+		// Now can get db data from url in new version
+		// English articles
 		if (!id) {
-			var td1 = ZU.xpath(links[i], './td/input')[0];
-			var tmp = td1.value.split('!');
-			var urlID  = url.match(/[?&]URLID=([^&#]*)/i);
-			itemUrl = `https://kns.cnki.net/KCMS/detail/${urlID[1]}`;
-			id = { dbname: tmp[0], filename: tmp[1], url: itemUrl};
+			var td = ZU.xpath(links[i], "./td[@class='operat']/a");
+			itemUrl = `https://kns.cnki.net/KCMS/detail/${a.href}`;
+			id = { 
+				dbname: td[0].getAttribute("data-table"), 
+				filename: td[0].getAttribute("data-filename"),
+				dbcode: td[1].getAttribute("data-dbname"),
+				url: itemUrl};
 		} else {
 			itemUrl = `https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=${id.dbcode}&dbname=${id.dbname}&filename=${id.filename}&v=`;
 			id.url =  itemUrl;
 		}
-
 		// download link in search result
 		var filelink = ZU.xpath(links[i], fileXpath);
 		if (!title || !id) continue;
@@ -202,7 +194,9 @@ function detectWeb(doc, url) {
 	if (id) {
 		return getTypeFromDBName(id.dbname);
 	}
-	else if (url.match(/kns\/brief\/(default_)?result\.aspx/i) || url.includes('JournalDetail')) {
+	// Add new version kns8
+	else if (url.match(/kns\/brief\/(default_)?result\.aspx/i) || url.includes('JournalDetail') ||
+	url.match(/kns8\/defaultresult\/index/i)) {
 		return "multiple";
 	}
 	else {
@@ -215,7 +209,7 @@ function doWeb(doc, url) {
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
-		//Z.debug(itemInfo);
+		// Z.debug(itemInfo);
 		if (!items) return false;// no items
 		Z.selectItems(items, function (selectedItems) {
 			if (!selectedItems) return;
@@ -235,15 +229,18 @@ function scrape(ids, doc, itemInfo) {
 	getRefWorksByID(ids, function (text, url) {
 		var translator = Z.loadTranslator('import');
 		translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86'); // RefWorks Tagged
-		text = text.replace(/vo (\d+)\n/, "VO $1\n");
 		translator.setString(text);
 		translator.setHandler('itemDone', function (obj, newItem) {
-			// If you want CAJ instead of PDF, set translators.CNKIPDF = false
-			// 如果你想将PDF文件替换为CAJ文件，将Zotero Connector中添加translators.CNKIPDF=false
+			// add PDF/CAJ attachments
+			// var loginStatus = loginDetect(doc);
+			var loginStatus = true;
+			// If you want CAJ instead of PDF, set keepPDF = false
+			// 如果你想将PDF文件替换为CAJ文件，将下面一行 keepPDF 设为 false
 			var keepPDF = Z.getHiddenPref('CNKIPDF');
 			if (keepPDF === undefined) {
 				keepPDF = true;
 			}
+			// Z.debug('loginStatus: '+loginStatus);
 			if (itemInfo && itemInfo[url].filelink) { // search result
 				var fileUrl = '';
 				var fileTitle =  "Full Text PDF"
@@ -286,8 +283,8 @@ function scrape(ids, doc, itemInfo) {
 					creator.lastName = creator.lastName.substr(lastSpace + 1);
 				}
 				else if (zhnamesplit) {
+					// zhnamesplit is true, split firstname and lastname.
 					// Chinese name. first character is last name, the rest are first name
-					// zhnamesplit is true, split firstname and lastname
 					creator.firstName = creator.lastName.substr(1);
 					creator.lastName = creator.lastName.charAt(0);
 				}
@@ -617,13 +614,12 @@ var testCases = [
 					}
 				],
 				"date": "1990",
-				"abstractNote": "<正>辽西区的范围从大兴安岭南缘到渤海北岸,西起燕山西段,东止辽河平原,基本上包括内蒙古的赤峰市(原昭乌达盟)、哲里木盟西半部,辽宁省西部和河北省的承德、唐山、廊坊及其邻近的北京、天津等地区。这一地区的古人类遗存自旧石器时代晚期起,就与同属东北的辽东区有着明显的不同,在后来的发展中,构成自具特色的一个考古学文化区,对我国东北部起过不可忽视的作用。以下就辽西地区新石器时代的考古学文化序列、编年、谱系",
+				"abstractNote": "<正>辽西区的范围从大兴安岭南缘到渤海北岸,西起燕山西段,东止辽河平原,基本上包括内蒙古的赤峰市(原昭乌达盟)、哲里木盟西半部,辽宁省西部和河北省的承德、唐山、廊坊及其邻近的北京、天津等地区。这一地区的古人类遗存自旧石器时代晚期起,就与同属东北的辽东区有着明显的不同,在后来的发展中,构成自具特色的一个考古学文化区,对我国东北部起过不可忽视的作用。以下就辽西地区新石器时代的考古学文化序列、编年、谱系及有关问题简要地谈一下自己的认识。",
 				"language": "中文;",
 				"libraryCatalog": "CNKI",
 				"pages": "6",
 				"proceedingsTitle": "内蒙古东部区考古学文化研究文集",
 				"publisher": "中国社会科学院考古研究所、内蒙古文物考古研究所、赤峰市文化局",
-				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CPFD&dbname=CPFD9908&filename=OYDD199010001004&v=MDI5NTRITnI0OUZaZXNQQ0JOS3VoZGhuajk4VG5qcXF4ZEVlTU9VS3JpZlplWnZGeW5tVTdqSkpWb1RLalRQYXJLeEY5",
 				"attachments": [
 					{
 						"title": "Full Text PDF",
@@ -632,10 +628,16 @@ var testCases = [
 				],
 				"tags": [
 					{
-						"tag": "之字纹"
+						"tag": "兴隆洼文化"
 					},
 					{
-						"tag": "兴隆洼文化"
+						"tag": "努鲁儿虎山"
+					},
+					{
+						"tag": "半坡文化"
+					},
+					{
+						"tag": "夹砂陶"
 					},
 					{
 						"tag": "富河文化"
@@ -647,22 +649,16 @@ var testCases = [
 						"tag": "庙底沟文化"
 					},
 					{
-						"tag": "泥质陶"
+						"tag": "彩陶花纹"
+					},
+					{
+						"tag": "文化纵横"
+					},
+					{
+						"tag": "新石器时代考古"
 					},
 					{
 						"tag": "红山文化"
-					},
-					{
-						"tag": "细泥陶"
-					},
-					{
-						"tag": "考古学文化"
-					},
-					{
-						"tag": "赤峰第一期文化"
-					},
-					{
-						"tag": "赵宝沟文化"
 					}
 				],
 				"notes": [],
@@ -704,13 +700,12 @@ var testCases = [
 						"creatorType": "author"
 					}
 				],
-				"date": "2020",
+				"date": "2020 vo 106",
 				"DOI": "10.1016/j.dci.2019.103601",
-				"abstractNote": "Bombyx mori bidensovirus (BmBDV) infects silkworm midgut and causes chronic flacherie disease; however, the interaction between BmBDV and silkworm is unclear. Twenty-four hours after BmBDV infection, the midgut was extracted for RNA-seq to analyze the factors associated with BmBDV-invasion and the early antiviral immune response in silkworms. The total reads from each sample were more than 16100000 and the number of expressed genes exceeded 8200. There were 334 upregulated and 272 downregulated differentially expressed genes (DEGs). Gene ontology analysis of DEGs showed that structural constituents of cuticle, antioxidant, and immune system processes were upregulated. Further analysis revealed BmBDV-mediated induction of BmorCPR23 and BmorCPR44 , suggesting possible involvement in viral invasion. Antioxidant genes that protect host cells from virus-induced oxidative stress, were significantly upregulated after BmBDV infection. Several genes related to peroxisomes, apoptosis, and autophagy—which may be involved in antiviral immunity—were induced by BmBDV. These results provide insights into the mechanism of BmBDV infection and host defense.",
+				"abstractNote": "Abstract(#br)Bombyx mori bidensovirus (BmBDV) infects silkworm midgut and causes chronic flacherie disease; however, the interaction between BmBDV and silkworm is unclear. Twenty-four hours after BmBDV infection, the midgut was extracted for RNA-seq to analyze the factors associated with BmBDV-invasion and the early antiviral immune response in silkworms. The total reads from each sample were more than 16100000 and the number of expressed genes exceeded 8200. There were 334 upregulated and 272 downregulated differentially expressed genes (DEGs). Gene ontology analysis of DEGs showed that structural constituents of cuticle, antioxidant, and immune system processes were upregulated. Further analysis revealed BmBDV-mediated induction of BmorCPR23 and BmorCPR44 , suggesting possible involvement in viral invasion. Antioxidant genes that protect host cells from virus-induced oxidative stress, were significantly upregulated after BmBDV infection. Several genes related to peroxisomes, apoptosis, and autophagy—which may be involved in antiviral immunity—were induced by BmBDV. These results provide insights into the mechanism of BmBDV infection and host defense.",
 				"libraryCatalog": "CNKI",
 				"publicationTitle": "Developmental and Comparative Immunology",
 				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=SJES&dbname=SJESTEMP_U&filename=SJES28B3C7256407805E8A3E8AA55386597D&v=MDY1NDVJMUFZdThQQzNRNXltTWJtendJUUE2VHFSYzJjYlNSVEwzckNKVWFGMXVRVXIvUEpsY1NibUtDR1lDR1FsZkJyTFUyNXRoaHc3MjV3YXc9TmlmT2ZiR3diTksvcQ==",
-				"volume": "106",
 				"attachments": [],
 				"tags": [
 					{
