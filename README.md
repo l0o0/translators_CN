@@ -37,7 +37,7 @@
 + [国家图书馆文津搜索](http://find.nlc.cn/) -> [Wenjin.js](./translators/Wenjin.js)
   - [x] 抓取引文信息
   - [x] 支持文献类型：图书，论文
-+ [ProQuest学位论文全文检索平台](http://find.nlc.cn/) -> [ProQuestCN Thesis.js](./translators/ProQuestCN&nbspThesis.js)
++ [ProQuest 学位论文全文检索平台](http://find.nlc.cn/) -> [ProQuestCN Thesis.js](<./translators/ProQuestCN Thesis.js>)
   - [x] 抓取引文信息
   - [x] 支持文献类型：学位论文
   - [x] PDF附件下载（需要账号或者IP具有下载权限）
