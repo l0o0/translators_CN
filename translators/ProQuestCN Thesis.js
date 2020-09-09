@@ -8,7 +8,7 @@
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
-	"browserSupport": "gcsibv",
+	"browserSupport": "gcsbv",
 	"lastUpdated": "2020-09-07 01:24:40"
 }
 
@@ -326,19 +326,4 @@ function handleName(authors,isContri){
 	creators.push(creator);
 	//Z.debug(creators);
 	return creators;
-}
-
-//get pdf
-function getAttachments(doc, item) {
-	
-}
-function getAccesToken(url){
-	//ZU.doGet(,function(text){
-	
-}
-function getAttachments(doc,item){
-	
-	
-	
-
 }
