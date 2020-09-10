@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2020-09-10 06:17:07"
+	"lastUpdated": "2020-09-10 13:59:09"
 }
 
 /*
@@ -57,9 +57,10 @@ function getRefWorksByID(ids, onDataAvailable) {
 					function (m, tag, authors) {
 						authors = authors.split(/\s*[;，,]\s*/); // that's a special comma
 						if (!authors[authors.length - 1].trim()) authors.pop();
-						return tag + ' ' + authors.join('\n' + tag + ' ');
+						return 'A1' + ' ' + authors.join('\n' + 'A1' + ' ');  // Use A1 tag instead
 					}
 				);
+			Z.debug(data);
 			onDataAvailable(data, url);
 			// If more results, keep going
 			if (ids.length) {
@@ -93,11 +94,12 @@ function getIDFromHeader(doc, url) {
 	var dbcode = ZU.xpath(doc, "//input[@id='paramdbcode']");
 	var filename = ZU.xpath(doc, "//input[@id='paramfilename']");
 	if (
-		!filename ||
-		!dbcode ||
-		!dbname
-	)
+		filename.length +
+		dbcode.length +
+		dbname.length <3
+	) {
 		return false;
+	}
 	return { dbname: dbname[0].value , filename: filename[0].value, dbcode: dbcode[0].value, url: url };
 }
 
@@ -196,8 +198,8 @@ function detectWeb(doc, url) {
 	else if (
 		url.match(/kns\/brief\/(default_)?result\.aspx/i) 
 		|| url.includes('JournalDetail') 
-		|| url.match(/kns\/defaultresult\/index/i)
-		|| url.includes("AdvSearch?db")) {
+		|| url.match(/kns8\/defaultresult\/index/i)
+		|| url.includes("KNS8/AdvSearch?")) {
 		return "multiple";
 	}
 	else {
@@ -275,6 +277,9 @@ function scrape(ids, doc, itemInfo) {
 			}
 			for (var i = 0, n = newItem.creators.length; i < n; i++) {
 				var creator = newItem.creators[i];
+				if (newItem.itemType == 'thesis' && i == n-1) {  // The last author is Advisor in thesis
+					creator.creatorType = 'contributor';  // Here is contributor
+				}
 				if (creator.firstName) continue;
 				
 				var lastSpace = creator.lastName.lastIndexOf(' ');
