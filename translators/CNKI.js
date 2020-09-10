@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2020-08-28 08:27:04"
+	"lastUpdated": "2020-09-10 06:17:07"
 }
 
 /*
@@ -72,41 +72,39 @@ function getRefWorksByID(ids, onDataAvailable) {
 
 function getIDFromURL (url) {
 	if (!url) return false;
-	// add regex for navi.cnki.net
 	var dbname = url.match(/[?&](?:db|table)[nN]ame=([^&#]*)/i);
 	var filename = url.match(/[?&]filename=([^&#]*)/i);
 	var dbcode = url.match(/[?&]dbcode=([^&#]*)/i);
 	if (
-		!dbname ||
-		!dbname[1] ||
 		!filename ||
 		!filename[1] ||
 		!dbcode ||
 		!dbcode[1] ||
-		dbname[1].match("TEMP_U$") // For EN articles.
+		!dbname ||
+		!dbname[1]
 	)
 		return false;
-	return { dbname: dbname[1], filename: filename[1], dbcode: dbcode[1] };
+	return { dbname: dbname[1] , filename: filename[1], dbcode: dbcode[1], url: url };
 }
 
-
-// 网络首发期刊信息并不能从URL获取dbname和filename信息
 // Get dbname and filename from pre-released article web page.
-function getIDFromRef(doc, url) {
-	var func = ZU.xpath(doc, '//div[@class="link"]/a');
-	if (!func.length) {
+function getIDFromHeader(doc, url) {
+	var dbname = ZU.xpath(doc, "//input[@id='paramdbname']");
+	var dbcode = ZU.xpath(doc, "//input[@id='paramdbcode']");
+	var filename = ZU.xpath(doc, "//input[@id='paramfilename']");
+	if (
+		!filename ||
+		!dbcode ||
+		!dbname
+	)
 		return false;
-	}
-	func = func[0].getAttribute('onclick');
-	var tmp = func.split(',')[1].split('!');
-	// Z.debug(func + tmp[0].slice(1));
-	return { dbname: tmp[0].slice(1), filename: tmp[1], url: url };
+	return { dbname: dbname[0].value , filename: filename[0].value, dbcode: dbcode[0].value, url: url };
 }
 
 function getIDFromPage(doc, url) {
 	return getIDFromURL(url)
 		|| getIDFromURL(ZU.xpathText(doc, '//div[@class="zwjdown"]/a/@href'))
-		|| getIDFromRef(doc, url);
+		|| getIDFromHeader(doc, url);
 }
 
 function getTypeFromDBName(dbname) {
@@ -189,14 +187,17 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 
 function detectWeb(doc, url) {
 	// Z.debug(doc);
-	// Z.monitorDOMChanges(ZU.xpath(doc, "//div[@id='HeaderDiv']")[0]);
 	var id = getIDFromPage(doc, url);
+	Z.debug(id);
 	if (id) {
 		return getTypeFromDBName(id.dbname);
 	}
 	// Add new version kns8
-	else if (url.match(/kns\/brief\/(default_)?result\.aspx/i) || url.includes('JournalDetail') ||
-	url.match(/kns8\/defaultresult\/index/i)) {
+	else if (
+		url.match(/kns\/brief\/(default_)?result\.aspx/i) 
+		|| url.includes('JournalDetail') 
+		|| url.match(/kns\/defaultresult\/index/i)
+		|| url.includes("AdvSearch?db")) {
 		return "multiple";
 	}
 	else {
@@ -205,7 +206,7 @@ function detectWeb(doc, url) {
 }
 
 function doWeb(doc, url) {
-	Z.debug("----------------CNKI 20200829---------------------");
+	Z.debug("----------------CNKI 20200910---------------------");
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
@@ -390,7 +391,7 @@ function getAttachments(doc, item, keepPDF) {
 var testCases = [
 	{
 		"type": "web",
-		"url": "http://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFQ&dbname=CJFDLAST2015&filename=SPZZ201412003&v=MTU2MzMzcVRyV00xRnJDVVJMS2ZidVptRmkva1ZiL09OajNSZExHNEg5WE5yWTlGWjRSOGVYMUx1eFlTN0RoMVQ=",
+		"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFQ&dbname=CJFDLAST2015&filename=SPZZ201412003&v=MTU2MzMzcVRyV00xRnJDVVJMS2ZidVptRmkva1ZiL09OajNSZExHNEg5WE5yWTlGWjRSOGVYMUx1eFlTN0RoMVQ=",
 		"items": [
 			{
 				"itemType": "journalArticle",
@@ -435,7 +436,7 @@ var testCases = [
 				"libraryCatalog": "CNKI",
 				"pages": "1306-1312",
 				"publicationTitle": "色谱",
-				"url": "http://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFQ&dbname=CJFDLAST2015&filename=SPZZ201412003&v=MTU2MzMzcVRyV00xRnJDVVJMS2ZidVptRmkva1ZiL09OajNSZExHNEg5WE5yWTlGWjRSOGVYMUx1eFlTN0RoMVQ=",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFQ&dbname=CJFDLAST2015&filename=SPZZ201412003&v=MTU2MzMzcVRyV00xRnJDVVJMS2ZidVptRmkva1ZiL09OajNSZExHNEg5WE5yWTlGWjRSOGVYMUx1eFlTN0RoMVQ=",
 				"volume": "32",
 				"attachments": [
 					{
@@ -543,64 +544,6 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "http://new.gb.oversea.cnki.net/KCMS/detail/detail.aspx?dbcode=CMFD&dbname=CMFDTEMP&filename=1019926131.nh&v=MTA5MjM2RjdxNkdORFBycEViUElSOGVYMUx1eFlTN0RoMVQzcVRyV00xRnJDVVJMT2VadVJxRnkzblY3dkJWRjI=",
-		"items": [
-			{
-				"itemType": "thesis",
-				"title": "商业银行个人住房不良资产证券化多元回归定价方法研究",
-				"creators": [
-					{
-						"lastName": "张",
-						"firstName": "雪",
-						"creatorType": "author"
-					}
-				],
-				"date": "2019",
-				"abstractNote": "不良资产证券化是一种新型的不良资产处置方式,其拓宽了商业银行处理不良资产的手段,特别适用于单户金额小、户数多的个人不良资产批量处置,而且这种市场化处置方式将银行不良资产处置和资本市场证券产品发行两个不同领域联接在一起,提高了不良资产的价值。本文以个人住房不良资产证券化为研究对象,确定资产池内不良资产未来回收价值。综合对比市场常用的定价方法,在此基础上提出建立多元回归定价模型的思路。利用YN银行个人住房不良贷款历史数据,分析得出影响不良资产定价的因素,建立定价方程,并对拟证券化的虚拟资产池计算整体回收价值,证明多元回归定价模型的有效性。本文提出的定价模型规避了传统资产定价方法效率低、评估结果不严谨等缺点,采用数理统计的方法,借助分析软件,使定价结果更加科学、准确,为商业银行提供了定价的新途径,也以此为契机建议商业银行成立完备的不良资产处置数据系统,为高效开展资产证券化工作提供数据和技术支持。",
-				"language": "中文;",
-				"libraryCatalog": "CNKI",
-				"thesisType": "硕士",
-				"university": "浙江大学",
-				"url": "http://new.gb.oversea.cnki.net/KCMS/detail/detail.aspx?dbcode=CMFD&dbname=CMFDTEMP&filename=1019926131.nh&v=MTA5MjM2RjdxNkdORFBycEViUElSOGVYMUx1eFlTN0RoMVQzcVRyV00xRnJDVVJMT2VadVJxRnkzblY3dkJWRjI=",
-				"attachments": [
-					{
-						"title": "Full Text PDF",
-						"mimeType": "application/pdf"
-					}
-				],
-				"tags": [
-					{
-						"tag": "Asset pool pricing"
-					},
-					{
-						"tag": "Multiple regression pricing model"
-					},
-					{
-						"tag": "Non-performing asset securitization"
-					},
-					{
-						"tag": "Personal housing loan"
-					},
-					{
-						"tag": "不良资产证券化"
-					},
-					{
-						"tag": "个人住房贷款"
-					},
-					{
-						"tag": "多元回归定价模型"
-					},
-					{
-						"tag": "资产池定价"
-					}
-				],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
 		"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CPFD&dbname=CPFD9908&filename=OYDD199010001004&v=MDI5NTRITnI0OUZaZXNQQ0JOS3VoZGhuajk4VG5qcXF4ZEVlTU9VS3JpZlplWnZGeW5tVTdqSkpWb1RLalRQYXJLeEY5",
 		"items": [
 			{
@@ -620,6 +563,7 @@ var testCases = [
 				"pages": "6",
 				"proceedingsTitle": "内蒙古东部区考古学文化研究文集",
 				"publisher": "中国社会科学院考古研究所、内蒙古文物考古研究所、赤峰市文化局",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CPFD&dbname=CPFD9908&filename=OYDD199010001004&v=MDI5NTRITnI0OUZaZXNQQ0JOS3VoZGhuajk4VG5qcXF4ZEVlTU9VS3JpZlplWnZGeW5tVTdqSkpWb1RLalRQYXJLeEY5",
 				"attachments": [
 					{
 						"title": "Full Text PDF",
@@ -668,63 +612,68 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=SJES&dbname=SJESTEMP_U&filename=SJES28B3C7256407805E8A3E8AA55386597D&v=MDY1NDVJMUFZdThQQzNRNXltTWJtendJUUE2VHFSYzJjYlNSVEwzckNKVWFGMXVRVXIvUEpsY1NibUtDR1lDR1FsZkJyTFUyNXRoaHc3MjV3YXc9TmlmT2ZiR3diTksvcQ==",
+		"url": "https://oversea.cnki.net/KCMS/detail/detail.aspx?dbcode=CAPJ&dbname=CAPJDAY&filename=SDYB20200908000&v=MTM4NjRDTEw3UjdxZForWm1GeW5sVWJ2TEkxaz1OaW5TYkxHNEhOSE1wbzlOWk9zUFl3OU16bVJuNmo1N1QzZmxxV00w",
 		"items": [
 			{
 				"itemType": "journalArticle",
-				"title": "Transcriptome analysis of the immune response of silkworm at the early stage of Bombyx mori bidensovirus infection",
+				"title": "新型冠状病毒肺炎2例报告",
 				"creators": [
 					{
-						"lastName": "Sun",
-						"firstName": "Qiang",
+						"lastName": "牛",
+						"firstName": "占丛",
 						"creatorType": "author"
 					},
 					{
-						"lastName": "Guo",
-						"firstName": "Huizhen",
+						"lastName": "王",
+						"firstName": "彦霞",
 						"creatorType": "author"
 					},
 					{
-						"lastName": "Xia",
-						"firstName": "Qingyou",
+						"lastName": "王",
+						"firstName": "晓亚",
 						"creatorType": "author"
 					},
 					{
-						"lastName": "Jiang",
-						"firstName": "Liang",
+						"lastName": "王",
+						"firstName": "晓庆",
 						"creatorType": "author"
 					},
 					{
-						"lastName": "Zhao",
-						"firstName": "Ping",
+						"lastName": "李",
+						"firstName": "亚轻",
+						"creatorType": "author"
+					},
+					{
+						"lastName": "边",
+						"firstName": "竞",
 						"creatorType": "author"
 					}
 				],
-				"date": "2020 vo 106",
-				"DOI": "10.1016/j.dci.2019.103601",
-				"abstractNote": "Abstract(#br)Bombyx mori bidensovirus (BmBDV) infects silkworm midgut and causes chronic flacherie disease; however, the interaction between BmBDV and silkworm is unclear. Twenty-four hours after BmBDV infection, the midgut was extracted for RNA-seq to analyze the factors associated with BmBDV-invasion and the early antiviral immune response in silkworms. The total reads from each sample were more than 16100000 and the number of expressed genes exceeded 8200. There were 334 upregulated and 272 downregulated differentially expressed genes (DEGs). Gene ontology analysis of DEGs showed that structural constituents of cuticle, antioxidant, and immune system processes were upregulated. Further analysis revealed BmBDV-mediated induction of BmorCPR23 and BmorCPR44 , suggesting possible involvement in viral invasion. Antioxidant genes that protect host cells from virus-induced oxidative stress, were significantly upregulated after BmBDV infection. Several genes related to peroxisomes, apoptosis, and autophagy—which may be involved in antiviral immunity—were induced by BmBDV. These results provide insights into the mechanism of BmBDV infection and host defense.",
+				"ISSN": "1671-7554",
+				"abstractNote": "<正>新型冠状病毒（2019-Novel coronavirus,2019-nCov）属于β属的冠状病毒,感染后引起的新型冠状病毒肺炎（Coronavirus Disease 2019,COVID-19）可引起肺、肝、脾、肾、心等多脏器病理改变[1],肺部受损尤其严重。对COVID-19死亡患者病理学研究发现,主要表现为肺泡上皮损伤和透明膜的形成,与重症急性呼吸综合征（severe acute respiratory syn-drome,SARS）极其相似[2]。",
+				"language": "中文",
 				"libraryCatalog": "CNKI",
-				"publicationTitle": "Developmental and Comparative Immunology",
-				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=SJES&dbname=SJESTEMP_U&filename=SJES28B3C7256407805E8A3E8AA55386597D&v=MDY1NDVJMUFZdThQQzNRNXltTWJtendJUUE2VHFSYzJjYlNSVEwzckNKVWFGMXVRVXIvUEpsY1NibUtDR1lDR1FsZkJyTFUyNXRoaHc3MjV3YXc9TmlmT2ZiR3diTksvcQ==",
-				"attachments": [],
+				"pages": "1-3",
+				"publicationTitle": "山东大学学报(医学版)",
+				"url": "https://oversea.cnki.net/KCMS/detail/detail.aspx?dbcode=CAPJ&dbname=CAPJDAY&filename=SDYB20200908000&v=MTM4NjRDTEw3UjdxZForWm1GeW5sVWJ2TEkxaz1OaW5TYkxHNEhOSE1wbzlOWk9zUFl3OU16bVJuNmo1N1QzZmxxV00w",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					}
+				],
 				"tags": [
 					{
-						"tag": "Bidensovirus"
+						"tag": "新型冠状病毒肺炎"
 					},
 					{
-						"tag": "Bombyx mori"
+						"tag": "核酸检测"
 					},
 					{
-						"tag": "Immune system"
+						"tag": "流行病学史"
 					},
 					{
-						"tag": "Midgut"
-					},
-					{
-						"tag": "Silkworm"
-					},
-					{
-						"tag": "Transcriptome"
+						"tag": "胸部CT"
 					}
 				],
 				"notes": [],
