@@ -34,6 +34,13 @@
 + [专利搜索网站Soopat](http://www.soopat.com/) -> [Snnopat.js](./translators/Soopat.js)
   - [x] 搜索页面和单个专利页面信息抓取
   - [x] PDF附件下载（需要登录，网站验证码可能会导致PDF下载失败）
++ [国家图书馆文津搜索](http://find.nlc.cn/) -> [Wenjin.js](./translators/Wenjin.js)
+  - [x] 抓取引文信息
+  - [x] 支持文献类型：图书，论文
++ [ProQuest 学位论文全文检索平台](http://www.pqdtcn.com/) -> [ProQuestCN Thesis.js](<./translators/ProQuestCN Thesis.js>)
+  - [x] 抓取引文信息
+  - [x] 支持文献类型：学位论文
+  - [x] PDF附件下载（需要账号或者IP具有下载权限）
 
 ## 📢 如何使用  
 
@@ -43,7 +50,7 @@
 
 **2 解压下载的压缩包，找到**translators**目录，将目录中的文件复制到 Zotero 的 translators 目录** 
 
-![](https://s1.ax1x.com/2020/08/19/dlKtG6.png)    
+![](https://s1.ax1x.com/2020/09/07/wnDwlV.jpg)    
 ![](https://s1.ax1x.com/2020/08/19/dlM36S.png)    
 
 **3 更新 translator 信息，Firefox 和 Chrome 浏览器操作类似。下面以 Firefox 为例**  
