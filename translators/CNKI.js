@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2020-09-10 13:59:09"
+	"lastUpdated": "2020-09-22 03:14:15"
 }
 
 /*
@@ -197,9 +197,9 @@ function detectWeb(doc, url) {
 	// Add new version kns8
 	else if (
 		url.match(/kns\/brief\/(default_)?result\.aspx/i) 
-		|| url.includes('JournalDetail') 
-		|| url.match(/kns8\/defaultresult\/index/i)
-		|| url.includes("KNS8/AdvSearch?")) {
+		|| url.match(/JournalDetail/i) // Journal home page
+		|| url.match(/kns8?\/defaultresult\/index/i) // search page
+		|| url.match(/KNS8?\/AdvSearch\?/i)) {  // search page
 		return "multiple";
 	}
 	else {
