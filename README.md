@@ -1,7 +1,7 @@
 # Zotero translators 中文维护小组  
 
 目前 Zotero 中有许多抓取中文学术网站的插件，这些插件有些已经非常老旧，缺少及时的维护。希望能在这里召集一些志同道合的朋友，共同维护中文学术或其他类型网站的抓取插件。
-如果 Github 下载速度慢，可以试试百度网盘分享 [链接](https://pan.baidu.com/s/1shRzcCQ_2Gn8C39X77FTPQ) 提取码: utny
+如果 Github 下载速度慢，可以试试 [Gitee](https://gitee.com/l0o0/translators_CN) 
 ## 🎯 目标网站
 
 + [知网或知网海外](https://cnki.net/) -> [CNKI.js](./translators/CNKI.js)  Update: 20200819
@@ -13,7 +13,7 @@
   - [x] 知网海外版PDF和CAJ附件下载支持  
   - [x] 支持文献类型：期刊，学位论文，会议论文，报纸，修改知网refworks会议论文类型错误的问题
   - [ ] 已同步到官方版本库中
-+ [万方数据](http://www.wanfangdata.com.cn/index.html) -> [WanFang.js](./translators/WanFang.js) ❗
++ [万方数据](http://www.wanfangdata.com.cn/index.html) -> [WanFang.js](./translators/WanFang.js) ❗ 失效
   - [x] 抓取引文信息  
   - [x] 支持文献类型：期刊，学位论文，专利，会议论文
   - [ ] PDF附件下载
