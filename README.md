@@ -4,7 +4,7 @@
 如果 Github 下载速度慢，可以试试 [Gitee](https://gitee.com/l0o0/translators_CN) 
 ## 🎯 目标网站
 
-+ [知网或知网海外](https://cnki.net/) -> [CNKI.js](./translators/CNKI.js)  Update: 20200819
++ [知网或知网海外](https://cnki.net/) -> [CNKI.js](./translators/CNKI.js)  Update: 20200930
   - [x] 搜索页面PDF附件下载
   - [x] 期刊详细页面的信息收集  
   - [x] 文章格式都为PDF，学位论文的CAJ链接已经替换为PDF，注意学位论文的PDF应该是没有目录信息的。[如何设置拆分姓名，保留CAJ格式](#jump)
@@ -13,7 +13,7 @@
   - [x] 知网海外版PDF和CAJ附件下载支持  
   - [x] 支持文献类型：期刊，学位论文，会议论文，报纸，修改知网refworks会议论文类型错误的问题
   - [ ] 已同步到官方版本库中
-+ [万方数据](http://www.wanfangdata.com.cn/index.html) -> [WanFang.js](./translators/WanFang.js) ❗ 失效
++ [万方数据](http://www.wanfangdata.com.cn/index.html) -> [WanFang.js](./translators/WanFang Data.js) Update: 20200930
   - [x] 抓取引文信息  
   - [x] 支持文献类型：期刊，学位论文，专利，会议论文
   - [ ] PDF附件下载
