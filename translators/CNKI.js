@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2020-09-22 03:14:15"
+	"lastUpdated": "2020-09-30 02:31:05"
 }
 
 /*
@@ -118,6 +118,7 @@ function getTypeFromDBName(dbname) {
 		SJPD: "journalArticle",
 		SSJD: "journalArticle",
 		CCJD: "journalArticle",
+		CDMD: "journalArticle",
 		CDFD: "thesis",
 		CMFD: "thesis",
 		CLKM: "thesis",
