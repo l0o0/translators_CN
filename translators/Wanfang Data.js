@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcs",
-	"lastUpdated": "2020-09-30 09:26:47"
+	"lastUpdated": "2020-10-18 08:43:38"
 }
 
 /*
@@ -121,7 +121,7 @@ function getRefworksByID(ids, next) {
 }
 
 
-function scrape(ids) {
+function scrape(ids, itemInfo) {
 	Z.debug("---------------WanFang Data 20200930---------------");
 	getRefworksByID(ids, function(detail) {
 		var dbname = detail.dbname;
@@ -132,7 +132,7 @@ function scrape(ids) {
 		newItem.abstractNote = detail.Abstract[0];
 		detail.Language ? newItem.language=detail.Language : newItem.language = 'chi';
 		if (detail.FulltextPath && detail.FulltextPath.startsWith("http")) { // add full text path in note
-			var note = `文章全文链接<a href="${detail.FulltextPath}">${detail.FulltextPath}</a>`;
+			var note = `文章全文链接<br><a href="${detail.FulltextPath}">${detail.FulltextPath}</a>`;
 			newItem.notes.push({note:note});
 		}
 		newItem.url = detail.url;
@@ -152,6 +152,15 @@ function scrape(ids) {
 			}
 			field.forEach(f => newItem[f] = (typeof detail[k] != 'object' ? detail[k]: detail[k][0]));
 			
+		}
+		var pdflink = getPDF(itemInfo, newItem.url);
+		if (pdflink) {
+			Z.debug(pdflink);
+			newItem.attachments = [{
+				title: "Full Text PDF",
+				mimeType: "application/pdf",
+				url: pdflink
+			}];
 		}
 		newItem.complete();
 	});
@@ -226,8 +235,8 @@ function getTypeFromDBName(db) {
 
 function detectWeb(doc, url) {
 	var id = getIDFromURL(url);
-	var items = url.match(/(search\/searchList.do\?)/i);
-	// Z.debug(items);
+	var items = url.match(/(\?searchType=)/i);
+	Z.debug(items);
 	if (items) {
 		return "multiple";
 	} else if (id) {
@@ -251,9 +260,17 @@ function getSearchResults(doc, itemInfo) {
 	// Z.debug(target.getAttribute('docid'));
 	var filename = target.getAttribute('docid');
 	var dbname = target.getAttribute('doctype');
-	itemInfo[href] = {filename:filename, dbname:getTypeFromDBName(dbname), url:href};
+	var reader = ZU.xpath(row, ".//a[@class='result_opera_ibook']");
+	if (reader.length > 0) {
+		var tmp = reader[0].getAttribute('onclick').split("','");
+		var pdflink = `http://oss.wanfangdata.com.cn/www/${tmp[5]}.ashx?isread=true&type=${tmp[2]}&resourceId=${tmp[4]}`;
+	} else {
+		var pdflink = null;
+	}
+	itemInfo[href] = {filename:filename, dbname:getTypeFromDBName(dbname), url:href, pdflink:pdflink};
 	idx +=1
   }
+  // Z.debug(itemInfo);
   return items;
 }
 
@@ -268,12 +285,22 @@ function doWeb(doc, url) {
 				ids.push(itemInfo[href]);
 			}
 			// Z.debug(ids);
-			scrape(ids)
+			scrape(ids, itemInfo)
 		});
 	} else {
 		var id = getIDFromURL(url);
-		scrape([id]);
+		scrape([id], doc);
 	}
+}
+
+function getPDF(target, url) {
+	if (Object.prototype.toString.call(target) == "[object Object]") {
+		var pdflink = target[url].pdflink;
+	} else {
+		var pdflink = ZU.xpath(target, "//a[@class='onlineRead']");
+		var pdflink = pdflink.length > 0 ? pdflink[0].href : null;
+	}
+	return pdflink;
 }/** BEGIN TEST CASES **/
 var testCases = [
 	{
