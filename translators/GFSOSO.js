@@ -2,14 +2,14 @@
 	"translatorID": "00988564-80ef-4d3b-8ff7-bd8a60af1561",
 	"label": "GFSOSO",
 	"creator": "西班牙馅饼, Simon Kornblith, Frank Bennett, Aurimas Vinckevicius",
-	"target": "^https?://[a-z]+\\.glgoo\\.top/scholar",
+	"target": "^https?://\\w+\\.glgoo\\.top/scholar",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2019-11-22 06:37:45"
+	"lastUpdated": "2020-02-27 05:59:48"
 }
 
 // attr()/text() v2
@@ -46,23 +46,25 @@ function detectWeb(doc, url) {
 }
 
 
-function getSearchResults(doc, checkOnly) {
+function getSearchResults(doc, checkOnly, itemInfo) {
 	var items = {};
 	var found = false;
 	var rows = doc.querySelectorAll('.gs_r[data-cid]');
 	for (var i=0; i<rows.length; i++) {
 		var href = rows[i].dataset.cid;
 		var title = text(rows[i], '.gs_rt');
+		var url = rows[i].querySelector('a[id]').href
 		if (!href || !title) continue;
 		if (checkOnly) return true;
 		found = true;
 		items[href] = title;
+		itemInfo[href] = url;
 	}
 	return found ? items : false;
 }
 
 
-function getProfileResults(doc, checkOnly) {
+function getProfileResults(doc, checkOnly, itemInfo) {
 	var items = {};
 	var found = false;
 	var rows = doc.querySelectorAll('a.gsc_a_at');
@@ -73,6 +75,7 @@ function getProfileResults(doc, checkOnly) {
 		if (checkOnly) return true;
 		found = true;
 		items[href] = title;
+		itemInfo[href] = url;
 	}
 	return found ? items : false;
 }
@@ -81,8 +84,9 @@ function getProfileResults(doc, checkOnly) {
 function doWeb(doc, url) {
 	var type = detectWeb(doc, url);
 	if (type == "multiple") {
+		var itemInfo = {};
 		if (getSearchResults(doc, true)) {
-			Zotero.selectItems(getSearchResults(doc, false), function (items) {
+			Zotero.selectItems(getSearchResults(doc, false, itemInfo), function (items) {
 				if (!items) {
 					return true;
 				}
@@ -91,14 +95,14 @@ function doWeb(doc, url) {
 					ids.push(i);
 				}
 				//here it is enough to know the ids and we can call scrape directly
-				scrape(doc, ids);
+				scrape(doc, ids, itemInfo);
 			});
 		} else if (getProfileResults(doc, true)) {
-			Zotero.selectItems(getProfileResults(doc, false), function (items) {
+			Zotero.selectItems(getProfileResults(doc, false, itemInfo), function (items) {
 				if (!items) {
 					return true;
 				}
-				var articles  = [];
+				var articles  = {}
 				for (var i in items) {
 					articles.push(i);
 				}
@@ -115,7 +119,7 @@ function doWeb(doc, url) {
 
 function scrape(doc, idsOrUrl, type) {
 	if (Array.isArray(idsOrUrl)) {
-		scrapeIds(doc, idsOrUrl);
+		scrapeIds(doc, idsOrUrl, type);
 	} else {
 		if (type && type=="case") {
 			scrapeCase(doc, idsOrUrl);
@@ -137,9 +141,9 @@ function scrape(doc, idsOrUrl, type) {
 }
 
 
-function scrapeIds(doc, ids) {
+function scrapeIds(doc, ids, itemInfo) {
 	for (let i=0; i<ids.length; i++) {
-		// We need here 'let' to access ids[i] later in the nested functions
+		// We need here 'let' to access id later in the nested functions
 		let context = doc.querySelector('.gs_r[data-cid="' + ids[i] + '"]');
 		if (!context && ids.length==1) context = doc;
 		var citeUrl = '/scholar?q=info:' + ids[i] + ':scholar.google.com/&output=cite&scirp=1';
@@ -149,6 +153,7 @@ function scrapeIds(doc, ids) {
 		if (scilib && scilib==1) {
 			var citeUrl = '/scholar?scila=' + ids[i] + '&output=cite&scirp=1';
 		}
+		var idx = i;
 		ZU.doGet(citeUrl, function(citePage) {
 			var m = citePage.match(/href="((https?:\/\/[a-z\.]*)?\/scholar.bib\?[^"]+)/);
 			if (!m) {
@@ -165,8 +170,8 @@ function scrapeIds(doc, ids) {
 				throw new Error(msg);
 			}
 			var bibUrl = ZU.unescapeHTML(m[1]);
+			var idx = i
 			ZU.doGet(bibUrl, function(bibtex) {
-				
 				var translator = Zotero.loadTranslator("import");
 				translator.setTranslator("9cb70025-a888-4a29-a210-93ec52da40d4");
 				translator.setString(bibtex);
@@ -260,7 +265,12 @@ function scrapeIds(doc, ids) {
 							mimeType: "text/html"
 						});
 					}
-
+					
+					// Add item url
+					if (itemInfo) {
+						item.url = itemInfo[ids[idx]];
+					}
+					
 					item.complete();
 				});
 				translator.translate();
@@ -677,290 +687,7 @@ ItemFactory.prototype.saveItemCommonVars = function () {
 var testCases = [
 	{
 		"type": "web",
-		"url": "http://scholar.google.com/scholar?q=marbury&hl=en&btnG=Search&as_sdt=1%2C22&as_sdtp=on",
-		"items": "multiple"
-	},
-	{
-		"type": "web",
-		"url": "http://scholar.google.com/scholar?hl=en&q=kelo&btnG=Search&as_sdt=0%2C22&as_ylo=&as_vis=0",
-		"items": "multiple"
-	},
-	{
-		"type": "web",
-		"url": "http://scholar.google.com/scholar?hl=en&q=smith&btnG=Search&as_sdt=0%2C22&as_ylo=&as_vis=0",
-		"items": "multiple"
-	},
-	{
-		"type": "web",
-		"url": "http://scholar.google.com/scholar?hl=en&q=view+of+the+cathedral&btnG=Search&as_sdt=0%2C22&as_ylo=&as_vis=0",
-		"items": "multiple"
-	},
-	{
-		"type": "web",
-		"url": "http://scholar.google.com/scholar?hl=en&q=clifford&btnG=Search&as_sdt=0%2C22&as_ylo=&as_vis=0",
-		"items": "multiple"
-	},
-	{
-		"type": "web",
-		"url": "http://scholar.google.com/scholar_case?case=9834052745083343188&q=marbury+v+madison&hl=en&as_sdt=2,5",
-		"items": [
-			{
-				"itemType": "case",
-				"caseName": "Marbury v. Madison",
-				"creators": [],
-				"dateDecided": "1803",
-				"court": "Supreme Court",
-				"firstPage": "137",
-				"itemID": "1",
-				"reporter": "US",
-				"reporterVolume": "5",
-				"attachments": [
-					{
-						"title": "Google Scholar Judgement",
-						"type": "text/html"
-					}
-				],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "http://scholar.google.com/scholar_case?case=11350538941232186766",
-		"items": [
-			{
-				"itemType": "case",
-				"caseName": "Meier ex rel. Meier v. Sun Intern. Hotels, Ltd.",
-				"creators": [],
-				"dateDecided": "April 19, 2002",
-				"court": "Court of Appeals, 11th Circuit",
-				"firstPage": "1264",
-				"itemID": "1",
-				"reporter": "F. 3d",
-				"reporterVolume": "288",
-				"attachments": [
-					{
-						"title": "Google Scholar Judgement",
-						"type": "text/html"
-					}
-				],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "http://scholar.google.com/scholar_case?case=4250138655935640563",
-		"items": [
-			{
-				"itemType": "case",
-				"caseName": "Patio Enclosures, Inc. v. Four Seasons Marketing Corp.",
-				"creators": [],
-				"dateDecided": "September 21, 2005",
-				"court": "Court of Appeals, 9th Appellate Dist.",
-				"extra": "{:jurisdiction: Ohio}",
-				"firstPage": "4933",
-				"itemID": "1",
-				"reporter": "Ohio",
-				"reporterVolume": "2005",
-				"attachments": [
-					{
-						"title": "Google Scholar Judgement",
-						"type": "text/html"
-					}
-				],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "http://scholar.google.com/scholar_case?case=8121501341214166807",
-		"items": [
-			{
-				"itemType": "case",
-				"caseName": "Click v. Estate of Click",
-				"creators": [],
-				"dateDecided": "June 13, 2007",
-				"court": "Court of Appeals, 4th Appellate Dist.",
-				"extra": "{:jurisdiction: Ohio}",
-				"firstPage": "3029",
-				"itemID": "1",
-				"reporter": "Ohio",
-				"reporterVolume": "2007",
-				"attachments": [
-					{
-						"title": "Google Scholar Judgement",
-						"type": "text/html"
-					}
-				],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "http://scholar.google.com/scholar_case?case=834584264358299037",
-		"items": [
-			{
-				"itemType": "case",
-				"caseName": "Kenty v. Transamerica Premium Ins. Co.",
-				"creators": [],
-				"dateDecided": "July 5, 1995",
-				"court": "Supreme Court",
-				"extra": "{:jurisdiction: Ohio}",
-				"firstPage": "415",
-				"itemID": "1",
-				"reporter": "Ohio St. 3d",
-				"reporterVolume": "72",
-				"attachments": [
-					{
-						"title": "Google Scholar Judgement",
-						"type": "text/html"
-					}
-				],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "http://scholar.google.com/scholar_case?case=15235797139493194004",
-		"items": [
-			{
-				"itemType": "case",
-				"caseName": "Tinker v. Des Moines Independent Community School Dist.",
-				"creators": [],
-				"dateDecided": "February 24, 1969",
-				"court": "Supreme Court",
-				"firstPage": "503",
-				"itemID": "1",
-				"reporter": "US",
-				"reporterVolume": "393",
-				"attachments": [
-					{
-						"title": "Google Scholar Judgement",
-						"type": "text/html"
-					}
-				],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "http://scholar.google.com/scholar_case?case=163483131267446711",
-		"items": [
-			{
-				"itemType": "case",
-				"caseName": "Kaimowitz v. Board of Trustees of U. of Illinois",
-				"creators": [],
-				"dateDecided": "December 23, 1991",
-				"court": "Court of Appeals, 7th Circuit",
-				"firstPage": "765",
-				"itemID": "1",
-				"reporter": "F. 2d",
-				"reporterVolume": "951",
-				"attachments": [
-					{
-						"title": "Google Scholar Judgement",
-						"type": "text/html"
-					}
-				],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://scholar.google.com/scholar_case?case=608089472037924072",
-		"items": [
-			{
-				"itemType": "case",
-				"caseName": "Kline v. Mortgage Electronic Security Systems",
-				"creators": [],
-				"dateDecided": "February 27, 2013",
-				"court": "Dist. Court",
-				"docketNumber": "Case No. 3:08cv408",
-				"extra": "{:jurisdiction: SD Ohio}",
-				"attachments": [
-					{
-						"title": "Google Scholar Judgement",
-						"type": "text/html"
-					}
-				],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://scholar.google.de/citations?view_op=view_citation&hl=de&user=INQwsQkAAAAJ&citation_for_view=INQwsQkAAAAJ:u5HHmVD_uO8C",
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "Linked data-the story so far",
-				"creators": [
-					{
-						"firstName": "Christian",
-						"lastName": "Bizer",
-						"creatorType": "author"
-					},
-					{
-						"firstName": "Tom",
-						"lastName": "Heath",
-						"creatorType": "author"
-					},
-					{
-						"firstName": "Tim",
-						"lastName": "Berners-Lee",
-						"creatorType": "author"
-					}
-				],
-				"date": "2009",
-				"itemID": "bizer2009linked",
-				"libraryCatalog": "Google Scholar",
-				"pages": "205–227",
-				"publicationTitle": "Semantic services, interoperability and web applications: emerging concepts",
-				"attachments": [
-					{
-						"title": "Snapshot"
-					},
-					{
-						"title": "Fulltext",
-						"mimeType": "application/pdf"
-					}
-				],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://scholar.google.de/citations?user=INQwsQkAAAAJ&hl=de&oi=sra",
-		"items": "multiple"
-	},
-	{
-		"type": "web",
-		"url": "https://scholar.google.be/scholar?hl=en&as_sdt=1,5&as_vis=1&q=%22transformative+works+and+cultures%22&scisbd=1",
+		"url": "https://c3.glgoo.top/scholar?q=wgcna",
 		"items": "multiple"
 	}
 ]

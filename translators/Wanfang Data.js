@@ -1,21 +1,21 @@
 {
-	"translatorID": "dbee13de-2baf-4034-bbac-afa05bc29b48",
-	"label": "WanFang",
+	"translatorID": "cdd6de3b-5a71-4d3f-afe4-a3bd654e81fd",
+	"label": "Wanfang Data",
 	"creator": "Xingzhong Lin",
-	"target": "^https?://www\\.wanfangdata\\.com\\.cn",
+	"target": "^https?://[wd]+\\.wanfangdata\\.com\\.cn",
 	"minVersion": "",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcs",
-	"lastUpdated": "2019-11-20 05:35:20"
+	"lastUpdated": "2020-10-19 06:28:11"
 }
 
 /*
 	***** BEGIN LICENSE BLOCK *****
 
-	Copyright © 2019 Xingzhong Lin, linxzh1989@gmail.com
+	Copyright © 2019 Xingzhong Lin, https://github.com/Zotero-CN/translators_CN
 	
 	This file is part of Zotero.
 
@@ -35,59 +35,195 @@
 	***** END LICENSE BLOCK *****
 */
 
+var typeFieldMapper = {
+	"journalArticle" : {
+		"PeriodicalTitle":"publicationTitle",
+		"Volum":"volume",
+		"Issue":"issue",
+		"Page":"pages",
+		"PublishDate":"date",
+		"journalAbbreviation": "",
+		"DOI": "DOI",
+		"ISSN": "ISSN",
+		"Keywords": "tags",
+		"Creator": [["Creator", "author"]]
+	},
+	"thesis": {
+		"Degree":"thesisType",
+		"OrganizationNorm":"university",
+		"PublishDate": "date",
+		"MachinedKeywords": "tags",
+		"Creator": [
+			["Creator", "author"],
+			["Tutor", "contributor"]
+		],
+	},
+	"conferencePaper": {
+		"MeetingDate": "date",
+		"MeetingTitle": "conferenceName",
+		"MeetingCorpus": "proceedingsTitle",
+		"MeetingArea": "place",
+		"MachinedKeywords": "tags",
+		"Volum":"volume",
+		"Page": "pages",
+		"DOI": "DOI",
+		"Sponsor": "publisher",
+		"Creator": [["Creator", "author"]],
+	},
+	"patent": {
+		"ApplicantArea": "place",
+		"CountryOrganization": "country",
+		"PatentCode" : "patentNumber",
+		"ApplicationDate":"filingDate",
+		"PublicationDate": "issueDate",
+		"LegalStatus": "legalStatus",
+		"SignoryItem": "rights",
+		"Applicant": "issuingAuthority",
+		"PublicationNo" : "applicationNumber",
+		"Creator": [
+			["Inventor", "inventor"],
+			["Agent", "attorneyAgent"]
+		],
+	}
+};
+
+
 function getRefworksByID(ids, next) {
+	if (!ids.length) return;
+	var { dbname, filename, url} = ids.shift();
+	var headers = {
+		'Content-Type': 'application/json;charset=UTF-8'
+	};
+	var postData = JSON.stringify({'Id':filename});
+	Z.debug(dbname, filename, url);
 	var searchType = {
-		journalArticle: 'periodical',
-		patent: 'patent',
-		conferencePaper: 'conference',
-		thesis: 'thesis'
-	}
-	var r = Math.random();
-	var isHtml5Value = '';
-	for (var i=0, n=ids.length; i<n; i++) {
-		// only these four types have refworks
-		if (searchType[ids[i].dbname]){
-			isHtml5Value += searchType[ids[i].dbname] + "_" + ids[i].filename + ";";
-		}
-	}
-	//var isHtml5Value = "thesis_Y3578315;conference_9534067;periodical_jsjyjyfz201910006;patent_CN201880013080.0";
-	
-	var postData = "r=" + r + "&exportType=refWorks&isHtml5=true&isHtml5Value=" + isHtml5Value;
-	// Z.debug(postData);
-	ZU.doPost('http://www.wanfangdata.com.cn/export/getExportJson.do', postData, 
+		journalArticle: "Periodical",
+		thesis: "Thesis",
+		conferencePaper: "Conference",
+		patent: "Patent"
+	};
+	var postUrl = "http://d.wanfangdata.com.cn/Detail/" + searchType[dbname] + "/";
+	ZU.doPost(postUrl, postData, 
 		function(text) {
-			var text = JSON.parse(text)['exportHtml'];
-			var text = text.replace(/<br>/g, '\n');
-			text = text.replace(/^RT\s+Dissertation\/Thesis/gmi, 'RT Dissertation');
-			text = text.replace(/^RT\s+Conference Proceeding/gmi, "RT Conference Proceedings");
-			// Z.debug(text);
-			next(text);
-		}
+			detail = JSON.parse(text).detail[0];
+			detail = detail[Object.keys(detail)[0]];
+			// Z.debug(detail);
+			detail.url = url;
+			detail.dbname = dbname;
+			next(detail);
+			if (ids.length) {
+				getRefworksByID(ids, next);
+			}
+		},
+		headers=headers
 	);
+	
+}
+
+
+function scrape(ids, itemInfo) {
+	Z.debug("---------------WanFang Data 20201018---------------");
+	getRefworksByID(ids, function(detail) {
+		var dbname = detail.dbname;
+		var newItem = new Zotero.Item();
+		var matcher = typeFieldMapper[dbname];
+		newItem.itemType = dbname;
+		newItem.title = detail.Title[0];
+		newItem.abstractNote = detail.Abstract[0];
+		detail.Language ? newItem.language=detail.Language : newItem.language = 'chi';
+		if (detail.FulltextPath && detail.FulltextPath.startsWith("http")) { // add full text path in note
+			var note = `文章全文链接<br><a href="${detail.FulltextPath}">${detail.FulltextPath}</a>`;
+			newItem.notes.push({note:note});
+		}
+		newItem.url = detail.url;
+		for (let k in matcher) {
+			var field = matcher[k];
+			if (k === "Creator") {
+				newItem.creators = addCreators(field, detail);
+				continue;
+			}
+			if (field === "tags") {
+				var tags = [];
+				detail[k].forEach(tag => newItem.tags.push({"tag":tag}));
+				continue;
+			}
+			if (typeof field === "string") {
+				field = [field];
+			}
+			field.forEach(f => newItem[f] = (typeof detail[k] != 'object' ? detail[k]: detail[k][0]));
+			
+		}
+		var pdflink = getPDF(itemInfo, newItem.url);
+		if (pdflink) {
+			Z.debug(pdflink);
+			newItem.attachments = [{
+				title: "Full Text PDF",
+				mimeType: "application/pdf",
+				url: pdflink
+			}];
+		}
+		newItem.complete();
+	});
+}
+
+
+function addCreators(field, detail) {
+	var creators = [];
+	for (let pair of field) {
+		// Z.debug(pair);
+		var names = detail[pair[0]];
+		names = names.includes("%") ? names.split("%") : names;
+		names.forEach(
+			name => creators.push({lastName: name, creatorType:pair[1]})
+		);
+	}
+	var zhnamesplit = Z.getHiddenPref('zhnamesplit') === undefined ? true : false;
+	for (var i = 0, n = creators.length; i < n; i++) {
+		var creator = creators[i];
+
+		if (creator.firstName) continue;
+		var lastSpace = creator.lastName.lastIndexOf(' ');
+		if (creator.lastName.search(/[A-Za-z]/) !== -1 && lastSpace !== -1) {
+			// western name. split on last space
+			creator.firstName = creator.lastName.substr(0, lastSpace);
+			creator.lastName = creator.lastName.substr(lastSpace + 1);
+		} else if (zhnamesplit) {
+			// zhnamesplit is true, split firstname and lastname.
+			// Chinese name. first character is last name, the rest are first name
+			creator.firstName = creator.lastName.substr(1);
+			creator.lastName = creator.lastName.charAt(0);
+		}
+	}
+	return creators;
 }
 
 
 // Get file name and database name.
 function getIDFromURL(url) {
 	if (!url) return false;
-	
-	var filename = url.match(/[?&]id=([^&#]*)/i);
-	var dbname = url.match(/[?&]_type=([^&#]*)/i);
-	if (!dbname || !dbname[1] || !filename || !filename[1]) return false;
-	return { 
-				dbname: getTypeFromDBName(dbname[1]), 
-				filename: decodeURI(filename[1]).replace('%2F', '/'), url: url };
-			}
+	var tmp = url.split('/');
+	var dbname = tmp[3];
+	var filename = tmp.slice(4).join('/');
+	if (dbname && filename) {
+		return {dbname: getTypeFromDBName(dbname),
+		filename: filename, url:url};
+	} else {
+		return false;
+	}
+}
 
 // database and item type match
 function getTypeFromDBName(db) {
 	var dbType = {
-		perio: "journalArticle",
-		degree: "thesis",
-		legislations: "statute",
+		periodical: "journalArticle",
+		thesis: "thesis",
+		// claw: "statute",
 		conference: "conferencePaper",
 		patent: "patent",
-		tech: "report",
+		// nstr: "report",
+		perio: "journalArticle",
+		degree: "thesis",
+		// tech: "report"
 	};
 	if (db) {
 		return dbType[db];
@@ -99,12 +235,12 @@ function getTypeFromDBName(db) {
 
 function detectWeb(doc, url) {
 	var id = getIDFromURL(url);
-	var items = url.match(/\/(search)\//i);
-	Z.debug(id);
-	if (id) {
-		return id.dbname;
-	} else if (items) {
+	var items = url.match(/(\?searchType=)/i);
+	Z.debug(items);
+	if (items) {
 		return "multiple";
+	} else if (id) {
+		return id.dbname;
 	} else {
 		return false;
 	}
@@ -113,119 +249,58 @@ function detectWeb(doc, url) {
 function getSearchResults(doc, itemInfo) {
   var items = {};
   var found = false;
-  // TODO: adjust the CSS selector
   var rows = ZU.xpath(doc, "//div[@class='ResultList ']");
+  var idx = 1
   for (let row of rows) {
 	var title = ZU.xpath(row, ".//a[normalize-space()!='目录']")[0];
 	var href = title.href;
-	// Z.debug(title.innerText);
 	// Z.debug(href);
-	items[href] = title.innerText;
-	var clickCmd = ZU.xpath(row, ".//a/i")[0].getAttribute('onclick');
-	var clickCmdArr = clickCmd.split(/[,)']/);
-	var filename = clickCmdArr[2];
-	var dbname = clickCmdArr[5]; 
-	itemInfo[href] = {filename:filename, dbname:getTypeFromDBName(dbname), url:href};
+	items[href] = idx + " " + title.innerText;
+	var target = ZU.xpath(row, ".//div[@class='ResultCheck']/input")[0];
+	// Z.debug(target.getAttribute('docid'));
+	var filename = target.getAttribute('docid');
+	var dbname = target.getAttribute('doctype');
+	var reader = ZU.xpath(row, ".//a[@class='result_opera_ibook']");
+	if (reader.length > 0) {
+		var tmp = reader[0].getAttribute('onclick').split("','");
+		var pdflink = `http://oss.wanfangdata.com.cn/www/${tmp[5]}.ashx?isread=true&type=${tmp[2]}&resourceId=${tmp[4]}`;
+	} else {
+		var pdflink = null;
+	}
+	itemInfo[href] = {filename:filename, dbname:getTypeFromDBName(dbname), url:href, pdflink:pdflink};
+	idx +=1
   }
-  return items
+  // Z.debug(itemInfo);
+  return items;
 }
 
 function doWeb(doc, url) {
-  if (detectWeb(doc, url) == "multiple") {
+	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getSearchResults(doc, itemInfo);
 		Z.selectItems(items, function(selectedItems) {
 			if (!selectedItems) return true;
-			
-			var itemInfoByTitle = {};
 			var ids = [];
-			for (var url in selectedItems) {
-				// Z.debug('url ' + url);
-				// Z.debug(itemInfo[url]);
-				ids.push(itemInfo[url]);
-				itemInfoByTitle[ZU.trimInternal(selectedItems[url])] = itemInfo[url];
+			for (var href in selectedItems) {
+				ids.push(itemInfo[href]);
 			}
-			scrape(ids, doc, url, itemInfoByTitle);
+			// Z.debug(ids);
+			scrape(ids, itemInfo)
 		});
 	} else {
-		scrape([getIDFromURL(url)], doc, url);
+		var id = getIDFromURL(url);
+		scrape([id], doc);
 	}
 }
 
-function scrape(ids, doc, url, itemInfo) {
-	getRefworksByID(ids, function(text, ids) {
-		var translator = Z.loadTranslator('import');
-		translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86'); //Refworks
-		translator.setString(text);
-		translator.setHandler('itemDone', function(obj, newItem) {
-			// split names
-			var authors = newItem.creators[0]['lastName'];
-			// remove [names in PINYIN]
-			var authors = authors.replace(/[\s;]\[.*\]/g, '');
-			if (newItem.itemType == "conferencePaper"){
-				var authors = authors.split(/[\s;]/);
-			} else {
-				var authors = authors.split(';');
-			}
-			newItem.creators = [];
-			for (var i = 0, n = authors.length; i < n; i++) {
-				var author = ZU.trimInternal(authors[i]);
-				var creator = {creatorType: "author"};
-				var lastSpace = author.lastIndexOf(' ');
-				if (author.search(/[A-Za-z]/) !== -1 && lastSpace !== -1) {
-					// western name. split on last space
-					creator['firstName'] = author.substr(0,lastSpace);
-					creator['lastName'] = author.substr(lastSpace + 1);
-				} else {
-					// Chinese name. first character is last name, the rest are first name
-					creator['firstName'] = author.substr(1);
-					creator['lastName'] = author.charAt(0);
-				}
-				newItem.creators.push(creator);
-			}
-			// split tags 
-			var tags = newItem.tags;
-			newItem.tags = [];
-			for (var tag of tags){
-				var tagSplit = tag.split(/\s+/);
-				newItem.tags = newItem.tags.concat(tagSplit);
-			}
-			// remove unnecessary notes
-			if (newItem.notes){
-				newItem.notes = [];
-			}
-				
-			if (newItem.abstractNote) {
-				newItem.abstractNote = newItem.abstractNote.replace(/\s*[\r\n]\s*/g, '\n');
-			}
-			
-			// clean up tags. Remove numbers from end
-			for (var j = 0, l = newItem.tags.length; j < l; j++) {
-				newItem.tags[j] = newItem.tags[j].replace(/:\d+$/, '');
-			}
-			
-			newItem.title = ZU.trimInternal(newItem.title);
-			if (itemInfo) {
-				var info = itemInfo[newItem.title];
-				if (!info) {
-					Z.debug('No item info for "' + newItem.title + '"');
-				} else {
-					newItem.url = info.url;
-				}
-			} else {
-				newItem.url = url;
-			}
-			newItem.attachments = [{
-				url: newItem.url,
-				title: newItem.title,
-				mimeType: "text/html",
-				snapshot: true
-			}];
-			newItem.complete();
-		});
-		
-		translator.translate();
-	});
+function getPDF(target, url) {
+	if (Object.prototype.toString.call(target) == "[object Object]") {
+		var pdflink = target[url].pdflink;
+	} else {
+		var pdflink = ZU.xpath(target, "//a[@class='onlineRead']");
+		var pdflink = pdflink.length > 0 ? pdflink[0].href : null;
+	}
+	return pdflink;
 }/** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -486,7 +561,7 @@ var testCases = [
 				"date": "2019",
 				"DOI": "10.1111/bjd.18291[doi]",
 				"ISSN": "0007-0963",
-				"abstractNote": "Summary 确定皮肤中存在何种细菌的传统方法是使用拭子取样。这种方法的一个局限是:拭子采样只能从皮肤表面采集,而细菌可能也存在于皮肤的深层。来自瑞典、爱尔兰和英国的研究者们调查了皮肤拭子和实际活检(组织样本)结果的差异。 在 16 名接受躯干或肢体皮损切除(手术去除)的患者中,从相同部位采集了一份拭子样本和一份 2 mm 环钻活检样本。首先润湿使用的拭子,之后对下方的脂肪层进行活检。对活检样本使用一种称为 16S rRNA 基因测序的技术来明确细菌的存在情况。这是一种非常敏感的技术,甚至在细菌不能被培养(生长)的情况发现细菌的 DNA。 活检显示称为梭菌目和拟杆菌门的细菌显著增多。梭菌目不需要氧气即可存活,因此预计可能在更深层皮肤发现。另一方面,其他细菌,如常见的金黄色葡萄球菌,在拭子样本中含量更为丰富。 更准确地了解皮肤中生活着何种细菌具有重要意义,因为这些细菌可能引发免疫反应,此反应对于特应性皮炎、银屑病和化脓性汗腺炎等皮肤病具有重要意义。 Linked Article: Prast‐Nielsen et al. Br J Dermatol 2019; 181:572–579",
+				"abstractNote": "Summary 确定皮肤中存在何种细菌的传统方法是使用拭子取样。这种方法的一个局限是:拭子采样只能从皮肤表面采集,而细菌可能也存在于皮肤的深层。来自瑞典、爱尔兰和英国的研究者们调查了皮肤拭子和实际活检(组织样本)结果的差异。 在 16 名接受躯干或肢体皮损切除(手术去除)的患者中,从相同部位采集了一份拭子样本和一份 2 mm 环钻活检样本。首先润湿使用的拭子,之后对下方的脂肪层进行活检。对活检样本使用一种称为 16S rRNA 基因测序的技术来明确细菌的存在情况。这是一种非常敏感的技术,甚至在细菌不能被培养(生长)的情况发现细菌的 DNA。 活检显示称为梭菌目和拟杆菌门的细菌显著增多。梭菌目不需要氧气即可存活,因此预计可能在更深层皮肤发现。另一方面,其他细菌,如常见的金黄色葡萄球菌,在拭子样本中含量更为丰富。 更准确地了解皮肤中生活着何种细菌具有重要意义,因为这些细菌可能引发免疫反应,此反应对于特应性皮炎、银屑病和化脓性汗腺炎等皮肤病具有重要意义。 Linked Article: Prast‐Nielsen et al. Br J Dermatol 2019; 181:572–579",
 				"issue": "3",
 				"language": "eng",
 				"libraryCatalog": "WanFang",
