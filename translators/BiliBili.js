@@ -105,7 +105,7 @@ function scrape(doc, url) {
 	if (item.date) {
 		item.date = ZU.strToISO(item.date);
 	}
-	var author = ZU.xpath(doc, "//div[@class='u-info']/div[@class='name']/a[1]");
+	var author = ZU.xpath(doc, "//div[@class='r-con']//a[contains(@class,'username') or contains(@class,'name-text')]");
 	if (!author.length) {
 		author = ZU.xpath(doc, "./div/div[3]/span[4]");
 	}
