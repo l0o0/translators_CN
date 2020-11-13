@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gc",
-	"lastUpdated": "2020-07-03 11:38:55"
+	"lastUpdated": "2020-11-04 14:48:26"
 }
 
 /*
@@ -97,27 +97,26 @@ function scrape(doc, url) {
 		time = ZU.xpath(doc, "./a");
 	}
 	item.runningTime = time[0].innerText;
-	var update = ZU.xpath(doc, "//div[@class='video-data'][1]/span[2]");
-	if (!update.length) { 
-		update = ZU.xpath(doc, "./div/div[3]/span[3]");
-	}
-	item.date = ZU.trimInternal(update[0].innerText);
-	if (item.date) {
-		item.date = ZU.strToISO(item.date);
-	}
-	var author = ZU.xpath(doc, "//div[@class='u-info']/div[@class='name']/a[1]");
-	if (!author.length) {
-		author = ZU.xpath(doc, "./div/div[3]/span[4]");
-	}
-	item.creators.push({
-		lastName: author[0].innerText,
-		creatorType: "author",
-		fieldMode: 1
-	});
+	
+	var uploadDate = ZU.xpath(doc, "//head/meta[@itemprop='uploadDate']");
+	item.date = uploadDate[0].content;
+
+	var authors = ZU.xpath(doc, "//div[@class='r-con']//a[contains(@class,'username') or contains(@class,'name-text')]");
+	if (!authors.length) {
+		authors = ZU.xpath(doc, "./div/div[3]/span[4]");
+	} 
+	
+	authors.forEach(function(a){
+		item.creators.push({
+			lastName: a.innerText,
+			creatorType: "author",
+			fieldMode: 1
+		});
+	})
 	
 	var description = ZU.xpath(doc, "//div[@id='v_desc']/div[contains(@class, 'info')]");
 	if (description.length) {
-		item.abstractNote = ZU.cleanTags(description[0].innerText);
+		item.abstractNote = ZU.cleanTags(description[1].innerText);
 	}
 	
 	var tags = ZU.xpath(doc, "//li[@class='tag'] ");
