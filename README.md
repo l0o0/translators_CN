@@ -93,6 +93,10 @@ Chrome 浏览器按照下面信息找到更新按钮
 + [Zotero 条目类型说明](https://aurimasv.github.io/z2csl/typeMap.xml)
 + [How to write a Zotero translator](https://niche-canada.org/member-projects/zotero-guide/about.html)
 
+## 🦸 其他热心参与者
+[@wanyzh](https://github.com/wanyzh)
+[@smilevent](https://github.com/smilevent)
+[@Lemmingh](https://github.com/Lemmingh)
 
 ## 🎈问题交流
 
