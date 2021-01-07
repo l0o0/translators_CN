@@ -278,7 +278,7 @@ function scrape(ids, doc, itemInfo) {
 			}
 			for (var i = 0, n = newItem.creators.length; i < n; i++) {
 				var creator = newItem.creators[i];
-				if (newItem.itemType == 'thesis' && i == n-1) {  // The last author is Advisor in thesis
+				if (newItem.itemType == 'thesis' && i != 0) {  // Except first author are Advisors in thesis
 					creator.creatorType = 'contributor';  // Here is contributor
 				}
 				if (creator.firstName) continue;
