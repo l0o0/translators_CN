@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2021-01-19 14:26:56"
+	"lastUpdated": "2021-01-29 05:37:01"
 }
 
 /*
@@ -182,6 +182,9 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 				filelink = filelink[0].href;
 				itemInfo[itemUrl].filelink = filelink;
 			}
+			var cite = ZU.xpath(links[i], "./td[@class='quote']/span/a");
+			cite = cite.length > 0 ? cite[0].innerText : "";
+			itemInfo[itemUrl].cite = cite;
 		}
 		items[itemUrl] = links[i].innerText;
 	}
@@ -209,7 +212,7 @@ function detectWeb(doc, url) {
 }
 
 function doWeb(doc, url) {
-	Z.debug("----------------CNKI 20210119---------------------");
+	Z.debug("----------------CNKI 20210129---------------------");
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
@@ -238,6 +241,7 @@ function scrape(ids, doc, itemInfo) {
 			// add PDF/CAJ attachments
 			// var loginStatus = loginDetect(doc);
 			var loginStatus = true;
+			var cite = citeStr = pubType = pubTypeStr = "";
 			// If you want CAJ instead of PDF, set keepPDF = false
 			// 如果你想将PDF文件替换为CAJ文件，将下面一行 keepPDF 设为 false
 			var keepPDF = Z.getHiddenPref('CNKIPDF');
@@ -267,10 +271,21 @@ function scrape(ids, doc, itemInfo) {
 					mimeType: mimeType,
 					url: fileUrl
 				}];
+				cite = itemInfo[url].cite;
 			}
 			else if (!itemInfo) { // detail page
 				newItem.attachments = getAttachments(doc, newItem, keepPDF);
+				cite = ZU.xpath(doc, "//em[text()= '被引频次']/parent::span/text()");
+				cite = cite.length > 0 ? cite[0].data.trim(): "";
+				pubType = ZU.xpath(doc, "//div[@class='top-tip']//a[@class='type']");
+				pubTypeStr = pubType.length > 0 ? "<" + pubType.map(function (ele) {
+                    return ele.innerText
+                }).join(", ") + ">" : "";
+				
 			}
+			var timestamp = new Date().toISOString().slice(0, 10);
+			var citeStr = cite ? `${cite} citations(CNKI)[${timestamp}]` : "";
+			newItem.extra = (citeStr + pubTypeStr).trim();
 			// split names, Chinese name split depends on Zotero Connector preference translators.zhnamesplit
 			var zhnamesplit = Z.getHiddenPref('zhnamesplit');
 			if (zhnamesplit === undefined) {
