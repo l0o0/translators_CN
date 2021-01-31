@@ -2,14 +2,14 @@
 	"translatorID": "5a325508-cb60-42c3-8b0f-d4e3c6441058",
 	"label": "Weixin",
 	"creator": "Fushan Wen",
-	"target": "^https?://([^/]+\\.)?mp\\.weixin\\.qq\\.com",
+	"target": "^https?://mp\\.weixin\\.qq\\.com",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2020-11-20 21:37:05"
+	"lastUpdated": "2021-01-31 16:32:20"
 }
 
 /*
@@ -28,55 +28,58 @@
 	***** END LICENSE BLOCK *****
 */
 
-function getMetaContent(doc, property) {
-	return ZU.xpath(doc, "/html/head/meta[@property='" + property + "']")[0].content.trim();
+function scrape(doc, url) {
+	const item = new Zotero.Item("webpage");
+	
+	const ogMetadataCache = new Map();
+	const nodeList = doc.head.querySelectorAll(':scope meta[property^="og:"]');
+	for (const node of nodeList) {
+		ogMetadataCache.set(node.getAttribute("property"), node.content);
+	}
+	
+	item.title = ogMetadataCache.get("og:title");
+	item.websiteTitle = ogMetadataCache.get("og:site_name");
+	item.url = ogMetadataCache.get("og:url");
+	item.abstractNote = ogMetadataCache.get("og:description");
+	item.creators = getArticleCreator(doc, ogMetadataCache.get("og:article:author"));
+	item.date = getArticleDate(doc);
+	item.accessDate = new Date().toISOString().slice(0, 10);
+	note_content = doc.body.querySelector("#js_content").innerText.trim().replace(/[\r\n]+/g, "<br/>");
+	item.notes.push({note:note_content});
+	
+	item.complete();
+}
+
+function detectWeb(doc, url) {
+	const ogType = doc.head.querySelector('meta[property="og:type"]');
+	if (ogType && ogType.content === "article") {
+		return "webpage";
+	}
+	return false;
+}
+
+function doWeb(doc, url) {
+	if (detectWeb(doc, url) === "webpage") {		
+		scrape(doc, url);
+	}
 }
 
 function getArticleDate(doc) {
-	var script_list = ZU.xpath(doc, "//script");
-	for (var sc of script_list) {
+	const script_list = ZU.xpath(doc, "//script");
+	for (const sc of script_list) {
 		if (sc.innerText.includes("今天")) {
-			Zotero.debug("Good date");
-			return sc.innerText.match(/s=\"(.+)\"/)[1].trim();
+			return sc.innerText.match(/=\"(\d+?-\d+?-\d+?)\"/)[1].trim();
 		}
 	}
 	return "";
 }
 
-function getArticleCreator(doc) {
-	var creatorName = getMetaContent(doc, "og:article:author");
-	var accountName = ZU.xpath(doc, "//a[@id='js_name']")[0].innerText.trim();
-	if (!creatorName.length) {
-		return [{lastName: accountName, creatorType: "author", fieldMode: 1}];
+function getArticleCreator(doc, authorName) {
+	const profileName = doc.querySelector("#js_name").innerText.trim();
+	if (!authorName.length || authorName === profileName) {
+		return [{lastName: profileName, creatorType: "author", fieldMode: 1}];
 	}
-	return [{lastName: creatorName, creatorType: "author", fieldMode: 1}, {lastName: accountName, creatorType: "author", fieldMode: 1}];
-}
-
-function scrape(doc, url) {
-	var item = new Zotero.Item("webpage");
-	item.title = getMetaContent(doc, "og:title");
-	item.websiteTitle = getMetaContent(doc, "og:site_name");
-	item.url = getMetaContent(doc, "og:url");
-	item.abstractNote = getMetaContent(doc, "og:description");
-	item.creators = getArticleCreator(doc);
-	item.date = getArticleDate(doc);
-	item.accessDate = new Date().toISOString().slice(0, 10);
-	item.extra = ZU.xpath(doc, "//div[@id='js_content']")[0].innerText.trim().replace(/[\r\n]+/g, "\n");
-	item.complete();
-}
-
-function detectWeb(doc, url) {
-	var title = getMetaContent(doc, "og:title");
-	if (title.length) {
-		return "webpage";
-	}
-	else {
-		return false;
-	}
-}
-
-function doWeb(doc, url) {
-	if (detectWeb(doc, url) == "webpage") {		
-		scrape(doc, url);
-	}
+	return [{lastName: authorName, creatorType: "author", fieldMode: 1}, 
+			{lastName: profileName, creatorType: "author", fieldMode: 1}
+		   ];
 }
