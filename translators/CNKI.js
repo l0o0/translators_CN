@@ -336,6 +336,41 @@ function scrape(ids, doc, itemInfo) {
 			// CN 中国刊物编号，非refworks中的callNumber
 			// CN in CNKI refworks format explains Chinese version of ISSN
 			newItem.callNumber = null;
+			// If you don't need references automatically saved as a note, set addReferenceToNote = false
+			// 如果不需要自动记录引用的文献，把addReferenceToNote改成false
+			if (addReferenceToNote === undefined) {
+				addReferenceToNote = true;
+			}
+			var iframeDocument = doc.querySelector("#frame1");			
+			if (iframeDocument && addReferenceToNote) {
+				var references = iframeDocument.contentDocument.querySelectorAll(".essayBox");
+				if (references.length) {
+					var noteContent = "<p><strong>References</strong></p>";					
+					for (var ref of references) {
+						var referenceItems = ref.querySelectorAll("li");
+						if (referenceItems.length) {
+							var referenceCategory = ref.querySelector(".dbTitle").innerText;
+							if (referenceCategory) {
+								noteContent += "<p>" + referenceCategory + "<ol>";
+							} else {
+								noteContent += "<p><ol>";
+							}
+							
+							for (var referenceItem of referenceItems) {
+								var referenceTitle = referenceItem.innerText.replace(/\[\d\]/,"").replaceAll("\n","");
+								var referenceLink = referenceItem.querySelector("a");
+								if (referenceTitle && referenceLink) {
+									noteContent += "<li><a href='" + referenceLink.href + "'>" + referenceTitle + "</a></li>";
+								} else if (referenceTitle) {
+									noteContent += "<li>" + referenceTitle + "</li>";
+								}
+							}
+							noteContent += "</ol></p>";
+						}
+					}
+					newItem.notes.push({note:noteContent});
+				}
+			}
 			newItem.complete();
 		});
 		
