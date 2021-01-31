@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2020-09-30 02:31:05"
+	"lastUpdated": "2021-01-29 05:37:01"
 }
 
 /*
@@ -182,6 +182,9 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 				filelink = filelink[0].href;
 				itemInfo[itemUrl].filelink = filelink;
 			}
+			var cite = ZU.xpath(links[i], "./td[@class='quote']/span/a");
+			cite = cite.length > 0 ? cite[0].innerText : "";
+			itemInfo[itemUrl].cite = cite;
 		}
 		items[itemUrl] = links[i].innerText;
 	}
@@ -209,7 +212,7 @@ function detectWeb(doc, url) {
 }
 
 function doWeb(doc, url) {
-	Z.debug("----------------CNKI 20200910---------------------");
+	Z.debug("----------------CNKI 20210129---------------------");
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
@@ -238,6 +241,7 @@ function scrape(ids, doc, itemInfo) {
 			// add PDF/CAJ attachments
 			// var loginStatus = loginDetect(doc);
 			var loginStatus = true;
+			var cite = citeStr = pubType = pubTypeStr = "";
 			// If you want CAJ instead of PDF, set keepPDF = false
 			// 如果你想将PDF文件替换为CAJ文件，将下面一行 keepPDF 设为 false
 			var keepPDF = Z.getHiddenPref('CNKIPDF');
@@ -267,10 +271,21 @@ function scrape(ids, doc, itemInfo) {
 					mimeType: mimeType,
 					url: fileUrl
 				}];
+				cite = itemInfo[url].cite;
 			}
 			else if (!itemInfo) { // detail page
 				newItem.attachments = getAttachments(doc, newItem, keepPDF);
+				cite = ZU.xpath(doc, "//em[text()= '被引频次']/parent::span/text()");
+				cite = cite.length > 0 ? cite[0].data.trim(): "";
+				pubType = ZU.xpath(doc, "//div[@class='top-tip']//a[@class='type']");
+				pubTypeStr = pubType.length > 0 ? "<" + pubType.map(function (ele) {
+                    return ele.innerText
+                }).join(", ") + ">" : "";
+				
 			}
+			var timestamp = new Date().toISOString().slice(0, 10);
+			var citeStr = cite ? `${cite} citations(CNKI)[${timestamp}]` : "";
+			newItem.extra = (citeStr + pubTypeStr).trim();
 			// split names, Chinese name split depends on Zotero Connector preference translators.zhnamesplit
 			var zhnamesplit = Z.getHiddenPref('zhnamesplit');
 			if (zhnamesplit === undefined) {
@@ -278,7 +293,7 @@ function scrape(ids, doc, itemInfo) {
 			}
 			for (var i = 0, n = newItem.creators.length; i < n; i++) {
 				var creator = newItem.creators[i];
-				if (newItem.itemType == 'thesis' && i == n-1) {  // The last author is Advisor in thesis
+				if (newItem.itemType == 'thesis' && i != 0) {  // Except first author are Advisors in thesis
 					creator.creatorType = 'contributor';  // Here is contributor
 				}
 				if (creator.firstName) continue;
@@ -303,9 +318,9 @@ function scrape(ids, doc, itemInfo) {
 			}
 			newItem.url = url;
 			if (!itemInfo) {
-				var doi = doc.querySelector("#catalog_DOI"); // add DOI
-				if (doi) {
-					newItem.DOI = doi.nextSibling.text;
+				var doi = ZU.xpath(doc, "//*[contains(text(), 'DOI')]/following-sibling::p"); // add DOI
+				if (doi.length > 0) {
+					newItem.DOI = doi[0].innerText;
 				}
 				var moreClick = ZU.xpath(doc, "//span/a[@id='ChDivSummaryMore']");
 				if (moreClick.length) {
@@ -618,50 +633,43 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://oversea.cnki.net/KCMS/detail/detail.aspx?dbcode=CAPJ&dbname=CAPJDAY&filename=SDYB20200908000&v=MTM4NjRDTEw3UjdxZForWm1GeW5sVWJ2TEkxaz1OaW5TYkxHNEhOSE1wbzlOWk9zUFl3OU16bVJuNmo1N1QzZmxxV00w",
+		"url": "https://chn.oversea.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFD&dbname=CJFDLAST2020&filename=ZGYK202012011&v=%25mmd2BHGGqe3MG%25mmd2FiWsTP5sBgemYG4X5LOYXSuyd0Rs%25mmd2FAl1mzrLs%25mmd2F7KNcFfXQMiFAipAgN",
 		"items": [
 			{
 				"itemType": "journalArticle",
-				"title": "新型冠状病毒肺炎2例报告",
+				"title": "多芯片联合分析2型糖尿病发病相关基因及其与阿尔茨海默病的关系",
 				"creators": [
 					{
-						"lastName": "牛",
-						"firstName": "占丛",
+						"lastName": "辛",
+						"firstName": "宁",
 						"creatorType": "author"
 					},
 					{
-						"lastName": "王",
-						"firstName": "彦霞",
+						"lastName": "陈",
+						"firstName": "建康",
 						"creatorType": "author"
 					},
 					{
-						"lastName": "王",
-						"firstName": "晓亚",
+						"lastName": "陈",
+						"firstName": "艳",
 						"creatorType": "author"
 					},
 					{
-						"lastName": "王",
-						"firstName": "晓庆",
-						"creatorType": "author"
-					},
-					{
-						"lastName": "李",
-						"firstName": "亚轻",
-						"creatorType": "author"
-					},
-					{
-						"lastName": "边",
-						"firstName": "竞",
+						"lastName": "杨",
+						"firstName": "洁",
 						"creatorType": "author"
 					}
 				],
-				"ISSN": "1671-7554",
-				"abstractNote": "<正>新型冠状病毒（2019-Novel coronavirus,2019-nCov）属于β属的冠状病毒,感染后引起的新型冠状病毒肺炎（Coronavirus Disease 2019,COVID-19）可引起肺、肝、脾、肾、心等多脏器病理改变[1],肺部受损尤其严重。对COVID-19死亡患者病理学研究发现,主要表现为肺泡上皮损伤和透明膜的形成,与重症急性呼吸综合征（severe acute respiratory syn-drome,SARS）极其相似[2]。",
-				"language": "中文",
+				"date": "2020",
+				"ISSN": "0258-4646",
+				"abstractNote": "目的利用生物信息学方法探索2型糖尿病发病的相关基因,并研究这些基因与阿尔茨海默病的关系。方法基因表达汇编(GEO)数据库下载GSE85192、GSE95849、GSE97760、GSE85426数据集,获得健康人和2型糖尿病患者外周血的差异基因,利用加权基因共表达网络(WGCNA)分析差异基因和临床性状的关系。使用DAVID数据库分析与2型糖尿病有关的差异基因的功能与相关通路,筛选关键蛋白。根据结果将Toll样受体4 (TLR4)作为关键基因,利用基因集富集分析(GSEA)分析GSE97760中与高表达TLR4基因相关的信号通路。通过GSE85426验证TLR4的表达量。结果富集分析显示,差异基因主要参与的生物学过程包括炎症反应、Toll样受体(TLR)信号通路、趋化因子产生的正向调节等。差异基因主要参与的信号通路有嘧啶代谢通路、TLR信号通路等。ILF2、TLR4、POLR2G、MMP9为2型糖尿病的关键基因。GSEA显示,TLR4上调可通过影响嘧啶代谢及TLR信号通路而导致2型糖尿病及阿尔茨海默病的发生。TLR4在阿尔茨海默病外周血中高表达。结论 ILF2、TLR4、POLR2G、MMP9为2型糖尿病发病的关键基因,TLR4基因上调与2型糖尿病、阿尔茨海默病发生有关。",
+				"issue": "12",
+				"language": "中文;",
 				"libraryCatalog": "CNKI",
-				"pages": "1-3",
-				"publicationTitle": "山东大学学报(医学版)",
-				"url": "https://oversea.cnki.net/KCMS/detail/detail.aspx?dbcode=CAPJ&dbname=CAPJDAY&filename=SDYB20200908000&v=MTM4NjRDTEw3UjdxZForWm1GeW5sVWJ2TEkxaz1OaW5TYkxHNEhOSE1wbzlOWk9zUFl3OU16bVJuNmo1N1QzZmxxV00w",
+				"pages": "1106-1111+1117",
+				"publicationTitle": "中国医科大学学报",
+				"url": "https://chn.oversea.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFD&dbname=CJFDLAST2020&filename=ZGYK202012011&v=%25mmd2BHGGqe3MG%25mmd2FiWsTP5sBgemYG4X5LOYXSuyd0Rs%25mmd2FAl1mzrLs%25mmd2F7KNcFfXQMiFAipAgN",
+				"volume": "49",
 				"attachments": [
 					{
 						"title": "Full Text PDF",
@@ -670,16 +678,34 @@ var testCases = [
 				],
 				"tags": [
 					{
-						"tag": "新型冠状病毒肺炎"
+						"tag": "2型糖尿病"
 					},
 					{
-						"tag": "核酸检测"
+						"tag": "Alzheimer disease"
 					},
 					{
-						"tag": "流行病学史"
+						"tag": "data mining"
 					},
 					{
-						"tag": "胸部CT"
+						"tag": "gene chip"
+					},
+					{
+						"tag": "islet inflammation"
+					},
+					{
+						"tag": "type 2 diabetes"
+					},
+					{
+						"tag": "基因芯片"
+					},
+					{
+						"tag": "数据挖掘"
+					},
+					{
+						"tag": "胰岛炎症反应"
+					},
+					{
+						"tag": "阿尔茨海默病"
 					}
 				],
 				"notes": [],

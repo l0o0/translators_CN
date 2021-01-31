@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcs",
-	"lastUpdated": "2020-10-19 06:28:11"
+	"lastUpdated": "2020-12-30 01:59:51"
 }
 
 /*
@@ -122,7 +122,7 @@ function getRefworksByID(ids, next) {
 
 
 function scrape(ids, itemInfo) {
-	Z.debug("---------------WanFang Data 20201018---------------");
+	Z.debug("---------------WanFang Data 20201230---------------");
 	getRefworksByID(ids, function(detail) {
 		var dbname = detail.dbname;
 		var newItem = new Zotero.Item();
@@ -173,9 +173,13 @@ function addCreators(field, detail) {
 		// Z.debug(pair);
 		var names = detail[pair[0]];
 		names = names.includes("%") ? names.split("%") : names;
-		names.forEach(
-			name => creators.push({lastName: name, creatorType:pair[1]})
-		);
+		if (names instanceof Array) {
+			names.forEach(
+				name => creators.push({lastName: name, creatorType:pair[1]})
+			);
+		} else {
+			creators.push({lastName: names, creatorType:pair[1]});
+		}
 	}
 	var zhnamesplit = Z.getHiddenPref('zhnamesplit') === undefined ? true : false;
 	for (var i = 0, n = creators.length; i < n; i++) {
