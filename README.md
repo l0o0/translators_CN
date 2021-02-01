@@ -45,6 +45,9 @@
 + [专利之星](http://cprs.patentstar.com.cn/) -> [PatentStar.js](./translators/PatentStar.js)
   - [x] 抓取专利引文信息
   - [x] PDF附件下载（需要注册账号） 
++ 微信公众号 -> [Weixin.js](./translators/Weixin.js)
+  - [x] 抓取网页引文信息
+  - [x] 公众号内容保存为笔记形式(仅保留文本)
 
 ## 📢 如何使用  
 
