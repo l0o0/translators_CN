@@ -91,13 +91,11 @@ function scrape(doc, _url) {
 	var dataUrl = attr(doc, 'i.reqdata', 'url');
 	var diversion = attr(doc, 'i.reqdata', 'diversion');
 	var sign = attr(doc, 'a.sc_q', 'data-sign');
-	var risUrl = "http://xueshu.baidu.com/u/citation?&url=" + encodeURIComponent(dataUrl) + "&sign=" + sign + "&diversion=" + diversion + "&t=ris";
 	var title = doc.title.replace(/\s+-\s+百度学术/, '');
 	var tags = [];
 	doc.querySelectorAll('p.kw_main span a').forEach(e => tags.push(ZU.trimInternal(e.textContent)));
 	// Z.debug({ ris });
 	// delete parenthesis in pages information, e.g. SP  - 5-7(3)
-	ris = ris.replace(/(SP\s+-\s\d+-\d+)\(\d+\)$/m, "$1");
 	var item= new Zotero.Item(detectWeb(doc,_url));
 	item.url = dataUrl;
 	var doiLink = attr(doc, 'a.dl_item[data-url*="doi.org/"]', 'data-url');
