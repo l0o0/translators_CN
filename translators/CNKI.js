@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2021-01-29 05:37:01"
+	"lastUpdated": "2021-02-07 03:36:41"
 }
 
 /*
@@ -29,6 +29,7 @@
 	along with Zotero. If not, see <http://www.gnu.org/licenses/>.
 	***** END LICENSE BLOCK *****
 */
+
 // Target regex for default search, advance search, detail page and journal articles pages.
 // Fetches RefWorks records for provided IDs and calls onDataAvailable with resulting text
 // ids should be in the form [{dbname: "CDFDLAST2013", filename: "1013102302.nh"}]
@@ -212,7 +213,7 @@ function detectWeb(doc, url) {
 }
 
 function doWeb(doc, url) {
-	Z.debug("----------------CNKI 20210129---------------------");
+	Z.debug("----------------CNKI 20210207---------------------");
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
@@ -278,9 +279,8 @@ function scrape(ids, doc, itemInfo) {
 				cite = ZU.xpath(doc, "//em[text()= '被引频次']/parent::span/text()");
 				cite = cite.length > 0 ? cite[0].data.trim(): "";
 				pubType = ZU.xpath(doc, "//div[@class='top-tip']//a[@class='type']");
-				pubTypeStr = pubType.length > 0 ? "<" + pubType.map(function (ele) {
-                    return ele.innerText
-                }).join(", ") + ">" : "";
+				pubTypeStr = pubType.length > 0 ? "<" + pubType.map(ele => ele.innerText)
+					.join(", ") + ">" : "";
 				
 			}
 			var timestamp = new Date().toISOString().slice(0, 10);
