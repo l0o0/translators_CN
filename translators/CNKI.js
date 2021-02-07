@@ -2,7 +2,7 @@
 	"translatorID": "5c95b67b-41c5-4f55-b71a-48d5d7183063",
 	"label": "CNKI",
 	"creator": "Aurimas Vinckevicius, Xingzhong Lin",
-	"target": "^https?://([^/]+\\.)?cnki\\.net",
+	"target": "https?://.*?/(kns8?/defaultresult/index|kns8?/AdvSearch|kcms/detail/|KNavi/JournalDetail/?)",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
@@ -29,7 +29,7 @@
 	along with Zotero. If not, see <http://www.gnu.org/licenses/>.
 	***** END LICENSE BLOCK *****
 */
-
+// Target regex for default search, advance search, detail page and journal articles pages.
 // Fetches RefWorks records for provided IDs and calls onDataAvailable with resulting text
 // ids should be in the form [{dbname: "CDFDLAST2013", filename: "1013102302.nh"}]
 function getRefWorksByID(ids, onDataAvailable) {
