@@ -48,6 +48,9 @@
 + 微信公众号 -> [Weixin.js](./translators/Weixin.js)
   - [x] 抓取网页引文信息
   - [x] 公众号内容保存为笔记形式(仅保留文本)
++ 知乎 -> [Zhihu.js](/translators/Zhihu.js)
+  - [x] 抓取知乎回答与专栏
+  - [x] 文章内容保存于笔记中
 
 ## 📢 如何使用  
 
