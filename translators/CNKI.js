@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2021-02-07 03:36:41"
+	"lastUpdated": "2021-02-22 03:10:36"
 }
 
 /*
@@ -125,6 +125,7 @@ function getTypeFromDBName(dbname) {
 		CLKM: "thesis",
 		CCND: "newspaperArticle",
 		CPFD: "conferencePaper",
+		IPFD: "conferencePaper",
 		SCPD: "patent"
 	};
 	var db = dbname.substr(0, 4).toUpperCase();
