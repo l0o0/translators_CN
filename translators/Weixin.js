@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2021-01-31 16:32:20"
+	"lastUpdated": "2021-03-01 04:36:11"
 }
 
 /*
@@ -44,9 +44,12 @@ function scrape(doc, url) {
 	item.creators = getArticleCreator(doc, ogMetadataCache.get("og:article:author"));
 	item.date = getArticleDate(doc);
 	item.accessDate = new Date().toISOString().slice(0, 10);
-	note_content = doc.body.querySelector("#js_content").innerText.trim().replace(/[\r\n]+/g, "<br/>");
+	note_content = doc.body.querySelector("#js_content").innerHTML.trim();
+	note_content = note_content.replace(/\"/g, "'");
+	note_content = note_content.replace(/<img .*?src='(.*?)'.*?>/g, "<img src='$1'\/>");
+	note_content = `<h1>${item.title}</h1>` + note_content;
 	item.notes.push({note:note_content});
-	
+	item.attachments.push({url: url, title: "Snapshot"});
 	item.complete();
 }
 
