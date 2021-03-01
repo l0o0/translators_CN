@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-02-22 15:30:25"
+	"lastUpdated": "2021-03-01 03:06:05"
 }
 
 /*
@@ -55,7 +55,10 @@ function detectWeb(doc, url) {
 	if (ZID) {
 		return "webpage";
 	}
-	else if (getSearchResults(doc, true)) {
+	else if (url.includes("search?type=")
+		|| url.includes("/collection/")
+		|| url.includes("/people/")
+		|| getSearchResults(doc, true)) {
 		return "multiple";
 	}
 	return false;
@@ -65,19 +68,20 @@ function getSearchResults(doc, checkOnly, itemInfo) {
 	var items = {};
 	var found = false;
 	var rows = doc.querySelectorAll('.ArticleItem,.AnswerItem');
-	for (let row of rows) {
-		let data = row.getAttribute('data-zop');
+	for (let i = 0; i<rows.length; i++) {
+		let data = rows[i].getAttribute('data-zop');
 		let url, ZID, title;
 		if (!data) {
-			url = row.querySelector("h2 a").getAttribute('href').replace(/^\/\//, 'https://');
+			url = rows[i].querySelector("h2 a").getAttribute('href').replace(/^\/\//, 'https://');
+			if (url.startsWith('/')) url = "https://zhihu.com" + url;
 			ZID = getIDFromUrl(url);
-			title = row.querySelector("h2 a span").textContent;
+			title = i + ' ' + rows[i].querySelector("h2 a span").textContent;
 		} else {
 			data = JSON.parse(data);
-			url = row.querySelector("meta[itemprop='url']").getAttribute('content').replace(/^\/\//, 'https://');
+			url = rows[i].querySelector("meta[itemprop='url']").getAttribute('content').replace(/^\/\//, 'https://');
 			if (data.type === 'answer') url = url + '/answer/' + data.itemId;
 			ZID = {ztype: data.type, zid: data.itemId, url: url};
-			title = data.title;
+			title = i + ' ' + data.authorName + ' : ' + data.title;
 		}
 		if (checkOnly) return true;
 		found = true;
@@ -112,7 +116,7 @@ function scrape(ZIDs) {
 	if (ztype === 'answer') targetUrl += "?include=data[*].content,voteup_count,share_text";
 	ZU.doGet(targetUrl, function(text){
 		textJson = JSON.parse(text);
-		Z.debug(textJson);
+		// Z.debug(textJson);
 		var newItem = new Zotero.Item("webpage");
 		newItem.url = url;
 		newItem.title = textJson.title ? textJson.title : textJson.question.title;
@@ -130,6 +134,7 @@ function scrape(ZIDs) {
 		}
 		newItem.language = 'zh-CN';
 		newItem.extra = `赞数:${textJson.voteup_count};`;
+		newItem.attachments.push({url:url, title:"Snapshot"});
 		newItem.complete();
 		if (ZIDs.length > 0) {
 			scrape(ZIDs);
@@ -179,6 +184,11 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.zhihu.com/search?type=content&q=Zotero",
+		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://www.zhihu.com/question/292241691",
 		"items": "multiple"
 	}
 ]
