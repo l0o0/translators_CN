@@ -2,14 +2,14 @@
 	"translatorID": "5c95b67b-41c5-4f55-b71a-48d5d7183063",
 	"label": "CNKI",
 	"creator": "Aurimas Vinckevicius, Xingzhong Lin",
-	"target": "https?://.*?/(kns8?/defaultresult/index|kns8?/AdvSearch|kcms/detail/|KNavi/JournalDetail/?)",
+	"target": "https?://.*?/(kns8?/defaultresult/index|kns8?/AdvSearch|kcms/detail/|KXReader/Detail\\?|KNavi/JournalDetail\\?)",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2021-03-02 07:29:47"
+	"lastUpdated": "2021-03-04 03:19:17"
 }
 
 /*
@@ -72,7 +72,7 @@ function getRefWorksByID(ids, onDataAvailable) {
 }
 
 
-function getIDFromURL (url) {
+function getIDFromURL(url) {
 	if (!url) return false;
 	var dbname = url.match(/[?&](?:db|table)[nN]ame=([^&#]*)/i);
 	var filename = url.match(/[?&]filename=([^&#]*)/i);
@@ -86,7 +86,7 @@ function getIDFromURL (url) {
 		!dbname[1]
 	)
 		return false;
-	return { dbname: dbname[1] , filename: filename[1], dbcode: dbcode[1], url: url };
+	return { dbname: dbname[1], filename: filename[1], dbcode: dbcode[1], url: url };
 }
 
 // Get dbname and filename from pre-released article web page.
@@ -97,11 +97,11 @@ function getIDFromHeader(doc, url) {
 	if (
 		filename.length +
 		dbcode.length +
-		dbname.length <3
+		dbname.length < 3
 	) {
 		return false;
 	}
-	return { dbname: dbname[0].value , filename: filename[0].value, dbcode: dbcode[0].value, url: url };
+	return { dbname: dbname[0].value, filename: filename[0].value, dbcode: dbcode[0].value, url: url };
 }
 
 function getIDFromPage(doc, url) {
@@ -166,14 +166,15 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 		if (!id) {
 			var td = ZU.xpath(links[i], "./td[@class='operat']/a");
 			itemUrl = `https://kns.cnki.net/KCMS/detail/${a.href}`;
-			id = { 
-				dbname: td[0].getAttribute("data-table"), 
+			id = {
+				dbname: td[0].getAttribute("data-table"),
 				filename: td[0].getAttribute("data-filename"),
 				dbcode: td[1].getAttribute("data-dbname"),
-				url: itemUrl};
+				url: itemUrl
+			};
 		} else {
 			itemUrl = `https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=${id.dbcode}&dbname=${id.dbname}&filename=${id.filename}&v=`;
-			id.url =  itemUrl;
+			id.url = itemUrl;
 		}
 		// download link in search result
 		var filelink = ZU.xpath(links[i], fileXpath);
@@ -202,7 +203,7 @@ function detectWeb(doc, url) {
 	}
 	// Add new version kns8
 	else if (
-		url.match(/kns\/brief\/(default_)?result\.aspx/i) 
+		url.match(/kns\/brief\/(default_)?result\.aspx/i)
 		|| url.match(/JournalDetail/i) // Journal home page
 		|| url.match(/kns8?\/defaultresult\/index/i) // search page
 		|| url.match(/KNS8?\/AdvSearch\?/i)) {  // search page
@@ -214,7 +215,7 @@ function detectWeb(doc, url) {
 }
 
 function doWeb(doc, url) {
-	Z.debug("----------------CNKI 20210302---------------------");
+	Z.debug("----------------CNKI 20210304---------------------");
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
@@ -246,24 +247,33 @@ function scrape(ids, doc, itemInfo) {
 			// 如果你想将PDF文件替换为CAJ文件，将下面一行 keepPDF 设为 false
 			var keepPDF = Z.getHiddenPref('CNKIPDF');
 			if (keepPDF === undefined) {
-				keepPDF = true;
+				keepPDF = false;
 			}
 			if (itemInfo) { // search page
 				newItem.attachments = getAttachments(null, itemInfo[url].filelink, keepPDF);
 				cite = itemInfo[url].cite;
 			}
 			else if (!itemInfo) { // detail page
-				var pdfurl = getPDF(doc, newItem.itemType);
-				var cajurl = getCAJ(doc, newItem.itemType);
-				newItem.attachments = getAttachments(pdfurl, cajurl, keepPDF);
+				if (url.includes("KXReader/Detail")) {
+					Z.debug("HTML text");
+					newItem.attachments.push({
+						title: "Snapshot",
+						document: doc
+					});
+				} else {
+					var pdfurl = getPDF(doc, newItem.itemType);
+					var cajurl = getCAJ(doc, newItem.itemType);
+					newItem.attachments = getAttachments(pdfurl, cajurl, keepPDF);
+				}
 				cite = doc.querySelector("span.num");
-				cite = cite ? cite.innerText.split('\n')[0]: "";
+				cite = cite ? cite.innerText.split('\n')[0] : "";
 				pubType = ZU.xpath(doc, "//div[@class='top-tip']//a[@class='type']");
 				pubTypeStr = pubType.length > 0 ? "<" + pubType.map(ele => ele.innerText)
 					.join(", ") + ">" : "";
-				var doi = ZU.xpath(doc, "//*[contains(text(), 'DOI')]/following-sibling::p"); // add DOI
-				if (doi.length > 0) {
-					newItem.DOI = doi[0].innerText;
+				var doi = ZU.xpath(doc, "//*[contains(text(), 'DOI')]/parent::li | //div[@class='tips']"); // add DOI
+				if (doi.length > 0 && doi[0].innerText.includes("DOI")) {
+					var DOI = doi[0].innerText.split("DOI");
+					newItem.DOI = DOI[DOI.length - 1].trim().replace(/[：:]/, '');
 				}
 				var moreClick = ZU.xpath(doc, "//span/a[@id='ChDivSummaryMore']");
 				if (moreClick.length) {
@@ -271,7 +281,7 @@ function scrape(ids, doc, itemInfo) {
 					newItem.abstractNote = ZU.xpath(doc, "//span[@id='ChDivSummary']")[0].innerText;
 				}
 			}
-			var timestamp = new Date().toLocaleDateString().replace(/\//g,'-');
+			var timestamp = new Date().toLocaleDateString().replace(/\//g, '-');
 			var citeStr = cite ? `${cite} citations(CNKI)[${timestamp}]` : "";
 			newItem.extra = (citeStr + pubTypeStr).trim();
 			// split names, Chinese name split depends on Zotero Connector preference translators.zhnamesplit
@@ -285,7 +295,7 @@ function scrape(ids, doc, itemInfo) {
 					creator.creatorType = 'contributor';  // Here is contributor
 				}
 				if (creator.firstName) continue;
-				
+
 				var lastSpace = creator.lastName.lastIndexOf(' ');
 				if (creator.lastName.search(/[A-Za-z]/) !== -1 && lastSpace !== -1) {
 					// western name. split on last space
@@ -299,16 +309,16 @@ function scrape(ids, doc, itemInfo) {
 					creator.lastName = creator.lastName.charAt(0);
 				}
 			}
-			
+
 			// clean up tags. Remove numbers from end
 			for (var j = 0, l = newItem.tags.length; j < l; j++) {
 				newItem.tags[j] = newItem.tags[j].replace(/:\d+$/, '');
 			}
 			newItem.url = url;
-			
+
 			if (newItem.abstractNote) {
 				newItem.abstractNote = newItem.abstractNote.replace(/\s*[\r\n]\s*/g, '\n')
-															.replace(/&lt;.*?&gt;/g, "");
+					.replace(/&lt;.*?&gt;/g, "");
 			}
 			newItem.title = ZU.trimInternal(newItem.title);
 			// CN 中国刊物编号，非refworks中的callNumber
@@ -316,7 +326,7 @@ function scrape(ids, doc, itemInfo) {
 			newItem.callNumber = null;
 			newItem.complete();
 		});
-		
+
 		translator.translate();
 	});
 }
@@ -350,13 +360,13 @@ function getCAJ(doc, itemType) {
 // add pdf or caj to attachments, default is pdf
 function getAttachments(pdfurl, cajurl, keepPDF) {
 	var attachments = [];
-	if (keepPDF) {
+	if (keepPDF && cajurl) {
 		attachments.push({
 			title: "Full Text PDF",
 			mimeType: "application/pdf",
 			url: pdfurl ? pdfurl : cajurl.replace('&dflag=nhdown', '&dflag=pdfdown')
 		});
-	} else {
+	} else if (cajurl) {
 		attachments.push({
 			title: "Full Text CAJ",
 			mimeType: "application/caj",
