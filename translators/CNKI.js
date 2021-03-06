@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2021-03-06 10:19:17"
+	"lastUpdated": "2021-03-06 22:40:46"
 }
 
 /*
@@ -364,7 +364,7 @@ function getAttachments(pdfurl, cajurl, keepPDF) {
 		attachments.push({
 			title: "Full Text PDF",
 			mimeType: "application/pdf",
-			url: pdfurl ? pdfurl : cajurl.replace('&dflag=nhdown', '&dflag=pdfdown')
+			url: pdfurl ? pdfurl : cajurl.includes("&dflag=nhdown") ? cajurl.replace('&dflag=nhdown', '&dflag=pdfdown') : cajurl + '&dflag=pdfdown'
 		});
 	} else if (cajurl) {
 		attachments.push({
