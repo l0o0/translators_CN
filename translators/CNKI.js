@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2021-03-04 03:19:17"
+	"lastUpdated": "2021-03-06 10:19:17"
 }
 
 /*
@@ -215,7 +215,7 @@ function detectWeb(doc, url) {
 }
 
 function doWeb(doc, url) {
-	Z.debug("----------------CNKI 20210304---------------------");
+	Z.debug("----------------CNKI 20210306---------------------");
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
@@ -247,7 +247,7 @@ function scrape(ids, doc, itemInfo) {
 			// 如果你想将PDF文件替换为CAJ文件，将下面一行 keepPDF 设为 false
 			var keepPDF = Z.getHiddenPref('CNKIPDF');
 			if (keepPDF === undefined) {
-				keepPDF = false;
+				keepPDF = true;
 			}
 			if (itemInfo) { // search page
 				newItem.attachments = getAttachments(null, itemInfo[url].filelink, keepPDF);
