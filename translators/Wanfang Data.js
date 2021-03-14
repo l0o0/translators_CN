@@ -1,15 +1,15 @@
 {
-	"translatorID": "cdd6de3b-5a71-4d3f-afe4-a3bd654e81fd",
+	"translatorID": "eb876bd2-644c-458e-8d05-bf54b10176f3",
 	"label": "Wanfang Data",
-	"creator": "Lin Xingzhong",
-	"target": "^https?://[a-z]\\.(g\\.)?wanfangdata\\.com\\.cn",
-	"minVersion": "",
+	"creator": "Ace Strong <acestrong@gmail.com>",
+	"target": "^https?://[ds]\\.(g\\.)?wanfangdata\\.com\\.cn",
+	"minVersion": "2.0rc1",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
-	"translatorType": 12,
+	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2021-02-04 06:24:09"
+	"lastUpdated": "2021-03-14 22:26:00"
 }
 
 /*
@@ -35,24 +35,24 @@
 	***** END LICENSE BLOCK *****
 */
 var core = {
-    PKU: "北大《中文核心期刊要目总览》",
-    "北大核心": "北大《中文核心期刊要目总览》",
-    ISTIC: "中国科技论文与引文数据库",
-    CSSCI: "中文社会科学引文索引",
-    NJU: "中文社会科学引文索引",
-    CSTPCD: "中文社会科学引文索引",
-    CSCD: "中国科学引文数据库",
-    CASS: "《中国人文社会科学核心期刊要览》",
-    AJ: "俄罗斯《文摘杂志》",
-    CA: "美国《化学文摘》",
-    EI: "美国《工程索引》",
-    SCI: "美国《科学引文索引》",
-    SCIE: "美国《科学引文索引(扩展版)》",
-    "A&HCI": "《艺术与人文科学引文索引》",
-    SSCI: "美国《社会科学引文索引》",
-    CBST: "日本《科学技术文献速报》",
-    SA: "英国《科学文摘》",
-    GDZJ: "广电总局认定学术期刊"
+	PKU: "北大《中文核心期刊要目总览》",
+	"北大核心": "北大《中文核心期刊要目总览》",
+	ISTIC: "中国科技论文与引文数据库",
+	CSSCI: "中文社会科学引文索引",
+	NJU: "中文社会科学引文索引",
+	CSTPCD: "中文社会科学引文索引",
+	CSCD: "中国科学引文数据库",
+	CASS: "《中国人文社会科学核心期刊要览》",
+	AJ: "俄罗斯《文摘杂志》",
+	CA: "美国《化学文摘》",
+	EI: "美国《工程索引》",
+	SCI: "美国《科学引文索引》",
+	SCIE: "美国《科学引文索引(扩展版)》",
+	"A&HCI": "《艺术与人文科学引文索引》",
+	SSCI: "美国《社会科学引文索引》",
+	CBST: "日本《科学技术文献速报》",
+	SA: "英国《科学文摘》",
+	GDZJ: "广电总局认定学术期刊"
 };
 
 var typeFieldMapper = {
@@ -142,7 +142,7 @@ function getRefworksByID(ids, next) {
 
 
 function scrape(ids, itemInfo) {
-	Z.debug("---------------WanFang Data 20210204---------------");
+	Z.debug("---------------WanFang Data 20210314---------------");
 	getRefworksByID(ids, function(detail) {
 		// Z.debug(detail);
 		var dbname = detail.dbname;
@@ -266,8 +266,7 @@ function getTypeFromDBName(db) {
 
 function detectWeb(doc, url) {
 	var id = getIDFromURL(url);
-	var items = doc.querySelector("div.normal-list");
-	if (items) {
+	if (url.includes("?q=") || url.includes("/advanced-search/")) {
 		return "multiple";
 	} else if (id) {
 		return id.dbname;
