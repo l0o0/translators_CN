@@ -17,7 +17,7 @@
 + [万方数据](http://www.wanfangdata.com.cn/index.html) -> [WanFang Data.js](./translators/WanFang\ Data.js) Update: 20200930
   - [x] 抓取引文信息  
   - [x] 支持文献类型：期刊，学位论文，专利，会议论文
-  - [ ] PDF附件下载
+  - [x] PDF附件下载
 + [维普](http://www.cqvip.com/) -> [WeiPu.js](./translators/WeiPu.js) ❗
   - [x] 抓取引文信息  
   - [x] 支持文献类型：期刊
@@ -55,7 +55,8 @@
   - [x] 读秀内容抓取
 
 ## 📢 如何使用  
-
+👉 [无聊的视频教程](https://www.bilibili.com/video/BV1F54y1k73n)
+图文教程 👇
 **1 下载网页翻译器(web translator)文件**  
 
 ![](https://s1.ax1x.com/2020/08/19/dlKNRK.png)  
@@ -72,9 +73,9 @@ Chrome 浏览器按照下面信息找到更新按钮
 
 ![](https://s1.ax1x.com/2020/08/19/dlKUxO.png)    
 
-**更新时请多点几下，根据我的经验，Chrome 浏览器更新比较快，Firefox 会比较慢**   
+**更新时请多点几下，根据我的经验，Chrome 浏览器更新比较快，Firefox 会比较慢，也可多重启几次 Zotero 或浏览器**   
 
-如果你使用学校的 VPN 来登录知网，可以参考这个[链接](https://zhuanlan.zhihu.com/p/111857132)进行设置。设置过程不复杂，就是用特殊符号把网址中的字符替换掉。
+最新版的知网翻译器，能够识别VPN之后的知网，不必做额外的设置，如有问题可提交 issue
 
 
 ## <span id="jump">🍇 如何在Zotero Connector 中添加中文姓名处理以及保留知网CAJ格式文件的设置</span>
