@@ -2,14 +2,14 @@
 	"translatorID": "5c95b67b-41c5-4f55-b71a-48d5d7183063",
 	"label": "CNKI",
 	"creator": "Aurimas Vinckevicius, Xingzhong Lin",
-	"target": "https?://.*?/(kns8?/defaultresult/index|kns8?/AdvSearch|kcms/detail/|KXReader/Detail\\?|KNavi/JournalDetail\\?)",
+	"target": "https?://.*?/(kns8?/defaultresult/index|kns8?/AdvSearch|kcms/detail/|KXReader/Detail\\?|KNavi/)",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2021-03-06 22:40:46"
+	"lastUpdated": "2021-03-17 10:39:20"
 }
 
 /*
@@ -120,6 +120,7 @@ function getTypeFromDBName(dbname) {
 		SSJD: "journalArticle",
 		CCJD: "journalArticle",
 		CDMD: "journalArticle",
+		CYFD: "journalArticle",
 		CDFD: "thesis",
 		CMFD: "thesis",
 		CLKM: "thesis",
@@ -204,7 +205,7 @@ function detectWeb(doc, url) {
 	// Add new version kns8
 	else if (
 		url.match(/kns\/brief\/(default_)?result\.aspx/i)
-		|| url.match(/JournalDetail/i) // Journal home page
+		|| url.includes("/KNavi/") // Article list in Navigation page
 		|| url.match(/kns8?\/defaultresult\/index/i) // search page
 		|| url.match(/KNS8?\/AdvSearch\?/i)) {  // search page
 		return "multiple";
@@ -215,7 +216,7 @@ function detectWeb(doc, url) {
 }
 
 function doWeb(doc, url) {
-	Z.debug("----------------CNKI 20210306---------------------");
+	Z.debug("----------------CNKI 20210317---------------------");
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
