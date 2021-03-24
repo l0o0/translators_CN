@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-03-01 03:06:05"
+	"lastUpdated": "2021-03-24 02:15:28"
 }
 
 /*
@@ -43,9 +43,8 @@ var urlHash = {
 
 // p for article, answer for answer
 function getIDFromUrl(url) {
-	let m = url.match(/\/(\w+)\/(\d+)$/);
+	let m = url.match(/\/(answer|p)\/(\d+)/);
 	if (!m) return false;
-	if (!['p', 'answer'].includes(m[1])) return false;
 	return {ztype:m[1]==='p' ? 'article' : 'answer', zid:m[2], url:url};
 }
 
@@ -71,15 +70,15 @@ function getSearchResults(doc, checkOnly, itemInfo) {
 	for (let i = 0; i<rows.length; i++) {
 		let data = rows[i].getAttribute('data-zop');
 		let url, ZID, title;
-		if (!data) {
+		if (!data) { // 搜索页面
 			url = rows[i].querySelector("h2 a").getAttribute('href').replace(/^\/\//, 'https://');
 			if (url.startsWith('/')) url = "https://zhihu.com" + url;
 			ZID = getIDFromUrl(url);
 			title = i + ' ' + rows[i].querySelector("h2 a span").textContent;
-		} else {
+		} else { // 问题页,首页,专栏
 			data = JSON.parse(data);
-			url = rows[i].querySelector("meta[itemprop='url']").getAttribute('content').replace(/^\/\//, 'https://');
-			if (data.type === 'answer') url = url + '/answer/' + data.itemId;
+			url = rows[i].querySelectorAll("meta[itemprop='url']");
+			url = url[url.length-1].getAttribute('content').replace(/^\/\//, 'https://');
 			ZID = {ztype: data.type, zid: data.itemId, url: url};
 			title = i + ' ' + data.authorName + ' : ' + data.title;
 		}
@@ -189,6 +188,11 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.zhihu.com/question/292241691",
+		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://www.zhihu.com/column/c_1218192088992534528",
 		"items": "multiple"
 	}
 ]
