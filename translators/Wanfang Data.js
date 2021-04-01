@@ -2,14 +2,14 @@
 	"translatorID": "eb876bd2-644c-458e-8d05-bf54b10176f3",
 	"label": "Wanfang Data",
 	"creator": "Ace Strong <acestrong@gmail.com>",
-	"target": "^https?://[ds]\\.(g\\.)?wanfangdata\\.com\\.cn",
+	"target": "^https?://[a-z]+\\.wanfangdata\\.com\\.cn",
 	"minVersion": "2.0rc1",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2021-03-14 22:26:00"
+	"lastUpdated": "2021-04-01 05:55:46"
 }
 
 /*
@@ -122,7 +122,7 @@ function getRefworksByID(ids, next) {
 		conferencePaper: "Conference",
 		patent: "Patent"
 	};
-	var postUrl = "http://d.wanfangdata.com.cn/Detail/" + searchType[dbname] + "/";
+	var postUrl = "https://d.wanfangdata.com.cn/Detail/" + searchType[dbname] + "/";
 	ZU.doPost(postUrl, postData, 
 		function(text) {
 			detail = JSON.parse(text).detail[0];
@@ -142,7 +142,7 @@ function getRefworksByID(ids, next) {
 
 
 function scrape(ids, itemInfo) {
-	Z.debug("---------------WanFang Data 20210314---------------");
+	Z.debug("---------------WanFang Data 20210401---------------");
 	getRefworksByID(ids, function(detail) {
 		// Z.debug(detail);
 		var dbname = detail.dbname;
@@ -184,7 +184,7 @@ function scrape(ids, itemInfo) {
 			}];
 		}
 		// Core Periodical
-		if (detail.CorePeriodical) {
+		if (detail.CorePeriodical.length > 0) {
 			newItem.extra = "<" + 
 			detail.CorePeriodical.map((c) => core[c]).join(', ') + 
 			">";
@@ -235,6 +235,12 @@ function getIDFromURL(url) {
 	var tmp = url.split('/');
 	var dbname = tmp[3];
 	var filename = tmp.slice(4).join('/');
+	if (!getTypeFromDBName(dbname)) {
+		// http://med.wanfangdata.com.cn/
+		tmp = url.match(/id=(\w+)Paper_([0-9a-z]+)&/);
+		dbname = tmp[1].toLowerCase();
+		filename = tmp[2];
+	}
 	if (dbname && filename) {
 		return {dbname: getTypeFromDBName(dbname),
 		filename: filename, url:url};
@@ -265,10 +271,10 @@ function getTypeFromDBName(db) {
 
 
 function detectWeb(doc, url) {
+	if (url.includes("?q=") || url.includes("/advanced-search/")) return "multiple";
 	var id = getIDFromURL(url);
-	if (url.includes("?q=") || url.includes("/advanced-search/")) {
-		return "multiple";
-	} else if (id) {
+	Z.debug(id);
+	if (id) {
 		return id.dbname;
 	} else {
 		return false;
@@ -279,6 +285,7 @@ function getSearchResults(doc, itemInfo) {
   var items = {};
   var found = false;
   var rows = ZU.xpath(doc, "//div[@class='normal-list']");
+  if (!rows.length > 0) rows = doc.querySelectorAll("div.mod-results-list div.item");
   var idx = 1
   for (let row of rows) {
 	var title = ZU.xpath(row, ".//a[normalize-space()!='目录']")[0];
@@ -655,6 +662,59 @@ var testCases = [
 						"note": "文章全文链接<br><a href=\"https://doi.org/10.1111/bjd.18291\">https://doi.org/10.1111/bjd.18291</a>"
 					}
 				],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "http://med.wanfangdata.com.cn/Paper/Detail?id=PeriodicalPaper_zhyfyx200202011&dbid=WF_QK",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "SF-36健康调查量表中文版的研制及其性能测试",
+				"creators": [
+					{
+						"lastName": "李",
+						"creatorType": "author",
+						"firstName": "鲁"
+					},
+					{
+						"lastName": "王",
+						"creatorType": "author",
+						"firstName": "红妹"
+					},
+					{
+						"lastName": "沈",
+						"creatorType": "author",
+						"firstName": "毅"
+					}
+				],
+				"date": "2002-04-28 00:00:00",
+				"DOI": "10.3760/j:issn:0253-9624.2002.02.011",
+				"ISSN": "0253-9624",
+				"abstractNote": "目的研制SF-36健康调查量表中文版并验证量表维度建立及记分假设、信度和效度.方法采用多阶段混合型等概率抽样法,用SF-36健康调查量表中文版对1 000户家庭的居民进行自评量表式调查;参照国际生命质量评价项目的标准程序,进行正式的心理测验学试验.结果在收回的1 985份问卷中,18岁以上的有效问卷1 972份,其中应答者1 688人(85.6%),1 316人回答了所有条目,372人有1个或以上的缺失答案,无应答者中文盲、半文盲占65.5%.等距假设在活力(VT)和精神健康(MH)维度被打破了,按重编码后值计算维度分数;条目集群的分布接近源量表及其他2个中文译本;除了生理功能(PF)、躯体疼痛(BP)、社会功能(SF)维度,其余维度有相似的标准差;除了SF、VT维度,其余6个维度条目维度相关一致;除了SF维度,7个维度集合效度成功率范围为75%～100%,区分效度成功率范围为87.5%～100%.一致性信度系数除了SF、VT维度,其余6维度变化范围为0.72～0.88,满足群组比较的要求.两周重测信度变化范围为0.66～0.94.因子分析产生了2个主成分,分别代表生理健康和心理健康,解释了56.3%的总方差.结论为SF-36健康调查量表适用于中国提供了证据,已知群效度试验将为量表效度提供更有意义的证据.",
+				"extra": "<中国科技论文与引文数据库, 北大《中文核心期刊要目总览》>",
+				"issue": "2",
+				"language": "chi",
+				"libraryCatalog": "Wanfang Data",
+				"pages": "109-113",
+				"publicationTitle": "中华预防医学杂志",
+				"url": "http://med.wanfangdata.com.cn/Paper/Detail?id=PeriodicalPaper_zhyfyx200202011&dbid=WF_QK",
+				"volume": "36",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "SF-36量表"
+					},
+					{
+						"tag": "心理学试验"
+					},
+					{
+						"tag": "生活质量"
+					}
+				],
+				"notes": [],
 				"seeAlso": []
 			}
 		]
