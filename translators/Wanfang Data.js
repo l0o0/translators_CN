@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2021-04-01 05:55:46"
+	"lastUpdated": "2021-04-07 08:58:52"
 }
 
 /*
@@ -184,7 +184,7 @@ function scrape(ids, itemInfo) {
 			}];
 		}
 		// Core Periodical
-		if (detail.CorePeriodical.length > 0) {
+		if (detail.CorePeriodical && detail.CorePeriodical.length > 0) {
 			newItem.extra = "<" + 
 			detail.CorePeriodical.map((c) => core[c]).join(', ') + 
 			">";
