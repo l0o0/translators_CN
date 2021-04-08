@@ -73,7 +73,7 @@
   * **6. 附件**  
 
   	* 目录存放至note附件里
-  * **7. ** [详细截图](https://github.com/Captain2021/myTranslator/tree/main)
+  * **7.** [详细截图](https://github.com/Captain2021/myTranslator/tree/main)
 
 ## 📢 如何使用  
 👉 [无聊的视频教程](https://www.bilibili.com/video/BV1F54y1k73n)
