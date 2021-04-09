@@ -12,5 +12,6 @@
     "Weixin.js": "微信公众号文章",
     "PatentStar.js": "专利之星",
     "Zhihu.js": "知乎",
-    "Duxiu.js": "读秀"
+    "Duxiu.js": "读秀",
+    "Douban.js": "豆瓣读书"
 }
