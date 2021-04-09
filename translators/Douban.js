@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-04-01 03:23:39"
+	"lastUpdated": "2021-04-09 07:09:26"
 }
 
 /*
@@ -94,7 +94,7 @@ function doWeb(doc, url) {
 			for (var i in items) {
 				articles.push(i);
 			}
-			Zotero.Utilities.processDocuments(articles, scrapeAndParse);
+			ZU.processDocuments(articles, scrapeAndParse);
 		});
 	}
 	else {
@@ -115,9 +115,9 @@ function trimTags(text) {
 
 function scrapeAndParse(doc, url) {
 	// Z.debug({ url })
-	Zotero.Utilities.HTTP.doGet(url, function (page) {
+	ZU.doGet(url, function (page) {
 		// Z.debug(page)
-		var pattern;
+		var pattern, extra;
 
 		// 类型 & URL
 		var itemType = "book";
@@ -135,7 +135,6 @@ function scrapeAndParse(doc, url) {
 		
 		// 评价人数
 		let commentNum = ZU.xpathText(doc, '//*[@id="interest_sectl"]/div[1]/div[2]/div/div[2]/span/a/span')
-		newItem.place = commentNum+"人评分"
 		
 		// 副标题
 		pattern = /<span [^>]*?>副标题:<\/span>(.*?)<br\/>/;
@@ -154,23 +153,24 @@ function scrapeAndParse(doc, url) {
 		pattern = /<h1>([\s\S]*?)<\/h1>/;
 		if (pattern.test(page)) {
 			var title = pattern.exec(page)[1];
-			title = Zotero.Utilities.trim(trimTags(title))
+			title = ZU.trim(trimTags(title))
 			let originalTitlePre = " #"
 			if(!originalTitle){ // 当没有原名时,使用空字符
 				originalTitlePre = ""
 			}
 			if(title === subTitle){ // 判断下副标题与标题一样否,避免重复
-				titleTemp = "《"+title+"》"+commentNum+" "+"评"+" "+dbScore+originalTitlePre+originalTitle
+				extra = "👩‍⚖️" + commentNum+";"+"🔟"+dbScore+originalTitlePre+originalTitle
 			} else {
-				titleTemp = "《"+title+" - "+subTitle+"》"+commentNum+" "+"评"+" "+dbScore+originalTitlePre+originalTitle			
+				extra = "《"+title+" - "+subTitle+"》;"+ "👩‍⚖️" + commentNum+";"+"🔟"+dbScore+originalTitlePre+originalTitle			
 			}
-			titleTemp = titleTemp.replace(/( - )?undefined/g,"").replace("null","0")
-			newItem.title = titleTemp
+			extra = extra.replace(/( - )?undefined/g,"").replace("null","0")
+			extra += ';'
+			newItem.title = title;
 		}
 		
 		
 		// 短标题
-			newItem.shortTitle = "《"+title+"》"
+		newItem.shortTitle = "《"+title+"》"
 
 
 		// 目录
@@ -274,8 +274,8 @@ function scrapeAndParse(doc, url) {
 				// 外文名
 					useComma = false;
 				}
-				newItem.creators.push(Zotero.Utilities.cleanAuthor(
-					Zotero.Utilities.trim(translatorNames[i]),
+				newItem.creators.push(ZU.cleanAuthor(
+					ZU.trim(translatorNames[i]),
 					"translator", useComma));
 			}
 		}
@@ -284,7 +284,7 @@ function scrapeAndParse(doc, url) {
 		pattern = /<span [^>]*?>ISBN:<\/span>(.*?)<br\/>/;
 		if (pattern.test(page)) {
 			var isbn = pattern.exec(page)[1];
-			newItem.ISBN = Zotero.Utilities.trim(isbn);
+			newItem.ISBN = ZU.trim(isbn);
 			// Zotero.debug("isbn: "+isbn);
 		}
 
@@ -292,7 +292,7 @@ function scrapeAndParse(doc, url) {
 		pattern = /<span [^>]*?>页数:<\/span>(.*?)<br\/>/;
 		if (pattern.test(page)) {
 			var numPages = pattern.exec(page)[1];
-			newItem.numPages = Zotero.Utilities.trim(numPages);
+			newItem.numPages = ZU.trim(numPages);
 			// Zotero.debug("numPages: "+numPages);
 		}
 
@@ -300,12 +300,13 @@ function scrapeAndParse(doc, url) {
 		pattern = /<span [^>]*?>出版社:<\/span>(.*?)<br\/>/;
 		if (pattern.test(page)) {
 			var publisher = pattern.exec(page)[1];
-			newItem.publisher = Zotero.Utilities.trim(publisher);
+			newItem.publisher = ZU.trim(publisher);
 			// Zotero.debug("publisher: "+publisher);
 		}
 
 		// 定价
 		pattern = /<span [^>]*?>定价:(.*?)<\/span>(.*?)<br\/?>/;
+		var price;
 		if (pattern.test(page)) {
 			var price = pattern.exec(page)[2];
 			// price = "60"
@@ -318,19 +319,18 @@ function scrapeAndParse(doc, url) {
 			
 			// 车同轨书同文,一统金额样式
 			if(prefix===""||prefix===" "||prefix.includes("CNY")){
-				price = numPrice+" 元"
+				price = numPrice+" 元;";
 			} else {
-				price = prefix+numPrice
+				price = prefix+numPrice + ';';
 			}
-			
-			newItem.rights = Zotero.Utilities.trim(price);
 		}
 		
 		// 丛书
 		pattern = /<span [^>]*?>丛书:<\/span>(.*?)<br\/>/;
 		if (pattern.test(page)) {
-			var series = trimTags(pattern.exec(page)[1]);
-			newItem.series = Zotero.Utilities.trim(series);
+			var series = trimTags(pattern.exec(page)[0]);
+			series = series.split("ISBN")[0].replace("丛书:", "");
+			newItem.series = ZU.trim(series);
 			// Zotero.debug("series: "+series);
 		}
 
@@ -338,32 +338,8 @@ function scrapeAndParse(doc, url) {
 		pattern = /<span [^>]*?>出版年:<\/span>(.*?)<br\/>/;
 		if (pattern.test(page)) {
 			var date = pattern.exec(page)[1];
-			newItem.date = Zotero.Utilities.trim(date);
+			newItem.date = ZU.trim(date);
 			// Zotero.debug("date: "+date);
-		}
-		
-		//获取当前日期，格式YYYY-MM-DD
-		function getNowFormatDay(nowDate) {
-			var char = "-";
-			if(nowDate == null){
-				nowDate = new Date();
-			}
-			var day = nowDate.getDate();
-			var month = nowDate.getMonth() + 1;//注意月份需要+1
-			var year = nowDate.getFullYear();
-			//补全0，并拼接
-			return year + char + completeDate(month) + char +completeDate(day);
-		}
-	 
-		//获取当前时间，格式YYYY-MM-DD HH:mm:ss
-		function getNowFormatTime() {
-			var nowDate = new Date();
-			var colon = ":";
-			var h = nowDate.getHours();
-			var m = nowDate.getMinutes();
-			var s = nowDate.getSeconds();
-			//补全0，并拼接
-			return getNowFormatDay(nowDate) + " " + completeDate(h) + colon + completeDate(m) + colon + completeDate(s);
 		}
 	 
 		//补全0
@@ -371,8 +347,7 @@ function scrapeAndParse(doc, url) {
 			return value < 10 ? "0"+value:value;
 		}
 		// 其他
-		let nowTime = getNowFormatTime() // 在评分后面新增时间,保持时效性
-		newItem.extra = "D"+dbScore.trim()+" 📅"+nowTime
+		newItem.extra = extra + price;
 	
 		
 		// 标签
@@ -415,21 +390,6 @@ function scrapeAndParse(doc, url) {
 		"内容简介:"+"\n"+contentInfoTwo
 
 		newItem.abstractNote = abstractNoteTemp
-		
-	
-		// 调用qk api,实现html转md
-		var postUrl = "https://tools.getquicker.cn/api/MarkDown/Html2Markdown"
-		let postData = "{\"source\":\"<h1>string</h1>\"}"
-		let headers  = {
-		 	Accept: "text/plain",
-		 	"Content-Type": "application/json",
-		}
-	
-	  
-		ZU.doPost(postUrl, postData, function(text){
-			
-		}, headers)
-		
 		newItem.complete();
 	});
 }
