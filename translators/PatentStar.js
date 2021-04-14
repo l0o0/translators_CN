@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gc",
-	"lastUpdated": "2020-12-22 13:40:44"
+	"lastUpdated": "2021-04-14 12:46:00"
 }
 
 /*
@@ -50,7 +50,7 @@ function detectWeb(doc, url) {
 function getSearchResults(doc, checkOnly) {
 	
 	
-	var mainDomain="http://cprs.patentstar.com.cn";
+	var mainDomain="https://cprs.patentstar.com.cn";
 	var items = {};
 	var found = false;
 	var rows = ZU.xpath(doc, "//label[@class='title-color']");
@@ -203,7 +203,7 @@ function scrape(doc,url){
 	/***************************************************************************/
 	//发现新的接口，可以直接提取信息
 	
-	var dataUrl="http://cprs.patentstar.com.cn/"+"Search/GetPatentByIDE"
+	var dataUrl="https://cprs.patentstar.com.cn/"+"Search/GetPatentByIDE"
 	var ANE=url.split('=')[1];
 	var postData="IDE="+ANE;
 	ZU.doPost(dataUrl,postData,function(text){
@@ -212,7 +212,7 @@ function scrape(doc,url){
 			var  data=JSON.parse(text);
 			if (data.Ret == 200){
 				//Z.debug(JSON.stringify(data.Data['Patent']));
-				Z.debug(data.Data['Patent']);
+				//Z.debug(data.Data['Patent']);
 				var patent=data.Data['Patent'];
 				newItem.title=ZU.trimInternal(patent['TI']);
 				
@@ -272,9 +272,12 @@ function scrape(doc,url){
 				
 				
 				/***************************************************************************/
-				//pdf附件的获取不变
+				//使用api获取pdf,该api返回的Data数据中包含可能包含两个pdf文件的网址
+				//如果有两个网址，则第一个为申请文件，第二个为授权文件
+				//故存在两个网址时，则取第二个作为附件保存
+				
 				if (detectLogin(doc,url)){
-					var pdfGetUrl="http://cprs.patentstar.com.cn/"+"WebService/GetPDFUrl";
+					var pdfGetUrl="https://cprs.patentstar.com.cn/"+"WebService/GetPDFUrl";
 					var ANE=url.split('=')[1];
 	
 					var postData="ANE="+ANE;
@@ -284,9 +287,16 @@ function scrape(doc,url){
 							//Z.debug(text);
 							try{
 								var  data=JSON.parse(text);
-								//Z.debug(data.Ret);
+								Z.debug(data);
+								var pdfurl='';
 								if(data.Ret==200){
-									var pdfurl = data.Data[0];
+									if (data.Data.length > 1){
+										pdfurl =data.Data[1];
+									}
+									else{
+										pdfurl = data.Data[0];
+									}
+									
 									newItem.attachments.push({
 										title: "Full Text PDF",
 										mimeType: "application/pdf",
@@ -301,6 +311,7 @@ function scrape(doc,url){
 								}
 							}
 							catch(err){
+								Z.debug(err);
 								Z.debug("获取pdf地址出错");
 								newItem.url = url;
 								newItem.complete();
@@ -310,7 +321,7 @@ function scrape(doc,url){
 			}
 		}
 		catch{
-			Z.debug("获取信息失败");
+			Z.debug("发生异常，获取信息失败");
 		}
 		
 	})
