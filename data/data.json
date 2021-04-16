@@ -13,5 +13,10 @@
     "PatentStar.js": "专利之星",
     "Zhihu.js": "知乎",
     "Duxiu.js": "读秀",
-    "Douban.js": "豆瓣读书"
+    "Douban.js": "豆瓣读书",
+    "Dangdang.js": "当当图书",
+    "Jd.js": "京东图书",
+    "Ncpssd.js": "国家哲学社会科学文献中心",
+    "Nlc.cn.js": "国图-中国标准在线服务网",
+    "Spc.org.cn.js": "中国标准在线服务网"
 }

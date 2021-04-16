@@ -25,9 +25,6 @@
 + [百度学术](http://xueshu.baidu.com/) -> [Baidu Scholar.js](./translators/Baidu&#32;Scholar.js)
   - [x] 修复抓取图书时错误
   - [x] 修复中文作者姓，名问题
-+ [Bilibili 视频网站](https://www.bilibili.com/) -> [BiliBili.js](./translators/BiliBili.js) Update: 20200703
-  - [x] 视频页抓取信息，包括Up主，标签，上传日期，视频选集
-  - [x] 搜索页面信息抓取，包括Up主，上传日期，标题，抓取信息比较少
 + [谷粉学术-谷歌学术](https://gfsoso.99lb.net/) -> [GFSOSO.js](./translators/GFSOSO.js)
   - [x] 修改了网页匹配，识别抓取代码抄自Google Scholar。从搜索结果页识别搜索结果，引文信息正常
   - [ ] 部分文献的PDF下载可能会有问题，谷粉搜搜上可能没有相应的下载链接
@@ -59,6 +56,14 @@
   - 摘要信息：作者简介 + 内容简介
   - 目录信息：目录存放至note附件里
   - [详细截图](https://github.com/Captain2021/myTranslator/tree/main)
++ 来自[道格学社仓库](https://github.com/gezhongran/DougSociety)的翻译器
+  - [Bilibili 视频网站](./translators/BiliBili.js)
+  - [当当网图书](./translators/Dangdang.js)
+  - [京东图书](./translators/Jd.js)
+  - [国家哲学社会科学文献中心](./translators/Ncpssd.js)
+  - [国家图书馆 - 中国标准在线服务网](./translators/Nlc.cn.js)
+  - [中国标准在线服务网](./translators/Spc.org.cn.js)
+
 
 ## 📢 如何使用  
 👉 [无聊的视频教程](https://www.bilibili.com/video/BV1F54y1k73n)
@@ -113,10 +118,11 @@ Chrome 浏览器按照下面信息找到更新按钮
 + [How to write a Zotero translator](https://niche-canada.org/member-projects/zotero-guide/about.html)
 
 ## 🦸 其他热心参与者
-[@wanyzh](https://github.com/wanyzh)
-[@smilevent](https://github.com/smilevent)
-[@Lemmingh](https://github.com/Lemmingh)
-[@Captain2021 (啊哈船长)](https://github.com/Captain2021)
+[@wanyzh](https://github.com/wanyzh)  
+[@smilevent](https://github.com/smilevent)  
+[@Lemmingh](https://github.com/Lemmingh)  
+[@Captain2021 (啊哈船长)](https://github.com/Captain2021)  
+[道格学社](https://github.com/gezhongran/DougSociety)及学员[Felix](https://github.com/xuwd)、[018](https://github.com/018)
 
 ## 🎈问题交流
 
