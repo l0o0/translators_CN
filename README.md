@@ -14,7 +14,7 @@
   - [x] 支持文献类型：期刊，学位论文，会议论文，报纸，修改知网refworks会议论文类型错误的问题
   - [x] 保存文献DOI，引用次数，中文核心期刊信息
   - [ ] 已同步到官方版本库中
-+ [万方数据](http://www.wanfangdata.com.cn/index.html) -> [WanFang Data.js](./translators/WanFang\ Data.js) Update: 20200930
++ [万方数据](http://www.wanfangdata.com.cn/index.html) -> [WanFang Data.js](./translators/WanFang/Data.js) Update: 20200930
   - [x] 抓取引文信息  
   - [x] 支持文献类型：期刊，学位论文，专利，会议论文
   - [x] PDF附件下载
