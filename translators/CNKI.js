@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2021-03-17 10:39:20"
+	"lastUpdated": "2021-09-09 01:22:17"
 }
 
 /*
@@ -110,7 +110,7 @@ function getIDFromPage(doc, url) {
 		|| getIDFromHeader(doc, url);
 }
 
-function getTypeFromDBName(dbname) {
+function getTypeFromDBName(id) {
 	var dbType = {
 		CJFQ: "journalArticle",
 		CJFD: "journalArticle",
@@ -129,13 +129,11 @@ function getTypeFromDBName(dbname) {
 		IPFD: "conferencePaper",
 		SCPD: "patent"
 	};
-	var db = dbname.substr(0, 4).toUpperCase();
-	if (dbType[db]) {
-		return dbType[db];
-	}
-	else {
-		return false;
-	}
+	var db = id.dbname.substr(0, 4).toUpperCase();
+
+	return dbType[db] || dbType[id.dbcode];
+
+
 }
 
 function getItemsFromSearchResults(doc, url, itemInfo) {
@@ -200,7 +198,7 @@ function detectWeb(doc, url) {
 	var id = getIDFromPage(doc, url);
 	Z.debug(id);
 	if (id) {
-		return getTypeFromDBName(id.dbname);
+		return getTypeFromDBName(id);
 	}
 	// Add new version kns8
 	else if (
@@ -216,7 +214,7 @@ function detectWeb(doc, url) {
 }
 
 function doWeb(doc, url) {
-	Z.debug("----------------CNKI 20210317---------------------");
+	Z.debug("----------------CNKI 20210909---------------------");
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
