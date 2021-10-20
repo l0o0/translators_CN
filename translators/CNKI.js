@@ -2,14 +2,14 @@
 	"translatorID": "5c95b67b-41c5-4f55-b71a-48d5d7183063",
 	"label": "CNKI",
 	"creator": "Aurimas Vinckevicius, Xingzhong Lin",
-	"target": "https?://.*?/(kns8?/defaultresult/index|kns8?/AdvSearch|kcms/detail|KXReader/Detail\\?|KNavi/)",
+	"target": "https?://.*?/(kns8?/defaultresult/index|kns8?/AdvSearch|kcms/detail|KXReader/Detail\\?|KNavi/|Kreader/CatalogViewPage\\.aspx\\?)",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcs",
-	"lastUpdated": "2021-09-09 01:22:17"
+	"lastUpdated": "2021-10-13 13:48:24"
 }
 
 /*
@@ -323,6 +323,7 @@ function scrape(ids, doc, itemInfo) {
 			// CN 中国刊物编号，非refworks中的callNumber
 			// CN in CNKI refworks format explains Chinese version of ISSN
 			newItem.callNumber = null;
+			Z.debug(newItem.attachments[0].url);
 			newItem.complete();
 		});
 
@@ -346,13 +347,7 @@ function getPDF(doc, itemType) {
 // caj download link, default is the whole article for thesis.
 function getCAJ(doc, itemType) {
 	// //div[@id='DownLoadParts']
-	var caj = '';
-	if (itemType == 'thesis') {
-		caj = ZU.xpath(doc, "//div[@id='DownLoadParts']/a");
-	}
-	if (!caj.length) {
-		caj = ZU.xpath(doc, "//a[@name='cajDown']");
-	}
+	var caj = ZU.xpath(doc, "//a[@name='cajDown']|//div[@id='downLoadFile']//a[@class='titleClass']");
 	return caj.length ? caj[0].href : false;
 }
 
@@ -360,20 +355,23 @@ function getCAJ(doc, itemType) {
 function getAttachments(pdfurl, cajurl, keepPDF) {
 	var attachments = [];
 	if (keepPDF && cajurl) {
+		var url = pdfurl ? pdfurl : cajurl.includes("&dflag=nhdown") ? cajurl.replace('&dflag=nhdown', '&dflag=pdfdown') : cajurl + '&dflag=pdfdown';
+		url = url.replace(/kns\.cnki\.net\/KNS8/, "oversea.cnki.net/kns");
 		attachments.push({
 			title: "Full Text PDF",
 			mimeType: "application/pdf",
-			url: pdfurl ? pdfurl : cajurl.includes("&dflag=nhdown") ? cajurl.replace('&dflag=nhdown', '&dflag=pdfdown') : cajurl + '&dflag=pdfdown'
+			url: url
 		});
 	} else if (cajurl) {
 		attachments.push({
 			title: "Full Text CAJ",
 			mimeType: "application/caj",
-			url: cajurl
+			url: cajurl.replace(/kns\.cnki\.net\/KNS8/, "oversea.cnki.net/kns")
 		});
 	}
 	return attachments;
-}/** BEGIN TEST CASES **/
+}
+/** BEGIN TEST CASES **/
 var testCases = [
 	{
 		"type": "web",
