@@ -354,7 +354,7 @@ function getCAJ(doc, itemType) {
 // add pdf or caj to attachments, default is pdf
 function getAttachments(pdfurl, cajurl, keepPDF) {
 	var attachments = [];
-	if (keepPDF && cajurl) {
+	if (keepPDF && pdfurl) {
 		var url = pdfurl ? pdfurl : cajurl.includes("&dflag=nhdown") ? cajurl.replace('&dflag=nhdown', '&dflag=pdfdown') : cajurl + '&dflag=pdfdown';
 		url = url.replace(/kns\.cnki\.net\/KNS8/, "oversea.cnki.net/kns");
 		attachments.push({
