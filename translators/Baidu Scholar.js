@@ -1,7 +1,7 @@
 {
 	"translatorID": "e034d9be-c420-42cf-8311-23bca5735a32",
 	"label": "Baidu Scholar",
-	"creator": "Philipp Zumstein,wasmetqall<wasmetqall@foxmail.com>",
+	"creator": "l0o0<linxzh1989@gmail.com>",
 	"target": "^https?://(www\\.)?xueshu\\.baidu\\.com/",
 	"minVersion": "3.0",
 	"maxVersion": "",
@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2019-12-19 03:41:34"
+	"lastUpdated": "2021-12-28 04:27:11"
 }
 
 /*
@@ -36,11 +36,26 @@
 */
 
 
-// attr()/text() v2
-// eslint-disable-next-line
-function attr(docOrElem,selector,attr,index){var elem=index?docOrElem.querySelectorAll(selector).item(index):docOrElem.querySelector(selector);return elem?elem.getAttribute(attr):null}
-function text(docOrElem,selector,index){var elem=index?docOrElem.querySelectorAll(selector).item(index):docOrElem.querySelector(selector);return elem?elem.textContent:null}
 
+function getRefByIDs(ids, onDataAvailable) {
+	if (!ids.length) return;
+	let {url, paper} = ids.shift();
+	let refUrl = `https://xueshu.baidu.com/u/citation?type=bib&paperid=${paper}`;
+	ZU.doGet(refUrl, function(text) {
+		// Z.debug(text);
+		onDataAvailable(text, url);
+		if (ids.length) {
+			getRefByIDs(ids, onDataAvailable);
+		}
+	});
+}
+
+
+function getIDFromUrl(url) {
+	let search = url.match(/paperid=(\w+)/);
+	if (search) return {url: url, paper: search[1]};
+	return false;
+}
 
 function detectWeb(doc, url) {
 	if (url.includes('paperid=')) {
@@ -70,72 +85,42 @@ function getSearchResults(doc, checkOnly) {
 
 function doWeb(doc, url) {
 	if (detectWeb(doc, url) == "multiple") {
-		Zotero.selectItems(getSearchResults(doc, false), function (items) {
+		let ids = [];
+		Zotero.selectItems(getSearchResults(doc, false, ids), function (items) {
 			if (!items) {
 				return;
 			}
 			var articles = [];
 			for (var i in items) {
+				ids.push(getIDFromUrl(i));
 				articles.push(i);
 			}
-			ZU.processDocuments(articles, scrape);
+			scrape(doc, ids);
 		});
 	}
 	else {
-		scrape(doc, url);
+		scrape(doc, [getIDFromUrl(url)]);
 	}
 }
 
 
-function scrape(doc, _url) {
-	var dataUrl = attr(doc, 'i.reqdata', 'url');
-	var diversion = attr(doc, 'i.reqdata', 'diversion');
-	var sign = attr(doc, 'a.sc_q', 'data-sign');
-	var title = doc.title.replace(/\s+-\s+百度学术/, '');
-	var tags = [];
-	doc.querySelectorAll('p.kw_main span a').forEach(e => tags.push(ZU.trimInternal(e.textContent)));
-	// Z.debug({ ris });
-	// delete parenthesis in pages information, e.g. SP  - 5-7(3)
-	var item= new Zotero.Item(detectWeb(doc,_url));
-	item.url = dataUrl;
-	var doiLink = attr(doc, 'a.dl_item[data-url*="doi.org/"]', 'data-url');
-	if (!item.DOI && doiLink) {
-		item.DOI = doiLink.substr(doiLink.indexOf('doi.org/') + 8);
-	}
-	if (!item.abstractNote) {
-		item.abstractNote = text(doc, 'div.sc_abstract') || text(doc, 'p.abstract');
-	}
-	item.attachments.push({
-		title: "Snapshot",
-		document: doc
-	});
-	item.tags = tags;
-	if (!item.title) {
-		item.title = title;
-	}
-	if (!item.creators || item.creators.length == 0) {
-		item.creators = [];
-		doc.querySelectorAll('p.author_text a').forEach((e) => {
-			var creator = ZU.cleanAuthor(e.textContent, 'author', true);
-			item.creators.push(creator);
-			if (creator.lastName.search(/[A-Za-z]/) == -1 && !creator.lastName.includes(' ')) {
-				// Chinese name. first character is last name, the rest are first name
-				creator.firstName = creator.lastName.substr(1);
-				creator.lastName = creator.lastName.charAt(0);
+function scrape(doc, ids) {
+	getRefByIDs(ids, function(text, url) {
+		let translator = Z.loadTranslator("import");
+		translator.setTranslator("9cb70025-a888-4a29-a210-93ec52da40d4");  // Bible format
+		translator.setString(text);
+		translator.setHandler("itemDone", function(obj, newItem) {
+			newItem.url = url;
+			if (doc.querySelector("p.abstract")) newItem.abstractNote = doc.querySelector("p.abstract").innerText.trim();
+			if (doc.querySelector("p.kw_main")) {
+				newItem.tags = doc.querySelector("p.kw_main").innerText.split("；");
 			}
+			Z.debug(newItem.abstractNote);
+			Z.debug(newItem.tags);
+			newItem.complete();
 		});
-	}
-	if (!item.publicationTitle) {
-		item.publicationTitle = attr(doc, 'a.journal_title', 'title');
-	}
-	if (!item.date) {
-		item.date = ZU.trimInternal(text(doc, 'div.year_wr p.kw_main'));
-	}
-	if (!item.DOI && text(doc, 'div.doi_wr p.kw_main')) {
-		item.DOI = ZU.trimInternal(text(doc, 'div.doi_wr p.kw_main'));
-	}
-
-	item.complete();
+		translator.translate();
+	});
 }
 
 /** BEGIN TEST CASES **/
