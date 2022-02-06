@@ -2,14 +2,14 @@
 	"translatorID": "ec98c7f1-1f76-43d1-a5fd-fc36428fba58",
 	"label": "Dangdang",
 	"creator": "018<lyb018@gmail.com>",
-	"target": "^http?://(product|search)\\.dangdang\\.com/",
+	"target": "^https?://(product|search)\\.dangdang\\.com/",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-03-25 11:59:39"
+	"lastUpdated": "2022-01-24 06:22:02"
 }
 
 /*
@@ -185,6 +185,16 @@ function scrapeSpc(document, url) {
 				}
 			}
 		}
+	}
+
+	// 中图clc作为标签，需要安装油猴插件：https://greasyfork.org/zh-CN/scripts/408682
+	var clc = text(document, '#clc');
+	if (clc) {
+		newItem.archiveLocation = clc;
+	}
+	var subject = text(document, '#subject');
+	if (subject) {
+		newItem.archive = subject;
 	}
 	
 	var span1 = document.querySelector('span[dd_name="全部评论"]');
