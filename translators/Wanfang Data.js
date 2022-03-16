@@ -8,8 +8,8 @@
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
-	"browserSupport": "gcs",
-	"lastUpdated": "2021-07-18 12:07:54"
+	"browserSupport": "gcsibv",
+	"lastUpdated": "2022-03-16 07:36:14"
 }
 
 /*
@@ -142,7 +142,7 @@ function getRefworksByID(ids, next) {
 
 
 function scrape(ids, itemInfo) {
-	Z.debug("---------------WanFang Data 20210401---------------");
+	Z.debug("---------------WanFang Data 20220316---------------");
 	getRefworksByID(ids, function(detail) {
 		// Z.debug(detail);
 		var dbname = detail.dbname;
@@ -174,9 +174,9 @@ function scrape(ids, itemInfo) {
 			field.forEach(f => newItem[f] = (typeof detail[k] != 'object' ? detail[k]: detail[k][0]));
 			
 		}
-		var pdflink = getPDF(itemInfo, detail);
+		var pdflink = getPDF(detail);
 		if (pdflink) {
-			// Z.debug(pdflink);
+			Z.debug(pdflink);
 			newItem.attachments = [{
 				title: "Full Text PDF",
 				mimeType: "application/pdf",
@@ -248,7 +248,7 @@ function getIDFromURL(url) {
 		dbname = tmp[1].toLowerCase();
 		filename = tmp[2];
 	}
-	if (dbname && filename) {
+	if (dbname && filename.length < 60) {
 		return {dbname: getTypeFromDBName(dbname),
 		filename: filename, url:url};
 	} else {
@@ -256,10 +256,24 @@ function getIDFromURL(url) {
 	}
 }
 
+// Get ID from page
+function getIDFromPage(doc, url) {
+	var ele = doc.querySelector("a.download") || doc.querySelector("span.title-id-hidden");
+	if (ele === null) return false;
+	var hiddenId = ele.getAttribute('href') || ele.innerText;
+	var tmp = hiddenId.match(/(\w+)_(\w+)/);
+	if (tmp === null) return false;
+	return {dbname: getTypeFromDBName(tmp[1]),
+		filename: tmp[2], url: url || `https://d.wanfangdata.com.cn/${hiddenId.replace("_", "/")}`
+	}
+
+}
+
 // database and item type match
 function getTypeFromDBName(db) {
 	var dbType = {
 		periodical: "journalArticle",
+		perio: "journalArticle",
 		thesis: "thesis",
 		// claw: "statute",
 		conference: "conferencePaper",
@@ -282,7 +296,7 @@ function getTypeFromDBName(db) {
 
 function detectWeb(doc, url) {
 	if (url.includes("?q=") || url.includes("/advanced-search/")) return "multiple";
-	var id = getIDFromURL(url);
+	var id = getIDFromPage(doc) || getIDFromURL(url);
 	Z.debug(id);
 	if (id) {
 		return id.dbname;
@@ -294,19 +308,17 @@ function detectWeb(doc, url) {
 function getSearchResults(doc, itemInfo) {
   var items = {};
   var found = false;
-  var rows = ZU.xpath(doc, "//div[@id='resultsList']/div[@class='item']");
+  var rows = ZU.xpath(doc, "//div[@class='normal-list']");
   if (!rows.length > 0) rows = doc.querySelectorAll("div.mod-results-list div.item");
   var idx = 1
   for (let row of rows) {
-	var title = ZU.xpath(row, ".//a[normalize-space()!='目录']")[0];
-	var href = title.href;
-	// Z.debug(href);
-	items[href] = idx + " " + title.innerText;
-	Z.debug(href);
-	var id = getIDFromURL(href);
-	id.url = href;
+	var title = ZU.xpath(row, ".//span[@class='title'] | .//div[@class='item-title']/a")[0];
+	var id = title.getAttribute("href") ? getIDFromURL(title.href) : getIDFromPage(row);
 	// Z.debug(id);
-	itemInfo[href] = id;
+	items[id.url] = idx + " " + title.innerText;
+	// var id = getIDFromURL(href);
+	// Z.debug(id);
+	itemInfo[id.url] = id;
 	idx +=1
   }
   // Z.debug(itemInfo);
@@ -323,22 +335,17 @@ function doWeb(doc, url) {
 			for (var href in selectedItems) {
 				ids.push(itemInfo[href]);
 			}
-			// Z.debug(ids);
 			scrape(ids, itemInfo)
 		});
 	} else {
-		var id = getIDFromURL(url);
+		var id = getIDFromPage(doc) || getIDFromURL(url);
 		scrape([id], doc);
 	}
 }
 
-function getPDF(target, detail) {
-	if (Object.prototype.toString.call(target) == "[object Object]") {
-		var pdflink = "http://oss.wanfangdata.com.cn/www/" + detail.Title[0] + ".ashx?isread=true&type=perio&resourceId=" + detail.Id;
-	} else {
-		var pdflink = ZU.xpath(target, "//a[@class='onlineRead']");
-		var pdflink = pdflink.length > 0 ? pdflink[0].href : null;
-	}
+function getPDF(detail) {
+	// 万方医学的附件没有账号测试，未添加
+	var pdflink = "http://oss.wanfangdata.com.cn/www/" + detail.Title[0] + ".ashx?isread=true&type=perio&resourceId=" + detail.Id;
 	return pdflink;
 }/** BEGIN TEST CASES **/
 var testCases = [
@@ -596,82 +603,6 @@ var testCases = [
 				],
 				"tags": [],
 				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://d.wanfangdata.com.cn/periodical/10.1111%252Fbjd.18291",
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "皮肤微生物组检查",
-				"creators": [
-					{
-						"lastName": "Prast‐Nielsen",
-						"creatorType": "author",
-						"firstName": "S."
-					},
-					{
-						"lastName": "Tobin",
-						"creatorType": "author",
-						"firstName": "A.‐M."
-					},
-					{
-						"lastName": "Adamzik",
-						"creatorType": "author",
-						"firstName": "K."
-					},
-					{
-						"lastName": "Powles",
-						"creatorType": "author",
-						"firstName": "A."
-					},
-					{
-						"lastName": "Hugerth",
-						"creatorType": "author",
-						"firstName": "L.W."
-					},
-					{
-						"lastName": "Sweeney",
-						"creatorType": "author",
-						"firstName": "C."
-					},
-					{
-						"lastName": "Kirby",
-						"creatorType": "author",
-						"firstName": "B."
-					},
-					{
-						"lastName": "Engstrand",
-						"creatorType": "author",
-						"firstName": "L."
-					},
-					{
-						"lastName": "Fry",
-						"creatorType": "author",
-						"firstName": "L."
-					}
-				],
-				"date": "2019-09-01 00:00:00",
-				"DOI": "10.1111/bjd.18291",
-				"ISSN": "0007-0963",
-				"abstractNote": "Summary 确定皮肤中存在何种细菌的传统方法是使用拭子取样。这种方法的一个局限是:拭子采样只能从皮肤表面采集,而细菌可能也存在于皮肤的深层。来自瑞典、爱尔兰和英国的研究者们调查了皮肤拭子和实际活检(组织样本)结果的差异。 在 16 名接受躯干或肢体皮损切除(手术去除)的患者中,从相同部位采集了一份拭子样本和一份 2 mm 环钻活检样本。首先润湿使用的拭子,之后对下方的脂肪层进行活检。对活检样本使用一种称为 16S rRNA 基因测序的技术来明确细菌的存在情况。这是一种非常敏感的技术,甚至在细菌不能被培养(生长)的情况发现细菌的 DNA。 活检显示称为梭菌目和拟杆菌门的细菌显著增多。梭菌目不需要氧气即可存活,因此预计可能在更深层皮肤发现。另一方面,其他细菌,如常见的金黄色葡萄球菌,在拭子样本中含量更为丰富。 更准确地了解皮肤中生活着何种细菌具有重要意义,因为这些细菌可能引发免疫反应,此反应对于特应性皮炎、银屑病和化脓性汗腺炎等皮肤病具有重要意义。 Linked Article: Prast‐Nielsen et al. Br J Dermatol 2019; 181:572–579",
-				"issue": "3",
-				"language": "eng",
-				"libraryCatalog": "Wanfang Data",
-				"pages": "e84-e84",
-				"publicationTitle": "British Journal of Dermatology",
-				"url": "https://d.wanfangdata.com.cn/periodical/10.1111%252Fbjd.18291",
-				"volume": "181",
-				"attachments": [],
-				"tags": [],
-				"notes": [
-					{
-						"note": "文章全文链接<br><a href=\"https://doi.org/10.1111/bjd.18291\">https://doi.org/10.1111/bjd.18291</a>"
-					}
-				],
 				"seeAlso": []
 			}
 		]
