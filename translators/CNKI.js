@@ -8,8 +8,8 @@
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
-	"browserSupport": "gcs",
-	"lastUpdated": "2021-10-13 13:48:24"
+	"browserSupport": "gcsibv",
+	"lastUpdated": "2022-04-02 07:58:41"
 }
 
 /*
@@ -105,9 +105,9 @@ function getIDFromHeader(doc, url) {
 }
 
 function getIDFromPage(doc, url) {
-	return getIDFromURL(url)
-		|| getIDFromURL(ZU.xpathText(doc, '//div[@class="zwjdown"]/a/@href'))
-		|| getIDFromHeader(doc, url);
+	return getIDFromHeader(doc, url)
+	    || getIDFromURL(url)
+		|| getIDFromURL(ZU.xpathText(doc, '//div[@class="zwjdown"]/a/@href'));
 }
 
 function getTypeFromDBName(id) {
