@@ -1,0 +1,56 @@
+{
+	"env": {
+		"browser": false,
+		"es6": true
+	},
+	"extends": [
+		"@zotero"
+	],
+	"parserOptions": {
+		"ecmaVersion": 2017
+	},
+	"globals": {
+		"Zotero": "readonly",
+		"Z": "readonly",
+		"ZU": "readonly",
+		"DOMParser": "readonly",
+		"XPathResult": "readonly",
+		"XMLSerializer": "readonly",
+		"attr": "readonly",
+		"innerText": "readonly",
+		"text": "readonly",
+		"atob": "readonly"
+	},
+	"rules": {
+		"no-unused-vars": [
+			"error",
+			{
+				"argsIgnorePattern": "^_",
+				"varsIgnorePattern": "^detectWeb$|^doWeb$|^detectImport$|^doImport$|^doExport$|^detectSearch$|^doSearch$|^exports$"
+			}
+		],
+
+		"no-redeclare": ["error", {"builtinGlobals": true}],
+
+		"zotero-translator/not-executable": "error",
+		"zotero-translator/header-valid-json": "error",
+		"zotero-translator/translator-id": "error",
+		"zotero-translator/last-updated": "warn",
+		"zotero-translator/translator-type": "warn",
+
+		"zotero-translator/no-for-each": "warn",
+		"zotero-translator/prefer-index-of": "warn",
+
+		"zotero-translator/test-cases-valid-json": "error",
+		"zotero-translator/test-cases": "error",
+		"zotero-translator/translator-framework": "warn",
+
+		"zotero-translator/license": [ "warn", {
+			"mustMatch": "GNU Affero General Public License",
+			"templateFile": ".ci/AGPL"
+		 }]
+	},
+	"plugins": [
+		"zotero-translator"
+	]
+}
