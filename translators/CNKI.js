@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-04-09 14:22:51"
+	"lastUpdated": "2022-04-13 13:25:16"
 }
 
 /*
@@ -52,7 +52,8 @@ function getRefWorksByID(ids, onDataAvailable) {
 				.replace(/^RT\s+Dissertation\/Thesis/gmi, 'RT Dissertation')
 				.replace(/;;/g, ';') // 保留作者中一个英文分号
 				.replace(/^ AB/g, 'AB') // 去除AB前空格
-				.replace(/vo (\d+)\n/, "VO $1\n")  // 修改vo 大小写
+				.replace(/vo 0?(\d+)\n/, "VO $1\n")  // Change vo to VO, remove leading 0
+				.replace(/IS 0?(\d+)\n/, "IS $1\n")  // Remove leading 0
 				.replace(
 					/^(A[1-4]|U2)\s*([^\r\n]+)/gm,
 					function (m, tag, authors) {
