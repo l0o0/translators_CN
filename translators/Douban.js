@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-04-09 07:09:26"
+	"lastUpdated": "2022-04-14 09:59:01"
 }
 
 /*
@@ -297,10 +297,10 @@ function scrapeAndParse(doc, url) {
 		}
 
 		// 出版社
-		pattern = /<span [^>]*?>出版社:<\/span>(.*?)<br\/>/;
+		pattern = /<span [^>]*?>出版社:<\/span>(.*?)<br>/;
 		if (pattern.test(page)) {
 			var publisher = pattern.exec(page)[1];
-			newItem.publisher = ZU.trim(publisher);
+			newItem.publisher = ZU.trim(trimTags(publisher));
 			// Zotero.debug("publisher: "+publisher);
 		}
 
@@ -393,6 +393,7 @@ function scrapeAndParse(doc, url) {
 		newItem.complete();
 	});
 }
+
 
 /** BEGIN TEST CASES **/
 var testCases = [
