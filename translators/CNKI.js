@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-04-02 07:58:41"
+	"lastUpdated": "2022-04-13 13:25:16"
 }
 
 /*
@@ -52,7 +52,8 @@ function getRefWorksByID(ids, onDataAvailable) {
 				.replace(/^RT\s+Dissertation\/Thesis/gmi, 'RT Dissertation')
 				.replace(/;;/g, ';') // 保留作者中一个英文分号
 				.replace(/^ AB/g, 'AB') // 去除AB前空格
-				.replace(/vo (\d+)\n/, "VO $1\n")  // 修改vo 大小写
+				.replace(/vo 0?(\d+)\n/, "VO $1\n")  // Change vo to VO, remove leading 0
+				.replace(/IS 0?(\d+)\n/, "IS $1\n")  // Remove leading 0
 				.replace(
 					/^(A[1-4]|U2)\s*([^\r\n]+)/gm,
 					function (m, tag, authors) {
@@ -106,7 +107,7 @@ function getIDFromHeader(doc, url) {
 
 function getIDFromPage(doc, url) {
 	return getIDFromHeader(doc, url)
-	    || getIDFromURL(url)
+		|| getIDFromURL(url)
 		|| getIDFromURL(ZU.xpathText(doc, '//div[@class="zwjdown"]/a/@href'));
 }
 
@@ -214,7 +215,7 @@ function detectWeb(doc, url) {
 }
 
 function doWeb(doc, url) {
-	Z.debug("----------------CNKI 20210909---------------------");
+	Z.debug("----------------CNKI 20220402---------------------");
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
@@ -280,6 +281,7 @@ function scrape(ids, doc, itemInfo) {
 					newItem.abstractNote = ZU.xpath(doc, "//span[@id='ChDivSummary']")[0].innerText;
 				}
 			}
+			newItem.attachments[0].referer = url;
 			var timestamp = new Date().toLocaleDateString().replace(/\//g, '-');
 			var citeStr = cite ? `${cite} citations(CNKI)[${timestamp}]` : "";
 			newItem.extra = (citeStr + pubTypeStr).trim();
@@ -314,6 +316,7 @@ function scrape(ids, doc, itemInfo) {
 				newItem.tags[j] = newItem.tags[j].replace(/:\d+$/, '');
 			}
 			newItem.url = url;
+			newItem.language = 'zh_CN';
 
 			if (newItem.abstractNote) {
 				newItem.abstractNote = newItem.abstractNote.replace(/\s*[\r\n]\s*/g, '\n')
@@ -323,7 +326,6 @@ function scrape(ids, doc, itemInfo) {
 			// CN 中国刊物编号，非refworks中的callNumber
 			// CN in CNKI refworks format explains Chinese version of ISSN
 			newItem.callNumber = null;
-			Z.debug(newItem.attachments[0].url);
 			newItem.complete();
 		});
 
@@ -354,9 +356,14 @@ function getCAJ(doc, itemType) {
 // add pdf or caj to attachments, default is pdf
 function getAttachments(pdfurl, cajurl, keepPDF) {
 	var attachments = [];
-	if (keepPDF && cajurl) {
-		var url = pdfurl ? pdfurl : cajurl.includes("&dflag=nhdown") ? cajurl.replace('&dflag=nhdown', '&dflag=pdfdown') : cajurl + '&dflag=pdfdown';
-		url = url.replace(/kns\.cnki\.net\/KNS8/, "oversea.cnki.net/kns");
+	if (keepPDF && pdfurl) {
+		attachments.push({
+			title: "Full Text PDF",
+			mimeType: "application/pdf",
+			url: pdfurl
+		});
+	} else if (keepPDF && !cajurl.includes("bar.cnki.net")) {  //Can not download PDF when contains bar.cnki.net
+		var url = cajurl.includes("&dflag=nhdown") ? cajurl.replace('&dflag=nhdown', '&dflag=pdfdown') : cajurl + '&dflag=pdfdown';
 		attachments.push({
 			title: "Full Text PDF",
 			mimeType: "application/pdf",
@@ -366,12 +373,11 @@ function getAttachments(pdfurl, cajurl, keepPDF) {
 		attachments.push({
 			title: "Full Text CAJ",
 			mimeType: "application/caj",
-			url: cajurl.replace(/kns\.cnki\.net\/KNS8/, "oversea.cnki.net/kns")
+			url: cajurl
 		});
 	}
 	return attachments;
-}
-/** BEGIN TEST CASES **/
+}/** BEGIN TEST CASES **/
 var testCases = [
 	{
 		"type": "web",
