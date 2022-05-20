@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-04-13 13:25:16"
+	"lastUpdated": "2022-05-19 21:08:16"
 }
 
 /*
@@ -263,7 +263,7 @@ function scrape(ids, doc, itemInfo) {
 				} else {
 					var pdfurl = getPDF(doc, newItem.itemType);
 					var cajurl = getCAJ(doc, newItem.itemType);
-					newItem.attachments = getAttachments(pdfurl, cajurl, keepPDF);
+					newItem.attachments = getAttachments(pdfurl, cajurl, keepPDF, url);
 				}
 				cite = doc.querySelector("span.num");
 				cite = cite ? cite.innerText.split('\n')[0] : "";
@@ -354,7 +354,7 @@ function getCAJ(doc, itemType) {
 }
 
 // add pdf or caj to attachments, default is pdf
-function getAttachments(pdfurl, cajurl, keepPDF) {
+function getAttachments(pdfurl, cajurl, keepPDF, weburl) {
 	var attachments = [];
 	if (keepPDF && pdfurl) {
 		attachments.push({
@@ -364,6 +364,13 @@ function getAttachments(pdfurl, cajurl, keepPDF) {
 		});
 	} else if (keepPDF && !cajurl.includes("bar.cnki.net")) {  //Can not download PDF when contains bar.cnki.net
 		var url = cajurl.includes("&dflag=nhdown") ? cajurl.replace('&dflag=nhdown', '&dflag=pdfdown') : cajurl + '&dflag=pdfdown';
+		attachments.push({
+			title: "Full Text PDF",
+			mimeType: "application/pdf",
+			url: url
+		});
+	} else if (keepPDF && weburl && weburl.includes("kns.cnki.net/kcms/detail/detail.aspx?")) {  //使用海外版进行pdf下载
+		var url = weburl.replace('kns.cnki.net/kcms/detail/detail.aspx?', 'chn.oversea.cnki.net/kns/download?');
 		attachments.push({
 			title: "Full Text PDF",
 			mimeType: "application/pdf",
