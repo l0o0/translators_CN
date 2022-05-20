@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-04-15 08:47:09"
+	"lastUpdated": "2022-05-20 07:45:04"
 }
 
 /*
@@ -207,11 +207,11 @@ function addCreators(newItem, node) {
 
 
 function scrape(doc) {
-	Z.debug("---------------WanFang Data 20220405---------------");
+	Z.debug("---------------WanFang Data 20220520---------------");
 	var id = getIDFromPage(doc) || getIDFromURL(doc.URL);
 	var newItem = new Zotero.Item(id.dbname);
 	newItem.title = doc.title;
-	newItem.abstractNote = doc.description;
+	newItem.abstractNote = doc.querySelector("meta[name='description']").content;
 	if (id.dbname != 'patent') newItem.tags = doc.querySelector('meta[name="keywords"]').content.split(',').map( e => ({tag: e}));
 	// Display full abstract
 	var clickMore = ZU.xpath(doc, "//span[@class='getMore' or text()='更多']");
@@ -233,15 +233,15 @@ function scrape(doc) {
 	// }
 	// newItem.abstractNote = newItem.abstractNote.trim().split("\n")[0];
 	newItem.url = doc.URL;
-	var pdflink = getPDF(doc);
-	Z.debug(pdflink);
-	if (pdflink) {
-		newItem.attachments.push({
-			url: pdflink,
-			title: "Full Text PDF",
-			mimeType: "application/pdf"
-		})
-	}
+	// var pdflink = getPDF(doc);
+	// Z.debug(pdflink);
+	// if (pdflink) {
+	// 	newItem.attachments.push({
+	// 		url: pdflink,
+	// 		title: "Full Text PDF",
+	// 		mimeType: "application/pdf"
+	// 	})
+	// }
 	newItem.complete();
 }
 
@@ -352,12 +352,6 @@ function doWeb(doc, url) {
 	} else {
 		scrape(doc);
 	}
-}
-
-function getPDF(doc) {
-	var pdflink = ZU.xpath(doc, "//a[text()='在线阅读']");
-	if (pdflink.length > 0 && pdflink[0].href) return pdflink[0].href;
-	return;
 }/** BEGIN TEST CASES **/
 var testCases = [
 	{
