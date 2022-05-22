@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-05-19 21:08:16"
+	"lastUpdated": "2022-05-22 14:19:46"
 }
 
 /*
@@ -54,6 +54,8 @@ function getRefWorksByID(ids, onDataAvailable) {
 				.replace(/^ AB/g, 'AB') // 去除AB前空格
 				.replace(/vo 0?(\d+)\n/, "VO $1\n")  // Change vo to VO, remove leading 0
 				.replace(/IS 0?(\d+)\n/, "IS $1\n")  // Remove leading 0
+				.replace(/^CL\s+([硕博士]{2})/gmi, 'CL $1学位论文') // Add 学位论文 to ItemType
+				.replace(/^LA 中文;/gmi, "LA zh_CN")  // Default language is zh_CN
 				.replace(
 					/^(A[1-4]|U2)\s*([^\r\n]+)/gm,
 					function (m, tag, authors) {
@@ -215,7 +217,7 @@ function detectWeb(doc, url) {
 }
 
 function doWeb(doc, url) {
-	Z.debug("----------------CNKI 20220402---------------------");
+	Z.debug("----------------CNKI 20220521---------------------");
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
@@ -275,11 +277,11 @@ function scrape(ids, doc, itemInfo) {
 					var DOI = doi[0].innerText.split("DOI");
 					newItem.DOI = DOI[DOI.length - 1].trim().replace(/[：:]/, '');
 				}
-				var moreClick = ZU.xpath(doc, "//span/a[@id='ChDivSummaryMore']");
-				if (moreClick.length) {
-					moreClick[0].click();// click to get a full abstract in a single article page
-					newItem.abstractNote = ZU.xpath(doc, "//span[@id='ChDivSummary']")[0].innerText;
-				}
+				// var moreClick = ZU.xpath(doc, "//span/a[@id='ChDivSummaryMore']");
+				// if (moreClick.length) {
+				// 	moreClick[0].click();// click to get a full abstract in a single article page
+				// 	newItem.abstractNote = ZU.xpath(doc, "//span[@id='ChDivSummary']")[0].innerText;
+				// }
 			}
 			newItem.attachments[0].referer = url;
 			var timestamp = new Date().toLocaleDateString().replace(/\//g, '-');
@@ -316,7 +318,6 @@ function scrape(ids, doc, itemInfo) {
 				newItem.tags[j] = newItem.tags[j].replace(/:\d+$/, '');
 			}
 			newItem.url = url;
-			newItem.language = 'zh_CN';
 
 			if (newItem.abstractNote) {
 				newItem.abstractNote = newItem.abstractNote.replace(/\s*[\r\n]\s*/g, '\n')
