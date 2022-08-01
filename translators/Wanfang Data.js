@@ -1,7 +1,7 @@
 {
 	"translatorID": "eb876bd2-644c-458e-8d05-bf54b10176f3",
 	"label": "Wanfang Data",
-	"creator": "Ace Strong <acestrong@gmail.com>",
+	"creator": "Ace Strong <acestrong@gmail.com>, rnicrosoft",
 	"target": "^https?://[a-z]+\\.wanfangdata\\.com\\.cn",
 	"minVersion": "2.0rc1",
 	"maxVersion": "",
@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-05-20 07:45:04"
+	"lastUpdated": "2022-07-28 14:40:22"
 }
 
 /*
@@ -207,7 +207,7 @@ function addCreators(newItem, node) {
 
 
 function scrape(doc) {
-	Z.debug("---------------WanFang Data 20220520---------------");
+	Z.debug("---------------WanFang Data 20220728---------------");
 	var id = getIDFromPage(doc) || getIDFromURL(doc.URL);
 	var newItem = new Zotero.Item(id.dbname);
 	newItem.title = doc.title;
@@ -233,15 +233,15 @@ function scrape(doc) {
 	// }
 	// newItem.abstractNote = newItem.abstractNote.trim().split("\n")[0];
 	newItem.url = doc.URL;
-	// var pdflink = getPDF(doc);
-	// Z.debug(pdflink);
-	// if (pdflink) {
-	// 	newItem.attachments.push({
-	// 		url: pdflink,
-	// 		title: "Full Text PDF",
-	// 		mimeType: "application/pdf"
-	// 	})
-	// }
+	var pdflink = getPDF(newItem, doc);
+	Z.debug(pdflink);
+	if (pdflink) {
+		newItem.attachments.push({
+			url: pdflink,
+			title: "Full Text PDF",
+			mimeType: "application/pdf"
+		})
+	}
 	newItem.complete();
 }
 
@@ -352,6 +352,16 @@ function doWeb(doc, url) {
 	} else {
 		scrape(doc);
 	}
+}
+
+function getPDF(newItem, doc) {
+	var ele = doc.querySelector("a.download") || doc.querySelector("span.title-id-hidden");
+	if (ele === null) return false;
+	var hiddenId = ele.getAttribute('href') || ele.innerText;
+	var tmp = hiddenId.match(/(\w+)_([^.]+)/);
+	if (tmp === null) return false;
+	// Z.debug(tmp)
+	return "https://oss.wanfangdata.com.cn/www/"+encodeURIComponent(doc.title)+".ashx?isread=true&type="+tmp[1]+"&resourceId="+encodeURI(decodeURIComponent(tmp[2]));
 }/** BEGIN TEST CASES **/
 var testCases = [
 	{
