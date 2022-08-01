@@ -55,7 +55,7 @@ function getRefWorksByID(ids, onDataAvailable) {
 				.replace(/vo 0?(\d+)\n/, "VO $1\n")  // Change vo to VO, remove leading 0
 				.replace(/IS 0?(\d+)\n/, "IS $1\n")  // Remove leading 0
 				.replace(/^CL\s+([硕博士]{2})/gmi, 'CL $1学位论文') // Add 学位论文 to ItemType
-				.replace(/^LA 中文;/gmi, "LA zh_CN")  // Default language is zh_CN
+				.replace(/^LA 中文;/gmi, "LA zh-CN")  // Default language is zh-CN
 				.replace(
 					/^(A[1-4]|U2)\s*([^\r\n]+)/gm,
 					function (m, tag, authors) {
