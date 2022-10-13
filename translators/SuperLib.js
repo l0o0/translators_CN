@@ -113,7 +113,7 @@ function scrape(doc, url) {
 	var item = new Zotero.Item(itemType);
 	item.title = doc.title.replace(/_.*?搜索$/, "");
 	item.url = url;
-	item.language = 'cn';
+	item.language = 'zh-CN';
 	var clickMore = ZU.xpath(doc, "//a[text()='更多...']");
 	clickMore.length > 0 ? clickMore[0].click() : null;
 	var content = ZU.xpath(doc, "//*[contains(text(), '【')]");
@@ -209,7 +209,7 @@ var testCases = [
 				"date": "2019.01",
 				"ISBN": "9787566914798",
 				"abstractNote": "本书以服装以及着装的主体-人作为研究对象，围绕人和服装之间的关系，从服装诱发的心理认知、生理卫生指标、动作行为三方面，将现代服装的一些测量方法进行了系统的介绍。满足市场导向生产模式的需求。本书提供了一些科学性的、有实际使用价值的现代服装测试方法和技术，帮助服装从业人员充分利用人体工效学方法进行科学的服装测量和研究。",
-				"language": "cn",
+				"language": "zh-CN",
 				"libraryCatalog": "SuperLib",
 				"numPages": "140",
 				"publisher": "上海：东华大学出版社",
@@ -302,7 +302,7 @@ var testCases = [
 				"date": "2015.03",
 				"ISBN": "9787560997186",
 				"abstractNote": "本书以基因工程的研究步骤及实际操作中的需要为主线，共分12章，包括基因工程的基本概念、基因工程基本技术原理、基因工程的工具酶和克隆载体、目的基因的克隆、外源基因的原核表达系统等。",
-				"language": "cn",
+				"language": "zh-CN",
 				"libraryCatalog": "SuperLib",
 				"numPages": "375",
 				"publisher": "武汉：华中科技大学出版社",
@@ -340,7 +340,7 @@ var testCases = [
 				],
 				"date": "2020",
 				"abstractNote": "卵巢癌是一种早期诊断率低而致死率较高的恶性肿瘤,对其预后标志物的鉴定和生存率的预测仍是生存分析的重要任务。利用卵巢癌预后相关基因构建基因共表达网络,鉴定预后生物标志物并进行生存率的预测。首先,对TCGA(The cancer genome atlas)数据库下载的卵巢癌基因表达数据实施单因素回归分析,利用得到的747个预后相关基因构建卵巢癌预后加权基因共表达网络。其次,考虑网络的生物学意义,利用蛋白质相互作用(Protein-protein interaction, PPI)数据对共表达网络中的模块重新加权,并根据网络中基因的拓扑重要性对基因进行排序。最后,运用Cox比例风险回归对网络中的重要基因构建卵巢癌预后模型,鉴定了3个预后生物标志物。生存分析结果显示,这3个标志物能够显著区分不同预后的患者,较好地预测卵巢癌患者的预后情况。",
-				"language": "cn",
+				"language": "zh-CN",
 				"libraryCatalog": "SuperLib",
 				"url": "http://jour.ucdrs.superlib.net/views/specific/2929/JourDetail.jsp?dxNumber=100287199277&d=EDA67F761EA0741D8CCBA19AAE292498&s=%E5%9F%BA%E5%9B%A0%E5%85%B1%E8%A1%A8%E8%BE%BE&ecode=utf-8",
 				"volume": "5",
