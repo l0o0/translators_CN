@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-07-28 14:40:22"
+	"lastUpdated": "2022-10-14 07:25:40"
 }
 
 /*
@@ -55,63 +55,40 @@ var core = {
 	GDZJ: "广电总局认定学术期刊"
 };
 
-var typeFieldMapper = {
-	"journalArticle" : {
-		"PeriodicalTitle":"publicationTitle",
-		"Volum":"volume",
-		"Issue":"issue",
-		"Page":"pages",
-		"PublishDate":"date",
-		"journalAbbreviation": "",
-		"DOI": "DOI",
-		"ISSN": "ISSN",
-		"Keywords": "tags",
-		"Creator": [["Creator", "author"]]
-	},
-	"thesis": {
-		"Degree":"thesisType",
-		"OrganizationNorm":"university",
-		"PublishDate": "date",
-		"MachinedKeywords": "tags",
-		"Creator": [
-			["Creator", "author"],
-			["Tutor", "contributor"]
-		],
-	},
-	"conferencePaper": {
-		"MeetingDate": "date",
-		"MeetingTitle": "conferenceName",
-		"MeetingCorpus": "proceedingsTitle",
-		"MeetingArea": "place",
-		"MachinedKeywords": "tags",
-		"Volum":"volume",
-		"Page": "pages",
-		"DOI": "DOI",
-		"Sponsor": "publisher",
-		"Creator": [["Creator", "author"]],
-	},
-	"patent": {
-		"ApplicantArea": "place",
-		"CountryOrganization": "country",
-		"PatentCode" : "patentNumber",
-		"ApplicationDate":"filingDate",
-		"PublicationDate": "issueDate",
-		"LegalStatus": "legalStatus",
-		"SignoryItem": "rights",
-		"Applicant": "issuingAuthority",
-		"PublicationNo" : "applicationNumber",
-		"Creator": [
-			["Inventor", "inventor"],
-			["Agent", "attorneyAgent"]
-		],
-	}
-};
-
 
 var nodeFieldMapper = {
-	doi: "DOI",
-	Keyword: addTags,
-	"作者": addCreators,
+	"//div[contains(concat(' ', normalize-space(@class), ' '), ' author ')]": addCreators,
+	"//div[contains(concat(' ', normalize-space(@class), ' '), ' detailOrganization ')]": "university",
+	"//div[contains(concat(' ', normalize-space(@class), ' '), ' summary ')]": "abstractNote",
+	"//div[contains(concat(' ', normalize-space(@class), ' '), ' keyword ')]": addTags,
+	"//div[contains(concat(' ', normalize-space(@class), ' '), ' pages ')]": addPages,
+	"//div[contains(concat(' ', normalize-space(@class), ' '), ' periodicalName ')]": "publicationTitle",
+	"//div[contains(concat(' ', normalize-space(@class), ' '), ' publishData ')]": addDVI,
+	"//div[contains(concat(' ', normalize-space(@class), ' '), ' coreContainer ')]": "extra",
+	"//div[contains(concat(' ', normalize-space(@class), ' '), ' doiStyle ')]": "DOI",
+	"//div[contains(concat(' ', normalize-space(@class), ' '), ' tutor ')]": addCreators,
+	"//div[contains(@class, 'degree')]/div[@class='itemUrl']": "thesisType",
+	"//div[contains(@class, 'thesisYear')]/div[@class='itemUrl']": "date",
+	"//div[contains(@class, 'meetingDate')]/div[@class='itemUrl']": "date",
+	"//div[contains(@class, 'meetingName')]/a": "conferenceName",
+	"//div[contains(@class, 'mettingCorpus')]/div[@class='itemUrl']": "series",
+	"//div[contains(@class, 'meetingArea')]/div[@class='itemUrl']": "palce",
+	"//div[contains(@class, 'applicant')][2]": addCreators,
+	"//div[contains(@class, 'agent')]": addCreators,
+	"//div[contains(@class, 'applicationDate')][2]/div[@class='itemUrl']": 'issueDate',
+	"//div[contains(@class, 'applicationDate')][1]/div[@class='itemUrl']": 'filingDate',
+	"//div[contains(@class, 'patentCode')]/div[@class='itemUrl']": 'patentNumber',
+	"//div[contains(@class, 'publicationNo')]/div[@class='itemUrl']": 'applicationNumber',
+	"//div[contains(@class, 'applicantArea')]/div[@class='itemUrl']": 'country',
+	"//div[contains(@class, 'applicant')][1]/div[@class='itemUrl']": 'issuingAuthority',
+	"//div[contains(@class, 'signoryItem')][1]/div[@class='itemUrl']": '权力要求',
+};
+
+var nodeFieldMapperForMed = {
+	DOI: "DOI",
+	"关键词": addTagsForMed,
+	"主题词": addTagsForMed,
+	"作者": addCreatorsForMed,
 	"刊名": "publicationTitle",
 	Journal: "journalAbbreviation",
 	"年，卷(期)": addDVI,
@@ -122,7 +99,6 @@ var nodeFieldMapper = {
 	"学位年度": "date",
 	"学位授予单位": "university",
 	"授予学位": "thesisType",
-	"导师姓名": addCreators,
 	"会议地点": "place",
 	"会议名称": "conferenceName",
 	"母体文献": "series",
@@ -130,12 +106,10 @@ var nodeFieldMapper = {
 	"国别省市代码": "country",
 	"主申请人地址": "place",
 	"发布时间": "extra",
-	"期刊": addMDVI,
+	"期刊": addDVIForMed,
 	"申请/专利号": "patentNumber",
 	"公开/公告号": "applicationNumber",
 	"申请/专利权人": "issuingAuthority",
-	"发明/设计人": addCreators,
-	"代理人": addCreators,
 };
 
 function addField(newItem, field, value) {
@@ -147,25 +121,38 @@ function getTextPair(node) {
 	return node.textContent.split(/：\s?/).map(e => e.trim());
 }
 
+// Get nest node text
+function getText(node) {
+	function recursor(n) {
+		var i, a = [];
+		if (n.nodeType !== 3) {
+			if (n.childNodes)
+				for (i = 0; i < n.childNodes.length; ++i)
+					a = a.concat(recursor(n.childNodes[i]));
+		} else
+			if (n.data.trim()) a.push(n.data.trim());
+		return a;
+	}
+	return recursor(node);
+}
 
-function addTags(newItem, node) {
-	var temp = ZU.xpath(node, "./div/a").map(e => ({"tag": e.textContent.trim()}));
+
+function addTagsForMed(newItem, node) {
+	var temp = ZU.xpath(node, ".//a").map(e => ({ "tag": e.textContent.trim() }));
 	newItem.tags = newItem.tags.concat(temp);
 }
 
-function addDVI(newItem, node) {
-	var text = getTextPair(node)[1];
-	var result = text.match(/([0-9]*), ?([0-9]*)\((.*?)\)/);
-	if (result) {
-		newItem.date = result[1];
-		newItem.volume = result[2];
-		newItem.issue = result[3];
-	} else {
-		newItem.date = text;
-	}
+function addTags(newItem, tags) {
+	newItem.tags = newItem.tags.concat(tags);
 }
 
-function addMDVI(newItem, node) {
+function addDVI(newItem, texts) {
+	newItem.date = texts[1];
+	newItem.volume = texts[2].replace(",", "");
+	newItem.issue = texts[3].replace(/[\(\)]/g, '');
+}
+
+function addDVIForMed(newItem, node) {
 	var core = ZU.xpath(node, ".//span[@title]").map(e => e.title).join("\n");
 	newItem.extra = (newItem.extra ? newItem.extra : "") + "\n" + core;
 	if (node.querySelector("em")) newItem.pages = node.querySelector("em").textContent.replace("页", "").replace(",", "-");
@@ -176,65 +163,112 @@ function addMDVI(newItem, node) {
 	if (matchRes[4]) newItem.issue = matchRes[4].replace("期", "");
 }
 
-function addCreators(newItem, node) {
+function addPages(newItem, pages) {
+	pages = pages[pages.length - 1];
+	pages = pages.replace(/[\(\)]/g, '');
+	newItem.pages = pages;
+}
+
+function fixCreator(name) {
+	name = name.trim();
 	var zhnamesplit = Z.getHiddenPref('zhnamesplit') === undefined ? true : false;
-	for (let name of getTextPair(node)[1].split(/\s+|%/)) {
+	var creator = {};
+	var lastSpace = name.lastIndexOf(',');
+	if (name.search(/[A-Za-z]/) !== -1 && lastSpace !== -1) {
+		// western name. split on last space
+		creator.firstName = name.substr(0, lastSpace);
+		creator.lastName = name.substr(lastSpace + 1);
+	} else if (zhnamesplit) {
+		// zhnamesplit is true, split firstname and lastname.
+		// Chinese name. first character is last name, the rest are first name
+		creator.firstName = name.substr(1);
+		creator.lastName = name.charAt(0);
+	}
+	return creator;
+}
+
+function addCreatorsForMed(newItem, node) {
+	for (let name of getTextPair(node)[1].split(/\s{2,}|%|;/)) {
 		if (name.includes("[")) continue;
-		var creator = {};
-		var lastSpace = name.lastIndexOf(' ');
-		if (name.search(/[A-Za-z]/) !== -1 && lastSpace !== -1) {
-			// western name. split on last space
-			creator.firstName = name.substr(0, lastSpace);
-			creator.lastName = name.substr(lastSpace + 1);
-		} else if (zhnamesplit) {
-			// zhnamesplit is true, split firstname and lastname.
-			// Chinese name. first character is last name, the rest are first name
-			creator.firstName = name.substr(1);
-			creator.lastName = name.charAt(0);
-		}
+		var creator = fixCreator(name);
 		if (getTextPair(node)[0].includes("导师")) {
 			creator.creatorType = "contributor"
 		} else if (getTextPair(node)[0].includes("发明")) {
 			creator.creatorType = "inventor";
 		} else if (getTextPair(node)[0].includes("代理人")) {
 			creator.creatorType = "attorneyAgent";
-		}else {
+		} else {
 			creator.creatorType = "author";
 		}
 		newItem.creators.push(creator);
 	}
 }
 
+var creatorTypeMap = {
+	"导师姓名：": "contributor",
+	"发明/设计人：": "inventor",
+	"代理人：": "attorneyAgent"
+}
+
+function addCreators(newItem, creators) {
+	var creatorType = "author";
+	for (let name of creators) {
+		if (name in creatorTypeMap) {
+			creatorType = creatorTypeMap[name];
+			continue;
+		}
+		if (name.includes("[")) continue;
+		var creator = fixCreator(name);
+		creator.creatorType = creatorType;
+		newItem.creators.push(creator);
+	}
+}
+
 
 function scrape(doc) {
-	Z.debug("---------------WanFang Data 20220728---------------");
+	Z.debug("---------------WanFang Data 20221014---------------");
 	var id = getIDFromPage(doc) || getIDFromURL(doc.URL);
 	var newItem = new Zotero.Item(id.dbname);
-	newItem.title = doc.title;
-	newItem.abstractNote = doc.querySelector("meta[name='description']").content;
-	if (id.dbname != 'patent') newItem.tags = doc.querySelector('meta[name="keywords"]').content.split(',').map( e => ({tag: e}));
+	newItem.title = doc.title.replace("-论文-万方医学网", "");
+
 	// Display full abstract
 	var clickMore = ZU.xpath(doc, "//span[@class='getMore' or text()='更多']");
-	if (clickMore.length > 0) clickMore[0].click() ;
-	var nodes = doc.querySelectorAll("div.detailList div");
-	if (nodes.length == 0) nodes = doc.querySelectorAll("div.table-tr"); // Medical
-	for (let node of nodes) {
-		var nodeTextPair = getTextPair(node);
-		if (nodeTextPair[0].trim() in nodeFieldMapper) {
-			typeof nodeFieldMapper[nodeTextPair[0]] == "string" 
-			? addField(newItem, nodeFieldMapper[nodeTextPair[0]], nodeTextPair[1].trim())
-			: nodeFieldMapper[nodeTextPair[0]](newItem, node)
+	if (clickMore.length > 0) clickMore[0].click();
+	if (doc.URL.includes("med.wanfangdata.com.cn")) { // 万方医学
+		newItem.abstractNote = doc.querySelector("meta[name='description']").content;
+		var nodes = doc.querySelectorAll("div.detailList div");
+		if (nodes.length == 0) nodes = doc.querySelectorAll("div.table-tr"); // Medical
+		for (let node of nodes) {
+			var nodeTextPair = getTextPair(node);
+			// Z.debug(nodeTextPair);
+			if (nodeTextPair[0].trim() in nodeFieldMapperForMed) {
+				typeof nodeFieldMapperForMed[nodeTextPair[0]] == "string"
+					? addField(newItem, nodeFieldMapperForMed[nodeTextPair[0]], nodeTextPair[1].trim())
+					: nodeFieldMapperForMed[nodeTextPair[0]](newItem, node) // 调用函数处理
+			}
+		}
+	} else { // 万方数据
+		for (let [k, v] of Object.entries(nodeFieldMapper)) {
+			var foundNodes = ZU.xpath(doc, k);
+			if (foundNodes.length == 0) continue;
+			var texts = getText(foundNodes[0]);
+			typeof v == 'string'
+				? addField(newItem, v, texts.join(';'))
+				: v(newItem, texts);
 		}
 	}
 	newItem.language = 'zh-CN';
-	// if (newItem.abstractNote == undefined) {  // Medical
-	// 	var abstract = doc.querySelector("div.abstracts");
-	// 	newItem.abstractNote = abstract.textContent.replace("摘要：", "");
-	// }
-	// newItem.abstractNote = newItem.abstractNote.trim().split("\n")[0];
+	if (newItem.abstractNote) newItem.abstractNote = newItem.abstractNote.replace(/^摘要：;/, "");
+	if (newItem.DOI) newItem.DOI = newItem.DOI.replace(/^DOI: /, "");
+	if (newItem.itemType != 'thesis' && newItem.university) {
+		newItem.extra ? newItem.extra = newItem.extra + "\n地点：" + newItem.university
+			: newItem.extra = "地点：" + newItem.university;
+		newItem.university = "";
+	}
+
 	newItem.url = doc.URL;
 	var pdflink = getPDF(newItem, doc);
-	Z.debug(pdflink);
+	// Z.debug(pdflink);
 	if (pdflink) {
 		newItem.attachments.push({
 			url: pdflink,
@@ -252,22 +286,23 @@ function getIDFromURL(url) {
 	var tmp, dbname, filename;
 	if (url.includes("Detail?id")) {  // For medical
 		tmp = url.match(/Detail\?id=(\w+)_(\w+)/)
-		dbname = tmp[1];
-		filename = tmp[2];
 	} else {
-		tmp = url.split('/');
-		dbname = tmp[3];
-		filename = tmp.slice(4).join('/')
+		tmp = url.match(/\/(\w+)[\/_]([0-9a-zA-Z%]+)$/);
 	}
+	if (!tmp) return false;
+	dbname = tmp[1];
+	filename = tmp[2]
 	if (!getTypeFromDBName(dbname)) {
 		// http://med.wanfangdata.com.cn/
 		tmp = url.match(/id=(\w+)Paper_([0-9a-z]+)&/);
 		dbname = tmp[1].toLowerCase();
 		filename = tmp[2];
 	}
-	if (dbname && filename.length < 60) {
-		return {dbname: getTypeFromDBName(dbname),
-		filename: filename, url:url};
+	if (dbname) {
+		return {
+			dbname: getTypeFromDBName(dbname),
+			filename: filename, url: url
+		};
 	} else {
 		return false;
 	}
@@ -280,7 +315,8 @@ function getIDFromPage(doc, url) {
 	var hiddenId = ele.getAttribute('href') || ele.innerText;
 	var tmp = hiddenId.match(/(\w+)_(\w+)/);
 	if (tmp === null) return false;
-	return {dbname: getTypeFromDBName(tmp[1]),
+	return {
+		dbname: getTypeFromDBName(tmp[1]),
 		filename: tmp[2], url: url || `https://d.wanfangdata.com.cn/${hiddenId.replace("_", "/")}`
 	}
 
@@ -323,30 +359,30 @@ function detectWeb(doc, url) {
 }
 
 function getSearchResults(doc, itemInfo) {
-  var items = {};
-  var found = false;
-  var rows = ZU.xpath(doc, "//div[@class='normal-list']");
-  if (!rows.length > 0) rows = doc.querySelectorAll("div.mod-results-list div.item");
-  var idx = 1
-  for (let row of rows) {
-	var title = ZU.xpath(row, ".//span[@class='title'] | .//div[@class='item-title']/a")[0];
-	var id = title.getAttribute("href") ? getIDFromURL(title.href) : getIDFromPage(row);
-	// Z.debug(id);
-	items[id.url] = idx + " " + title.innerText;
-	// var id = getIDFromURL(href);
-	// Z.debug(id);
-	itemInfo[id.url] = id;
-	idx +=1
-  }
-  // Z.debug(itemInfo);
-  return items;
+	var items = {};
+	var found = false;
+	var rows = ZU.xpath(doc, "//div[@class='normal-list']");
+	if (!rows.length > 0) rows = doc.querySelectorAll("div.mod-results-list div.item");
+	var idx = 1
+	for (let row of rows) {
+		var title = ZU.xpath(row, ".//span[@class='title'] | .//div[@class='item-title']/a")[0];
+		var id = title.getAttribute("href") ? getIDFromURL(title.href) : getIDFromPage(row);
+		// Z.debug(id);
+		items[id.url] = idx + " " + title.innerText;
+		// var id = getIDFromURL(href);
+		// Z.debug(id);
+		itemInfo[id.url] = id;
+		idx += 1
+	}
+	// Z.debug(itemInfo);
+	return items;
 }
 
 function doWeb(doc, url) {
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getSearchResults(doc, itemInfo);
-		Z.selectItems(items, function(selectedItems) {
+		Z.selectItems(items, function (selectedItems) {
 			if (selectedItems) ZU.processDocuments(Object.keys(selectedItems), scrape);
 		});
 	} else {
@@ -361,7 +397,7 @@ function getPDF(newItem, doc) {
 	var tmp = hiddenId.match(/(\w+)_([^.]+)/);
 	if (tmp === null) return false;
 	// Z.debug(tmp)
-	return "https://oss.wanfangdata.com.cn/www/"+encodeURIComponent(doc.title)+".ashx?isread=true&type="+tmp[1]+"&resourceId="+encodeURI(decodeURIComponent(tmp[2]));
+	return "https://oss.wanfangdata.com.cn/www/" + encodeURIComponent(doc.title) + ".ashx?isread=true&type=" + tmp[1] + "&resourceId=" + encodeURI(decodeURIComponent(tmp[2]));
 }/** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -668,6 +704,141 @@ var testCases = [
 					},
 					{
 						"tag": "生活质量"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://d.wanfangdata.com.cn/periodical/ChlQZXJpb2RpY2FsQ0hJTmV3UzIwMjIwNzE5Eg5RSzE5OTgwMTIxODkyMhoIdm9wbzYzZ2k%3D",
+		"items": [
+			{
+				"itemType": "webpage",
+				"title": "个人写作但是在个人与世界之间-肖开愚访谈录",
+				"creators": [
+					{
+						"firstName": "开愚",
+						"lastName": "肖",
+						"creatorType": "author"
+					},
+					{
+						"firstName": "弦",
+						"lastName": "余",
+						"creatorType": "author"
+					}
+				],
+				"date": "1998,          (8)",
+				"abstractNote": "万方数据知识服务平台-中外学术论文、中外标准、中外专利、科技成果、政策法规等科技文献的在线服务平台。",
+				"language": "zh-CN",
+				"url": "https://d.wanfangdata.com.cn/periodical/ChlQZXJpb2RpY2FsQ0hJTmV3UzIwMjIwNzE5Eg5RSzE5OTgwMTIxODkyMhoIdm9wbzYzZ2k%3D",
+				"websiteTitle": "北京文学",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "个人写作"
+					},
+					{
+						"tag": "中国诗"
+					},
+					{
+						"tag": "书面语言"
+					},
+					{
+						"tag": "余弦"
+					},
+					{
+						"tag": "写作冲动"
+					},
+					{
+						"tag": "动物园"
+					},
+					{
+						"tag": "北京文学"
+					},
+					{
+						"tag": "四川省"
+					},
+					{
+						"tag": "小说"
+					},
+					{
+						"tag": "抒情诗"
+					},
+					{
+						"tag": "肖开愚"
+					},
+					{
+						"tag": "西方诗歌"
+					},
+					{
+						"tag": "诗歌写作"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "http://med.wanfangdata.com.cn/Paper/Detail/PeriodicalPaper_PM21270037",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "Intra-guild competition and its implications for one of the biggest terrestrial predators, Tyrannosaurus rex.",
+				"creators": [
+					{
+						"firstName": "Chris",
+						"lastName": "Carbone",
+						"creatorType": "author"
+					},
+					{
+						"firstName": "Samuel T",
+						"lastName": "Turvey",
+						"creatorType": "author"
+					},
+					{
+						"firstName": "Jon",
+						"lastName": "Bielby",
+						"creatorType": "author"
+					}
+				],
+				"DOI": "10.1098/rspb.2010.2497",
+				"abstractNote": "Identifying tradeoffs between hunting and scavenging in an ecological context is important for understanding predatory guilds. In the past century, the feeding strategy of one of the largest and best-known terrestrial carnivores, Tyrannosaurus rex, has been the subject of much debate: was it an active predator or an obligate scavenger? Here we look at the feasibility of an adult T. rex being an obligate scavenger in the environmental conditions of Late Cretaceous North America, given the size distributions of sympatric herbivorous dinosaurs and likely competition with more abundant small-bodied theropods. We predict that nearly 50 per cent of herbivores would have been within a 55-85 kg range, and calculate based on expected encounter rates that carcasses from these individuals would have been quickly consumed by smaller theropods. Larger carcasses would have been very rare and heavily competed for, making them an unreliable food source. The potential carcass search rates of smaller theropods are predicted to be 14-60 times that of an adult T. rex. Our results suggest that T. rex and other extremely large carnivorous dinosaurs would have been unable to compete as obligate scavengers and would have primarily hunted large vertebrate prey, similar to many large mammalian carnivores in modern-day ecosystems.",
+				"extra": "Institute of Zoology\n                            [1]\n                        \n                        \n                             Zoological Society of London\n                            [2]\n                        \n                        \n                             Regent's Park\n                            [3]\n                        \n                        \n                             London NW1 4RY\n                            [4]\n                        \n                        \n                             UK. chris.carbone@ioz.ac.uk\n                            [5]\n\n2021-10-20",
+				"language": "zh-CN",
+				"libraryCatalog": "Wanfang Data",
+				"pages": "2682-90",
+				"publicationTitle": "Proceedings. Biological sciences",
+				"url": "http://med.wanfangdata.com.cn/Paper/Detail/PeriodicalPaper_PM21270037",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "动物(Animals)"
+					},
+					{
+						"tag": "北美洲(North America)"
+					},
+					{
+						"tag": "恐龙(Dinosaurs)"
+					},
+					{
+						"tag": "掠夺行为(Predatory Behavior)"
+					},
+					{
+						"tag": "摄食行为(Feeding Behavior)"
+					},
+					{
+						"tag": "生态系统(Ecosystem)"
+					},
+					{
+						"tag": "竞争行为(Competitive Behavior)"
+					},
+					{
+						"tag": "食人肉癖(Cannibalism)"
 					}
 				],
 				"notes": [],
