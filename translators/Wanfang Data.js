@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-10-14 07:25:40"
+	"lastUpdated": "2022-10-15 11:30:21"
 }
 
 /*
@@ -82,6 +82,15 @@ var nodeFieldMapper = {
 	"//div[contains(@class, 'applicantArea')]/div[@class='itemUrl']": 'country',
 	"//div[contains(@class, 'applicant')][1]/div[@class='itemUrl']": 'issuingAuthority',
 	"//div[contains(@class, 'signoryItem')][1]/div[@class='itemUrl']": '权力要求',
+	"//div[contains(@class, 'standardId list')][1]/div[@class='itemUrl']": "code",
+	"//div[contains(@class, 'draftsComp list')]": addCreators, // 购买后查看字段
+	"//div[contains(@class, 'issueOrganization list')][1]/div[@class='itemUrl']": "rights", // 购买后查看字段
+	"//div[contains(@class, 'applyDate list')][1]/div[@class='itemUrl']": "dateEnacted",
+	"//div[contains(@class, 'status list')]": addExtra,
+	"//div[contains(@class, 'isForce list')]": addExtra,
+	"//div[contains(@class, 'applyDate list')]": addExtra,
+	"//div[contains(@class, 'standardPageNum list')][1]/div[@class='itemUrl']": "pages",
+	"//div[contains(@class, 'newStandard list')][1]/div[@class='itemUrl']": addHistory, // 购买后查看字段
 };
 
 var nodeFieldMapperForMed = {
@@ -144,6 +153,10 @@ function addTagsForMed(newItem, node) {
 
 function addTags(newItem, tags) {
 	newItem.tags = newItem.tags.concat(tags);
+}
+
+function addExtra(newItem, extra) {
+	newItem.extra = (newItem.extra ? newItem.extra + "\n" : "") + extra[0].trim().replace(/[：:]$/, '') + ": " + extra.slice(1).join('; ');
 }
 
 function addDVI(newItem, texts) {
@@ -212,21 +225,36 @@ var creatorTypeMap = {
 
 function addCreators(newItem, creators) {
 	var creatorType = "author";
+	var isComp = false;
 	for (let name of creators) {
 		if (name in creatorTypeMap) {
 			creatorType = creatorTypeMap[name];
 			continue;
 		}
+		if (name.includes("单位")) {
+			isComp = true;
+			continue;
+		}
 		if (name.includes("[")) continue;
 		var creator = fixCreator(name);
+		if (isComp) {
+			creator.lastName = name.trim();
+			delete creator.firstName;
+			creator.fieldMode = 1;
+		}
 		creator.creatorType = creatorType;
 		newItem.creators.push(creator);
 	}
 }
 
+function addHistory(newItem, history) {
+	history.map(ele => ele.replace(/;$/, ''));
+	addField(newItem, "history", history.slice(1).join('; '));
+}
+
 
 function scrape(doc) {
-	Z.debug("---------------WanFang Data 20221014---------------");
+	Z.debug("---------------WanFang Data 20221015---------------");
 	var id = getIDFromPage(doc) || getIDFromURL(doc.URL);
 	var newItem = new Zotero.Item(id.dbname);
 	newItem.title = doc.title.replace("-论文-万方医学网", "");
@@ -253,9 +281,12 @@ function scrape(doc) {
 			if (foundNodes.length == 0) continue;
 			var texts = getText(foundNodes[0]);
 			typeof v == 'string'
-				? addField(newItem, v, texts.join(';'))
+				? addField(newItem, v, texts.join('; '))
 				: v(newItem, texts);
 		}
+	}
+	if (doc.URL.includes("wanfangdata.com.cn/standard/")) {
+		addExtra(newItem, ["Type", "standard"]); // https://forums.zotero.org/discussion/comment/409058/#Comment_409058
 	}
 	newItem.language = 'zh-CN';
 	if (newItem.abstractNote) newItem.abstractNote = newItem.abstractNote.replace(/^摘要：;/, "");
@@ -287,7 +318,7 @@ function getIDFromURL(url) {
 	if (url.includes("Detail?id")) {  // For medical
 		tmp = url.match(/Detail\?id=(\w+)_(\w+)/)
 	} else {
-		tmp = url.match(/\/(\w+)[\/_]([0-9a-zA-Z%]+)$/);
+		tmp = url.match(/\/(\w+)[\/_]([0-9a-zA-Z%\-]+)$/);
 	}
 	if (!tmp) return false;
 	dbname = tmp[1];
@@ -313,13 +344,12 @@ function getIDFromPage(doc, url) {
 	var ele = doc.querySelector("a.download") || doc.querySelector("span.title-id-hidden");
 	if (ele === null) return false;
 	var hiddenId = ele.getAttribute('href') || ele.innerText;
-	var tmp = hiddenId.match(/(\w+)_(\w+)/);
+	var tmp = hiddenId.match(/(\w+)_([^.]+)/);
 	if (tmp === null) return false;
 	return {
 		dbname: getTypeFromDBName(tmp[1]),
-		filename: tmp[2], url: url || `https://d.wanfangdata.com.cn/${hiddenId.replace("_", "/")}`
+		filename: decodeURI(tmp[2]), url: url || `https://d.wanfangdata.com.cn/${hiddenId.replace("_", "/")}`
 	}
-
 }
 
 // database and item type match
@@ -337,7 +367,9 @@ function getTypeFromDBName(db) {
 		// tech: "report"
 		PeriodicalPaper: "journalArticle",  // For med
 		DegreePaper: "thesis",
-		ConferencePaper: "conferencePaper"
+		ConferencePaper: "conferencePaper",
+		standard: "statute",
+		Standard: "statute",
 	};
 	if (db) {
 		return dbType[db];
@@ -398,7 +430,10 @@ function getPDF(newItem, doc) {
 	if (tmp === null) return false;
 	// Z.debug(tmp)
 	return "https://oss.wanfangdata.com.cn/www/" + encodeURIComponent(doc.title) + ".ashx?isread=true&type=" + tmp[1] + "&resourceId=" + encodeURI(decodeURIComponent(tmp[2]));
-}/** BEGIN TEST CASES **/
+}
+
+
+/** BEGIN TEST CASES **/
 var testCases = [
 	{
 		"type": "web",
@@ -841,6 +876,24 @@ var testCases = [
 						"tag": "食人肉癖(Cannibalism)"
 					}
 				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://d.wanfangdata.com.cn/standard/GB%252FT%25252019001-2016",
+		"items": [
+			{
+				"itemType": "statute",
+				"nameOfAct": "万方数据知识服务平台",
+				"creators": [],
+				"extra": "Type: standard",
+				"language": "zh-CN",
+				"url": "https://d.wanfangdata.com.cn/standard/GB%252FT%25252019001-2016",
+				"attachments": [],
+				"tags": [],
 				"notes": [],
 				"seeAlso": []
 			}
