@@ -183,7 +183,7 @@ function scrapeJournalArticle(url) {
 
 			switch (json.language) {
 				case 1:
-					item.language = '中文';
+					item.language = 'zh-CN';
 					item.publicationTitle = '《' + json.media_c + '》' + (json.media_e && json.media_e.length > 0 ? ('(' + json.media_e + ')') : '');
 					item.abstractNote = json.remark_c;
 		
@@ -221,7 +221,7 @@ function scrapeJournalArticle(url) {
 					}
 					break;
 				case 2:
-					item.language = '外文';
+					item.language = 'en';
 					item.publicationTitle = '《' + json.media_e + '》';
 					item.abstractNote = json.remark_c;
 		
@@ -291,7 +291,7 @@ function scrapeAncientBook(url) {
 			item.volume = opt(json.vol);
 			item.issue = opt(json.num);
 
-			item.language = '中文';
+			item.language = 'zh-CN';
 			item.publicationTitle = json.media_c ? ('《' + json.media_c + '》') : '';
 			item.abstractNote = json.remark_c;
 
@@ -483,7 +483,7 @@ var testCases = [
 					}
 				],
 				"issue": "2531958",
-				"language": "外文",
+				"language": "en",
 				"libraryCatalog": "ncpssd",
 				"pages": "null",
 				"publicationTitle": "《》(Wings of Gold)",

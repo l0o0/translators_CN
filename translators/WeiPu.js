@@ -139,7 +139,12 @@ function convertJournal(journal, url, fileid, filestr) {
   	var newItem = new Zotero.Item("journalArticle");
 	newItem.abstractNote = journal.getElementsByTagName('Abstract')[0].childNodes[1].textContent;
 	newItem.title = journal.getElementsByTagName('Title')[0].childNodes[3].textContent;
-	newItem.language = journal.getElementsByTagName('Title')[0].childNodes[1].textContent;
+	let language = journal.getElementsByTagName('Title')[0].childNodes[1].textContent;
+	if (language === 'chi') {
+		newItem.language = 'zh-CN';
+	} else {
+		newItem.language = language;
+	}
 	var volume = journal.getElementsByTagName('Volum')[0].childNodes[0].nodeValue;
 	if (volume != "0") {
 		newItem.volume = volume;
@@ -227,7 +232,7 @@ var testCases = [
 				"date": "2017",
 				"abstractNote": "本文以徐州市圆通快递文化宫营业部到中国矿业大学南湖校区为研究对象,建立了不确定因素下最优路径模型,利用正态分布的可加性,得出各条路径的总行驶时间正态分布表达式,并进行标准化,解出行驶时间的表达式。当到达终点的概率确定时,最优路径为行驶时间最少的路径。在此基础上设计了基于深度优先搜索的最优路径算法,运用MATLAB编程,得出7条不同的路径,求出最短行驶时间和最优路径。",
 				"issue": "7",
-				"language": "chi",
+				"language": "zh-CN",
 				"libraryCatalog": "WeiPu",
 				"pages": "861-870",
 				"publicationTitle": "应用数学进展",
