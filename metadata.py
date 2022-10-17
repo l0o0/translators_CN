@@ -28,6 +28,6 @@ with open("data/translators.json", 'w', encoding='utf-8') as handle:
 try:
     os.system("git add data/translators.json")
     os.system("git commit -m 'Update metadata %s'" % datetime.now())
-    os.system("git push origin master")
+    os.system("git push")
 except:
     print("Error")
