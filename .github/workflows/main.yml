@@ -1,0 +1,24 @@
+name: Auto update translator metadata
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    # copy git 仓库到虚拟机上
+    - name: 'Checkout codes'
+      uses: actions/checkout@v1
+    
+    - name: Git init
+      run: |
+        git config user.name "GitHub Actions Bot"
+        git config user.email "<>"
+        git clean -f  # Remove untrack file
+        git remote -v
+        git branch -al | cat
+          
+    - name: Update metadata
+      id: update_metadata
+      run: |
+        python metadata.py
+    - name: cat file
+      run: cat data/translators.json
