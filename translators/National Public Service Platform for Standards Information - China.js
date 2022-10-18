@@ -1,6 +1,6 @@
 {
 	"translatorID": "cd01cf63-90ba-42b4-a505-74d8d14f79d6",
-	"label": "全国标准信息公共服务平台",
+	"label": "National Public Service Platform for Standards Information - China",
 	"creator": "Zeping Lee",
 	"target": "https?://std\\.samr\\.gov\\.cn/",
 	"minVersion": "3.0",
@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-10-03 17:41:09"
+	"lastUpdated": "2022-10-18 13:36:12"
 }
 
 /*
@@ -35,29 +35,22 @@
 	***** END LICENSE BLOCK *****
 */
 
-function detectWeb(doc, url) {
+function detectWeb(_doc, _url) {
 	return 'report';
 }
 
 function doWeb(doc, url) {
-	scrape(doc, url);
-}
+	var item = new Zotero.Item('report');
 
-function scrape(doc, url) {
-	if (!url || url.length <= 0) {
-		return;
-	}
-
-	var itemType = detectWeb(doc, url);
-
-	var item = new Zotero.Item(itemType);
-
+	item.language = 'zh-CN';
 	item.url = url;
+	item.libraryCatalog = '全国标准信息公共服务平台';
 	item.extra = 'Type: standard';
 
 	if (doc.querySelector('.label-info').textContent === '国际标准') {
 		item.title = doc.querySelector('.page-header + p').textContent;
-	} else {
+	}
+	else {
 		item.title = doc.querySelector('.page-header h4').textContent;
 	}
 
@@ -67,10 +60,11 @@ function scrape(doc, url) {
 	for (var i = 0; i < dtList.length; ++i) {
 		var name = dtList[i].textContent;
 		var span = ddList[i].querySelector('span');
+		let value = ddList[i].textContent;
 		if (span) {
-			var value = span.textContent;
-		} else {
-			var value = ddList[i].textContent;
+			value = span.textContent;
+		}
+		else {
 		}
 		value = value.trim();
 
@@ -80,14 +74,12 @@ function scrape(doc, url) {
 
 		switch (name) {
 			case '标准号':
-				if (value.startsWith('GB') || value.startsWith('CY')) {
+				var standardType = doc.querySelector('.label-info');
+				if (!(standardType && standardType.textContent.startsWith('国际标准'))) {
 					// 国标编号使用一字线
 					value = value.replace('-', '—');
 				}
-				item.reportNumber = value
-				break;
-			case '版本':
-				item.extra += '\nEdition: ' + value;
+				item.reportNumber = value;
 				break;
 			case '发布日期':
 				item.date = value;
@@ -96,16 +88,6 @@ function scrape(doc, url) {
 				if (!item.date || item.date.length === 0) {
 					item.date = value;
 				}
-				break;
-			case '标准类别':
-				item.extra += '\n标准类别: ' + value;
-				break;
-			case '中国标准分类号':
-				item.language = 'zh-CN';
-				item.extra += '\n中国标准分类号: ' + value;
-				break;
-			case '国际标准分类号':
-				item.extra += '\n国际标准分类号: ' + value;
 				break;
 			case '归口部门':
 			case '归口单位':
@@ -125,6 +107,11 @@ function scrape(doc, url) {
 				break;
 		}
 	}
+
+	item.attachments.push({
+		title: 'Snapshot',
+		document: doc
+	});
 
 	item.complete();
 }
@@ -147,12 +134,17 @@ var testCases = [
 					}
 				],
 				"date": "1993-07-01",
-				"extra": "Type: standard\n标准类别: 基础\n中国标准分类号: A51",
+				"extra": "Type: standard",
 				"language": "zh-CN",
 				"libraryCatalog": "全国标准信息公共服务平台",
 				"reportNumber": "GB 3100—1993",
 				"url": "https://std.samr.gov.cn/gb/search/gbDetailed?id=71F772D7AA78D3A7E05397BE0A0AB82A",
-				"attachments": [],
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
@@ -174,12 +166,17 @@ var testCases = [
 					}
 				],
 				"date": "2015-05-15",
-				"extra": "Type: standard\n标准类别: 基础\n中国标准分类号: A14\n国际标准分类号: 01.140.20",
+				"extra": "Type: standard",
 				"language": "zh-CN",
 				"libraryCatalog": "全国标准信息公共服务平台",
 				"reportNumber": "GB/T 7714—2015",
 				"url": "https://std.samr.gov.cn/gb/search/gbDetailed?id=71F772D8055ED3A7E05397BE0A0AB82A",
-				"attachments": [],
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
@@ -201,12 +198,17 @@ var testCases = [
 					}
 				],
 				"date": "2017-04-17",
-				"extra": "Type: standard\n中国标准分类号: A19\n国际标准分类号: 01.140.40",
+				"extra": "Type: standard",
 				"language": "zh-CN",
 				"libraryCatalog": "全国标准信息公共服务平台",
 				"reportNumber": "CY/T 154—2017",
 				"url": "https://std.samr.gov.cn/hb/search/stdHBDetailed?id=8B1827F23645BB19E05397BE0A0AB44A",
-				"attachments": [],
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
@@ -228,12 +230,17 @@ var testCases = [
 					}
 				],
 				"date": "2021-06-11",
-				"extra": "Type: standard\nEdition: 4",
+				"extra": "Type: standard",
 				"language": "en",
 				"libraryCatalog": "全国标准信息公共服务平台",
 				"reportNumber": "ISO 690:2021",
 				"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=63A23D3AFA47E60C29392465F6A791C3",
-				"attachments": [],
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
@@ -255,12 +262,17 @@ var testCases = [
 					}
 				],
 				"date": "2020-12-21",
-				"extra": "Type: standard\nEdition: 6",
+				"extra": "Type: standard",
 				"language": "en",
 				"libraryCatalog": "全国标准信息公共服务平台",
 				"reportNumber": "ISO/IEC 10646:2020",
 				"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=DE5099AC5B0BE767513328A92BB85614",
-				"attachments": [],
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
@@ -282,13 +294,18 @@ var testCases = [
 					}
 				],
 				"date": "2019-08-26",
-				"extra": "Type: standard\nEdition: 2",
+				"extra": "Type: standard",
 				"language": "en",
 				"libraryCatalog": "全国标准信息公共服务平台",
 				"reportNumber": "ISO 80000-2:2019",
 				"shortTitle": "Quantities and units — Part 2",
 				"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=B918D134293DC9AF17BD9A5FCB5C24B2",
-				"attachments": [],
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
