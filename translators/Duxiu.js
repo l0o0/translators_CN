@@ -1,6 +1,6 @@
 {
 	"translatorID": "c198059a-3e3a-4ee5-adc0-c3011351365c",
-	"label": "Duxiu",
+	"label": "读秀",
 	"creator": "Bo An",
 	"target": "^https?://book\\.duxiu\\.com/(search|bookDetail)",
 	"minVersion": "3.0",

@@ -1,6 +1,6 @@
 {
 	"translatorID": "78ba8722-6748-47f4-9976-8985d75a220c",
-	"label": "dpaper",
+	"label": "中国科学院文献情报中心",
 	"creator": "with",
 	"target": "http://dpaper.las.ac.cn",
 	"minVersion": "5.0",

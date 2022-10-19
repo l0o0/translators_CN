@@ -1,6 +1,6 @@
 {
 	"translatorID": "00988564-80ef-4d3b-8ff7-bd8a60af1561",
-	"label": "GFSOSO",
+	"label": "谷粉搜搜",
 	"creator": "西班牙馅饼, Simon Kornblith, Frank Bennett, Aurimas Vinckevicius",
 	"target": "^https?://\\w+\\.glgoo\\.top/scholar",
 	"minVersion": "3.0",

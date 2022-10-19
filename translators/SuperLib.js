@@ -1,6 +1,6 @@
 {
 	"translatorID": "44c46760-3a27-4145-a623-9e42b733fbe8",
-	"label": "SuperLib",
+	"label": "全国图书馆联盟",
 	"creator": "Xingzhong Lin",
 	"target": "https?://.*?\\.ucdrs\\.superlib\\.net",
 	"minVersion": "3.0",

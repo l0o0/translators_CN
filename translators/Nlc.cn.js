@@ -1,6 +1,6 @@
 {
 	"translatorID": "33ed4133-f48b-45e4-8f00-9b8c22342c0b",
-	"label": "nlc.cn",
+	"label": "国图-中国标准在线服务网",
 	"creator": "018<lyb018@gmail.com>",
 	"target": "https?://vpn2\\.nlc\\.cn/prx",
 	"minVersion": "3.0",
