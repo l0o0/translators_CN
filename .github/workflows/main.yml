@@ -15,7 +15,6 @@ jobs:
         git config user.name "GitHub Actions Bot"
         git config user.email "<>"
         git clean -f  # Remove untrack file
-
     - name: Update metadata
       id: update_metadata
       run: |
@@ -24,10 +23,10 @@ jobs:
     - name: check update
       id: modified
       run: |
+        
         counts=`git status | grep "data/translators.json" | wc -l`
         echo "counts=${counts}" >> $GITHUB_ENV
-
-    - name: Git status
+    - name: Update and mirror
       if: env.counts == 1
       run: |
         git status
@@ -35,3 +34,9 @@ jobs:
         git add data/translators.json
         git commit -m 'update translator metadata'
         git push
+    - uses: wearerequired/git-mirror-action@master #开源actions包
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      with:
+        source-repo: "git@github.com:l0o0/translators_CN.git" # github仓库地址
+        destination-repo: "git@gitcode.net:goonback/translators_CN.git" # gitee仓库地址
