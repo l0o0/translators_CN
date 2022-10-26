@@ -1,6 +1,6 @@
 {
 	"translatorID": "eb876bd2-644c-458e-8d05-bf54b10176f3",
-	"label": "Wanfang Data",
+	"label": "万方",
 	"creator": "Ace Strong <acestrong@gmail.com>, rnicrosoft",
 	"target": "^https?://[a-z]+\\.wanfangdata\\.com\\.cn",
 	"minVersion": "2.0rc1",

@@ -1,6 +1,6 @@
 {
 	"translatorID": "9444e3cb-e7d6-4735-b5f5-7d103838f3d9",
-	"label": "xiaoyuzhoufm",
+	"label": "小宇宙FM",
 	"creator": "dofine",
 	"target": "https?://www.xiaoyuzhoufm.com/episode/.*",
 	"minVersion": "5.0",

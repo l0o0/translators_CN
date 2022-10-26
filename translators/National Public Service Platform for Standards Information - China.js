@@ -1,6 +1,6 @@
 {
 	"translatorID": "cd01cf63-90ba-42b4-a505-74d8d14f79d6",
-	"label": "National Public Service Platform for Standards Information - China",
+	"label": "全国标准信息公共服务平台",
 	"creator": "Zeping Lee",
 	"target": "https?://std\\.samr\\.gov\\.cn/",
 	"minVersion": "3.0",
@@ -112,7 +112,6 @@ function doWeb(doc, url) {
 		title: 'Snapshot',
 		document: doc
 	});
-
 	item.complete();
 }
 

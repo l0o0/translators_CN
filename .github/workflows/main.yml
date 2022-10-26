@@ -1,24 +1,42 @@
 name: Auto update translator metadata
-on: [push]
+on: 
+  push:
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
     # copy git 仓库到虚拟机上
     - name: 'Checkout codes'
-      uses: actions/checkout@v1
+      uses: actions/checkout@v3
     
     - name: Git init
       run: |
         git config user.name "GitHub Actions Bot"
         git config user.email "<>"
         git clean -f  # Remove untrack file
-        git remote -v
-        git branch -al | cat
-          
     - name: Update metadata
       id: update_metadata
       run: |
         python metadata.py
-    - name: cat file
-      run: cat data/translators.json
+      
+    - name: check update
+      id: modified
+      run: |
+        
+        counts=`git status | grep "data/translators.json" | wc -l`
+        echo "counts=${counts}" >> $GITHUB_ENV
+    - name: Update and mirror
+      if: env.counts == 1
+      run: |
+        git status
+        echo ${{ env.counts }}
+        git add data/translators.json
+        git commit -m 'update translator metadata'
+        git push
+    - uses: wearerequired/git-mirror-action@master #开源actions包
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      with:
+        source-repo: "git@github.com:l0o0/translators_CN.git" # github仓库地址
+        destination-repo: "git@gitcode.net:goonback/translators_CN.git" # gitee仓库地址

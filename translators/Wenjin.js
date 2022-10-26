@@ -1,6 +1,6 @@
 {
 	"translatorID": "f306107f-dabb-41ac-8fa2-f7f858feb11f",
-	"label": "Wenjin",
+	"label": "国家图书馆-文津搜索",
 	"creator": "Xingzhong Lin",
 	"target": "https?://find.nlc.cn/search",
 	"minVersion": "3.0",
