@@ -1,6 +1,6 @@
 {
 	"translatorID": "fc353b26-8911-4c34-9196-f6f567c93901",
-	"label": "豆瓣",
+	"label": "Douban",
 	"creator": "不是船长<tanguangzhi@foxmail.com>,Ace Strong<acestrong@gmail.com>",
 	"target": "^https?://(www|book)\\.douban\\.com/(subject|doulist|people/[a-zA-Z._]*/(do|wish|collect)|.*?status=(do|wish|collect)|group/[0-9]*?/collection|tag)",
 	"minVersion": "2.0rc1",
@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-04-14 09:59:01"
+	"lastUpdated": "2022-10-26 15:50:12"
 }
 
 /*
@@ -408,9 +408,10 @@ var testCases = [
 				"title": "Norwegian Wood",
 				"creators": [
 					{
-						"firstName": "Haruki",
-						"lastName": "Murakami",
-						"creatorType": "author"
+						"firstName": " ",
+						"lastName": "Haruki Murakami",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
 						"firstName": "Jay",
@@ -420,38 +421,16 @@ var testCases = [
 				],
 				"date": "2003",
 				"ISBN": "9780099448822",
-				"abstractNote": "When he hears her favourite Beatles song, Toru Watanabe recalls his first love Naoko, the girlfriend of his best friend Kizuki. Immediately he is transported back almost twenty years to his student days in Tokyo, adrift in a world of uneasy friendships, casual sex, passion, loss and desire - to a time when an impetuous young woman called Midori marches into his life and he has ..., (展开全部)",
+				"abstractNote": "作者简介:\nHaruki Murakami (村上春樹, Murakami Haruki, born January 12, 1949) is a popular contemporary Japanese writer and translator.His work has been described by the Virginia Quarterly Review as \"easily accessible, yet profoundly complex.\"\n\n内容简介:\nWhen he hears her favourite Beatles song, Toru Watanabe recalls his first love Naoko, the girlfriend of his best friend Kizuki. Immediately he is transported back almost twenty years to his student days in Tokyo, adrift in a world of uneasy friendships, casual sex, passion, loss and desire - to a time when an impetuous young woman called Midori marches into his life and he has to choose between the future and the past. (20021018)\n\n  点击链接进入中文版： \n 挪威的森林",
+				"extra": "《Norwegian Wood》;👩‍⚖️711;🔟9.0; GBP 8.99;",
 				"libraryCatalog": "Douban",
 				"numPages": "389",
-				"publisher": "Vintage",
+				"publisher": "Vintage                                                   译者:                                Jay Rubin                  出版年: 2003              页数: 389              定价: GBP 8.99              装帧: Paperback              丛书:Works by Haruki Murakami",
+				"series": "Works by Haruki Murakami",
+				"shortTitle": "《Norwegian Wood》",
 				"url": "https://book.douban.com/subject/1355643/",
 				"attachments": [],
-				"tags": [
-					{
-						"tag": "HarukiMurakami"
-					},
-					{
-						"tag": "小说"
-					},
-					{
-						"tag": "挪威森林英文版"
-					},
-					{
-						"tag": "日本"
-					},
-					{
-						"tag": "日本文学"
-					},
-					{
-						"tag": "村上春树"
-					},
-					{
-						"tag": "英文原版"
-					},
-					{
-						"tag": "英文版"
-					}
-				],
+				"tags": [],
 				"notes": [],
 				"seeAlso": []
 			}
@@ -464,7 +443,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://book.douban.com/tag/认知心理学?type=S",
+		"url": "https://book.douban.com/tag/%E8%AE%A4%E7%9F%A5%E5%BF%83%E7%90%86%E5%AD%A6?type=S",
 		"items": "multiple"
 	}
 ]
