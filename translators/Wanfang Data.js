@@ -3,20 +3,20 @@
     "label": "万方",
     "creator": "Ace Strong <acestrong@gmail.com>, rnicrosoft",
     "target": "^https?://[a-z]+\\.wanfangdata\\.com\\.cn",
-	"minVersion": "2.0rc1",
+    "minVersion": "2.0rc1",
     "maxVersion": "",
     "priority": 100,
     "inRepository": true,
     "translatorType": 4,
     "browserSupport": "gcsibv",
-    "lastUpdated": "2022-10-15 11:30:21"
+    "lastUpdated": "2022-11-16 07:42:02"
 }
 
 /*
     ***** BEGIN LICENSE BLOCK *****
 
     Copyright © 2019 Xingzhong Lin, https://github.com/Zotero-CN/translators_CN
-	
+
     This file is part of Zotero.
 
     Zotero is free software: you can redistribute it and/or modify
@@ -227,6 +227,7 @@ function addCreators(newItem, creators) {
     var creatorType = "author";
     var isComp = false;
     for (let name of creators) {
+        if (/^\d+$/.test(name)) continue;
         if (name in creatorTypeMap) {
             creatorType = creatorTypeMap[name];
             continue;
@@ -254,7 +255,7 @@ function addHistory(newItem, history) {
 
 
 function scrape(doc) {
-    Z.debug("---------------WanFang Data 20221015---------------");
+    Z.debug("---------------WanFang Data 20221116---------------");
     var id = getIDFromPage(doc) || getIDFromURL(doc.URL);
     var newItem = new Zotero.Item(id.dbname);
     newItem.title = doc.title.replace("-论文-万方医学网", "");
