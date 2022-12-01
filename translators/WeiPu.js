@@ -1,6 +1,6 @@
 {
 	"translatorID": "dd9efb0b-ca1d-4634-b480-9aabc84213c0",
-	"label": "维普",
+	"label": "WeiPu",
 	"creator": "Xingzhong Lin",
 	"target": "^https?://qikan\\.cqvip\\.com",
 	"minVersion": "3.0",

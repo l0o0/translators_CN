@@ -1,6 +1,6 @@
 {
 	"translatorID": "b06ddb30-55db-49dd-b550-4eb63d184277",
-	"label": "知乎",
+	"label": "Zhihu",
 	"creator": "Lin Xingzhong",
 	"target": "https?://(zhuanlan|www)\\.zhihu\\.com/",
 	"minVersion": "3.0",
