@@ -36,7 +36,7 @@ def read_metadata(filename):
     return json.loads(''.join(headers))
 
 translators = os.listdir("translators")
-translators = [t for t in translators if t.endswith('js') and t != 'RefWorks Tagged.js']
+translators = [t for t in translators if t.endswith('js') and t not in ['RefWorks Tagged.js', 'BibTeX.js']]
 translators = sorted(translators)
 
 translator_metadata = {}
