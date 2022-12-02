@@ -1,6 +1,6 @@
 {
 	"translatorID": "c90ad4a0-fe8a-4697-b345-ae5d3714d1fd",
-	"label": "ProQuest学位论文(中国)",
+	"label": "ProQuestCN Thesis",
 	"creator": "Yizhao Wan",
 	"target": "^https?://www.pqdtcn.com/",
 	"minVersion": "3.0",

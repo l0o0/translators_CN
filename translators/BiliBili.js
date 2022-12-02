@@ -1,6 +1,6 @@
 {
 	"translatorID": "f9b132f7-8504-4a8f-b423-b61c8dae4783",
-	"label": "BiliBili视频",
+	"label": "BiliBili",
 	"creator": "Felix Hui",
 	"target": "https?://(search|www).bilibili.com/(video|bangumi|cheese|all)",
 	"minVersion": "3.0",

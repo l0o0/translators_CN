@@ -1,6 +1,6 @@
 {
 	"translatorID": "5a325508-cb60-42c3-8b0f-d4e3c6441058",
-	"label": "微信公众号",
+	"label": "Weixin",
 	"creator": "Fushan Wen",
 	"target": "^https?://mp\\.weixin\\.qq\\.com",
 	"minVersion": "3.0",

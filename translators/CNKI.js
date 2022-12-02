@@ -1,6 +1,6 @@
 {
 	"translatorID": "5c95b67b-41c5-4f55-b71a-48d5d7183063",
-	"label": "中国知网CNKI",
+	"label": "CNKI",
 	"creator": "Aurimas Vinckevicius, Xingzhong Lin",
 	"target": "https?://.*?/(kns8?/defaultresult/index|kns8?/AdvSearch|kcms/detail|KXReader/Detail\\?|KNavi/|Kreader/CatalogViewPage\\.aspx\\?)",
 	"minVersion": "3.0",
