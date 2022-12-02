@@ -112,13 +112,12 @@ function scrape(doc, ids) {
 		translator.setHandler("itemDone", function(obj, newItem) {
 			newItem.url = url;
 			if (doc.querySelector("p.abstract")) newItem.abstractNote = doc.querySelector("p.abstract").innerText.trim();
-			let tagsList = document.querySelectorAll("div.kw_wr p.kw_main a");
-			if (tagsList.length() == 1) {
+			let tagsList = doc.querySelectorAll("div.kw_wr p.kw_main a");
+			if (tagsList && tagsList.length() == 1) {
 				newItem.tags = tagsList[0].innerText.split("；");
 			}else if (tagsList.length() > 1) {
 				tagsList.forEach(function(tag) {
 					newItem.tags.push(tag.innerText);
-					console.log(tag.innerText);
 				});
 			}
 			if (doc.querySelector("div.doi_wr")) {
