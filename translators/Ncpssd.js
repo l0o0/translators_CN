@@ -1,6 +1,6 @@
 {
 	"translatorID": "5b731187-04a7-4256-83b4-3f042fa3eaa4",
-	"label": "国家哲学社会科学文献中心",
+	"label": "Ncpssd",
 	"creator": "018<lyb018@gmail.com>",
 	"target": "^https?://([^/]+\\.)?ncpssd\\.org/Literature/",
 	"minVersion": "3.0",

@@ -1,6 +1,6 @@
 {
 	"translatorID": "8276f7cf-bc43-45b5-9409-8ba2af369c60",
-	"label": "专利之星",
+	"label": "PatentStar",
 	"creator": "Yizhao Wan",
 	"target": "^https?://cprs.patentstar.com.cn",
 	"minVersion": "3.0",

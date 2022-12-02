@@ -1,6 +1,6 @@
 {
 	"translatorID": "fc353b26-8911-4c34-9196-f6f567c93901",
-	"label": "豆瓣",
+	"label": "Douban",
 	"creator": "不是船长<tanguangzhi@foxmail.com>,Ace Strong<acestrong@gmail.com>",
 	"target": "^https?://(www|book)\\.douban\\.com/(subject|doulist|people/[a-zA-Z._]*/(do|wish|collect)|.*?status=(do|wish|collect)|group/[0-9]*?/collection|tag)",
 	"minVersion": "2.0rc1",

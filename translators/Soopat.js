@@ -1,6 +1,6 @@
 {
 	"translatorID": "441ffe59-2049-41b1-8ead-7a3a53f7d0bd",
-	"label": "Soopat专利网站",
+	"label": "Soopat",
 	"creator": "Xingzhong Lin",
 	"target": "^https?://([^/]+\\.)?soopat\\.com",
 	"minVersion": "1.0",

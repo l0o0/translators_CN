@@ -1,6 +1,6 @@
 {
 	"translatorID": "30ad4aab-a919-49fc-82ac-58b9d45eceb8",
-	"label": "京东图书",
+	"label": "Jd",
 	"creator": "018<lyb018@gmail.com>",
 	"target": "^https?://(search|item)\\.jd\\.com/",
 	"minVersion": "3.0",

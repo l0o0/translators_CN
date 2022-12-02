@@ -1,6 +1,6 @@
 {
 	"translatorID": "c198059a-3e3a-4ee5-adc0-c3011351365c",
-	"label": "读秀",
+	"label": "Duxiu",
 	"creator": "Bo An",
 	"target": "^https?://book\\.duxiu\\.com/(search|bookDetail)",
 	"minVersion": "3.0",
@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-06-29 02:01:12"
+	"lastUpdated": "2022-11-29 09:12:10"
 }
 
 /*
@@ -97,7 +97,9 @@ function scrapeAndParse(doc, url) {
 		if (pattern.test(page)) {
 			Z.debug("test");
 			var title = pattern.exec(page)[1];
-			newItem.title = Zotero.Utilities.trim(title);
+			title = Zotero.Utilities.trim(title);
+			title = title.replace(/ +/g, " "); // https://developer.mozilla.org/docs/Web/CSS/white-space
+			newItem.title = title;
 		}
 		//newItem.title="test";
 		
