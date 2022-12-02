@@ -105,22 +105,30 @@ function doWeb(doc, url) {
 
 
 function scrape(doc, ids) {
-    getRefByIDs(ids, function (text, url) {
-        let translator = Z.loadTranslator("import");
-        translator.setTranslator("9cb70025-a888-4a29-a210-93ec52da40d4");  // Bible format
-        translator.setString(text);
-        translator.setHandler("itemDone", function (obj, newItem) {
-            newItem.url = url;
-            if (doc.querySelector("p.abstract")) newItem.abstractNote = doc.querySelector("p.abstract").innerText.trim();
-            if (doc.querySelector("p.kw_main")) {
-                newItem.tags = doc.querySelector("p.kw_main").innerText.split("；");
-            }
-            Z.debug(newItem.abstractNote);
-            Z.debug(newItem.tags);
-            newItem.complete();
-        });
-        translator.translate();
-    });
+	getRefByIDs(ids, function(text, url) {
+		let translator = Z.loadTranslator("import");
+		translator.setTranslator("9cb70025-a888-4a29-a210-93ec52da40d4");  // Bible format
+		translator.setString(text);
+		translator.setHandler("itemDone", function(obj, newItem) {
+			newItem.url = url;
+			if (doc.querySelector("p.abstract")) newItem.abstractNote = doc.querySelector("p.abstract").innerText.trim();
+			let tagsList = doc.querySelectorAll("div.kw_wr p.kw_main a");
+			if (tagsList && tagsList.length() == 1) {
+				newItem.tags = tagsList[0].innerText.split("；");
+			}else if (tagsList.length() > 1) {
+				tagsList.forEach(function(tag) {
+					newItem.tags.push(tag.innerText);
+				});
+			}
+			if (doc.querySelector("div.doi_wr")) {
+				newItem.DOI = doc.querySelector("div.doi_wr p.kw_main").innerText.replace("doi:", "");
+			}
+			Z.debug(newItem.abstractNote);
+			Z.debug(newItem.tags);
+			newItem.complete();
+		});
+		translator.translate();
+	});
 }
 
 /** BEGIN TEST CASES **/
