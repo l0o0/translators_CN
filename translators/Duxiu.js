@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-05 03:26:08"
+	"lastUpdated": "2022-12-05 13:54:44"
 }
 
 /*
@@ -51,14 +51,14 @@ async function doWeb(doc, url) {
 		});
 	}
 	else if (pagetype == "bookSection") {
-		await scrapeBookSection(doc);
+		await scrapeBookSection(doc, url);
 	}
 	else {
 		scrapeAndParse(doc, url);
 	};
 }
 
-async function scrapeBookSection(doc) {
+async function scrapeBookSection(doc, url) {
 	var scriptStrs = doc.querySelectorAll('script');
 	var metaStr;
 	var bookUrl;
@@ -69,11 +69,27 @@ async function scrapeBookSection(doc) {
 			bookUrl = bookRegex.exec(metaStr)[1];
 			break;
 		}
+		bookRegex = /dxid=(\d+)&SSID=(\d+)&PageNo="\+page\+"&A=(.+?)&/ // 页面来自 ucdrs.superlib.net
+		if (bookRegex.test(metaStr)) {
+			//let key = bookRegex.exec(metaStr);
+			//bookUrl = `http://book.ucdrs.superlib.net/views/specific/2929/bookDetail.jsp?dxNumber=${key[1]}&d=...`;
+			bookUrl = "";
+			break;
+		}
 	}
 
-	var pdfUrl = doc.querySelectorAll('#saveAs');
-	pdfUrl = pdfUrl.length > 0 ? pdfUrl[0].href : "";
+	var pdfUrl = doc.querySelector('#saveAs');
+	pdfUrl = pdfUrl ? pdfUrl.href : "";
+	if (pdfUrl === "") { // 另一种阅读界面
+		pdfUrl = ZU.xpath(doc, '//li/a[text()="PDF"]')
+		pdfUrl = pdfUrl ? pdfUrl[0].href : "";
+	}
 	//Z.debug(pdfUrl);
+
+	if (bookUrl === "") {
+		getBookMetaFromPage(doc, url, pdfUrl, metaStr);
+		return;
+	}
 
 	//Z.debug(bookUrl);
 	var bookDoc = await requestDocument(bookUrl);
@@ -95,7 +111,7 @@ async function scrapeBookSection(doc) {
 		var pattern = /var ssid = '(\d+)';/;
 		if (typeof newItem.SSID == 'undefined' && pattern.test(metaStr)) {
 			newItem.SSID = pattern.exec(metaStr)[1];
-			newItem.extra = newItem.extra + "SSID: " + newItem.SSID;
+			//newItem.extra = newItem.extra + "SSID: " + newItem.SSID;
 		}
 		//Z.debug(newItem.SSID);
 		pattern = /var page = (\d+);/;
@@ -113,6 +129,43 @@ async function scrapeBookSection(doc) {
 
 		newItem.complete();
 	}, doc);
+}
+
+// 用于没有d=参数的阅读页面，无法取得书籍页面URL
+function getBookMetaFromPage(doc, url, pdfUrl, metaStr) {
+	var itemType = "book"; // bookSection备选。有页号但无章节名。
+	var newItem = new Zotero.Item(itemType);
+	newItem.url = url;
+	newItem.abstractNote = "";
+
+	var title = doc.title;
+	title = Zotero.Utilities.trim(title);
+	title = title.replace(/ +/g, " "); // https://developer.mozilla.org/docs/Web/CSS/white-space
+	newItem.title = title;
+
+	newItem.extra = doc.querySelector('#bookinfo').innerText;
+
+	var pattern = /origin\.jsp\?dxid=\d+&SSID=(\d+)&PageNo=/;
+	if (pattern.test(metaStr)) {
+		newItem.SSID = pattern.exec(metaStr)[1];
+	}
+	//Z.debug(newItem.SSID);
+	pattern = /var page = (\d+);/;
+	if (pattern.test(metaStr)) {
+		newItem.pages = pattern.exec(metaStr)[1];
+	}
+	//Z.debug(newItem.pages);
+
+	var pagesStr;
+	pattern = /&PageRanges=(.+?)&/;
+	if (pattern.test(pdfUrl)) {
+		pagesStr = pattern.exec(pdfUrl)[1];
+	}
+	newItem.attachments = getAttachments(pdfUrl, pagesStr)
+
+	//newItem.libraryCatalog = "SuperLib";
+
+	newItem.complete();
 }
 
 function getAttachments(pdfurl, pagesStr) {
@@ -147,7 +200,10 @@ function detectWeb(doc, url) {
 	else if (/^https?:\/\/book\.duxiu\.com\/bookDetail\?/.test(url)) {
 		return "book";
 	}
-	else if (/^https?:\/\/.+\.cn\/n\/dsrqw\/book\/base/.test(url)) {
+	else if (/^https?:\/\/.+\.cn\/n\/dsrqw\/book\/base/.test(url)) { // 读秀
+		return "bookSection";
+	}
+	else if (/^https?:\/\/.+\.cn\/n\/drspath\/book\/base/.test(url)) { // 全国图书馆参考咨询联盟
 		return "bookSection";
 	}
 }
@@ -425,7 +481,7 @@ function scrapeAndParse(doc, url, callback, rootDoc = doc) {
 	if (pattern.test(page)) {
 		var SSID = trimTags(pattern.exec(page)[1]);
 		newItem.SSID = Zotero.Utilities.trim(SSID);
-		newItem.extra = newItem.extra + "SSID: " + newItem.SSID;
+		//newItem.extra = newItem.extra + "SSID: " + newItem.SSID;
 	}
 
 	// dxid
@@ -467,6 +523,8 @@ function pickClosestRole(namelist, index) {
 	}
 	return role;
 }
+
+
 
 
 
