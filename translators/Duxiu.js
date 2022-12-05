@@ -486,7 +486,7 @@ function pickClosestRole(namelist, index) {
 
 
 
-
+ // The "dsrqw" book's meta info depend on https://bl.ocks.org/yfdyh000/raw/3d01e626fbc750c8e4719efa220d5752/?raw=true') in Scaffold IDE, due to Cookies bug.
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -539,6 +539,72 @@ var testCases = [
 		"type": "web",
 		"url": "https://book.duxiu.com/search?channel=search&gtag=&sw=%E5%9B%BD%E5%AD%A6&ecode=utf-8&Field=all&adminid=&btype=&seb=0&pid=0&year=&sectyear=&showc=0&fenleiID=&searchtype=&authid=0&exp=0&expertsw=&Sort=2",
 		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "http://www.wenhuakxjyty.cn/n/drspath/book/base/13502290/87401ecb66e14a3a9c2cf00623ceb30a/6021f445cd1dd132d0c07cc8f82fc24a.shtml?bt=2022-11-28&dm=-211...&et=2022-12-18&fid=789...&username=...",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "缅怀毛泽东 下 第2版",
+				"creators": [],
+				"extra": "《缅怀毛泽东》编辑组编著,缅怀毛泽东  下  第2版,中央文献出版社,2013.01,",
+				"libraryCatalog": "Duxiu",
+				"url": "http://www.wenhuakxjyty.cn/n/drspath/book/base/13502290/87401ecb66e14a3a9c2cf00623ceb30a/6021f445cd1dd132d0c07cc8f82fc24a.shtml?bt=2022-11-28&dm=-211...&et=2022-12-18&fid=789...&username=...",
+				"attachments": [
+					{
+						"title": "Full Text PDF (p. 45-70)",
+						"mimeType": "application/pdf"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "http://www.jingjilei.cn/n/dsrqw/book/base/14544172/43ac4eaae1c749728b7accd62e9f4430/a6634cc09372a18024397266f7ad293a.shtml?dm=-845...&dxid=000030410675&tp=dsrquanwen&uf=1&userid=...&bt=qw&firstdrs=...",
+		"items": [
+			{
+				"itemType": "bookSection",
+				"title": "哈哈哈哈哈哈哈哈",
+				"creators": [
+					{
+						"lastName": "彭懿",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "李海燕",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2018.01",
+				"ISBN": "9787558306426",
+				"abstractNote": "要是有，你听说一只猫被一只小老鼠打得落花流水，你一定不会相信吧而《可口可乐鼠》这部长篇童话故事里说的小老鼠可口可乐却做到了。它敢于与瘸腿猫斗智斗勇，几次死里逃生，很终成为了鼠界的英雄。\n\n主题词: 童话-中国-当代",
+				"bookTitle": "中国书香童年名家文库 彭懿奇思妙想童话系列 可口可乐鼠",
+				"callNumber": "I287.7    ( 文学->中国文学->儿童文学->当代作品（1949年~） )",
+				"extra": "参考格式: 彭懿著；李海燕绘.中国书香童年名家文库  彭懿奇思妙想童话系列  可口可乐鼠[M].广州：新世纪出版社,2018.01.\n原书定价: 28.80",
+				"libraryCatalog": "Duxiu",
+				"pages": "96",
+				"place": "广州",
+				"publisher": "新世纪出版社",
+				"series": "中国书香童年名家文库  彭懿奇思妙想童话系列",
+				"url": "https://book.duxiu.com/bookDetail.jsp?dxNumber=000030410675&d=042B3273F79BAE7067EAB7A9C4599906",
+				"attachments": [
+					{
+						"title": "Full Text PDF (p. 95-97)",
+						"mimeType": "application/pdf"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
 	}
 ]
 /** END TEST CASES **/
