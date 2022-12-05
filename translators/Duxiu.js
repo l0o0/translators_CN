@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-05 13:29:56"
+	"lastUpdated": "2022-12-05 18:10:11"
 }
 
 /*
@@ -141,7 +141,7 @@ function getBookMetaFromPage(doc, url, pdfUrl, metaStr) {
 	title = title.replace(/ +/g, " "); // https://developer.mozilla.org/docs/Web/CSS/white-space
 	newItem.title = title;
 
-	newItem.extra = doc.querySelector('#bookinfo').innerText;
+	newItem.extra = doc.querySelector('#bookinfo').innerText.replace(/ +/g, " ");
 
 	newItem.SSID = getI(metaStr.match(/origin\.jsp\?dxid=\d+&SSID=(\d+)&PageNo=/));
 	//Z.debug(newItem.SSID);
@@ -486,7 +486,8 @@ function pickClosestRole(namelist, index) {
 
 
 
- // The "dsrqw" book's meta info depend on https://bl.ocks.org/yfdyh000/raw/3d01e626fbc750c8e4719efa220d5752/?raw=true') in Scaffold IDE, due to Cookies bug.
+// The "dsrqw" book's meta info depend on https://bl.ocks.org/yfdyh000/raw/3d01e626fbc750c8e4719efa220d5752/?raw=true') in Scaffold IDE, due to Cookies bug.
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -548,7 +549,7 @@ var testCases = [
 				"itemType": "book",
 				"title": "缅怀毛泽东 下 第2版",
 				"creators": [],
-				"extra": "《缅怀毛泽东》编辑组编著,缅怀毛泽东  下  第2版,中央文献出版社,2013.01,",
+				"extra": "《缅怀毛泽东》编辑组编著,缅怀毛泽东 下 第2版,中央文献出版社,2013.01,",
 				"libraryCatalog": "Duxiu",
 				"url": "http://www.wenhuakxjyty.cn/n/drspath/book/base/13502290/87401ecb66e14a3a9c2cf00623ceb30a/6021f445cd1dd132d0c07cc8f82fc24a.shtml?bt=2022-11-28&dm=-211...&et=2022-12-18&fid=789...&username=...",
 				"attachments": [
