@@ -2,20 +2,21 @@
 	"translatorID": "c198059a-3e3a-4ee5-adc0-c3011351365c",
 	"label": "Duxiu",
 	"creator": "Bo An",
-	"target": "^https?://book\\.duxiu\\.com/(search|bookDetail)",
-	"minVersion": "3.0",
+	"target": "html",
+	"minVersion": "6.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-04 01:38:40"
+	"lastUpdated": "2022-12-05 03:26:08"
 }
 
 /*
 	***** BEGIN LICENSE BLOCK *****
 
 	Copyright © 2019 Bo An
+	Copyright © 2022 YFdyh000
 
 	This file is part of Zotero.
 
@@ -35,8 +36,9 @@
 	***** END LICENSE BLOCK *****
 */
 
-function doWeb(doc, url) {
-	if (detectWeb(doc, url) == "multiple") {
+async function doWeb(doc, url) {
+	var pagetype = detectWeb(doc, url);
+	if (pagetype == "multiple") {
 		Zotero.selectItems(getSearchResults(doc, false), function (items) {
 			if (!items) {
 				return true;
@@ -48,9 +50,79 @@ function doWeb(doc, url) {
 			Zotero.Utilities.processDocuments(articles, scrapeAndParse);
 		});
 	}
+	else if (pagetype == "bookSection") {
+		await scrapeBookSection(doc);
+	}
 	else {
 		scrapeAndParse(doc, url);
 	};
+}
+
+async function scrapeBookSection(doc) {
+	var scriptStrs = doc.querySelectorAll('script');
+	var metaStr;
+	var bookUrl;
+	for (let i = scriptStrs.length - 1; i > 0; i--) {
+		metaStr = scriptStrs[i].text;
+		var bookRegex = /escape\('(https?:\/\/book\.duxiu\.com\/bookDetail.jsp\?.+)'\)+/
+		if (bookRegex.test(metaStr)) {
+			bookUrl = bookRegex.exec(metaStr)[1];
+			break;
+		}
+	}
+
+	var pdfUrl = doc.querySelectorAll('#saveAs');
+	pdfUrl = pdfUrl.length > 0 ? pdfUrl[0].href : "";
+	//Z.debug(pdfUrl);
+
+	//Z.debug(bookUrl);
+	var bookDoc = await requestDocument(bookUrl);
+	/*if (bookDoc.URL.indexOf("/login.jsp?") > -1) // 未登录，包括环境不支持（Scaffold，cookie异常）
+	{
+		// 传入测试样本供开发测试。
+		bookDoc = await requestDocument('https://bl.ocks.org/yfdyh000/raw/3d01e626fbc750c8e4719efa220d5752/?raw=true');
+		//page="";
+	}*/
+
+	//Z.debug(bookDoc);
+	scrapeAndParse(bookDoc, bookUrl, function(newItem) {
+		//Z.debug(newItem);
+		//Z.debug(doc.title);
+		newItem.bookTitle = newItem.title;
+		newItem.title = doc.title;
+
+		//Z.debug(metaStr);
+		var pattern = /var ssid = '(\d+)';/;
+		if (typeof newItem.SSID == 'undefined' && pattern.test(metaStr)) {
+			newItem.SSID = pattern.exec(metaStr)[1];
+			newItem.extra = newItem.extra + "SSID: " + newItem.SSID;
+		}
+		//Z.debug(newItem.SSID);
+		pattern = /var page = (\d+);/;
+		if (pattern.test(metaStr)) {
+			newItem.pages = pattern.exec(metaStr)[1];
+		}
+		//Z.debug(newItem.pages);
+
+		var pagesStr;
+		pattern = /&PageRanges=(.+?)&/;
+		if (pattern.test(pdfUrl)) {
+			pagesStr = pattern.exec(pdfUrl)[1];
+		}
+		newItem.attachments = getAttachments(pdfUrl, pagesStr)
+
+		newItem.complete();
+	}, doc);
+}
+
+function getAttachments(pdfurl, pagesStr) {
+	var attachments = [];
+	attachments.push({
+		title: `Full Text PDF (p. ${pagesStr})`,
+		mimeType: "application/pdf",
+		url: pdfurl
+	});
+	return attachments;
 }
 
 function getSearchResults(doc, checkOnly) {
@@ -69,12 +141,14 @@ function getSearchResults(doc, checkOnly) {
 }
 
 function detectWeb(doc, url) {
-	var pattern = /book.duxiu.com\/search?/;
-	if (pattern.test(url)) {
+	if (/^https?:\/\/book\.duxiu\.com\/search\?/.test(url)) {
 		return "multiple";
 	}
-	else {
+	else if (/^https?:\/\/book\.duxiu\.com\/bookDetail\?/.test(url)) {
 		return "book";
+	}
+	else if (/^https?:\/\/.+\.cn\/n\/dsrqw\/book\/base/.test(url)) {
+		return "bookSection";
 	}
 }
 
@@ -84,18 +158,23 @@ function detectWeb(doc, url) {
 function attr(docOrElem,selector,attr,index){var elem=index?docOrElem.querySelectorAll(selector).item(index):docOrElem.querySelector(selector);return elem?elem.getAttribute(attr):null;}function text(docOrElem,selector,index){var elem=index?docOrElem.querySelectorAll(selector).item(index):docOrElem.querySelector(selector);return elem?elem.textContent:null;}
 
 function decodeHtmlEntity(html, odoc) {
-	var doc = odoc.implementation.createHTMLDocument();
-	var txt = doc.createElement("textarea");
+	let doc = odoc.implementation.createHTMLDocument();
+	let txt = doc.createElement("textarea");
 	txt.innerHTML = html;
 	return txt.value;
 }
 
-function scrapeAndParse(doc, url) {
-	var page = decodeHtmlEntity(doc.querySelectorAll('dl')[0].outerHTML, doc);
+function scrapeAndParse(doc, url, callback, rootDoc = doc) {
+	var isSection = typeof callback == "function";
+	let pageEl = ZU.xpath(doc,'//dl');
+	let page;
+	// 必须提供根文档，否则无法正常implementation.createHTMLDocument，可能出现 [Exception... "Unexpected error"  nsresult: "0x8000ffff (NS_ERROR_UNEXPECTED)"
+	page=decodeHtmlEntity(pageEl[0].innerHTML, rootDoc);
+	//Z.debug(isSection);
 	var pattern;
 	//Z.debug(typeof(page));
 	// 类型 item Type & URL
-	var itemType = "book";
+	var itemType = isSection ? "bookSection" : "book";
 	var newItem = new Zotero.Item(itemType);
 	newItem.url = url;
 	newItem.abstractNote = "";
@@ -107,14 +186,12 @@ function scrapeAndParse(doc, url) {
 	pattern=/<dt>([\s\S]*?)<\/dt>/;
 	//Z.debug(page);
 	if (pattern.test(page)) {
-		Z.debug("test");
 		var title = pattern.exec(page)[1];
 		title = Zotero.Utilities.trim(title);
 		title = title.replace(/ +/g, " "); // https://developer.mozilla.org/docs/Web/CSS/white-space
 		newItem.title = title;
 	}
-	//newItem.title="test";
-	
+
 	// 外文题名 foreign title.
 	pattern = /<dd>[\s\S]*外文题名[\s\S]*?：[\s\S]*?([\s\S]*?)<\/dd>/;
 	if (pattern.test(page)) {
@@ -358,7 +435,8 @@ function scrapeAndParse(doc, url) {
 		newItem.DXID = dxid;
 	}
 
-	newItem.complete();
+	if (isSection) {callback(newItem);}
+	else {newItem.complete();}
 }
 
 // the list from which to pick the best role for a given creator. Do not add variants of strings that end with 著,译，编
@@ -389,6 +467,8 @@ function pickClosestRole(namelist, index) {
 	}
 	return role;
 }
+
+
 
 
 /** BEGIN TEST CASES **/
