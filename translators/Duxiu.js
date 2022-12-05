@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-05 13:54:44"
+	"lastUpdated": "2022-12-05 13:29:56"
 }
 
 /*
@@ -47,7 +47,7 @@ async function doWeb(doc, url) {
 			for (var i in items) {
 				articles.push(i);
 			}
-			Zotero.Utilities.processDocuments(articles, scrapeAndParse);
+			ZU.processDocuments(articles, scrapeAndParse);
 		});
 	}
 	else if (pagetype == "bookSection") {
@@ -62,15 +62,15 @@ async function scrapeBookSection(doc, url) {
 	var scriptStrs = doc.querySelectorAll('script');
 	var metaStr;
 	var bookUrl;
+	const DXbookRegex = /escape\('(https?:\/\/book\.duxiu\.com\/bookDetail.jsp\?.+)'\)+/  // 不适合参考联盟阅读界面
+	const bookRegex = /dxid=(\d+)&SSID=(\d+)&PageNo="\+page\+"&A=(.+?)&/ // 适合读秀和参考联盟等。缺少d而无法使用
 	for (let i = scriptStrs.length - 1; i > 0; i--) {
 		metaStr = scriptStrs[i].text;
-		var bookRegex = /escape\('(https?:\/\/book\.duxiu\.com\/bookDetail.jsp\?.+)'\)+/
-		if (bookRegex.test(metaStr)) {
-			bookUrl = bookRegex.exec(metaStr)[1];
-			break;
-		}
-		bookRegex = /dxid=(\d+)&SSID=(\d+)&PageNo="\+page\+"&A=(.+?)&/ // 页面来自 ucdrs.superlib.net
-		if (bookRegex.test(metaStr)) {
+		if (metaStr.length == 0) continue;
+
+		bookUrl = getI(metaStr.match(DXbookRegex));
+		if(bookUrl.length>0) {break;}
+		if (!bookUrl && bookRegex.test(metaStr)) {
 			//let key = bookRegex.exec(metaStr);
 			//bookUrl = `http://book.ucdrs.superlib.net/views/specific/2929/bookDetail.jsp?dxNumber=${key[1]}&d=...`;
 			bookUrl = "";
@@ -93,7 +93,7 @@ async function scrapeBookSection(doc, url) {
 
 	//Z.debug(bookUrl);
 	var bookDoc = await requestDocument(bookUrl);
-	/*if (bookDoc.URL.indexOf("/login.jsp?") > -1) // 未登录，包括环境不支持（Scaffold，cookie异常）
+	/*if (bookDoc.URL.includes("/login.jsp?")) // 未登录，包括环境不支持（Scaffold，cookie异常）
 	{
 		// 传入测试样本供开发测试。
 		bookDoc = await requestDocument('https://bl.ocks.org/yfdyh000/raw/3d01e626fbc750c8e4719efa220d5752/?raw=true');
@@ -108,27 +108,25 @@ async function scrapeBookSection(doc, url) {
 		newItem.title = doc.title;
 
 		//Z.debug(metaStr);
-		var pattern = /var ssid = '(\d+)';/;
-		if (typeof newItem.SSID == 'undefined' && pattern.test(metaStr)) {
-			newItem.SSID = pattern.exec(metaStr)[1];
-			//newItem.extra = newItem.extra + "SSID: " + newItem.SSID;
+		let ssid = getI(metaStr.match(/var ssid = '(\d+)';/));
+		if (typeof newItem.SSID == 'undefined' && ssid) {
+			newItem.SSID = ssid;
 		}
 		//Z.debug(newItem.SSID);
-		pattern = /var page = (\d+);/;
-		if (pattern.test(metaStr)) {
-			newItem.pages = pattern.exec(metaStr)[1];
-		}
+		newItem.pages = getI(metaStr.match(/var page = (\d+);/));
 		//Z.debug(newItem.pages);
 
-		var pagesStr;
-		pattern = /&PageRanges=(.+?)&/;
-		if (pattern.test(pdfUrl)) {
-			pagesStr = pattern.exec(pdfUrl)[1];
-		}
+		let pagesStr = getI(pdfUrl.match(/&PageRanges=(.+?)&/));
 		newItem.attachments = getAttachments(pdfUrl, pagesStr)
 
 		newItem.complete();
 	}, doc);
+}
+
+function getI(array, index = 1, def = "") { // getItemFromArray
+	if (Array.isArray(array)) {
+		return index < array.length ? array[index] : def;
+	}
 }
 
 // 用于没有d=参数的阅读页面，无法取得书籍页面URL
@@ -139,28 +137,19 @@ function getBookMetaFromPage(doc, url, pdfUrl, metaStr) {
 	newItem.abstractNote = "";
 
 	var title = doc.title;
-	title = Zotero.Utilities.trim(title);
+	title = ZU.trim(title);
 	title = title.replace(/ +/g, " "); // https://developer.mozilla.org/docs/Web/CSS/white-space
 	newItem.title = title;
 
 	newItem.extra = doc.querySelector('#bookinfo').innerText;
 
-	var pattern = /origin\.jsp\?dxid=\d+&SSID=(\d+)&PageNo=/;
-	if (pattern.test(metaStr)) {
-		newItem.SSID = pattern.exec(metaStr)[1];
-	}
+	newItem.SSID = getI(metaStr.match(/origin\.jsp\?dxid=\d+&SSID=(\d+)&PageNo=/));
 	//Z.debug(newItem.SSID);
-	pattern = /var page = (\d+);/;
-	if (pattern.test(metaStr)) {
-		newItem.pages = pattern.exec(metaStr)[1];
-	}
+
+	newItem.pages = getI(metaStr.match(/var page = (\d+);/));
 	//Z.debug(newItem.pages);
 
-	var pagesStr;
-	pattern = /&PageRanges=(.+?)&/;
-	if (pattern.test(pdfUrl)) {
-		pagesStr = pattern.exec(pdfUrl)[1];
-	}
+	let pagesStr = getI(pdfUrl.match(/&PageRanges=(.+?)&/));
 	newItem.attachments = getAttachments(pdfUrl, pagesStr)
 
 	//newItem.libraryCatalog = "SuperLib";
@@ -239,34 +228,27 @@ function scrapeAndParse(doc, url, callback, rootDoc = doc) {
 	
 	// 标题 title.
 	//pattern = /bookname="([\s\S]*?)"/;
-	pattern=/<dt>([\s\S]*?)<\/dt>/;
 	//Z.debug(page);
-	if (pattern.test(page)) {
-		var title = pattern.exec(page)[1];
-		title = Zotero.Utilities.trim(title);
+	let title = getI(page.match(/<dt>([\s\S]*?)<\/dt>/));
+	if (title) {
+		title = ZU.trim(title);
 		title = title.replace(/ +/g, " "); // https://developer.mozilla.org/docs/Web/CSS/white-space
 		newItem.title = title;
 	}
 
 	// 外文题名 foreign title.
-	pattern = /<dd>[\s\S]*外文题名[\s\S]*?：[\s\S]*?([\s\S]*?)<\/dd>/;
-	if (pattern.test(page)) {
-		var foreignTitle = trimTags(pattern.exec(page)[1]);
-		
-		newItem.foreignTitle = Zotero.Utilities.trim(foreignTitle);
-	}
+	let foreignTitle = trimTags(getI(page.match(/<dd>[\s\S]*外文题名[\s\S]*?：[\s\S]*?([\s\S]*?)<\/dd>/)));
+	newItem.foreignTitle = ZU.trim(foreignTitle);
 	page = page.replace(/\n/g, "");
 
 	// 作者名 author name.
-	pattern = /<dd>[\s\S]*?作[\s]*者[\s\S]*?：([\s\S]*?)<\/dd>/;
-	if (pattern.test(page)) {
-		var authorNames = trimTags(pattern.exec(page)[1]);
-
+	let authorNames = trimTags(getI(page.match(/<dd>[\s\S]*?作[\s]*者[\s\S]*?：([\s\S]*?)<\/dd>/)));
+	if (authorNames) {
 		// prevent English name from being split.
 		authorNames = authorNames.replace(/([a-z])，([A-Z])/g, "$1" + " " + "$2");
 
 		authorNames = authorNames.replace(/；/g, "，");
-		authorNames = Zotero.Utilities.trim(authorNames);
+		authorNames = ZU.trim(authorNames);
 
 		authorNames = authorNames.split("，");
 		// Zotero.debug(authorNames);
@@ -284,7 +266,7 @@ function scrapeAndParse(doc, url, callback, rootDoc = doc) {
 				assignedRole = determineRoles(authorNames[i]);
 			}
 			
-			var assignedName = Zotero.Utilities.trim(authorNames[i]).replace(titleMask, "");
+			var assignedName = ZU.trim(authorNames[i]).replace(titleMask, "");
 			
 			switch (assignedRole) {
 				// Not all conditions listed since 编,译,著 catch most of their variations already.
@@ -357,47 +339,44 @@ function scrapeAndParse(doc, url, callback, rootDoc = doc) {
 	}
 	
 	// 出版地点 publication place.
-	pattern = /<dd>[\s\S]*出版发行[\s\S]*?<\/span>([\s\S]*?)：[\s\S]*?<\/dd>/;
-	if (pattern.test(page)) {
-		var place = pattern.exec(page)[1];
+	let place  = getI(page.match(/<dd>[\s\S]*出版发行[\s\S]*?<\/span>([\s\S]*?)：[\s\S]*?<\/dd>/));
+	if (place) {
 		if (place.includes(",")) {
 			// if publication place not provided, replace publisher with trimed info. from place field.
-			newItem.publisher = Zotero.Utilities.trim(place.substring(0, place.indexOf(",")));
+			newItem.publisher = ZU.trim(place.substring(0, place.indexOf(",")));
 			place = "";
 		}
-		else if (Zotero.Utilities.trim(place).match(/^\d/)) {
+		else if (ZU.trim(place).match(/^\d/)) {
 			place = "";
 		}
 		else {
-			newItem.place = Zotero.Utilities.trim(place);
+			newItem.place = ZU.trim(place);
 		}
 	}
 	
 	// 出版社 publisher.
-	pattern = /<dd>[\s\S]*出版发行[\s\S]*?：([\s\S]*?),[\s\S]*?<\/dd>/;
-	if (pattern.test(page)) {
-		var publisher = pattern.exec(page)[1];
+	let publisher = getI(page.match(/<dd>[\s\S]*出版发行[\s\S]*?：([\s\S]*?),[\s\S]*?<\/dd>/));
+	if (publisher) {
 		if (place) {
-			newItem.publisher = Zotero.Utilities.trim(publisher);
+			newItem.publisher = ZU.trim(publisher);
 		}
 	}
 	
 	// 出版时间 publication date.
-	pattern = /<dd>[\s\S]*出版发行[\s\S]*?,([\s\S]*?)<\/dd>/;
-	if (!pattern.test(page)) {
-		pattern = /<dd>[\s\S]*出版发行[\s\S]*?([\s\S]*?)<\/dd>/;
+	let date = getI(page.match(/<dd>[\s\S]*出版发行[\s\S]*?,([\s\S]*?)<\/dd>/));
+	if (!date) {
+		date = getI(page.match(/<dd>[\s\S]*出版发行[\s\S]*?([\s\S]*?)<\/dd>/));
 	}
-	if (pattern.test(page)) {
+	if (date) {
 	// preserve Chinese characters used for the publication date of old books.
-		var date = pattern.exec(page)[1].replace(/[^.\d民国清光绪宣统一二三四五六七八九年-]/g, "");
-		newItem.date = Zotero.Utilities.trim(date);
+		date = date.replace(/[^.\d民国清光绪宣统一二三四五六七八九年-]/g, "");
+		newItem.date = ZU.trim(date);
 	}
 	
 	// ISBN
-	pattern = /<dd>[\s\S]*?ISBN号[\D]*(.*[\d])/;
-	if (pattern.test(page)) {
-		var isbn = pattern.exec(page)[1];
-		newItem.ISBN = Zotero.Utilities.trim(isbn);
+	let isbn = getI(page.match(/<dd>[\s\S]*?ISBN号[\D]*(.*[\d])/));
+	if (isbn) {
+		newItem.ISBN = ZU.trim(isbn);
 		if (newItem.ISBN.length < 13) {
 			newItem.extra = "出版号: " + newItem.ISBN + "\n" + newItem.extra;
 		}
@@ -409,62 +388,45 @@ function scrapeAndParse(doc, url, callback, rootDoc = doc) {
 	}
 
 	// 页数 number of pages.
-	pattern = /页[\s]*数\D*([\s\S]*?)<\/dd>/;
-	if (pattern.test(page)) {
-		var numPages = pattern.exec(page)[1];
-		newItem.numPages = Zotero.Utilities.trim(numPages);
-	}
+	let numPages = getI(page.match(/页[\s]*数\D*([\s\S]*?)<\/dd>/));
+	newItem.numPages = ZU.trim(numPages);
 	
 	// 丛书 book series.
-	pattern = /<dd>[\s\S]*丛书名[\s\S]*?>([\s\S]*?)<\/dd>/;
-	if (pattern.test(page)) {
-		var series = trimTags(pattern.exec(page)[1]);
-		newItem.series = Zotero.Utilities.trim(series);
-	}
+	let series = trimTags(getI(page.match(/<dd>[\s\S]*丛书名[\s\S]*?>([\s\S]*?)<\/dd>/)));
+	newItem.series = ZU.trim(series);
 	// 原书定价 retail price.
-	pattern = /原书定价\D*([\s\S]*?)<\/dd>/;
-	if (pattern.test(page)) {
-		var price = pattern.exec(page)[1];
-		newItem.price = Zotero.Utilities.trim(price);
+	let price = ZU.trim(getI(page.match(/原书定价\D*([\s\S]*?)<\/dd>/)));
+	if (price) {
+		newItem.price = price;
 		newItem.extra += "原书定价: " + newItem.price + "\n";
 	}
 	
 	// 开本 edition format.
-	pattern = /<dd>[\s\S]*开本[\s\S]*?>([\s\S]*?)<\/dd>/;
-	if (pattern.test(page)) {
-		var format = trimTags(pattern.exec(page)[1]);
-		newItem.format = Zotero.Utilities.trim(format);
+	let format = ZU.trim(trimTags(getI(page.match(/<dd>[\s\S]*开本[\s\S]*?>([\s\S]*?)<\/dd>/))));
+	if (format) {
+		newItem.format = format;
 		newItem.extra += "开本: " + newItem.format + "\n";
 	}
 	// 主题词 subject terms.
-	pattern = /<dd>[\s\S]*主题词[\s\S]*?>([\s\S]*?)<\/dd>/;
-	if (pattern.test(page)) {
-		var subjectTerms = trimTags(pattern.exec(page)[1]);
-		newItem.subjectTerms = Zotero.Utilities.trim(subjectTerms);
+	let subjectTerms = trimTags(getI(page.match(/<dd>[\s\S]*主题词[\s\S]*?>([\s\S]*?)<\/dd>/)));
+	if (subjectTerms) {
+		newItem.subjectTerms = ZU.trim(subjectTerms);
 	}
 
 	// 中图法分类号 CLC classification number.
-	pattern = /<dd>[\s\S]*中图法分类号[\s\S]*?>([\s\S]*?)<\/dd>/;
-	if (pattern.test(page)) {
-		var callNumber = trimTags(pattern.exec(page)[1]);
-		newItem.callNumber = Zotero.Utilities.trim(callNumber);
-	}		
+	let callNumber = ZU.trim(trimTags(getI(page.match(/<dd>[\s\S]*中图法分类号[\s\S]*?>([\s\S]*?)<\/dd>/))));
+	newItem.callNumber = callNumber;
 	
 	// 参考文献格式 reference format.
-	pattern = /<dd>[\s\S]*参考文献格式[\s\S]*?>([\s\S]*?)<\/dd>/;
-	if (pattern.test(page)) {
-		var refFormat = trimTags(pattern.exec(page)[1]);
-		newItem.refFormat = Zotero.Utilities.trim(refFormat);
-		
+	let refFormat = ZU.trim(trimTags(getI(page.match(/<dd>[\s\S]*参考文献格式[\s\S]*?>([\s\S]*?)<\/dd>/))));
+	if (refFormat) {
+		newItem.refFormat = refFormat;
 		newItem.extra = "参考格式: " + newItem.refFormat + "\n" + newItem.extra;
 	}
 	
 	// 内容提要 abstract.
-	pattern = /<dd>[\s\S]*内容提要[\s\S]*?>([\s\S]*?)<\/dd>/;
-	if (pattern.test(page)) {
-		var abstractNote = trimTags(pattern.exec(page)[1]);
-		newItem.abstractNote = Zotero.Utilities.trim(abstractNote).replace(/&mdash;/g, "-") + "\n\n";
-	}
+	let abstractNote = trimTags(getI(page.match(/<dd>[\s\S]*内容提要[\s\S]*?>([\s\S]*?)<\/dd>/)));
+	newItem.abstractNote = ZU.trim(abstractNote).replace(/&mdash;/g, "-") + "\n\n";
 	
 	// use subject terms to populate abstract
 	if (newItem.subjectTerms) {
@@ -477,12 +439,8 @@ function scrapeAndParse(doc, url, callback, rootDoc = doc) {
 	}
 
 	// SSID
-	pattern = /<input name = "ssid" id = "forumssid" {2}value = "([\s\S]*?)"/;
-	if (pattern.test(page)) {
-		var SSID = trimTags(pattern.exec(page)[1]);
-		newItem.SSID = Zotero.Utilities.trim(SSID);
-		//newItem.extra = newItem.extra + "SSID: " + newItem.SSID;
-	}
+	let SSID = ZU.trim(trimTags(getI(page.match(/<input name = "ssid" id = "forumssid" {2}value = "([\s\S]*?)"/))));
+	newItem.SSID = SSID;
 
 	// dxid
 	var dxid = attr(doc, "#dxid", "value");
@@ -499,7 +457,7 @@ function scrapeAndParse(doc, url, callback, rootDoc = doc) {
 var rolelist = ["总主编", "总编辑", "总编", "编著", "编译", "编", "整理", "执笔", "译", "著", "撰", "纂", "集解", "辑", "编辑", "集注","绘"];
 
 function trimTags(text) {
-	return text.replace(/(<.*?>)|\t|\r|(隐藏更多)|&nbsp;|/g, "");
+	return text ? text.replace(/(<.*?>)|\t|\r|(隐藏更多)|&nbsp;|/g, "") : "";
 }
 
 // pick a role for a creator.
