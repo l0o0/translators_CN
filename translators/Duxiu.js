@@ -2,7 +2,7 @@
 	"translatorID": "c198059a-3e3a-4ee5-adc0-c3011351365c",
 	"label": "Duxiu",
 	"creator": "Bo An",
-	"target": "html",
+	"target": "(search|bookDetail|\\/book\\/base)",
 	"minVersion": "6.0",
 	"maxVersion": "",
 	"priority": 100,
