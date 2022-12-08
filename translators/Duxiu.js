@@ -126,6 +126,8 @@ async function scrapeBookSection(doc, url) {
 function getI(array, index = 1, def = "") { // getItemFromArray
 	if (Array.isArray(array)) {
 		return index < array.length ? array[index] : def;
+	} else {
+		return def;
 	}
 }
 
