@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-08 04:20:05"
+	"lastUpdated": "2022-12-16 09:19:57"
 }
 
 /*
@@ -402,6 +402,9 @@ function scrapeAndParse(doc, url, callback, rootDoc = doc) {
 		else if (ZU.trim(place).match(/^\d/)) {
 			place = "";
 		}
+		else if (place.includes("<dd>")) { // 误匹配其他栏位的冒号
+			place = "";
+		}
 		else {
 			newItem.place = ZU.trim(place);
 		}
@@ -409,7 +412,11 @@ function scrapeAndParse(doc, url, callback, rootDoc = doc) {
 	
 	// 出版社 publisher.
 	let publisher = getI(page.match(/<dd>[\s\S]*出版发行[\s\S]*?：([\s\S]*?),[\s\S]*?<\/dd>/));
-	if (publisher) {
+	if (publisher.includes("<dd>")) { // 误匹配其他栏位的冒号
+		publisher = ZU.trim(getI(page.match(/<dd>[\s\S]*出版发行[\s\S]*?<\/span>([\s\S]*?)<\/dd>/))); // 栏位的全文
+		newItem.publisher = publisher;
+	}
+	else if (publisher) {
 		if (place) {
 			newItem.publisher = ZU.trim(publisher);
 		}
@@ -682,6 +689,27 @@ var testCases = [
 						"mimeType": "application/pdf"
 					}
 				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://book.duxiu.com/bookDetail.jsp?dxNumber=000007798830&d=84337FB71A1ED5917061A4BB4C3610AF",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "中国包装年鉴 2010-2011",
+				"creators": [],
+				"callNumber": "F426.89-54    ( 经济->工业经济->中国工业经济->工业部门经济 )",
+				"extra": "参考格式: 中国包装年鉴  2010-2011[M].中国包装联合会,",
+				"libraryCatalog": "Duxiu",
+				"numPages": "366",
+				"publisher": "中国包装联合会",
+				"url": "https://book.duxiu.com/bookDetail.jsp?dxNumber=000007798830&d=84337FB71A1ED5917061A4BB4C3610AF",
+				"attachments": [],
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
