@@ -2,14 +2,14 @@
 	"translatorID": "c198059a-3e3a-4ee5-adc0-c3011351365c",
 	"label": "Duxiu",
 	"creator": "Bo An",
-	"target": "(search|bookDetail|\\/book\\/base)",
+	"target": "(search|bookDetail|\\/base)",
 	"minVersion": "6.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-05 18:10:11"
+	"lastUpdated": "2022-12-16 09:19:57"
 }
 
 /*
@@ -50,7 +50,7 @@ async function doWeb(doc, url) {
 			ZU.processDocuments(articles, scrapeAndParse);
 		});
 	}
-	else if (pagetype == "bookSection") {
+	else if (pagetype == "bookSection" || pagetype == "journalArticle") {
 		await scrapeBookSection(doc, url);
 	}
 	else {
@@ -64,30 +64,33 @@ async function scrapeBookSection(doc, url) {
 	var bookUrl;
 	const DXbookRegex = /escape\('(https?:\/\/book\.duxiu\.com\/bookDetail.jsp\?.+)'\)+/  // 不适合参考联盟阅读界面
 	const bookRegex = /dxid=(\d+)&SSID=(\d+)&PageNo="\+page\+"&A=(.+?)&/ // 适合读秀和参考联盟等。缺少d而无法使用
+	const elseRegex = /var pageType = \d+;/ // 期刊等
 	for (let i = scriptStrs.length - 1; i > 0; i--) {
 		metaStr = scriptStrs[i].text;
 		if (metaStr.length == 0) continue;
 
 		bookUrl = getI(metaStr.match(DXbookRegex));
-		if(bookUrl.length>0) {break;}
+		if(bookUrl) {break;}
 		if (!bookUrl && bookRegex.test(metaStr)) {
 			//let key = bookRegex.exec(metaStr);
 			//bookUrl = `http://book.ucdrs.superlib.net/views/specific/2929/bookDetail.jsp?dxNumber=${key[1]}&d=...`;
-			bookUrl = "";
 			break;
 		}
+		if (elseRegex.test(metaStr)) break;
 	}
 
-	var pdfUrl = doc.querySelector('#saveAs');
-	pdfUrl = pdfUrl ? pdfUrl.href : "";
-	if (pdfUrl === "") { // 另一种阅读界面
-		pdfUrl = ZU.xpath(doc, '//li/a[text()="PDF"]')
-		pdfUrl = pdfUrl ? pdfUrl[0].href : "";
-	}
+	var pdfUrl = ZU.xpathText(doc, '//a[@id="saveAs"]/@href')
+		|| ZU.xpathText(doc, '//li/a[text()="PDF"]/@href')
+		|| ZU.xpathText(doc, '//li/a[text()="保存"]/@href');
 	//Z.debug(pdfUrl);
 
-	if (bookUrl === "") {
-		getBookMetaFromPage(doc, url, pdfUrl, metaStr);
+	//Z.debug(bookUrl);
+	if (!bookUrl) {
+		if (doc.querySelector('#OriginInfo') && !ZU.xpathText(doc, '//div[@id="bookinfo"]/@content')) {
+			getBookMetaFromPageOriginInfo(doc, url, pdfUrl, metaStr);
+		} else {
+			getBookMetaFromPage(doc, url, pdfUrl, metaStr);
+		}
 		return;
 	}
 
@@ -96,7 +99,8 @@ async function scrapeBookSection(doc, url) {
 	/*if (bookDoc.URL.includes("/login.jsp?")) // 未登录，包括环境不支持（Scaffold，cookie异常）
 	{
 		// 传入测试样本供开发测试。
-		bookDoc = await requestDocument('https://bl.ocks.org/yfdyh000/raw/3d01e626fbc750c8e4719efa220d5752/?raw=true');
+		//bookDoc = await requestDocument('https://bl.ocks.org/yfdyh000/raw/3d01e626fbc750c8e4719efa220d5752/?raw=true'); // <dl>信息较多的样本
+		bookDoc = await requestDocument('https://jsbin.com/pekuvikayo'); // 信息较少的《中华民国现代名人录 中英文版》的<dl>
 		//page="";
 	}*/
 
@@ -126,7 +130,50 @@ async function scrapeBookSection(doc, url) {
 function getI(array, index = 1, def = "") { // getItemFromArray
 	if (Array.isArray(array)) {
 		return index < array.length ? array[index] : def;
+	} else {
+		return def;
 	}
+}
+
+// 部分页面bookinfo为空，提供#OriginInfo
+function getBookMetaFromPageOriginInfo(doc, url, pdfUrl, metaStr) {
+	var itemType = "journalArticle";
+	var newItem = new Zotero.Item(itemType);
+	newItem.url = url;
+	newItem.abstractNote = "";
+
+	var title = doc.title; // 可能为期刊名，没有在此页面中提供章节名
+	title = ZU.trim(title);
+	title = title.replace(/ +/g, " "); // https://developer.mozilla.org/docs/Web/CSS/white-space
+	newItem.title = title;
+
+	var meta = doc.querySelector('#OriginInfo').innerHTML;
+	var metaText = doc.querySelector('#OriginInfo').innerText.replace(/ /g, "");
+	metaText = metaText.replace(/(.+?):(.+)/g, "$1: $2"); // 补回冒号后空格，并小心书名有冒号
+	//var metaText = ZU.trimInternal(doc.querySelector('#OriginInfo').innerText); // 无换行版
+	newItem.extra = metaText;
+
+	//Z.debug(meta);
+	let jTitle = getI(meta.match(/<b>题名:<\/b>(.+?)\s*<\/li>/)).replace(/ +/g, " ");
+	newItem.journalAbbreviation = jTitle;
+	let year = getI(meta.match(/<b>年代:<\/b>(.+?)年?\s*<\/li>/));
+	newItem.date = year;
+	let issue = getI(meta.match(/<b>刊号:<\/b>第(\d+)期?\s*<\/li>/));
+	newItem.issue = issue;
+
+	//Z.debug(metaStr);
+	newItem.SSID = getI(metaStr.match(/ssid: '(\d+)',/));
+	//Z.debug(newItem.SSID);
+
+	newItem.pages = getI(metaStr.match(/var page = (\d+);/));
+	//Z.debug(newItem.pages);
+
+	let pagesStr = getI(pdfUrl.match(/&PageRanges=(.+?)&/));
+	newItem.attachments = getAttachments(pdfUrl, pagesStr)
+
+	//newItem.libraryCatalog = "SuperLib";
+
+	newItem.complete();
 }
 
 // 用于没有d=参数的阅读页面，无法取得书籍页面URL
@@ -195,6 +242,12 @@ function detectWeb(doc, url) {
 	else if (/^https?:\/\/.+\.cn\/n\/drspath\/book\/base/.test(url)) { // 全国图书馆参考咨询联盟
 		return "bookSection";
 	}
+	else if (/^https?:\/\/.+\.cn\/n\/.+\/qikan\/base/.test(url)) { // 读秀
+		return "journalArticle";
+	}
+	/*else if (text(doc,'#textocr')==='文字摘录') { // 读秀系。各类书刊。
+		return "bookSection";
+	}*/
 }
 
 // https://github.com/zuphilip/translators/wiki/Common-code-blocks-for-translators
@@ -349,6 +402,9 @@ function scrapeAndParse(doc, url, callback, rootDoc = doc) {
 		else if (ZU.trim(place).match(/^\d/)) {
 			place = "";
 		}
+		else if (place.includes("<dd>")) { // 误匹配其他栏位的冒号
+			place = "";
+		}
 		else {
 			newItem.place = ZU.trim(place);
 		}
@@ -356,7 +412,11 @@ function scrapeAndParse(doc, url, callback, rootDoc = doc) {
 	
 	// 出版社 publisher.
 	let publisher = getI(page.match(/<dd>[\s\S]*出版发行[\s\S]*?：([\s\S]*?),[\s\S]*?<\/dd>/));
-	if (publisher) {
+	if (publisher.includes("<dd>")) { // 误匹配其他栏位的冒号
+		publisher = ZU.trim(getI(page.match(/<dd>[\s\S]*出版发行[\s\S]*?<\/span>([\s\S]*?)<\/dd>/))); // 栏位的全文
+		newItem.publisher = publisher;
+	}
+	else if (publisher) {
 		if (place) {
 			newItem.publisher = ZU.trim(publisher);
 		}
@@ -488,6 +548,7 @@ function pickClosestRole(namelist, index) {
 
 // The "dsrqw" book's meta info depend on https://bl.ocks.org/yfdyh000/raw/3d01e626fbc750c8e4719efa220d5752/?raw=true') in Scaffold IDE, due to Cookies bug.
 
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -601,6 +662,54 @@ var testCases = [
 						"mimeType": "application/pdf"
 					}
 				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "http://www.zhengzhifl.cn/n/p2jpathqk/qikan/base/22116525/37b1e2f9d2304e62aefe60d6ae459f18/71e073b8157d339518676b37df7fed1b.shtml?...",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "中国建筑装饰装修",
+				"creators": [],
+				"date": "2008",
+				"extra": "题名: 中国建筑装饰装修\n年代: 2008年\n刊号: 第7期",
+				"issue": "7",
+				"journalAbbreviation": "中国建筑装饰装修",
+				"libraryCatalog": "Duxiu",
+				"pages": "128",
+				"url": "http://www.zhengzhifl.cn/n/p2jpathqk/qikan/base/22116525/37b1e2f9d2304e62aefe60d6ae459f18/71e073b8157d339518676b37df7fed1b.shtml?...",
+				"attachments": [
+					{
+						"title": "Full Text PDF (p. 128-205)",
+						"mimeType": "application/pdf"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://book.duxiu.com/bookDetail.jsp?dxNumber=000007798830&d=84337FB71A1ED5917061A4BB4C3610AF",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "中国包装年鉴 2010-2011",
+				"creators": [],
+				"callNumber": "F426.89-54    ( 经济->工业经济->中国工业经济->工业部门经济 )",
+				"extra": "参考格式: 中国包装年鉴  2010-2011[M].中国包装联合会,",
+				"libraryCatalog": "Duxiu",
+				"numPages": "366",
+				"publisher": "中国包装联合会",
+				"url": "https://book.duxiu.com/bookDetail.jsp?dxNumber=000007798830&d=84337FB71A1ED5917061A4BB4C3610AF",
+				"attachments": [],
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
