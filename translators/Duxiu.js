@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-16 09:19:57"
+	"lastUpdated": "2022-12-21 09:06:52"
 }
 
 /*
@@ -233,7 +233,7 @@ function detectWeb(doc, url) {
 	if (/^https?:\/\/book\.duxiu\.com\/search\?/.test(url)) {
 		return "multiple";
 	}
-	else if (/^https?:\/\/book\.duxiu\.com\/bookDetail\?/.test(url)) {
+	else if (/^https?:\/\/book\.duxiu\.com\/bookDetail/.test(url)) {
 		return "book";
 	}
 	else if (/^https?:\/\/.+\.cn\/n\/dsrqw\/book\/base/.test(url)) { // 读秀
