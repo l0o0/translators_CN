@@ -2,14 +2,14 @@
 	"translatorID": "5c95b67b-41c5-4f55-b71a-48d5d7183063",
 	"label": "CNKI",
 	"creator": "Aurimas Vinckevicius, Xingzhong Lin",
-	"target": "https?://.*?/(kns8?/defaultresult/index|kns8?/AdvSearch|kcms/detail|KXReader/Detail\\?|KNavi/|Kreader/CatalogViewPage\\.aspx\\?)",
+	"target": "https?://.*?/(kns8?/defaultresult/index|kns8?/AdvSearch|kcms/detail|KXReader/Detail\\?|KNavi/|Kreader/CatalogViewPage\\.aspx\\?|kcms2?/article/abstract\\?v=|kcms/doi/)",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-10-11 12:51:15"
+	"lastUpdated": "2022-12-21 06:46:36"
 }
 
 /*
@@ -217,7 +217,7 @@ function detectWeb(doc, url) {
 }
 
 function doWeb(doc, url) {
-	Z.debug("----------------CNKI 20220521---------------------");
+	Z.debug("----------------CNKI 20221221---------------------");
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
@@ -277,11 +277,11 @@ function scrape(ids, doc, itemInfo) {
 					var DOI = doi[0].innerText.split("DOI");
 					newItem.DOI = DOI[DOI.length - 1].trim().replace(/[：:]/, '');
 				}
-				// var moreClick = ZU.xpath(doc, "//span/a[@id='ChDivSummaryMore']");
-				// if (moreClick.length) {
-				// 	moreClick[0].click();// click to get a full abstract in a single article page
-				// 	newItem.abstractNote = ZU.xpath(doc, "//span[@id='ChDivSummary']")[0].innerText;
-				// }
+				var moreClick = ZU.xpath(doc, "//span/a[@id='ChDivSummaryMore']");
+				if (moreClick.length) {
+					moreClick[0].click();// click to get a full abstract in a single article page
+					newItem.abstractNote = ZU.xpath(doc, "//span[@id='ChDivSummary']")[0].innerText;
+				}
 			}
 			newItem.attachments[0].referer = url;
 			var timestamp = new Date().toLocaleDateString().replace(/\//g, '-');
@@ -701,6 +701,273 @@ var testCases = [
 					},
 					{
 						"tag": "阿尔茨海默病"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://t.cnki.net/kcms/article/abstract?v=7zUO4zIUaYCFYmofRdVaTccS6pQdozTC-dL0zYy_U5BuOnmujzA0Ctv9HaxYLNybybuKuIahaVhLLubCnEd36GhbDFWEhAQoEqKJRGoexyZgSy0rMOE4Rj6CrXMcnd8WqI3k6fX10AM=&uniplatform=NZKPT",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "压型钢板-聚氨酯夹芯楼板受弯性能研究",
+				"creators": [
+					{
+						"lastName": "王",
+						"firstName": "腾",
+						"creatorType": "author"
+					},
+					{
+						"lastName": "冯",
+						"firstName": "会康",
+						"creatorType": "author"
+					},
+					{
+						"lastName": "乔",
+						"firstName": "文涛",
+						"creatorType": "author"
+					},
+					{
+						"lastName": "苏",
+						"firstName": "佶智",
+						"creatorType": "author"
+					},
+					{
+						"lastName": "王",
+						"firstName": "丽欢",
+						"creatorType": "author"
+					}
+				],
+				"date": "2022",
+				"DOI": "10.13206/j.gjgS22031502",
+				"ISSN": "2096-6865",
+				"abstractNote": "金属面夹芯板以其保温绝热、降噪、自重轻和装配效率高等优点在围护结构中得到了很好的应用，基于金属面夹芯板的构造，提出一种新型的压型钢板与聚氨酯组合的夹芯楼板结构。为了研究压型钢板-聚氨酯夹芯楼板的受弯性能，对夹芯楼板试件进行了两点对称静载试验。在试验的基础上，提出并验证了夹芯楼板有限元模型，并对槽钢楼板厚度、压型钢板厚度和聚氨酯密度等进行了参数分析。研究结果表明：夹芯楼板的破坏形式主要表现为挠度过大，最大挠度达到了板跨度的1/42,并且跨中截面处的槽钢出现畸变屈曲；夹芯楼板受弯变形后，槽钢首先达到屈服状态，而受压钢板的材料性能未能得到充分发挥；新型压型钢板聚氨酯夹芯楼板相比传统金属面夹芯板的承载...",
+				"issue": "8",
+				"language": "zh-CN",
+				"libraryCatalog": "CNKI",
+				"pages": "9-16",
+				"publicationTitle": "钢结构(中英文)",
+				"url": "https://t.cnki.net/kcms/article/abstract?v=7zUO4zIUaYCFYmofRdVaTccS6pQdozTC-dL0zYy_U5BuOnmujzA0Ctv9HaxYLNybybuKuIahaVhLLubCnEd36GhbDFWEhAQoEqKJRGoexyZgSy0rMOE4Rj6CrXMcnd8WqI3k6fX10AM=&uniplatform=NZKPT",
+				"volume": "37",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf",
+						"referer": "https://t.cnki.net/kcms/article/abstract?v=7zUO4zIUaYCFYmofRdVaTccS6pQdozTC-dL0zYy_U5BuOnmujzA0Ctv9HaxYLNybybuKuIahaVhLLubCnEd36GhbDFWEhAQoEqKJRGoexyZgSy0rMOE4Rj6CrXMcnd8WqI3k6fX10AM=&uniplatform=NZKPT"
+					}
+				],
+				"tags": [
+					{
+						"tag": "finite element analysis"
+					},
+					{
+						"tag": "flexural capacity"
+					},
+					{
+						"tag": "profiled steel sheet"
+					},
+					{
+						"tag": "sandwich slab"
+					},
+					{
+						"tag": "static test"
+					},
+					{
+						"tag": "压型钢板"
+					},
+					{
+						"tag": "受弯性能"
+					},
+					{
+						"tag": "夹芯楼板"
+					},
+					{
+						"tag": "有限元分析"
+					},
+					{
+						"tag": "静载试验"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://t.cnki.net/kcms/article/abstract?v=7zUO4zIUaYCFYmofRdVaTccS6pQdozTC-dL0zYy_U5BuOnmujzA0Ctv9HaxYLNybybuKuIahaVhLLubCnEd36GhbDFWEhAQoEqKJRGoexyZgSy0rMOE4Rj6CrXMcnd8WqI3k6fX10AM=&uniplatform=NZKPT",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "压型钢板-聚氨酯夹芯楼板受弯性能研究",
+				"creators": [
+					{
+						"lastName": "王",
+						"firstName": "腾",
+						"creatorType": "author"
+					},
+					{
+						"lastName": "冯",
+						"firstName": "会康",
+						"creatorType": "author"
+					},
+					{
+						"lastName": "乔",
+						"firstName": "文涛",
+						"creatorType": "author"
+					},
+					{
+						"lastName": "苏",
+						"firstName": "佶智",
+						"creatorType": "author"
+					},
+					{
+						"lastName": "王",
+						"firstName": "丽欢",
+						"creatorType": "author"
+					}
+				],
+				"date": "2022",
+				"DOI": "10.13206/j.gjgS22031502",
+				"ISSN": "2096-6865",
+				"abstractNote": "金属面夹芯板以其保温绝热、降噪、自重轻和装配效率高等优点在围护结构中得到了很好的应用，基于金属面夹芯板的构造，提出一种新型的压型钢板与聚氨酯组合的夹芯楼板结构。为了研究压型钢板-聚氨酯夹芯楼板的受弯性能，对夹芯楼板试件进行了两点对称静载试验。在试验的基础上，提出并验证了夹芯楼板有限元模型，并对槽钢楼板厚度、压型钢板厚度和聚氨酯密度等进行了参数分析。研究结果表明：夹芯楼板的破坏形式主要表现为挠度过大，最大挠度达到了板跨度的1/42,并且跨中截面处的槽钢出现畸变屈曲；夹芯楼板受弯变形后，槽钢首先达到屈服状态，而受压钢板的材料性能未能得到充分发挥；新型压型钢板聚氨酯夹芯楼板相比传统金属面夹芯板的承载...",
+				"issue": "8",
+				"language": "zh-CN",
+				"libraryCatalog": "CNKI",
+				"pages": "9-16",
+				"publicationTitle": "钢结构(中英文)",
+				"url": "https://t.cnki.net/kcms/article/abstract?v=7zUO4zIUaYCFYmofRdVaTccS6pQdozTC-dL0zYy_U5BuOnmujzA0Ctv9HaxYLNybybuKuIahaVhLLubCnEd36GhbDFWEhAQoEqKJRGoexyZgSy0rMOE4Rj6CrXMcnd8WqI3k6fX10AM=&uniplatform=NZKPT",
+				"volume": "37",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf",
+						"referer": "https://t.cnki.net/kcms/article/abstract?v=7zUO4zIUaYCFYmofRdVaTccS6pQdozTC-dL0zYy_U5BuOnmujzA0Ctv9HaxYLNybybuKuIahaVhLLubCnEd36GhbDFWEhAQoEqKJRGoexyZgSy0rMOE4Rj6CrXMcnd8WqI3k6fX10AM=&uniplatform=NZKPT"
+					}
+				],
+				"tags": [
+					{
+						"tag": "finite element analysis"
+					},
+					{
+						"tag": "flexural capacity"
+					},
+					{
+						"tag": "profiled steel sheet"
+					},
+					{
+						"tag": "sandwich slab"
+					},
+					{
+						"tag": "static test"
+					},
+					{
+						"tag": "压型钢板"
+					},
+					{
+						"tag": "受弯性能"
+					},
+					{
+						"tag": "夹芯楼板"
+					},
+					{
+						"tag": "有限元分析"
+					},
+					{
+						"tag": "静载试验"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://t.cnki.net/kcms/article/abstract?v=7zUO4zIUaYCFYmofRdVaTccS6pQdozTC-dL0zYy_U5BuOnmujzA0Ctv9HaxYLNybybuKuIahaVhLLubCnEd36GhbDFWEhAQoEqKJRGoexyZgSy0rMOE4Rj6CrXMcnd8WqI3k6fX10AM=&uniplatform=NZKPT",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "压型钢板-聚氨酯夹芯楼板受弯性能研究",
+				"creators": [
+					{
+						"lastName": "王",
+						"firstName": "腾",
+						"creatorType": "author"
+					},
+					{
+						"lastName": "冯",
+						"firstName": "会康",
+						"creatorType": "author"
+					},
+					{
+						"lastName": "乔",
+						"firstName": "文涛",
+						"creatorType": "author"
+					},
+					{
+						"lastName": "苏",
+						"firstName": "佶智",
+						"creatorType": "author"
+					},
+					{
+						"lastName": "王",
+						"firstName": "丽欢",
+						"creatorType": "author"
+					}
+				],
+				"date": "2022",
+				"DOI": "10.13206/j.gjgS22031502",
+				"ISSN": "2096-6865",
+				"abstractNote": "金属面夹芯板以其保温绝热、降噪、自重轻和装配效率高等优点在围护结构中得到了很好的应用，基于金属面夹芯板的构造，提出一种新型的压型钢板与聚氨酯组合的夹芯楼板结构。为了研究压型钢板-聚氨酯夹芯楼板的受弯性能，对夹芯楼板试件进行了两点对称静载试验。在试验的基础上，提出并验证了夹芯楼板有限元模型，并对槽钢楼板厚度、压型钢板厚度和聚氨酯密度等进行了参数分析。研究结果表明：夹芯楼板的破坏形式主要表现为挠度过大，最大挠度达到了板跨度的1/42,并且跨中截面处的槽钢出现畸变屈曲；夹芯楼板受弯变形后，槽钢首先达到屈服状态，而受压钢板的材料性能未能得到充分发挥；新型压型钢板聚氨酯夹芯楼板相比传统金属面夹芯板的承载能力和刚度有明显提升，承载力和刚度均提高203%;楼板厚度和压型钢板厚度对夹芯楼板的承载能力和刚度均具有显著影响，而楼板厚度相比压型钢板厚度对刚度的影响效果更明显，当楼板厚度从120 mm增大到160 mm时，夹芯楼板的承载力在正常使用状态下提高87%,在承载能力极限状态下提高63%,刚度提高88%,钢板厚度由1 mm增至3 mm时，夹芯楼板的承载力在正常使用状态下提高59%,在承载能力极限状态下提高84%,刚度提高61%;聚氨酯泡沫密度的变化对夹芯楼板的承载能力和刚度影响较小，当密度从45 kg/m~3变化到90 kg/m~3时，正常使用状态下夹芯楼板的承载力增幅为12%,承载能力极限状态下的承载力增幅仅为2%,刚度增幅为12%。",
+				"issue": "8",
+				"language": "zh-CN",
+				"libraryCatalog": "CNKI",
+				"pages": "9-16",
+				"publicationTitle": "钢结构(中英文)",
+				"url": "https://t.cnki.net/kcms/article/abstract?v=7zUO4zIUaYCFYmofRdVaTccS6pQdozTC-dL0zYy_U5BuOnmujzA0Ctv9HaxYLNybybuKuIahaVhLLubCnEd36GhbDFWEhAQoEqKJRGoexyZgSy0rMOE4Rj6CrXMcnd8WqI3k6fX10AM=&uniplatform=NZKPT",
+				"volume": "37",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf",
+						"referer": "https://t.cnki.net/kcms/article/abstract?v=7zUO4zIUaYCFYmofRdVaTccS6pQdozTC-dL0zYy_U5BuOnmujzA0Ctv9HaxYLNybybuKuIahaVhLLubCnEd36GhbDFWEhAQoEqKJRGoexyZgSy0rMOE4Rj6CrXMcnd8WqI3k6fX10AM=&uniplatform=NZKPT"
+					}
+				],
+				"tags": [
+					{
+						"tag": "finite element analysis"
+					},
+					{
+						"tag": "flexural capacity"
+					},
+					{
+						"tag": "profiled steel sheet"
+					},
+					{
+						"tag": "sandwich slab"
+					},
+					{
+						"tag": "static test"
+					},
+					{
+						"tag": "压型钢板"
+					},
+					{
+						"tag": "受弯性能"
+					},
+					{
+						"tag": "夹芯楼板"
+					},
+					{
+						"tag": "有限元分析"
+					},
+					{
+						"tag": "静载试验"
 					}
 				],
 				"notes": [],
