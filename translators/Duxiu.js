@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-25 01:08:48"
+	"lastUpdated": "2022-12-25 03:01:13"
 }
 
 /*
@@ -159,7 +159,7 @@ function getBookMetaFromPageOriginInfo(doc, url, pdfUrl, metaStr) {
 
 	//Z.debug(meta);
 	let jTitle = getI(meta.match(/<b>题名:<\/b>(.+?)\s*<\/li>/)).replace(/ +/g, " ");
-	newItem.journalAbbreviation = jTitle;
+	newItem.publicationTitle = jTitle;
 	let year = getI(meta.match(/<b>年代:<\/b>(.+?)年?\s*<\/li>/));
 	newItem.date = year;
 	let issue = getI(meta.match(/<b>刊号:<\/b>第(\d+)期?\s*<\/li>/));
@@ -295,7 +295,7 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 	}
 	if (type == "journalArticle") {
 		let journalName = trimTags(getI(page.match(/<span>刊\s+名\s+:\s+<\/span>([\s\S]*?)<\/dd>/)));
-		newItem.journalAbbreviation = ZU.trim(journalName)
+		newItem.publicationTitle = ZU.trim(journalName)
 	}
 
 	// 外文题名 foreign title.
@@ -524,7 +524,7 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 
 	if (type == "journalArticle") {
 		let issn = getI(page.match(/<dd>[\s\S]*?ISSN[\D]*(.*[\d])<\/dd>/));
-		if (issn) newItem.issn = ZU.trim(issn);
+		if (issn) newItem.ISSN = ZU.trim(issn);
 
 		newItem.pages = getI(page.match(/<dd><span>页\s*码\s:\s<\/span>(.+?)<\/dd>/));
 
