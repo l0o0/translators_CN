@@ -2,14 +2,14 @@
 	"translatorID": "c198059a-3e3a-4ee5-adc0-c3011351365c",
 	"label": "Duxiu",
 	"creator": "Bo An",
-	"target": "(search|bookDetail|\\/base)",
+	"target": "(search|bookDetail|JourDetail|\\/base)",
 	"minVersion": "6.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-21 09:06:52"
+	"lastUpdated": "2022-12-25 01:08:48"
 }
 
 /*
@@ -49,6 +49,10 @@ async function doWeb(doc, url) {
 			}
 			ZU.processDocuments(articles, scrapeAndParse);
 		});
+	}
+	else if (/^https?:\/\/jour\.duxiu\.com\/JourDetail/.test(url)) {
+		scrapeAndParse(doc, url, null, "journalArticle");
+		return;
 	}
 	else if (pagetype == "bookSection" || pagetype == "journalArticle") {
 		await scrapeBookSection(doc, url);
@@ -124,7 +128,7 @@ async function scrapeBookSection(doc, url) {
 		newItem.attachments = getAttachments(pdfUrl, pagesStr)
 
 		newItem.complete();
-	}, doc);
+	}, "bookSection", doc);
 }
 
 function getI(array, index = 1, def = "") { // getItemFromArray
@@ -236,6 +240,9 @@ function detectWeb(doc, url) {
 	else if (/^https?:\/\/book\.duxiu\.com\/bookDetail/.test(url)) {
 		return "book";
 	}
+	else if (/^https?:\/\/jour\.duxiu\.com\/JourDetail/.test(url)) {
+		return "journalArticle";
+	}
 	else if (/^https?:\/\/.+\.cn\/n\/dsrqw\/book\/base/.test(url)) { // 读秀
 		return "bookSection";
 	}
@@ -262,17 +269,15 @@ function decodeHtmlEntity(html, odoc) {
 	return txt.value;
 }
 
-function scrapeAndParse(doc, url, callback, rootDoc = doc) {
-	var isSection = typeof callback == "function";
+function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 	let pageEl = ZU.xpath(doc,'//dl');
 	let page;
 	// 必须提供根文档，否则无法正常implementation.createHTMLDocument，可能出现 [Exception... "Unexpected error"  nsresult: "0x8000ffff (NS_ERROR_UNEXPECTED)"
 	page=decodeHtmlEntity(pageEl[0].innerHTML, rootDoc);
-	//Z.debug(isSection);
 	var pattern;
 	//Z.debug(typeof(page));
 	// 类型 item Type & URL
-	var itemType = isSection ? "bookSection" : "book";
+	var itemType = type || "book";
 	var newItem = new Zotero.Item(itemType);
 	newItem.url = url;
 	newItem.abstractNote = "";
@@ -288,19 +293,26 @@ function scrapeAndParse(doc, url, callback, rootDoc = doc) {
 		title = title.replace(/ +/g, " "); // https://developer.mozilla.org/docs/Web/CSS/white-space
 		newItem.title = title;
 	}
+	if (type == "journalArticle") {
+		let journalName = trimTags(getI(page.match(/<span>刊\s+名\s+:\s+<\/span>([\s\S]*?)<\/dd>/)));
+		newItem.journalAbbreviation = ZU.trim(journalName)
+	}
 
 	// 外文题名 foreign title.
 	let foreignTitle = trimTags(getI(page.match(/<dd>[\s\S]*外文题名[\s\S]*?：[\s\S]*?([\s\S]*?)<\/dd>/)));
+	if (type == "journalArticle") foreignTitle = trimTags(getI(page.match(/<dd>[\s\S]*外文题名[\s\S]*?:[\s\S]*?<\/span>([\s\S]*?)<\/dd>/)));
 	newItem.foreignTitle = ZU.trim(foreignTitle);
 	page = page.replace(/\n/g, "");
 
 	// 作者名 author name.
-	let authorNames = trimTags(getI(page.match(/<dd>[\s\S]*?作[\s]*者[\s\S]*?：([\s\S]*?)<\/dd>/)));
+	let authorNames = getI(page.match(/<dd>[\s\S]*?作[\s]*者[\s\S]*?\s*[：:]\s*([\s\S]*?)<\/dd>/));
 	if (authorNames) {
+		authorNames = authorNames.replace(/<sup>.+?<\/sup>/g, ""); // 期刊文章作者下标
+		authorNames = trimTags(authorNames);
 		// prevent English name from being split.
 		authorNames = authorNames.replace(/([a-z])，([A-Z])/g, "$1" + " " + "$2");
 
-		authorNames = authorNames.replace(/；/g, "，");
+		authorNames = authorNames.replace(/[；;]/g, "，");
 		authorNames = ZU.trim(authorNames);
 
 		authorNames = authorNames.split("，");
@@ -427,6 +439,7 @@ function scrapeAndParse(doc, url, callback, rootDoc = doc) {
 	if (!date) {
 		date = getI(page.match(/<dd>[\s\S]*出版发行[\s\S]*?([\s\S]*?)<\/dd>/));
 	}
+	if (type == "journalArticle") date = getI(page.match(/<dd>[\s\S]*出版日期[\s\S]*?<\/span>([\s\S]*?)<\/dd>/));
 	if (date) {
 	// preserve Chinese characters used for the publication date of old books.
 		date = date.replace(/[^.\d民国清光绪宣统一二三四五六七八九年-]/g, "");
@@ -509,7 +522,25 @@ function scrapeAndParse(doc, url, callback, rootDoc = doc) {
 		newItem.DXID = dxid;
 	}
 
-	if (isSection) {callback(newItem);}
+	if (type == "journalArticle") {
+		let issn = getI(page.match(/<dd>[\s\S]*?ISSN[\D]*(.*[\d])<\/dd>/));
+		if (issn) newItem.issn = ZU.trim(issn);
+
+		newItem.pages = getI(page.match(/<dd><span>页\s*码\s:\s<\/span>(.+?)<\/dd>/));
+
+		let keywords = trimTags(getI(page.match(/<dd><span>关键词\s:\s<\/span>([\s\S]*?)<\/dd>/)));
+		//Z.debug(keywords)
+		newItem.tags = keywords.split("；");
+
+		let issue = trimTags(getI(page.match(/<dd>\s*<span>期\s*号\s:\s<\/span>([\s\S]*?)<\/dd>/)));
+		issue = issue.replace(/[第期]/g, "")
+		newItem.issue = issue;
+
+		let abstractNote = trimTags(getI(page.match(/<dd>[\s\S]*摘\s要[\s\S]*?>([\s\S]*?)<\/dd>/)));
+		newItem.abstractNote = ZU.trim(abstractNote).replace(/&mdash;/g, "-") + "\n\n";
+	}
+
+	if (typeof callback == "function") {callback(newItem);}
 	else {newItem.complete();}
 }
 
@@ -711,6 +742,69 @@ var testCases = [
 				"url": "https://book.duxiu.com/bookDetail.jsp?dxNumber=000007798830&d=84337FB71A1ED5917061A4BB4C3610AF",
 				"attachments": [],
 				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://jour.duxiu.com/JourDetail.jsp?dxNumber=100232796446&d=3D8C8F355C594EBCD96602E1EE599A61&fenlei=13011005",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "什么是随机动力系统",
+				"creators": [
+					{
+						"lastName": "段金桥",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "郑雅允",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "白露",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "姜涛",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2015",
+				"abstractNote": "本文综述随机动力系统的基本概念、理论、方法与应用,内容包括Brownian运动、Lévy运动和随机微分方程及其解的刻画。重点讨论通过量化指标、不变结构、几何方法和非高斯性态来理解随机动力学现象。本文还介绍了段金桥的著作《An Introduction to Stochastic Dynamics(随机动力系统导论)》的基本内容。",
+				"extra": "参考格式: 段金桥1,2,3,郑雅允2,白露2,姜涛2.什么是随机动力系统[J].数学建模及其应用,2015,(第4期).",
+				"issue": "4",
+				"journalAbbreviation": "数学建模及其应用",
+				"libraryCatalog": "Duxiu",
+				"pages": "1-9",
+				"url": "https://jour.duxiu.com/JourDetail.jsp?dxNumber=100232796446&d=3D8C8F355C594EBCD96602E1EE599A61&fenlei=13011005",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "Brownian运动"
+					},
+					{
+						"tag": "Fokker-Planck方程"
+					},
+					{
+						"tag": "Lévy运动"
+					},
+					{
+						"tag": "不变流形"
+					},
+					{
+						"tag": "随机动力系统"
+					},
+					{
+						"tag": "随机微分方程"
+					}
+				],
 				"notes": [],
 				"seeAlso": []
 			}
