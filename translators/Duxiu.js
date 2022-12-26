@@ -578,12 +578,13 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 		newItem.university = university;
 
 		let advisors = trimTags(getI(page.match(/<dd><span>导师姓名\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
-		let advisorsNames = advisors.split(";");
+		/*let advisorsNames = advisors.split(";");
 		for (let an of advisorsNames) {
 			newItem.creators.push({ lastName: an,
 			creatorType: "advisor",
 			fieldMode: 1 });
-		}
+		}*/ // 没有合适的creatorType
+		newItem.extra += "导师: " + advisors + "\n";
 
 		let abstractNote = ZU.xpathText(doc, '//dd/div[@id="zymore"]')
 		abstractNote = ZU.trim(abstractNote).replace(/^摘\s*要\s*:\s*/, "").replace(/\s*隐藏更多$/, "");
