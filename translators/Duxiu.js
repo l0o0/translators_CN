@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-25 03:01:13"
+	"lastUpdated": "2022-12-26 00:56:56"
 }
 
 /*
@@ -52,6 +52,10 @@ async function doWeb(doc, url) {
 	}
 	else if (/^https?:\/\/jour\.duxiu\.com\/JourDetail/.test(url)) {
 		scrapeAndParse(doc, url, null, "journalArticle");
+		return;
+	}
+	else if (pagetype == "newspaperArticle") {
+		scrapeAndParse(doc, url, null, "newspaperArticle");
 		return;
 	}
 	else if (pagetype == "bookSection" || pagetype == "journalArticle") {
@@ -580,6 +584,8 @@ function pickClosestRole(namelist, index) {
 // The "dsrqw" book's meta info depend on https://bl.ocks.org/yfdyh000/raw/3d01e626fbc750c8e4719efa220d5752/?raw=true') in Scaffold IDE, due to Cookies bug.
 
 
+
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -777,12 +783,13 @@ var testCases = [
 					}
 				],
 				"date": "2015",
+				"ISSN": "2095-3070",
 				"abstractNote": "本文综述随机动力系统的基本概念、理论、方法与应用,内容包括Brownian运动、Lévy运动和随机微分方程及其解的刻画。重点讨论通过量化指标、不变结构、几何方法和非高斯性态来理解随机动力学现象。本文还介绍了段金桥的著作《An Introduction to Stochastic Dynamics(随机动力系统导论)》的基本内容。",
 				"extra": "参考格式: 段金桥1,2,3,郑雅允2,白露2,姜涛2.什么是随机动力系统[J].数学建模及其应用,2015,(第4期).",
 				"issue": "4",
-				"journalAbbreviation": "数学建模及其应用",
 				"libraryCatalog": "Duxiu",
 				"pages": "1-9",
+				"publicationTitle": "数学建模及其应用",
 				"url": "https://jour.duxiu.com/JourDetail.jsp?dxNumber=100232796446&d=3D8C8F355C594EBCD96602E1EE599A61&fenlei=13011005",
 				"attachments": [],
 				"tags": [
