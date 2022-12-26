@@ -2,14 +2,14 @@
 	"translatorID": "c198059a-3e3a-4ee5-adc0-c3011351365c",
 	"label": "Duxiu",
 	"creator": "Bo An",
-	"target": "(search|bookDetail|JourDetail|NPDetail|thesisDetail|CPDetail|\\/base)",
+	"target": "(search|bookDetail|JourDetail|NPDetail|thesisDetail|CPDetail|patentDetail|\\/base)",
 	"minVersion": "6.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-26 03:07:53"
+	"lastUpdated": "2022-12-26 04:24:19"
 }
 
 /*
@@ -55,7 +55,7 @@ async function doWeb(doc, url) {
 		return;
 	}
 	else if (pagetype == "newspaperArticle" || pagetype == "thesis"
-		  || pagetype == "conferencePaper") {
+		  || pagetype == "conferencePaper"  || pagetype == "patent") {
 		scrapeAndParse(doc, url, null, pagetype);
 		return;
 	}
@@ -257,6 +257,9 @@ function detectWeb(doc, url) {
 	else if (/^https?:\/\/jour\.duxiu\.com\/CPDetail/.test(url)) {
 		return "conferencePaper";
 	}
+	else if (/^https?:\/\/book\.duxiu\.com\/patentDetail/.test(url)) {
+		return "patent";
+	}
 	else if (/^https?:\/\/.+\.cn\/n\/dsrqw\/book\/base/.test(url)) { // 读秀
 		return "bookSection";
 	}
@@ -302,6 +305,7 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 	//pattern = /bookname="([\s\S]*?)"/;
 	//Z.debug(page);
 	let title = getI(page.match(/<dt>([\s\S]*?)<\/dt>/));
+	if (type == "patent") title = ZU.xpathText(doc, '//dt[@id="parentinfo"]');
 	if (title) {
 		title = ZU.trim(title);
 		title = title.replace(/ +/g, " "); // https://developer.mozilla.org/docs/Web/CSS/white-space
@@ -611,6 +615,30 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 
 		let authorAgency = trimTags(getI(page.match(/<dd><span>\s*作者联系方式\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
 		newItem.extra += "作者机构: " + authorAgency + "\n";
+	}
+
+	if (type == "patent") {
+		let authorNames = getI(page.match(/<dd><span>发明人\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
+		authorNames = authorNames.split("，");
+		for (let an of authorNames) {
+			newItem.creators.push({ lastName: an,
+			creatorType: "author",
+			fieldMode: 1 });
+		}
+
+		newItem.applicationNumber = getI(page.match(/<dd><span>申请号\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
+		newItem.assignee = getI(page.match(/<dd><span>申请人\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
+		newItem.place = getI(page.match(/<dd><span>地\s址\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
+		newItem.filingDate = getI(page.match(/<dd><span>申请日期\s*:\s*<\/span>([\s\S]*?)<\/dd>/)).replace(/\./g, '-');;
+		let patentType = getI(page.match(/<dd><span>专利类型\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
+		let patentIPC = trimTags(getI(page.match(/<dd><span>IPC号\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
+		newItem.extra += "专利类型: " + patentType + "\n";
+		newItem.extra += "专利IPC号: " + patentIPC + "\n";
+
+		let abstractNote = ZU.xpathText(doc, '//dd[@id="content2"]')
+		if(!abstractNote) abstractNote = getI(page.match(/<dd><span>摘\s要\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
+		abstractNote = ZU.trim(abstractNote).replace(/^摘\s*要\s*:\s*/, "").replace(/\s*收起$/, "");
+		newItem.abstractNote = abstractNote;
 	}
 
 	if (typeof callback == "function") {callback(newItem);}
@@ -1045,6 +1073,69 @@ var testCases = [
 						"tag": "重工业电影"
 					}
 				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://book.duxiu.com/patentDetail.jsp?dxid=166042694583&d=01E8862E4B5CAEAFB1E2CCDFEF566CF6",
+		"items": [
+			{
+				"itemType": "patent",
+				"title": "一种结合知网与词林的词语相似度获取方法及系统",
+				"creators": [
+					{
+						"lastName": " 唐贤伦",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "罗杨",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "党晓圆",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "杨敬明",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "邓武权",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "邹密",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "徐梓辉",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "李锐",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"abstractNote": "本发明公开了一种结合知网与词林的词语相似度获取方法及系统，利用《知网》义原层次树计算知网义原信息内容含量；并构建第一词语相似度计算模型；根据扩展版《同义词词林》词林拓扑树中的路径信息构建第二词语相似度计算模型；根据待测词语对在《知网》和扩展版《同义词词林》中的分布情况，综合两个计算模型的计算结果，获得待测词语对的最终词语相似度，在原本的信息内容含量的基础上引入义原节点的密度信息，能够得到更符合人类判断的词语相似度计算结果，同时在词林的计算过程中设置关于路径信息的权重参数，通过改变该参数的值，得到更高的皮尔森相关系数，更符合人类主观判断的结果，从而提高词语相似度的计算精度和范围。",
+				"applicationNumber": "202111510160.7",
+				"assignee": "重庆邮电大学",
+				"extra": "专利类型:  发明专利\n专利IPC号: G06F16/35;G06F40/247;G06F40/194",
+				"filingDate": "2021-12-10",
+				"place": "400000 重庆市南岸区南山街道崇文路2号",
+				"url": "https://book.duxiu.com/patentDetail.jsp?dxid=166042694583&d=01E8862E4B5CAEAFB1E2CCDFEF566CF6",
+				"attachments": [],
+				"tags": [],
 				"notes": [],
 				"seeAlso": []
 			}
