@@ -2,14 +2,14 @@
 	"translatorID": "c198059a-3e3a-4ee5-adc0-c3011351365c",
 	"label": "Duxiu",
 	"creator": "Bo An",
-	"target": "(search|bookDetail|JourDetail|NPDetail|thesisDetail|CPDetail|patentDetail|StdDetail|\\/base)",
+	"target": "(getPage|search|bookDetail|JourDetail|NPDetail|thesisDetail|CPDetail|patentDetail|StdDetail|\\/base)",
 	"minVersion": "6.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-26 16:00:34"
+	"lastUpdated": "2022-12-26 22:29:37"
 }
 
 /*
@@ -47,7 +47,7 @@ async function doWeb(doc, url) {
 			for (var i in items) {
 				articles.push(i);
 			}
-			ZU.processDocuments(articles, scrapeAndParse);
+			ZU.processDocuments(articles, scrapeAndParseMultiple);
 		});
 	}
 	else if (/^https?:\/\/jour\.duxiu\.com\/JourDetail/.test(url)) {
@@ -66,6 +66,10 @@ async function doWeb(doc, url) {
 	else {
 		scrapeAndParse(doc, url);
 	};
+}
+function scrapeAndParseMultiple(doc, url) {
+	//Z.debug(url);
+	doWeb(doc, url);
 }
 
 async function scrapeBookSection(doc, url) {
@@ -228,19 +232,59 @@ function getSearchResults(doc, checkOnly) {
 	var items = {};
 	var found = false;
 	var rows = doc.querySelectorAll('dt a');
-	for (var i = 0; i < rows.length; i++) {
-		var href = rows[i].href;
-		var title = ZU.trimInternal(rows[i].textContent);
+	for (let row of rows) {
+		var href = row.href;
+		var title = ZU.trimInternal(row.textContent);
+		if (href == "javascript:showUpload(this)") continue; // 知识搜索-资料共享链接
 		if (!href || !title) continue;
 		if (checkOnly) return true;
 		found = true;
-		items[href] = title;
+		
+		let metaText = ZU.xpathText(row.parentNode.parentNode, 'dd/span[@class="lzspan"]'); // 知识搜索-链接描述
+		metaText = metaText || ZU.xpathText(row.parentNode.parentNode, 'dd'); // 其他通用
+		let desc = metaText ? title + " - " + metaText : title;
+		items[href] = desc;
 	}
 	return found ? items : false;
 }
 
-function detectWeb(doc, url) {
+// 注：返回值目前未使用
+function detectMultipleType(url) {
 	if (/^https?:\/\/book\.duxiu\.com\/search\?/.test(url)) {
+		return "book";
+	}
+	else if (/^https?:\/\/qw\.duxiu\.com\/getPage\?/.test(url)) {
+		return "book";
+		//return "zhishi";
+		// Bug: Scaffold中正常，浏览器中出现 HTTP request to https://qw.duxiu.com/goreadqw.jsp?... rejected with status 0
+	}
+	else if (/^https?:\/\/jour\.duxiu\.com\/searchJour\?/.test(url)) {
+		return "journalArticle";
+		//return "qikan";
+	}
+	else if (/^https?:\/\/newspaper\.duxiu\.com\/searchNP\?/.test(url)) {
+		return "newspaper";
+	}
+	else if (/^https?:\/\/jour\.duxiu\.com\/searchThesis\?/.test(url)) {
+		return "thesis";
+	}
+	else if (/^https?:\/\/jour\.duxiu\.com\/searchCP\?/.test(url)) {
+		return "conferencePaper";
+	}
+	else if (/^https?:\/\/book\.duxiu\.com\/searchPatent\?/.test(url)) {
+		return "patent";
+	}
+	else if (/^https?:\/\/book\.duxiu\.com\/searchStd\?/.test(url)) {
+		return "report";
+		//return "standard";
+	}
+	else {
+		return null;
+	}
+}
+function detectWeb(doc, url) {
+	let multipleType = detectMultipleType(url);
+	if (multipleType) {
 		return "multiple";
 	}
 	else if (/^https?:\/\/book\.duxiu\.com\/bookDetail/.test(url)) {
@@ -713,6 +757,8 @@ function pickClosestRole(namelist, index) {
 
 
 // The "dsrqw" book's meta info depend on https://bl.ocks.org/yfdyh000/raw/3d01e626fbc750c8e4719efa220d5752/?raw=true') in Scaffold IDE, due to Cookies bug.
+
+
 
 
 
