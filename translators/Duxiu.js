@@ -2,14 +2,14 @@
 	"translatorID": "c198059a-3e3a-4ee5-adc0-c3011351365c",
 	"label": "Duxiu",
 	"creator": "Bo An",
-	"target": "(search|bookDetail|JourDetail|\\/base)",
+	"target": "(search|bookDetail|JourDetail|NPDetail|thesisDetail|\\/base)",
 	"minVersion": "6.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-26 00:56:56"
+	"lastUpdated": "2022-12-26 01:32:34"
 }
 
 /*
@@ -54,8 +54,8 @@ async function doWeb(doc, url) {
 		scrapeAndParse(doc, url, null, "journalArticle");
 		return;
 	}
-	else if (pagetype == "newspaperArticle") {
-		scrapeAndParse(doc, url, null, "newspaperArticle");
+	else if (pagetype == "newspaperArticle" || pagetype == "thesis") {
+		scrapeAndParse(doc, url, null, pagetype);
 		return;
 	}
 	else if (pagetype == "bookSection" || pagetype == "journalArticle") {
@@ -246,6 +246,12 @@ function detectWeb(doc, url) {
 	}
 	else if (/^https?:\/\/jour\.duxiu\.com\/JourDetail/.test(url)) {
 		return "journalArticle";
+	}
+	else if (/^https?:\/\/newspaper\.duxiu\.com\/NPDetail/.test(url)) {
+		return "newspaperArticle";
+	}
+	else if (/^https?:\/\/jour\.duxiu\.com\/thesisDetail/.test(url)) {
+		return "thesis";
 	}
 	else if (/^https?:\/\/.+\.cn\/n\/dsrqw\/book\/base/.test(url)) { // 读秀
 		return "bookSection";
@@ -544,6 +550,44 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 		newItem.abstractNote = ZU.trim(abstractNote).replace(/&mdash;/g, "-") + "\n\n";
 	}
 
+	if (type == "newspaperArticle") {
+		newItem.pages = getI(page.match(/<dd><span>\s*版\s*次\s*:\s*<\/span>(.+?)<\/dd>/));
+
+		let abstractNote = getI(page.match(/<dd>[\s\S]*正\s文[\s\S]*?>([\s\S]*?)<\/dd>/));
+		newItem.abstractNote = ZU.trim(abstractNote).replace(/&mdash;/g, "-") + "\n\n";
+
+		let date = trimTags(getI(page.match(/<dd>\s*<span>\s*日\s*期\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
+		newItem.date = date.replace(/\./g, '-');
+
+		newItem.publicationTitle = trimTags(getI(page.match(/<dd>\s*<span>\s*来\s*源\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
+	}
+
+	if (type == "thesis") {
+		//newItem.pages = getI(page.match(/<dd><span>页\s*码\s:\s<\/span>(.+?)<\/dd>/));
+
+		let keywords = trimTags(getI(page.match(/<dd>\s*<span>关键词\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
+		newItem.tags = keywords.split("；");
+
+		let date = trimTags(getI(page.match(/<dd><span>学位年度\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
+		newItem.date = date;
+
+		let thesisType = trimTags(getI(page.match(/<dd><span>学位名称\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
+		newItem.thesisType = thesisType;
+
+		let university = trimTags(getI(page.match(/<dd>\s*<span>学位授予单位\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
+		newItem.university = university;
+
+		let advisor = trimTags(getI(page.match(/<dd><span>导师姓名\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
+		newItem.creators.push({ lastName: advisor,
+			creatorType: "advisor",
+			fieldMode: 1 });
+
+		let abstractNote = ZU.xpathText(doc, '//dd/div[@id="zymore"]')
+		abstractNote = ZU.trim(abstractNote).replace(/^摘\s*要\s*:\s*/, "").replace(/\s*隐藏更多$/, "");
+		newItem.abstractNote = abstractNote;
+	}
+
+
 	if (typeof callback == "function") {callback(newItem);}
 	else {newItem.complete();}
 }
@@ -810,6 +854,75 @@ var testCases = [
 					},
 					{
 						"tag": "随机微分方程"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://newspaper.duxiu.com/NPDetail.jsp?dxNumber=406009217912&d=84EAFEA9F557F7B8AA076F2533E47863",
+		"items": [
+			{
+				"itemType": "newspaperArticle",
+				"title": "国学与家风",
+				"creators": [
+					{
+						"lastName": "张建云",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2022-05-17",
+				"abstractNote": "在中国，为人所称道的世家，其家族中肯定有一个甚至几个国学底蕴深厚的大师。对这样的家庭而言，其家风就从《老子》《论语》《孟子》这些经典中而来，化于日常生活之中。  所以，要树立良好的家风，学国学是必要的。就家风的构建而言，学国学的主要目的有两个：一是完善人性，二是修缮家庭关系。这两件事做好了，就将所学国学内化了，方可谈建功立业。但如今大多数人学国学，却将其当成一种知识，没有将其化为一种素养——不管怎么学，家人之间仍是一谈问题就吵架，天天针尖对麦芒。  那么，具体应该怎么做呢自2014年开始研习家风，我几乎每天都在思考这个问题。去过上百个城市演讲后，我愈发觉得社会...",
+				"libraryCatalog": "Duxiu",
+				"pages": "第10版：副刊",
+				"publicationTitle": "今晚报",
+				"url": "https://newspaper.duxiu.com/NPDetail.jsp?dxNumber=406009217912&d=84EAFEA9F557F7B8AA076F2533E47863",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://jour.duxiu.com/thesisDetail.jsp?dxNumber=390107234763&d=C427F0C1FF6DF58569AA4E671806709F&fenlei=07020202",
+		"items": [
+			{
+				"itemType": "thesis",
+				"title": "《国学丛刊》研究",
+				"creators": [
+					{
+						"lastName": "景欢",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "于亭",
+						"creatorType": "advisor",
+						"fieldMode": 1
+					}
+				],
+				"date": "2018",
+				"abstractNote": "《国学丛刊》由国立东南大学国学研究会顾实等人于1923年11月创办,停刊于1926年,是中国近代国学发展史上的重要期刊。本文首先通过对当时的学术背景分析、国学研究会的创办及其指导员和主要活动的介绍等展现了《国学丛刊》从创办到消亡的全过程中所面临的外部状况。继而对几大板块的文本内容和目录进行了详细的讨论和梳理,这也构成了本文的核心内容所在。长期以来,学术界习惯性地将《国学丛刊》与文化保守主义者归为文化“关门主义”的代表,却对其真正内容的特色和发展缺乏深度的理解。《国学丛刊》向后世学者展示的绝不是简单的文化保守,而是在激进的西化大潮中对民族文化的本位坚守,是一种理性和积极乐观的文化立场和态度。在提倡“爱国好学”、坚守传统本位的同时,《国学丛刊》也主张“学融中西”,以包容、开放的态度面对西方学术和文化。丛刊引入了大量的西方学术理论知识并对科学先锋徐寿等人做出了高度的评价,这也是《国学丛刊》精神的可贵所在。同时,丛刊关注辛亥革命等政治变革,收录了大量的爱国主义诗歌和作品。在这些作品中,流露着丛刊作者群体忧国忧民的家国情怀,洋溢着浓厚的爱国主义精神。他们认为,民族命运的变迁和个人息息相关,面对国家危机,知识分子应该拿出勇气和担当。而一个民族的发展离不开本民族文化的强大,因此在近代化的过程中坚守民族文化的本位至关重要。《国学丛刊》代表了 20世纪20年代仁人志士对民族文化命运的一种深刻思考和行动,当下这种思考和行动仍然没有停止,从刊正是为我们展示了这样一种视角和学术理路供我们学习和借鉴。",
+				"libraryCatalog": "Duxiu",
+				"thesisType": "硕士",
+				"university": "武汉大学",
+				"url": "https://jour.duxiu.com/thesisDetail.jsp?dxNumber=390107234763&d=C427F0C1FF6DF58569AA4E671806709F&fenlei=07020202",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "《国学丛刊》"
+					},
+					{
+						"tag": "保守主义"
+					},
+					{
+						"tag": "文本研究"
 					}
 				],
 				"notes": [],
