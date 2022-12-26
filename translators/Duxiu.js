@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-26 01:32:34"
+	"lastUpdated": "2022-12-26 01:38:21"
 }
 
 /*
@@ -577,10 +577,13 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 		let university = trimTags(getI(page.match(/<dd>\s*<span>学位授予单位\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
 		newItem.university = university;
 
-		let advisor = trimTags(getI(page.match(/<dd><span>导师姓名\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
-		newItem.creators.push({ lastName: advisor,
+		let advisors = trimTags(getI(page.match(/<dd><span>导师姓名\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
+		let advisorsNames = advisors.split(";");
+		for (let an of advisorsNames) {
+			newItem.creators.push({ lastName: an,
 			creatorType: "advisor",
 			fieldMode: 1 });
+		}
 
 		let abstractNote = ZU.xpathText(doc, '//dd/div[@id="zymore"]')
 		abstractNote = ZU.trim(abstractNote).replace(/^摘\s*要\s*:\s*/, "").replace(/\s*隐藏更多$/, "");
@@ -923,6 +926,59 @@ var testCases = [
 					},
 					{
 						"tag": "文本研究"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://jour.duxiu.com/thesisDetail.jsp?dxNumber=390109152129&d=67FF0CFDCA295D070C801D4765239348&fenlei=181704110101%3B%7C1817020603",
+		"items": [
+			{
+				"itemType": "thesis",
+				"title": "基于神经网络的中文拼写纠错",
+				"creators": [
+					{
+						"lastName": "陈贝",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "高明",
+						"creatorType": "advisor",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "陆雪松",
+						"creatorType": "advisor",
+						"fieldMode": 1
+					}
+				],
+				"date": "2022",
+				"abstractNote": "中文拼写纠错任务是检测和纠正句子中拼写错误的汉字,即错别字。它在日常生活和工作中有着广泛的应用。譬如,帮助搜索引擎进行关键词消歧,纠正语音、光学字符识别中出现的错别字,以及辅助作文自动批改等等。同时,中文拼写纠错是一项极具挑战性的任务,因为汉字的组合具有多样性和复杂性,而且错误字符会给句子的语义带来极大的干扰。因此,一个有效的中文拼写纠错解决方案往往需要具备人类级别的语义理解能力。在早期,研究人员利用端到端的机器翻译模型来解决该问题,尝试直接将错误句子翻译成正确的句子。但此方法作为一个序列到序列的通用模型,并没有特别考虑如何利用错误字符的相似性信息。针对此问题,本文展开了第一项研究,尝试利用对比学习来获取错误字符的相似性信息,以此让模型学到更多的错误字符信息。另外,近年来的研究焦点是将BERT与外部知识（例如混淆集以及字符的语音和形态特征）相结合来解决该任务。但BERT本身的错别字检测能力不足仍是这类方法的性能瓶颈。因此本文展开了第二项研究,提出了使用“输入显著性”技术来识别字符错误并将错误信息集成到纠正模型中,以提高整个模型的检测和纠正能力。本文的主要贡献可总结如下:·本文提出一个基于对比学习和指针网络的端到端中文拼写纠错模型,即Contr PN。为了能有效利用错误字符的相似性信息,本文先用混淆集构建和原始错误句子相似的句子,然后使用对比学习使得原始错误句子和通过混淆集构成的错误句子表征距离接近,同时使原始错误句子和训练批次中的随机句子的表征距离变远,从而使得属于同一个混淆集的字符具有更加相似的表征,提高模型纠正错误字符的概率。此外,在Seq2Seq模型的基础上利用指针网络来让模型学习复制句子中的正确字符,而不单从词表中生成候选词,可以减少误纠率。·本文提出一个基于“显著性”信息的中文拼写纠错模型,即Spel LM。本文针对BERT本身错别字检测能力不足,以模仿人类纠正拼写错误的方式来缓解此问题。具体来说,人类会首先根据上下文信息识别拼写错误的字符,然后用正确的字符替代它们。因此,本文提出了一个检测-纠正的两阶段模型,模型在第一阶段识别拼写错误,然后在第二阶段借助错误检测信息来纠正错误。模型使用“输入显著性”技术来识别字符错误并将较精确的错误信息集成到纠正模型BERT中,以提高整个模型的检测和纠正能力。此方法独立于相似性过滤器、混淆集、语音和形态特征或候选依赖特征等现有技术,使其独立且可以灵活地与现有方法结合,且更加高效。·本文将深度模型的可解释技术应用于深度模型,展示了如何利用可解释人工智能（XAI）技术来提升深度学习模型在特定任务中的性能。通过中文拼写纠错这个任务,本文在Spel LM模型中利用输入显著性技术提取字符对于句子错误预测的显著性信息,显著性越高的字符越有可能是错误字符,随后可以利用这个信息与字符纠错模型相结合,提高纠正错误字符的成功率。尽管中文拼写纠错是本研究的重点任务,但我们相信这个思想可以经过迁移,用来解决其他相关任务。综上所述,对于中文拼写纠错任务,本文重点研究了如何在基于端到端的纠错模型中有效利用错误字符的相关性信息,以及如何进一步提高基于BERT的纠错模型的错误检测能力。针对这两个问题,本文分别提出了各自的改进方案,构建了相应的神经网络模型,即上述的Contr PN模型和Spel LM模型。并结合基准模型,利用两种评估矩阵在多个测试集上进行评估,印证了改进方案的有效性和可行性。",
+				"libraryCatalog": "Duxiu",
+				"thesisType": "硕士",
+				"university": "华东师范大学",
+				"url": "https://jour.duxiu.com/thesisDetail.jsp?dxNumber=390109152129&d=67FF0CFDCA295D070C801D4765239348&fenlei=181704110101%3B%7C1817020603",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "BERT"
+					},
+					{
+						"tag": "中文拼写纠错"
+					},
+					{
+						"tag": "对比学习"
+					},
+					{
+						"tag": "归因网络"
+					},
+					{
+						"tag": "显著性信息"
 					}
 				],
 				"notes": [],
