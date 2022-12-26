@@ -611,6 +611,7 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 		newItem.date = date.replace(/\./g, '-');
 
 		let abstractNote = ZU.xpathText(doc, '//dd/div[@id="zymore"]')
+		abstractNote = abstractNote || getI(page.match(/<dd>\s*<span>\s*摘\s*要\s*:\s*([\s\S]*?)<\/dd>/)) || "";
 		abstractNote = ZU.trim(abstractNote).replace(/^摘\s*要\s*:\s*/, "").replace(/\s*隐藏更多$/, "");
 		newItem.abstractNote = abstractNote;
 
