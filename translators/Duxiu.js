@@ -2,14 +2,14 @@
 	"translatorID": "c198059a-3e3a-4ee5-adc0-c3011351365c",
 	"label": "Duxiu",
 	"creator": "Bo An",
-	"target": "(search|bookDetail|JourDetail|NPDetail|thesisDetail|CPDetail|patentDetail|\\/base)",
+	"target": "(search|bookDetail|JourDetail|NPDetail|thesisDetail|CPDetail|patentDetail|StdDetail|\\/base)",
 	"minVersion": "6.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-26 04:24:19"
+	"lastUpdated": "2022-12-26 14:17:05"
 }
 
 /*
@@ -55,7 +55,8 @@ async function doWeb(doc, url) {
 		return;
 	}
 	else if (pagetype == "newspaperArticle" || pagetype == "thesis"
-		  || pagetype == "conferencePaper"  || pagetype == "patent") {
+		  || pagetype == "conferencePaper"  || pagetype == "patent"
+		  || pagetype == "bill") {
 		scrapeAndParse(doc, url, null, pagetype);
 		return;
 	}
@@ -259,6 +260,9 @@ function detectWeb(doc, url) {
 	}
 	else if (/^https?:\/\/book\.duxiu\.com\/patentDetail/.test(url)) {
 		return "patent";
+	}
+	else if (/^https?:\/\/book\.duxiu\.com\/StdDetail/.test(url)) {
+		return "bill";
 	}
 	else if (/^https?:\/\/.+\.cn\/n\/dsrqw\/book\/base/.test(url)) { // 读秀
 		return "bookSection";
@@ -629,7 +633,7 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 		newItem.applicationNumber = getI(page.match(/<dd><span>申请号\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
 		newItem.assignee = getI(page.match(/<dd><span>申请人\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
 		newItem.place = getI(page.match(/<dd><span>地\s址\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
-		newItem.filingDate = getI(page.match(/<dd><span>申请日期\s*:\s*<\/span>([\s\S]*?)<\/dd>/)).replace(/\./g, '-');;
+		newItem.filingDate = getI(page.match(/<dd><span>申请日期\s*:\s*<\/span>([\s\S]*?)<\/dd>/)).replace(/\./g, '-');
 		let patentType = getI(page.match(/<dd><span>专利类型\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
 		let patentIPC = trimTags(getI(page.match(/<dd><span>IPC号\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
 		newItem.extra += "专利类型: " + patentType + "\n";
@@ -639,6 +643,26 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 		if(!abstractNote) abstractNote = getI(page.match(/<dd><span>摘\s要\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
 		abstractNote = ZU.trim(abstractNote).replace(/^摘\s*要\s*:\s*/, "").replace(/\s*收起$/, "");
 		newItem.abstractNote = abstractNote;
+	}
+
+	if (type == "bill") { // “标准”。尚无对应项目类型，用“法案”代替
+		newItem.foreignTitle = getI(page.match(/<dd><span>标准英文名\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
+		newItem.billNumber = getI(page.match(/<dd><span>标准号\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
+		newItem.date = getI(page.match(/<dd><span>实施日期\s*:\s*<\/span>([\s\S]*?)<\/dd>/)).replace(/\./g, '-');
+		newItem.history = getI(page.match(/<dd><span>替代情况\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
+		let authorBody = getI(page.match(/<dd><span>起草单位\s*:\s*<\/span>([\s\S]*?)<\/dd>/))
+		newItem.creators.push({ lastName: authorBody, creatorType: "author", fieldMode: 1 });
+		let body = getI(page.match(/<dd><span>发布单位\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
+		newItem.legislativeBody = body;
+		let ref = getI(page.match(/<dd><span>引用标准\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
+		newItem.extra += "引用标准: " + ref + "\n";
+		let cnCatNumber = getI(page.match(/<dd><span>中标分类号\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
+		newItem.extra += "中标分类号: " + cnCatNumber + "\n";
+		let ICS = getI(page.match(/<dd><span>ICS分类号\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
+		newItem.extra += "ICS分类号: " + ICS + "\n";
+
+		let abstractNote = getI(page.match(/<dd><span>简介\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
+		newItem.abstractNote = ZU.trim(abstractNote);
 	}
 
 	if (typeof callback == "function") {callback(newItem);}
@@ -1134,6 +1158,80 @@ var testCases = [
 				"filingDate": "2021-12-10",
 				"place": "400000 重庆市南岸区南山街道崇文路2号",
 				"url": "https://book.duxiu.com/patentDetail.jsp?dxid=166042694583&d=01E8862E4B5CAEAFB1E2CCDFEF566CF6",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320151457340&d=D15D61CC62E6E40DE6DB82785CA3212E&fenlei=0",
+		"items": [
+			{
+				"itemType": "bill",
+				"title": "中国结绳",
+				"creators": [],
+				"date": "2019-07-01",
+				"abstractNote": "本标准规定了中国结绳的术语和定义、技术要求、分等规定、试验方法、检验规则、包装、标识、运输、贮存。 ;本标准适用于以涤纶长丝、锦纶长丝为主体原材料，直径为1.5 mmm～15 mm的中国结绳。",
+				"billNumber": "FZ/T 63043-2018",
+				"extra": "引用标准: FZ/T 63043-2018\n中标分类号: \nICS分类号: 59.080.99",
+				"legislativeBody": "工业和信息化部",
+				"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320151457340&d=D15D61CC62E6E40DE6DB82785CA3212E&fenlei=0",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320151549195&d=443146B469770278DD217B9CF31D9D84",
+		"items": [
+			{
+				"itemType": "bill",
+				"title": "中国海图图式",
+				"creators": [
+					{
+						"lastName": "海军参谋部海图信息中心",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"billNumber": "20201885-Q-307",
+				"extra": "引用标准: \n中标分类号: A79\nICS分类号: 07.040",
+				"history": "替代以下标准：GB 12319-1998",
+				"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320151549195&d=443146B469770278DD217B9CF31D9D84",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320150075008&d=7A67975D6DC75BE5AF38153D553373E8",
+		"items": [
+			{
+				"itemType": "bill",
+				"title": "中国海图图式",
+				"creators": [
+					{
+						"lastName": "GB",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "1999-05-01",
+				"abstractNote": "本标准规定了海图符号的规格和海图各要素在图上的表示方法。本标准适用于测制、出版各种比例尺航海图，也可供编制出版各种专题海图时参考；它是识别、使用海图的基本依据。",
+				"billNumber": "GB 12319-1998",
+				"extra": "引用标准: IHO-1992,NEQ%IHO 1-1987,NEQ%IHO 2-1987,NEQ\n中标分类号: A79\nICS分类号: 07.040",
+				"history": "GB 12317-1990%GB 12319-1990",
+				"legislativeBody": "国家质量技术监督局",
+				"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320150075008&d=7A67975D6DC75BE5AF38153D553373E8",
 				"attachments": [],
 				"tags": [],
 				"notes": [],
