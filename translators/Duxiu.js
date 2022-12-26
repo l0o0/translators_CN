@@ -2,14 +2,14 @@
 	"translatorID": "c198059a-3e3a-4ee5-adc0-c3011351365c",
 	"label": "Duxiu",
 	"creator": "Bo An",
-	"target": "(search|bookDetail|JourDetail|NPDetail|thesisDetail|\\/base)",
+	"target": "(search|bookDetail|JourDetail|NPDetail|thesisDetail|CPDetail|\\/base)",
 	"minVersion": "6.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-26 01:38:21"
+	"lastUpdated": "2022-12-26 03:07:53"
 }
 
 /*
@@ -54,7 +54,8 @@ async function doWeb(doc, url) {
 		scrapeAndParse(doc, url, null, "journalArticle");
 		return;
 	}
-	else if (pagetype == "newspaperArticle" || pagetype == "thesis") {
+	else if (pagetype == "newspaperArticle" || pagetype == "thesis"
+		  || pagetype == "conferencePaper") {
 		scrapeAndParse(doc, url, null, pagetype);
 		return;
 	}
@@ -252,6 +253,9 @@ function detectWeb(doc, url) {
 	}
 	else if (/^https?:\/\/jour\.duxiu\.com\/thesisDetail/.test(url)) {
 		return "thesis";
+	}
+	else if (/^https?:\/\/jour\.duxiu\.com\/CPDetail/.test(url)) {
+		return "conferencePaper";
 	}
 	else if (/^https?:\/\/.+\.cn\/n\/dsrqw\/book\/base/.test(url)) { // 读秀
 		return "bookSection";
@@ -591,6 +595,23 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 		newItem.abstractNote = abstractNote;
 	}
 
+	if (type == "conferencePaper") {
+		let keywords = trimTags(getI(page.match(/<dd>\s*<span>关键词\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
+		newItem.tags = keywords.split("；");
+
+		let date = trimTags(getI(page.match(/<dd>\s*<span>\s*日\s*期\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
+		newItem.date = date.replace(/\./g, '-');
+
+		let abstractNote = ZU.xpathText(doc, '//dd/div[@id="zymore"]')
+		abstractNote = ZU.trim(abstractNote).replace(/^摘\s*要\s*:\s*/, "").replace(/\s*隐藏更多$/, "");
+		newItem.abstractNote = abstractNote;
+
+		newItem.conferenceName = trimTags(getI(page.match(/<dd>\s*<span>\s*会议名称\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
+		newItem.proceedingsTitle = trimTags(getI(page.match(/<dd>\s*<span>\s*会议录名称\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
+
+		let authorAgency = trimTags(getI(page.match(/<dd><span>\s*作者联系方式\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
+		newItem.extra += "作者机构: " + authorAgency + "\n";
+	}
 
 	if (typeof callback == "function") {callback(newItem);}
 	else {newItem.complete();}
@@ -630,6 +651,7 @@ function pickClosestRole(namelist, index) {
 
 
 // The "dsrqw" book's meta info depend on https://bl.ocks.org/yfdyh000/raw/3d01e626fbc750c8e4719efa220d5752/?raw=true') in Scaffold IDE, due to Cookies bug.
+
 
 
 
@@ -980,6 +1002,47 @@ var testCases = [
 					},
 					{
 						"tag": "显著性信息"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://jour.duxiu.com/CPDetail.jsp?dxNumber=330108219629&d=07D54E26D018CFFE717D9DC8F3E28BA4&fenlei=0",
+		"items": [
+			{
+				"itemType": "conferencePaper",
+				"title": "\"重工业电影\"形态下电影民族主体性表达的再思考",
+				"creators": [
+					{
+						"lastName": "荆婧",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2018",
+				"abstractNote": "电影的民族主体性一直是中国电影人孜孜以求的议题，当前中国电影市场面临再次升级，电影工业化体系建设被提上议程。随着\"重工业电影\"概念的提出，在新的产业形势下正确表达中国电影的民族主体性将成为时代的必然，同时新的电影形态也给中国电影民族主体性的表达带来新的讨论空间。在\"重工业电影\"的创作中，可结合其自身特点，利用视效优势建立电影的民族影像风骨，在类型化创作中把握民族审美心理，并在叙事中回归故事本身，表达民族精神及情感，从而达到民族主体性与\"重工业电影\"的有机结合，实现民族话语的准确表达。",
+				"conferenceName": "中国艺术学理论学会艺术管理专业委员会第七届年会",
+				"extra": "作者机构: 临沂大学历史文化学院",
+				"libraryCatalog": "Duxiu",
+				"proceedingsTitle": "中国艺术学理论学会艺术管理专业委员会第七届年会论文集",
+				"url": "https://jour.duxiu.com/CPDetail.jsp?dxNumber=330108219629&d=07D54E26D018CFFE717D9DC8F3E28BA4&fenlei=0",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "民族主体性"
+					},
+					{
+						"tag": "海外传播"
+					},
+					{
+						"tag": "身份认同"
+					},
+					{
+						"tag": "重工业电影"
 					}
 				],
 				"notes": [],
