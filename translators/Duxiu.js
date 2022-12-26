@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-26 14:26:10"
+	"lastUpdated": "2022-12-26 16:00:34"
 }
 
 /*
@@ -56,7 +56,7 @@ async function doWeb(doc, url) {
 	}
 	else if (pagetype == "newspaperArticle" || pagetype == "thesis"
 		  || pagetype == "conferencePaper"  || pagetype == "patent"
-		  || pagetype == "bill") {
+		  || pagetype == "report") {
 		scrapeAndParse(doc, url, null, pagetype);
 		return;
 	}
@@ -262,7 +262,7 @@ function detectWeb(doc, url) {
 		return "patent";
 	}
 	else if (/^https?:\/\/book\.duxiu\.com\/StdDetail/.test(url)) {
-		return "bill";
+		return "report";
 	}
 	else if (/^https?:\/\/.+\.cn\/n\/dsrqw\/book\/base/.test(url)) { // 读秀
 		return "bookSection";
@@ -645,22 +645,24 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 		newItem.abstractNote = abstractNote;
 	}
 
-	if (type == "bill") { // “标准”。尚无对应项目类型，用“法案”代替
+	if (type == "report") { // “标准”。尚无对应项目类型，用“报告”代替
+		newItem.extra += "Type: standard\n";
 		newItem.foreignTitle = getI(page.match(/<dd><span>标准英文名\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
-		newItem.billNumber = getI(page.match(/<dd><span>标准号\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
+		newItem.reportNumber = getI(page.match(/<dd><span>标准号\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
 		newItem.date = getI(page.match(/<dd><span>实施日期\s*:\s*<\/span>([\s\S]*?)<\/dd>/)).replace(/\./g, '-');
-		newItem.history = getI(page.match(/<dd><span>替代情况\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
+		let replaced = getI(page.match(/<dd><span>替代情况\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
+		if (replaced) newItem.extra += "替代情况: " + replaced + "\n";
 
 		let authorNames = getI(page.match(/<dd><span>起草单位\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
 		authorNames = authorNames.split("；");
 		for (let an of authorNames) {
-			newItem.creators.push({ lastName: an,
-			creatorType: "author",
-			fieldMode: 1 });
+			newItem.creators.push({ lastName: an, creatorType: "contributor", fieldMode: 1 });
 		}
 
 		let body = getI(page.match(/<dd><span>发布单位\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
-		newItem.legislativeBody = body;
+		//newItem.institution = body;
+		newItem.creators.push({ lastName: body, creatorType: "author", fieldMode: 1 });
+
 		let ref = getI(page.match(/<dd><span>引用标准\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
 		if (ref) newItem.extra += "引用标准: " + ref + "\n";
 		let cnCatNumber = getI(page.match(/<dd><span>中标分类号\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
@@ -710,6 +712,7 @@ function pickClosestRole(namelist, index) {
 
 
 // The "dsrqw" book's meta info depend on https://bl.ocks.org/yfdyh000/raw/3d01e626fbc750c8e4719efa220d5752/?raw=true') in Scaffold IDE, due to Cookies bug.
+
 
 
 
@@ -1174,18 +1177,24 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320151457340&d=D15D61CC62E6E40DE6DB82785CA3212E&fenlei=0",
+		"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320151457340&d=D15D61CC62E6E40DE6DB82785CA3212E",
 		"items": [
 			{
-				"itemType": "bill",
+				"itemType": "report",
 				"title": "中国结绳",
-				"creators": [],
+				"creators": [
+					{
+						"lastName": "工业和信息化部",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
 				"date": "2019-07-01",
 				"abstractNote": "本标准规定了中国结绳的术语和定义、技术要求、分等规定、试验方法、检验规则、包装、标识、运输、贮存。 ;本标准适用于以涤纶长丝、锦纶长丝为主体原材料，直径为1.5 mmm～15 mm的中国结绳。",
-				"billNumber": "FZ/T 63043-2018",
-				"extra": "引用标准: FZ/T 63043-2018\n中标分类号: \nICS分类号: 59.080.99",
-				"legislativeBody": "工业和信息化部",
-				"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320151457340&d=D15D61CC62E6E40DE6DB82785CA3212E&fenlei=0",
+				"extra": "Type: standard\n引用标准: FZ/T 63043-2018\nICS分类号: 59.080.99",
+				"libraryCatalog": "Duxiu",
+				"reportNumber": "FZ/T 63043-2018",
+				"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320151457340&d=D15D61CC62E6E40DE6DB82785CA3212E",
 				"attachments": [],
 				"tags": [],
 				"notes": [],
@@ -1198,18 +1207,18 @@ var testCases = [
 		"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320151549195&d=443146B469770278DD217B9CF31D9D84",
 		"items": [
 			{
-				"itemType": "bill",
+				"itemType": "report",
 				"title": "中国海图图式",
 				"creators": [
 					{
 						"lastName": "海军参谋部海图信息中心",
-						"creatorType": "author",
+						"creatorType": "contributor",
 						"fieldMode": 1
 					}
 				],
-				"billNumber": "20201885-Q-307",
-				"extra": "引用标准: \n中标分类号: A79\nICS分类号: 07.040",
-				"history": "替代以下标准：GB 12319-1998",
+				"extra": "Type: standard\n替代情况: 替代以下标准：GB 12319-1998\n中标分类号: A79\nICS分类号: 07.040",
+				"libraryCatalog": "Duxiu",
+				"reportNumber": "20201885-Q-307",
 				"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320151549195&d=443146B469770278DD217B9CF31D9D84",
 				"attachments": [],
 				"tags": [],
@@ -1223,21 +1232,25 @@ var testCases = [
 		"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320150075008&d=7A67975D6DC75BE5AF38153D553373E8",
 		"items": [
 			{
-				"itemType": "bill",
+				"itemType": "report",
 				"title": "中国海图图式",
 				"creators": [
 					{
 						"lastName": "GB",
+						"creatorType": "contributor",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "国家质量技术监督局",
 						"creatorType": "author",
 						"fieldMode": 1
 					}
 				],
 				"date": "1999-05-01",
 				"abstractNote": "本标准规定了海图符号的规格和海图各要素在图上的表示方法。本标准适用于测制、出版各种比例尺航海图，也可供编制出版各种专题海图时参考；它是识别、使用海图的基本依据。",
-				"billNumber": "GB 12319-1998",
-				"extra": "引用标准: IHO-1992,NEQ%IHO 1-1987,NEQ%IHO 2-1987,NEQ\n中标分类号: A79\nICS分类号: 07.040",
-				"history": "GB 12317-1990%GB 12319-1990",
-				"legislativeBody": "国家质量技术监督局",
+				"extra": "Type: standard\n替代情况: GB 12317-1990%GB 12319-1990\n引用标准: IHO-1992,NEQ%IHO 1-1987,NEQ%IHO 2-1987,NEQ\n中标分类号: A79\nICS分类号: 07.040",
+				"libraryCatalog": "Duxiu",
+				"reportNumber": "GB 12319-1998",
 				"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320150075008&d=7A67975D6DC75BE5AF38153D553373E8",
 				"attachments": [],
 				"tags": [],
@@ -1251,25 +1264,30 @@ var testCases = [
 		"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320151532272&d=2285CC411E01C2FC59D6CDC73124AF38",
 		"items": [
 			{
-				"itemType": "bill",
+				"itemType": "report",
 				"title": "中国美酒名镇",
 				"creators": [
 					{
 						"lastName": "中国酒业协会",
-						"creatorType": "author",
+						"creatorType": "contributor",
 						"fieldMode": 1
 					},
 					{
 						"lastName": "宿迁市洋河新区管委会",
+						"creatorType": "contributor",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "中国酒业协会",
 						"creatorType": "author",
 						"fieldMode": 1
 					}
 				],
 				"date": "2021-03-01",
 				"abstractNote": "本文件规定了中国美酒名镇的技术指标体系、数据采集和评价方法。本文件适用于中国酒业协会已经核定公布的中国优势酿酒产区中的中国美酒名镇的评价依据。",
-				"billNumber": "T/CBJ 2304-2021",
-				"extra": "中标分类号: X61\nICS分类号: 67.160.10",
-				"legislativeBody": "中国酒业协会",
+				"extra": "Type: standard\n中标分类号: X61\nICS分类号: 67.160.10",
+				"libraryCatalog": "Duxiu",
+				"reportNumber": "T/CBJ 2304-2021",
 				"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320151532272&d=2285CC411E01C2FC59D6CDC73124AF38",
 				"attachments": [],
 				"tags": [],
