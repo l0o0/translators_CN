@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-26 14:17:05"
+	"lastUpdated": "2022-12-26 14:26:10"
 }
 
 /*
@@ -650,16 +650,23 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 		newItem.billNumber = getI(page.match(/<dd><span>标准号\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
 		newItem.date = getI(page.match(/<dd><span>实施日期\s*:\s*<\/span>([\s\S]*?)<\/dd>/)).replace(/\./g, '-');
 		newItem.history = getI(page.match(/<dd><span>替代情况\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
-		let authorBody = getI(page.match(/<dd><span>起草单位\s*:\s*<\/span>([\s\S]*?)<\/dd>/))
-		newItem.creators.push({ lastName: authorBody, creatorType: "author", fieldMode: 1 });
+
+		let authorNames = getI(page.match(/<dd><span>起草单位\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
+		authorNames = authorNames.split("；");
+		for (let an of authorNames) {
+			newItem.creators.push({ lastName: an,
+			creatorType: "author",
+			fieldMode: 1 });
+		}
+
 		let body = getI(page.match(/<dd><span>发布单位\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
 		newItem.legislativeBody = body;
 		let ref = getI(page.match(/<dd><span>引用标准\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
-		newItem.extra += "引用标准: " + ref + "\n";
+		if (ref) newItem.extra += "引用标准: " + ref + "\n";
 		let cnCatNumber = getI(page.match(/<dd><span>中标分类号\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
-		newItem.extra += "中标分类号: " + cnCatNumber + "\n";
+		if (cnCatNumber) newItem.extra += "中标分类号: " + cnCatNumber + "\n";
 		let ICS = getI(page.match(/<dd><span>ICS分类号\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
-		newItem.extra += "ICS分类号: " + ICS + "\n";
+		if (ICS) newItem.extra += "ICS分类号: " + ICS + "\n";
 
 		let abstractNote = getI(page.match(/<dd><span>简介\s*:\s*<\/span>([\s\S]*?)<\/dd>/));
 		newItem.abstractNote = ZU.trim(abstractNote);
@@ -1232,6 +1239,38 @@ var testCases = [
 				"history": "GB 12317-1990%GB 12319-1990",
 				"legislativeBody": "国家质量技术监督局",
 				"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320150075008&d=7A67975D6DC75BE5AF38153D553373E8",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320151532272&d=2285CC411E01C2FC59D6CDC73124AF38",
+		"items": [
+			{
+				"itemType": "bill",
+				"title": "中国美酒名镇",
+				"creators": [
+					{
+						"lastName": "中国酒业协会",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "宿迁市洋河新区管委会",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2021-03-01",
+				"abstractNote": "本文件规定了中国美酒名镇的技术指标体系、数据采集和评价方法。本文件适用于中国酒业协会已经核定公布的中国优势酿酒产区中的中国美酒名镇的评价依据。",
+				"billNumber": "T/CBJ 2304-2021",
+				"extra": "中标分类号: X61\nICS分类号: 67.160.10",
+				"legislativeBody": "中国酒业协会",
+				"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320151532272&d=2285CC411E01C2FC59D6CDC73124AF38",
 				"attachments": [],
 				"tags": [],
 				"notes": [],
