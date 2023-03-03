@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-21 06:46:36"
+	"lastUpdated": "2023-03-03 12:27:12"
 }
 
 /*
@@ -36,35 +36,37 @@
 function getRefWorksByID(ids, onDataAvailable) {
 	if (!ids.length) return;
 	var { dbname, filename, url } = ids.shift();
-	var postData = "formfilenames=" + encodeURIComponent(dbname + "!" + filename + "!1!0,")
-		+ '&hid_kLogin_headerUrl=/KLogin/Request/GetKHeader.ashx%3Fcallback%3D%3F'
-		+ '&hid_KLogin_FooterUrl=/KLogin/Request/GetKHeader.ashx%3Fcallback%3D%3F'
-		+ '&CookieName=FileNameS';
-	ZU.doPost('https://kns.cnki.net/kns/ViewPage/viewsave.aspx?displayMode=Refworks', postData,
+	let postData = "filename=" + filename + 
+		"&displaymode=Refworks&orderparam=0&ordertype=desc&selectfield=&dbname=" + 
+		dbname + "&random=0.2111567532240084";
+	
+	ZU.doPost('https://kns.cnki.net/KNS8/manage/ShowExport', postData,
 		function (text) {
-			var parser = new DOMParser();
-			var html = parser.parseFromString(text, "text/html");
-			var data = ZU.xpath(html, "//table[@class='mainTable']//td")[0].innerHTML
-				.replace(/\n/g, '<br>')
-				.replace(/<br>\s+/g, ';')
-				.replace(/(<br>)+/g, '\n')
-				.replace(/^RT\s+Conference Proceeding/gmi, 'RT Conference Proceedings')
-				.replace(/^RT\s+Dissertation\/Thesis/gmi, 'RT Dissertation')
-				.replace(/;;/g, ';') // 保留作者中一个英文分号
-				.replace(/^ AB/g, 'AB') // 去除AB前空格
-				.replace(/vo 0?(\d+)\n/, "VO $1\n")  // Change vo to VO, remove leading 0
-				.replace(/IS 0?(\d+)\n/, "IS $1\n")  // Remove leading 0
-				.replace(/^CL\s+([硕博士]{2})/gmi, 'CL $1学位论文') // Add 学位论文 to ItemType
-				.replace(/^LA 中文;/gmi, "LA zh-CN")  // Default language is zh-CN
-				.replace(
-					/^(A[1-4]|U2)\s*([^\r\n]+)/gm,
-					function (m, tag, authors) {
-						authors = authors.split(/\s*[;，,]\s*/); // that's a special comma
-						if (!authors[authors.length - 1].trim()) authors.pop();
-						return 'A1' + ' ' + authors.join('\n' + 'A1' + ' ');  // Use A1 tag instead
-					}
-				);
-			Z.debug(data);
+			let data = text
+				.replace("<ul class='literature-list'><li>", "")
+            	.replace("<br></li></ul>", "")
+            	.replace("</li><li>", "") // divide results
+            	.replace(/<br>|\r/g, "\n")
+            	.replace(/vo (\d+)\n/, "VO $1\n") // Divide VO and IS to different line
+            	.replace(/IS 0(\d+)\n/g, "IS $1\n")  // Remove leading 0
+            	.replace(/VO 0(\d+)\n/g, "VO $1\n")
+            	.replace(/\n+/g, "\n")
+            	.replace(/\n([A-Z][A-Z1-9]\s)/g, "<br>$1")
+            	.replace(/\n/g, "")
+            	.replace(/<br>/g, "\n")
+            	.replace(/\t/g, "") // \t in abstract
+            	.replace(
+            	    /^RT\s+Conference Proceeding/gim,
+            	    "RT Conference Proceedings"
+            	)
+            	.replace(/^RT\s+Dissertation\/Thesis/gim, "RT Dissertation")
+            	.replace(/^(A[1-4]|U2)\s*([^\r\n]+)/gm, function (m, tag, authors) {
+            	    authors = authors.split(/\s*[;，,]\s*/); // that's a special comma
+            	    if (!authors[authors.length - 1].trim()) authors.pop();
+            	    return tag + " " + authors.join("\n" + tag + " ");
+            	})
+            	.trim();
+			// Z.debug(data);
 			onDataAvailable(data, url);
 			// If more results, keep going
 			if (ids.length) {
