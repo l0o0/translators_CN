@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-03-10 07:18:27"
+	"lastUpdated": "2023-03-10 14:37:04"
 }
 
 /*
@@ -109,7 +109,6 @@ function doWeb(doc, url) {
 }
 
 function scrape(ZIDs) {
-	Z.debug("**** 111");
 	if (!ZIDs.length) return false;
 	var { ztype, zid, url } = ZIDs.shift();
 	let targetUrl = urlHash[ztype] + zid;
@@ -119,15 +118,18 @@ function scrape(ZIDs) {
 		var newItem = new Zotero.Item("webpage");
 		newItem.url = url;
 		if (ztype === 'answer') {
+			let author = '匿名用户';
 			let parser = new DOMParser();
 			let html = parser.parseFromString(text, 'text/html');
 			newItem.title = html.title.replace(" - 知乎", '');
 			let noteContent = ZU.xpath(html, "//div[@class='RichContent-inner']//span")[0].innerHTML;
+			noteContent = noteContent.replace(/<figure.*?<img src="(.*?)".*?<\/figure>/g, "<img src='$1'/>");
 			newItem.abstractNote = ZU.cleanTags(noteContent).slice(0, 150) + "...";
 			newItem.notes.push({ note: noteContent });
 			newItem.date = ZU.xpath(html, "//span[@data-tooltip]")[0].innerText.split(' ').slice(1).join(" ");
 			newItem.websiteType = '知乎回答';
-			let author = ZU.xpath(html, "//div[@class='AuthorInfo-head']")[0].innerText;
+			let authorMatch = ZU.xpath(html, "//div[@class='AuthorInfo-head']//a");
+			if (authorMatch)  author = authorMatch[0].innerText;
 			newItem.creators.push({lastName: author, createType: 'author'});
 			if (ZU.xpath(html, "//meta[@itemprop='keywords']")) {
 				ZU.xpath(html, "//meta[@itemprop='keywords']")[0].content.split(",").forEach(t => newItem.tags.push({ tag: t }));
