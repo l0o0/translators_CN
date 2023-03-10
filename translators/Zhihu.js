@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-09-19 21:51:07"
+	"lastUpdated": "2023-03-10 07:18:27"
 }
 
 /*
@@ -99,7 +99,6 @@ function doWeb(doc, url) {
 			for (let url in selectedItems) {
 				ZIDs.push(itemInfo[url]);
 			}
-			Z.debug(ZIDs);
 			scrape(ZIDs);
 		});
 	}
@@ -110,30 +109,49 @@ function doWeb(doc, url) {
 }
 
 function scrape(ZIDs) {
+	Z.debug("**** 111");
 	if (!ZIDs.length) return false;
 	var { ztype, zid, url } = ZIDs.shift();
 	let targetUrl = urlHash[ztype] + zid;
-	if (ztype === 'answer') targetUrl += "?include=data[*].content,voteup_count,share_text";
+	if (ztype === 'answer') targetUrl = url;
 	ZU.doGet(targetUrl, function (text) {
-		var textJson = JSON.parse(text);
-		// Z.debug(textJson);
+		// Z.debug(text);
 		var newItem = new Zotero.Item("webpage");
 		newItem.url = url;
-		newItem.title = textJson.title ? textJson.title : textJson.question.title;
-		newItem.abstractNote = textJson.share_text.replace(/ [（(]想看更多.*$/, '');
-		let createdTime = textJson.created ? textJson.created : textJson.created_time;
-		newItem.date = new Date(createdTime * 1000).toLocaleString();
-		newItem.websiteType = ztype === 'article' ? "知乎专栏文章" : "知乎回答";
-		newItem.websiteTitle = textJson.column ? textJson.column.title : '回答';
-		let content = textJson.content.replace(/<figure.*?<img src="(.*?)".*?<\/figure>/g, "<img src='$1'/>");
-		content = "<p><h1>正文详情</h1></p>" + content;
-		newItem.creators.push({ lastName: textJson.author.name, creatorType: "author" });
-		newItem.notes.push({ note: content });
-		if (textJson.topics) {
-			textJson.topics.forEach(t => newItem.tags.push({ tag: t.name }));
+		if (ztype === 'answer') {
+			let parser = new DOMParser();
+			let html = parser.parseFromString(text, 'text/html');
+			newItem.title = html.title.replace(" - 知乎", '');
+			let noteContent = ZU.xpath(html, "//div[@class='RichContent-inner']//span")[0].innerHTML;
+			newItem.abstractNote = ZU.cleanTags(noteContent).slice(0, 150) + "...";
+			newItem.notes.push({ note: noteContent });
+			newItem.date = ZU.xpath(html, "//span[@data-tooltip]")[0].innerText.split(' ').slice(1).join(" ");
+			newItem.websiteType = '知乎回答';
+			let author = ZU.xpath(html, "//div[@class='AuthorInfo-head']")[0].innerText;
+			newItem.creators.push({lastName: author, createType: 'author'});
+			if (ZU.xpath(html, "//meta[@itemprop='keywords']")) {
+				ZU.xpath(html, "//meta[@itemprop='keywords']")[0].content.split(",").forEach(t => newItem.tags.push({ tag: t }));
+			}
+			let vote = html.querySelector("button.Button.VoteButton.VoteButton--up").innerText.match("[0-9]+$");
+			if (vote) newItem.extra = `赞数:${vote[0]}`;
+		} else {
+			var textJson = JSON.parse(text);
+			newItem.title = textJson.title ? textJson.title : textJson.question.title;
+			newItem.abstractNote = textJson.share_text.replace(/ [（(]想看更多.*$/, '');
+			let createdTime = textJson.created ? textJson.created : textJson.created_time;
+			newItem.date = new Date(createdTime * 1000).toLocaleString();
+			newItem.websiteType = ztype === 'article' ? "知乎专栏文章" : "知乎回答";
+			newItem.websiteTitle = textJson.column ? textJson.column.title : '回答';
+			let content = textJson.content.replace(/<figure.*?<img src="(.*?)".*?<\/figure>/g, "<img src='$1'/>");
+			content = "<p><h1>正文详情</h1></p>" + content;
+			newItem.creators.push({ lastName: textJson.author.name, creatorType: "author" });
+			newItem.notes.push({ note: content });
+			if (textJson.topics) {
+				textJson.topics.forEach(t => newItem.tags.push({ tag: t.name }));
+			}
+			newItem.extra = `赞数:${textJson.voteup_count};`;
 		}
 		newItem.language = 'zh-CN';
-		newItem.extra = `赞数:${textJson.voteup_count};`;
 		newItem.attachments.push({ url: url, title: "Snapshot" });
 		newItem.complete();
 		if (ZIDs.length > 0) {
@@ -141,6 +159,7 @@ function scrape(ZIDs) {
 		}
 	});
 }
+
 
 /** BEGIN TEST CASES **/
 var testCases = [
