@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-03-10 14:37:04"
+	"lastUpdated": "2023-03-10 16:37:35"
 }
 
 /*
@@ -79,9 +79,10 @@ function getSearchResults(doc, checkOnly, itemInfo) {
 		else { // 问题页,首页,专栏
 			data = JSON.parse(data);
 			url = rows[i].querySelectorAll("meta[itemprop='url']");
+			createTime = rows[i].querySelector("meta[itemprop='dateCreated']");
 			url = url[url.length - 1].getAttribute('content').replace(/^\/\//, 'https://');
 			ZID = { ztype: data.type, zid: data.itemId, url: url };
-			title = i + ' ' + data.authorName + ' : ' + data.title;
+			title = i + ' ' + data.authorName + ' : ' + data.title + `创建于: ${createTime.content.slice(0, 19).replace("T", " ")}`;
 		}
 		if (checkOnly) return true;
 		found = true;
@@ -138,6 +139,7 @@ function scrape(ZIDs) {
 			if (vote) newItem.extra = `赞数:${vote[0]}`;
 		} else {
 			var textJson = JSON.parse(text);
+			Z.debug(text);
 			newItem.title = textJson.title ? textJson.title : textJson.question.title;
 			newItem.abstractNote = textJson.share_text.replace(/ [（(]想看更多.*$/, '');
 			let createdTime = textJson.created ? textJson.created : textJson.created_time;

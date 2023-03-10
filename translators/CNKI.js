@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-03-03 12:27:12"
+	"lastUpdated": "2023-03-10 14:41:03"
 }
 
 /*
@@ -44,28 +44,28 @@ function getRefWorksByID(ids, onDataAvailable) {
 		function (text) {
 			let data = text
 				.replace("<ul class='literature-list'><li>", "")
-            	.replace("<br></li></ul>", "")
-            	.replace("</li><li>", "") // divide results
-            	.replace(/<br>|\r/g, "\n")
-            	.replace(/vo (\d+)\n/, "VO $1\n") // Divide VO and IS to different line
-            	.replace(/IS 0(\d+)\n/g, "IS $1\n")  // Remove leading 0
-            	.replace(/VO 0(\d+)\n/g, "VO $1\n")
-            	.replace(/\n+/g, "\n")
-            	.replace(/\n([A-Z][A-Z1-9]\s)/g, "<br>$1")
-            	.replace(/\n/g, "")
-            	.replace(/<br>/g, "\n")
-            	.replace(/\t/g, "") // \t in abstract
-            	.replace(
-            	    /^RT\s+Conference Proceeding/gim,
-            	    "RT Conference Proceedings"
-            	)
-            	.replace(/^RT\s+Dissertation\/Thesis/gim, "RT Dissertation")
-            	.replace(/^(A[1-4]|U2)\s*([^\r\n]+)/gm, function (m, tag, authors) {
-            	    authors = authors.split(/\s*[;，,]\s*/); // that's a special comma
-            	    if (!authors[authors.length - 1].trim()) authors.pop();
-            	    return tag + " " + authors.join("\n" + tag + " ");
-            	})
-            	.trim();
+				.replace("<br></li></ul>", "")
+				.replace("</li><li>", "") // divide results
+				.replace(/<br>|\r/g, "\n")
+				.replace(/vo (\d+)\n/, "VO $1\n") // Divide VO and IS to different line
+				.replace(/IS 0(\d+)\n/g, "IS $1\n")  // Remove leading 0
+				.replace(/VO 0(\d+)\n/g, "VO $1\n")
+				.replace(/\n+/g, "\n")
+				.replace(/\n([A-Z][A-Z1-9]\s)/g, "<br>$1")
+				.replace(/\n/g, "")
+				.replace(/<br>/g, "\n")
+				.replace(/\t/g, "") // \t in abstract
+				.replace(
+					/^RT\s+Conference Proceeding/gim,
+					"RT Conference Proceedings"
+				)
+				.replace(/^RT\s+Dissertation\/Thesis/gim, "RT Dissertation")
+				.replace(/^(A[1-4]|U2)\s*([^\r\n]+)/gm, function (m, tag, authors) {
+					authors = authors.split(/\s*[;，,]\s*/); // that's a special comma
+					if (!authors[authors.length - 1].trim()) authors.pop();
+					return tag + " " + authors.join("\n" + tag + " ");
+				})
+				.trim();
 			// Z.debug(data);
 			onDataAvailable(data, url);
 			// If more results, keep going
@@ -341,7 +341,7 @@ function getPDF(doc, itemType) {
 	// retrieve PDF links from CNKI oversea
 	var pdf = '';
 	if (itemType == 'thesis') {
-		pdf = ZU.xpath(doc, "//div[@id='DownLoadParts']/a[contains(text(), 'PDF')]");
+		pdf = ZU.xpath(doc, "//div[@id='DownLoadParts']//a[contains(text(), 'PDF')]");
 	}
 	else {
 		pdf = ZU.xpath(doc, "//a[@name='pdfDown']");
