@@ -341,7 +341,7 @@ function getPDF(doc, itemType) {
 	// retrieve PDF links from CNKI oversea
 	var pdf = '';
 	if (itemType == 'thesis') {
-		pdf = ZU.xpath(doc, "//div[@id='DownLoadParts']/a[contains(text(), 'PDF')]");
+		pdf = ZU.xpath(doc, "//div[@id='DownLoadParts']//a[contains(text(), 'PDF')]");
 	}
 	else {
 		pdf = ZU.xpath(doc, "//a[@name='pdfDown']");
