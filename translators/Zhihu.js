@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-03-10 16:37:35"
+	"lastUpdated": "2023-03-10 17:31:35"
 }
 
 /*
@@ -147,6 +147,7 @@ function scrape(ZIDs) {
 			newItem.websiteType = ztype === 'article' ? "知乎专栏文章" : "知乎回答";
 			newItem.websiteTitle = textJson.column ? textJson.column.title : '回答';
 			let content = textJson.content.replace(/<figure.*?<img src="(.*?)".*?<\/figure>/g, "<img src='$1'/>");
+			content = content.replace(/<sup.*?data-text="(.*?)".*?data-url="(.*?)".*?>\[(\d+)\]<\/sup>/g, '<sup><a title="$1" href="$2">[$3]</a></sup>');
 			content = "<p><h1>正文详情</h1></p>" + content;
 			newItem.creators.push({ lastName: textJson.author.name, creatorType: "author" });
 			newItem.notes.push({ note: content });
