@@ -2,14 +2,14 @@
 	"translatorID": "fc353b26-8911-4c34-9196-f6f567c93901",
 	"label": "Douban",
 	"creator": "不是船长<tanguangzhi@foxmail.com>, Ace Strong<acestrong@gmail.com>, Zeping Lee",
-	"target": "^https?://(www|book)\\.douban\\.com/(subject|doulist|people/[a-zA-Z._]*/(do|wish|collect)|.*?status=(do|wish|collect)|group/[0-9]*?/collection|tag)",
+	"target": "^https?://(www|book|read)\\.douban\\.com/(subject|doulist|people/[a-zA-Z._]*/(do|wish|collect)|.*?status=(do|wish|collect)|group/[0-9]*?/collection|tag|ebook)",
 	"minVersion": "2.0rc1",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-10-28 08:35:39"
+	"lastUpdated": "2023-03-22 18:46:52"
 }
 
 /*
@@ -137,7 +137,7 @@ function processName(item, name, type, extraContents) {
 	};
 
 	// 去掉括号中的内容，如 "戴维 A.帕特森 (David A.Patterson)"
-	matched = name.match(/^(.*?)\s*\(([^(]*)\)$/);
+	matched = name.replace(/（/g, '(').replace(/）/g, ')').match(/^(.*?)\s*\(([^(]*)\)$/);
 	if (matched) {
 		name = matched[1];
 		let parenthetical = matched[2];
@@ -270,10 +270,19 @@ function transformChineseNumber(number) {
 	return res;
 }
 
+function isRead(url){
+	Z.debug(url);
+	if(url.includes('read.douban')){
+		return true;
+	}
+	return false;
+}
+
 function scrape(doc, url) {
 	// 类型 & URL
 	var itemType = "book";
 	var newItem = new Zotero.Item(itemType);
+	var read = isRead(url);
 	newItem.url = url;
 	let extraContents = [];
 
@@ -297,18 +306,59 @@ function scrape(doc, url) {
 		newItem.language = 'en';
 	}
 
-	let info = doc.querySelector('#info');
+	let info = doc.querySelector(read ? '.article-meta' : '#info');
 	let items = [];
 	let itemText = '';
-	for (let node of info.childNodes) {
-		if (node.tagName === 'BR') {
-			items.push(ZU.trimInternal(itemText));
-			itemText = '';
+	if(read){
+		for (let node of info.childNodes) {
+			if (node.tagName === 'P') {
+				let label = node.querySelector('.label').textContent;
+				let text = node.querySelector('.labeled-text').innerHTML;
+
+				mix_text = text.match(/<[a-zA-Z]+.*?>([\s\S]*?)<\/[a-zA-Z]+.*?>/g);
+				if(mix_text){
+					let contentInfo=[];
+					for (let i = 0; i < mix_text.length; i++) {
+						let match = mix_text[i].match(/<[a-zA-Z]+.*?>([\s\S]*?)<\/[a-zA-Z]+.*?>/);
+						contentInfo.push(match[1]);
+					}
+					text = contentInfo.join(" / ");
+				}else{
+					text = node.querySelector('.labeled-text').textContent;
+				}
+				
+				if(label == '出版社'){
+					let m = text.match(/([^\/]*)\/(.+)/);
+					if (m){
+						text = m[1];
+						items.push(ZU.trimInternal('出版年:'+m[2]));
+					}
+				}
+				Z.debug(label+':'+text);
+				
+				items.push(ZU.trimInternal(label+':'+text));
+				itemText = '';
+			}
+			else {
+				itemText += node.textContent;
+			}
 		}
-		else {
-			itemText += node.textContent;
+		let subtitle = doc.querySelector('.subtitle');
+		if(subtitle){
+			items.push(ZU.trimInternal('副标题:'+subtitle.textContent));
+		}
+	}else{
+		for (let node of info.childNodes) {
+			if (node.tagName === 'BR') {
+				items.push(ZU.trimInternal(itemText));
+				itemText = '';
+			}
+			else {
+				itemText += node.textContent;
+			}
 		}
 	}
+	
 
 	for (let item of items) {
 		let parts = item.match(/^([^:]*):\s*(.*)$/);
@@ -407,6 +457,24 @@ function scrape(doc, url) {
 		note += ' - 目录</h1>\n' + toc.innerHTML;
 		newItem.notes.push({ note: note });
 	}
+	if(read){
+		let toc = doc.querySelector('.article-profile-intro.table-of-contents.collapse-context');
+		if(toc){
+			let text=toc.querySelector('.bd.collapse-content ol');
+			if(text){
+				text = text.innerText.replace(/\n/g, '<br>\n');
+				let note = '<h1>';
+				if (isChinese(title)) {
+					note += '《' + title + '》';
+				}
+				else {
+					note += '<i>' + title + '</i>';
+				}
+				note += ' - 目录</h1>\n' + text;
+				newItem.notes.push({ note: note });
+			}
+		}
+	}
 
 	// 标签
 	var tags = ZU.xpath(doc, '//div[@id="db-tags-section"]/div[@class="indent"]/span/a[contains(@class, "tag") ]');
@@ -441,6 +509,16 @@ function scrape(doc, url) {
 		for (let i = 0; i < contentInfo.length; i++) {
 			contentInfo[i] = contentInfo[i].match(/<[a-zA-Z]+.*?>([\s\S]*?)<\/[a-zA-Z]+.*?>/g);
 			contentInfoTwo = contentInfoTwo + RegExp.$1 + "\n";
+		}
+	}
+	
+	if(read){
+		contentInfoList = doc.querySelector("div[itemprop='description']").querySelectorAll(".info");
+		if(contentInfoList && contentInfoList.length>1){
+			for(let i=0; i<contentInfoList.length-1; i++){
+				let contentInfo = contentInfoList[i].innerText.replace(/\n\n/g, '\n');
+				contentInfoTwo += contentInfo + "\n";
+			}
 		}
 	}
 
@@ -1009,6 +1087,81 @@ var testCases = [
 				"notes": [
 					{
 						"note": "<h1>《好好讲道理》 - 目录</h1>\n\n        引言<br>\n        <br>\n        第一章\t智识行为规范<br>\n        程序标准<br>\n        伦理标准<br>\n        形成自己智识风格的原则<br>\n        1. 或谬原则<br>\n        2. 求真原则<br>\n        3. 清晰原则<br>\n        练习<br>\n        第二章  什么是论证<br>\n        论点即其他论断所支持的论断<br>\n        区分论点和意见<br>\n        4.举证原则<br>\n        论证的标准形式<br>\n        5.宽容原则<br>\n        演绎论证Vs 归纳论证<br>\n        规范性论证的演绎本质<br>\n        道德论证<br>\n        法律论证<br>\n        审美论证<br>\n        练习<br>\n        第三章  什么是好的论证<br>\n        好论证须符合五个标准<br>\n        6.结构原则<br>\n        7.相关原则<br>\n        8.接受原则<br>\n        前提的可接受标准<br>\n        前提不可接受的条件<br>\n        9.充分原则<br>\n        10.辩驳原则<br>\n        改善你的论证<br>\n        运用论证的规范<br>\n        11.延迟判断原则<br>\n        12.终结原则<br>\n        练习<br>\n        第四章  什么是谬误<br>\n        关于谬误的理论<br>\n        有名称的谬误VS未命名的谬误<br>\n        谬误的结构<br>\n        回击谬误<br>\n        自毁论证<br>\n        荒谬反证<br>\n        反证方式<br>\n        谬误游戏规则<br>\n        练习<br>\n        第五章  违反结构原则的谬误<br>\n        6.结构原则<br>\n        不当前提的谬误<br>\n        丐题谬误<br>\n        •回击谬误<br>\n        复合提问谬误<br>\n        •回击谬误<br>\n        丐题定义谬误<br>\n        •回击谬误<br>\n        前提不兼容的谬误<br>\n        •回击谬误<br>\n        前提和结论矛盾的谬误<br>\n        •回击谬误<br>\n        规范性前提不明的谬误<br>\n        •回击谬误<br>\n        练习<br>\n        <br>\n        演绎推理的谬误<br>\n        条件推理<br>\n        否定前件<br>\n        •回击谬误<br>\n        肯定后件<br>\n        •回击谬误<br>\n        三段论推理<br>\n        中词不周延的谬误<br>\n        •回击谬误<br>\n        端项周延不当的谬误<br>\n        •回击谬误<br>\n        不当换位<br>\n        •回击谬误<br>\n        练习<br>\n        第六章  违反相关原则的谬误<br>\n        7.相关原则<br>\n        无关前提的谬误<br>\n        起源谬误<br>\n        •回击谬误<br>\n        合理化谬误<br>\n        •回击谬误<br>\n        得出错误结论<br>\n        •回击谬误<br>\n        使用理由不当<br>\n        •回击谬误<br>\n        作业<br>\n        <br>\n        诉诸不当的谬误<br>\n        诉诸不当权威<br>\n        •回击谬误<br>\n        诉诸公议<br>\n        •回击谬误<br>\n        诉诸强力或威胁<br>\n        •回击谬误<br>\n        诉诸传统<br>\n        •回击谬误<br>\n        诉诸自利<br>\n        •回击谬误<br>\n        操纵情绪<br>\n        •回击谬误<br>\n        练习<br>\n        第七章  违反接受原则的谬误<br>\n        8.接受原则<br>\n        语义混乱的谬误<br>\n        模凌两可<br>\n        •回击谬误<br>\n        暧昧<br>\n        •破解谬误<br>\n        强调误导<br>\n        •回击谬误<br>\n        不当反推<br>\n        •回击谬误<br>\n        滥用模糊<br>\n        •回击谬误<br>\n        貌异实同<br>\n        •回击谬误<br>\n        练习<br>\n        无理预设的谬误<br>\n        后来居上<br>\n        •回击谬误<br>\n        连续体谬误<br>\n        •回击谬误<br>\n        合成谬误<br>\n        •回击谬误<br>\n        分割谬误<br>\n        •回击谬误<br>\n        非此即彼<br>\n        •回击谬误<br>\n        实然/应然之谬<br>\n        •回击谬误<br>\n        一厢情愿<br>\n        •回击谬误<br>\n        拒绝例外<br>\n        •回击谬误<br>\n        折衷谬误<br>\n        •回击谬误<br>\n        不当类比<br>\n        •回击谬误<br>\n        练习<br>\n        第八章  违反充分原则的谬误<br>\n        9.充分原则<br>\n        缺失证据的谬误<br>\n        样本不充分<br>\n        •回击谬误<br>\n        数据不具代表性<br>\n        •回击谬误<br>\n        诉诸无知<br>\n        •回击谬误<br>\n        罔顾事实的假设<br>\n        •回击谬误<br>\n        诉诸俗见<br>\n        •回击谬误<br>\n        片面辩护<br>\n        •回击谬误<br>\n        漏失关键证据<br>\n        •回击谬误<br>\n        练习<br>\n        因果谬误<br>\n        混淆充分与必要条件<br>\n        •回击谬误<br>\n        因果关系简单化<br>\n        •回击谬误<br>\n        后此谬误<br>\n        •回击谬误<br>\n        混淆因果关系<br>\n        •回击谬误<br>\n        忽视共同原因<br>\n        •回击谬误<br>\n        多米诺谬误（滑坡谬误）<br>\n        •回击谬误<br>\n        赌徒谬误<br>\n        •回击谬误<br>\n        练习<br>\n        第九章 违反辩驳原则的谬误<br>\n        10.辩驳原则<br>\n        有关反证的谬误<br>\n        否认反证<br>\n        •回击谬误<br>\n        忽略反证<br>\n        •回击谬误<br>\n        毛举细故<br>\n        •回击谬误<br>\n        练习<br>\n        诉诸人格的谬误<br>\n        人身攻击<br>\n        •回击谬误<br>\n        投毒于井<br>\n        •回击谬误<br>\n        彼此彼此<br>\n        •回击谬误<br>\n        练习<br>\n        转移焦点的谬误<br>\n        攻击稻草人<br>\n        •回击谬误<br>\n        红鲱鱼<br>\n        •回击谬误<br>\n        笑而不答<br>\n        •回击谬误<br>\n        练习<br>\n        第十章  如何写议论文<br>\n        研究问题<br>\n        陈述你的立场<br>\n        论证你的立场<br>\n        驳斥对立观点<br>\n        解决问题<br>\n        议论文样本<br>\n        练习<br>\n        译名表<br>\n        部分练习答案<br>"
+					}
+				],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://read.douban.com/ebook/2383275/",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "汽车是怎样跑起来的",
+				"creators": [
+					{
+						"lastName": "[日]御堀直嗣",
+						"creatorType": "author"
+					},
+					{
+						"lastName": "卢扬",
+						"creatorType": "translator"
+					}
+				],
+				"date": "2013-12",
+				"ISBN": "9787115330321",
+				"abstractNote": "本书从汽车的内部结构开始讲起，精选了大量手绘图与各知名汽车公司提供的照片，以图配文的形式详细讲解了汽油动力车、电动汽车和混合动力车的工作原理，同时开辟了“汽车辟谣”专栏，通过生动有趣的人物对话，澄清对汽车的种种误解。\n车为什么会跑？汽车会跑与人会走路一样，都是日常生活中再普通不过的事情了。正因如此，一旦被问及原因，反而不知该如何回答。\n从零开始讲解汽车的结构，需要花费很长时间。并且，各种新技术层出不穷，也迫使我们不得不重新认识汽车的行驶原理。多问几个“为什么”，我们就能感受到汽车的伟大和珍贵。",
+				"language": "zh",
+				"libraryCatalog": "Douban",
+				"publisher": "人民邮电出版社",
+				"url": "https://read.douban.com/ebook/2383275/",
+				"attachments": [],
+				"tags": [],
+				"notes": [
+					{
+						"note": "前言<br>\n第1章 汽车的五大要素<br>\n1.1汽车的五大要素<br>\n1.1.1行驶、转向和停车<br>\n1.1.2五大要素密切协作<br>\n1.2使汽车发动的物理原理<br>\n1.2.1汽车因热而动、因热而停<br>\n1.2.2轮胎也受“热”的影响<br>\n1.2.3借助作用力与反作用力转向<br>\n1.2.4充分利用物理原理采取安全措施<br>\n1.2.5汽车巧用物理<br>\n1.3汽车行驶、转向直至停车的过程<br>\n1.3.1动力传动系驱动汽车<br>\n1.3.2转向系统实现汽车转向<br>\n1.3.3制动液传递制动压力，使轮胎停止转动<br>\nColumn汽车辟谣 世界上最早的汽车真的是三轮车吗？<br>\n第1部分 汽油动力车篇<br>\n第2章 行驶——发动机是汽车的心脏<br>\n2.1启动发动机<br>\n2.1.1从点火开始<br>\n2.1.2四冲程发动机的结构<br>\n2.1.3将活塞的上下运动转化为曲轴的旋转<br>\n2.1.4启动发动机前先使曲轴转动<br>\n2.1.5用蓄电池供电<br>\n2.2将空气与汽油混合后的混合气体吸入发动机<br>\n2.2.1雾化汽油，生成混合气体<br>\n2.2.2将燃料注入汽缸的“燃料喷射”<br>\n2.2.3燃料喷射包括直接喷射和吸气管喷射<br>\n2.2.4空气和汽油的理想比例是14.7∶1<br>\n2.2.5在直喷中，需要形成旋涡才能很好地生成混合气体<br>\n2.2.6开启阀门，混合气体进入汽缸<br>\n2.2.7活塞上升，压缩混合气体<br>\n2.3压缩并引燃混合气体<br>\n2.3.1用电引燃混合气体<br>\n2.3.2从12伏到1万伏<br>\n2.3.3转动凸轮，开启阀门<br>\n2.3.4实现凸轮与活塞联动的装置<br>\n2.3.5曲轴和凸轮轴还会影响引燃时机<br>\n2.3.6不同形状的凸轮<br>\n2.3.7VTEC区别使用两个不同形状的凸轮<br>\n2.4净化废气，减小噪声<br>\n2.4.1废气的处理<br>\n2.4.2用贵金属净化废气<br>\n2.4.3废气既不能过热也不能过冷<br>\n2.4.4降低油耗的稀薄燃烧<br>\n2.4.5设置消音器迷宫，减小噪声<br>\n2.5改良发动机<br>\n2.5.1使发动机运转更顺畅 改良1：多缸发动机<br>\n2.5.2直列发动机和V型发动机<br>\n2.5.3使发动机运转更顺畅 改良2：飞轮<br>\n2.5.4使发动机运转更顺畅 改良3：平衡重<br>\n2.5.5使发动机运转更顺畅 改良4：机油<br>\n2.6从空转到提高发动机转速<br>\n2.6.1调节混合气体流量的油门<br>\n2.6.2用电控制空气量的线控油门<br>\n2.6.3没有油门，效率更高<br>\nColumn汽车辟谣 发动机的效率真的只有30%？<br>\n第3章 行驶——变速器利用齿轮改变力量<br>\n3.1离合器连接发动机和变速器<br>\n3.1.1将发动机旋转传递至轮胎的动力传动系<br>\n3.1.2利用离合器接合或分离变速器<br>\n3.2利用齿轮实现发动机的自由变速<br>\n3.2.1利用齿轮的减速增大发动机的旋转力<br>\n3.2.2变速器的齿轮将旋转力变至原来的4倍<br>\n3.2.3变换齿轮组，完成加速<br>\n3.2.4在所有齿轮啮合时切换齿轮<br>\n3.2.5行驶中无法实现齿轮的啮合<br>\n3.2.6利用同步啮合装置实现精准啮合<br>\n3.3从变速器到差速器<br>\n3.3.1将发动机的旋转力传递至万向节<br>\n3.3.2将旋转力从差速器传递到左右车轮<br>\n3.3.3差速器也能降低速度，增大动力<br>\n3.3.4利用差速器调整内侧和外侧的距离差<br>\n3.3.5连接差速器和轮胎的传动轴<br>\n3.4自动变速方式1：变矩器式<br>\n3.4.1自动变速器有三种<br>\n3.4.2液力变扭器像面对面摆放的两个风扇<br>\n3.4.3用导轮加快液体的流速<br>\n3.4.4离合器与液力变扭器强强联合<br>\n3.4.5使用三个齿轮的行星齿轮<br>\n3.4.6利用两个齿轮的组合进行齿轮切换<br>\n3.4.7行星齿轮也是利用齿轮的半径比进行变速<br>\n3.4.8利用离合器和制动器等驱动行星齿轮<br>\n3.5自动变速方式2：自动离合器式<br>\n3.6自动变速方式3：CVT<br>\nColumn汽车辟谣 汽车的最快速度与空气有关吗？<br>\n第4章 转向——借助轮胎和差速器顺利转向<br>\n4.1改变汽车方向的转向系统<br>\n4.1.1方向盘的转动带动齿轮工作<br>\n4.1.2动力转向系统借助助力实现轻松转向<br>\n4.2借助轮胎的变形和弯曲转向<br>\n4.2.1轮胎具有柔软性，可以改变形状<br>\n4.2.2充分利用轮胎的四边形触地面<br>\n4.2.3轮胎弯曲，产生侧偏力<br>\n4.3轮胎的抓地力支撑汽车<br>\n4.3.1没有抓地力就无法转向<br>\n4.3.2揭开抓地力的神秘面纱<br>\n4.3.3轮胎的抓地力随路面状况发生变化<br>\n4.3.4把抓地力分配给行驶和转向<br>\n4.3.5抓地力的作用方法在前轮和后轮上有所不同<br>\n4.3.6前轮驱动和后轮驱动利用抓地力的方法<br>\n4.3.7如何增大轮胎的抓地力<br>\n4.4差速器用于调整左右转速<br>\n4.4.1转向时里侧转速慢，外侧转速快<br>\n4.4.2四个伞齿轮吸收左右的转速差<br>\n4.5利用悬架调整车体的倾斜度<br>\n4.5.1转向时悬架受力，车身倾斜<br>\n4.5.2利用弹簧、减震器和稳定器缓和振动<br>\n4.5.3恰到好处的车身倾斜能够增大抓地力<br>\n4.5.4转向时轮胎依然直立<br>\n4.5.5转向时轮胎的触地面发生变形<br>\n4.5.6为不改变触地面的形状而努力<br>\nColumn汽车辟谣 真敢侧滑轮胎来驾驶汽车吗？<br>\n第5章 停车——制动器将速度转化为摩擦热<br>\n5.1负责让汽车停止的制动器的结构<br>\n5.1.1松开加速踏板时速度会因摩擦而降低<br>\n5.1.2踩下制动踏板时制动液会传递力量<br>\n5.1.3制动器将速度转化为摩擦热<br>\n5.1.4盘式制动器和鼓式制动器的不同<br>\n5.1.5前后轮的制动负担不同<br>\n5.1.6增强前轮制动效果的结构<br>\n5.2制动器的助力<br>\n5.2.1用很小的力也能让1吨的车停止<br>\n5.2.2用杠杆原理增大踏力<br>\n5.2.3用发动机的力辅助制动踏板的踏力<br>\n5.3轮胎使汽车停止<br>\n5.3.1轮胎也会影响制动效果<br>\n5.3.2轮胎不转动就无法制动<br>\n5.4除制动器之外的减速装置<br>\nColumn汽车辟谣 紧急时刻有人不踩刹车吗？<br>\n第6章 舒适性——很好地减小噪声和振动<br>\n6.1减小各种噪声<br>\n6.1.1汽车上处处都是噪声源<br>\n6.1.2减小发动机的噪声<br>\n6.1.3利用轮胎的沟纹减小噪声<br>\n6.1.4轮胎上的花纹沟兼顾排水性和噪声控制<br>\n6.1.5用轮胎抑制噪声的增加<br>\n6.1.6柔软地固定金属，减小制动器噪声<br>\n6.1.7接近流线型能够减小风噪<br>\n6.1.8因动力传动系的变速产生的噪声<br>\n6.1.9悬架也会产生很小的噪声<br>\n6.1.10利用底盘上的隔音材料和底盘下的表面处理隔音<br>\n6.2减轻振动<br>\n6.3减轻声振粗糙<br>\nColumn汽车辟谣 乘坐舒适度高的汽车容易晕车吗？<br>\n第7章 安全性——多项技术保护人们免受事故伤害<br>\n7.1防患于未然的主动安全技术<br>\n7.1.1安全技术大体分为三种<br>\n7.1.2ABS防止轮胎锁死<br>\n7.1.3利用电脑自动调节制动器<br>\n7.1.4踩住加速踏板时ESC发挥作用<br>\n7.1.5紧急时刻借助制动辅助系统增强制动效果<br>\n7.1.6接近于自动驾驶的雷达巡航控制系统<br>\n7.1.7借助摄像头识别车道标记线的车道保持系统<br>\n7.2临近事故时发挥作用的预碰撞安全技术<br>\n7.2.1在即将撞击时制动<br>\n7.2.2临近撞击时收紧安全带<br>\n7.3撞击后控制损失的被动安全技术<br>\n7.3.1既易变性又坚固的吸能车身结构<br>\n7.3.2三点式安全带利用急减速的趋势固定<br>\n7.3.3SRS安全气囊能够感知冲击力从而膨胀起来<br>\n7.3.4保护头颈部的主动式头枕技术<br>\nColumn汽车辟谣 即使有发达的安全技术也无法减少事故吗？<br>\n第2部分 新一代汽车篇<br>\n第8章 电动汽车——用电启动电动机驱动汽车<br>\n8.1电动汽车与汽油动力车的区别<br>\n8.1.1电动汽车的零件比汽油动力车少<br>\n8.1.2即使按下了按钮仍处于静止状态<br>\n8.1.3根据加速情况调节输送到电动机中的电量<br>\n8.2利用变频器和电动机产生旋转力<br>\n8.2.1变频器负责转动电动机<br>\n8.2.2交流电动机的结构<br>\n8.2.3利用电动机发电的再生功能<br>\n8.2.4再生需要变频器<br>\n8.2.5从汽车发动时开始，电动机就能产生最大扭矩<br>\n8.2.6电动机安静地转动<br>\n8.3轮毂电机的结构<br>\n8.3.1每个轮子上都有电动机<br>\n8.3.2汽车的新可能性蕴藏在电动汽车中<br>\n8.4锂离子电池的特征<br>\nColumn汽车辟谣 电动汽车果真静得吓人吗？<br>\n第9章 环保型汽车——混合动力汽车以及燃料电池汽车等<br>\n9.1燃料电池汽车的结构<br>\n9.1.1蓄电池的低性能催生出了能够发电的电动汽车<br>\n9.1.2以氢为燃料发电<br>\n9.1.3仅残留水的燃料电池汽车是终极环保车<br>\n9.2混合动力汽车有很多种<br>\n9.2.1同时使用发动机和电动机<br>\n9.2.2并联式混合动力汽车和串联式混合动力汽车<br>\n9.2.3接近电动汽车的插入式混合动力汽车<br>\n9.3不用电的新一代汽车<br>\n9.3.1不受排放标准限制的清洁柴油汽车<br>\n9.3.2使用生物燃料的发动机汽车<br>\n9.3.3燃烧氢的氢动力汽车<br>\nColumn汽车辟谣 新一代汽车里果真没有赢家吗？<br>\n结语<br>\n致谢"
+					}
+				],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://read.douban.com/ebook/314197637/?dcs=search",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "永不停歇的时钟：机器、生命动能与现代科学的形成",
+				"creators": [
+					{
+						"lastName": "[美]杰西卡·里斯金",
+						"creatorType": "author"
+					},
+					{
+						"lastName": "王丹",
+						"creatorType": "translator"
+					},
+					{
+						"lastName": "朱丛",
+						"creatorType": "translator"
+					}
+				],
+				"date": "2020-07",
+				"ISBN": "9787508699806",
+				"abstractNote": "*科学史扛鼎之作！美国《高等教育纪事报》誉为“20年来深具影响力的书之一”\n*从中世纪自动发条机器人到当代人工智能，探求生命的本源之问。机械狂人、蒸汽朋克、机械奇幻、人工智能爱好者的宝藏之书\n*《图书馆杂志》2016年畅销书名单，亚马逊2016年连续60天销售榜首\n*《自然》《卫报》《泰晤士高等教育》等权威期刊一致称赞，不吝专文推荐，口碑赛高\n中世纪以来盛行的自动机械人偶，曾让欧洲的皇室和宫廷贵族着迷发狂，传教士甚至将其作为贡礼献给中国皇帝。从雅凯-德罗兹的写字小男孩儿到坎普林的下棋机器人，人和动物的形象，被频繁地制成荒诞而逼真的机器，像是有了“能动的生命”。这一切都源于“万物机械说”的大行其道，它牵涉出的是困扰人类始终的问题：生命是什么？机器会拥有生命吗？事物运转的动力来自内部还是外部？\n人和机器、物质和灵魂之间的关系，几百年来争论不休。17世纪是翻天覆地的思想大变革时代，机械论作为现代科学的核心范式得以确立，整个宇宙被看作一台机器，包括动物和人类，但仍将其动力和精神归于上帝之手。然而，更为反叛的科学家和哲学家，则认为生命机器具有内在动能。现代生命科学就在这两种矛盾的机械论中兵分两路。笛卡儿、玻意耳及其追随者，坚持经典的被动机械论，莱布尼茨、拉马克创造性发展了主动机械论，达尔文的进化论在被动和主动模型之间摇摆不定。由此还催生了理查德·道金斯“自私的基因”说，薛定谔则用颠覆性的量子力学解释生命体能从“秩序生秩序”。机械论接连引发了控制论、目的论、进化论以及认知科学、进化心理学、人工智能等理论和学科的形成，在社会文化环境的联动下，铺展成一幅气势磅礴、方兴未艾的现代科学图景。\n杰西卡·里斯金拥有哲学、历史学和科学研究综合背景，她用生动而思辨的文笔，原创性地将一手资料、学界往来通信和文献档案熔融一炉，顺着生命本源问题的脉络，展开这场“长达四个世纪的争论”。理解现代科学的历史，对于思考当下、想象未来具有重要意义。这本科学史著作不仅会颠覆我们对现代科学的认知，还将成为我们理解当下生命科学、认知科学和人工智能等前沿问题的思考利器。",
+				"language": "zh",
+				"libraryCatalog": "Douban",
+				"publisher": "中信出版社",
+				"shortTitle": "永不停歇的时钟",
+				"url": "https://read.douban.com/ebook/314197637/?dcs=search",
+				"attachments": [],
+				"tags": [],
+				"notes": [
+					{
+						"note": "<h1>《永不停歇的时钟》 - 目录</h1>\n引言 究竟是赫胥黎的玩笑，还是自然与科学界的能动作用<br>\n第一章 花园里的机器<br>\n第二章 机器之间的笛卡儿<br>\n第三章 被动的望远镜还是永不停歇的时钟<br>\n第四章 最早的机器人<br>\n第五章 机器先生冒险记<br>\n第六章 自组织机器的困境<br>\n第七章 机器间的达尔文<br>\n第八章 机械卵和智能卵<br>\n第九章 由外而内<br>\n第十章 历史的重要性<br>\n致谢<br>\n参考文献"
 					}
 				],
 				"seeAlso": []
