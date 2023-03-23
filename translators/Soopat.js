@@ -8,8 +8,8 @@
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
-	"browserSupport": "gcsv",
-	"lastUpdated": "2020-03-18 06:28:12"
+	"browserSupport": "gcsibv",
+	"lastUpdated": "2023-03-23 09:11:21"
 }
 
 /*
@@ -35,6 +35,27 @@
 	***** END LICENSE BLOCK *****
 */
 
+var fieldsMap = {
+	"摘要": "abstractNote",
+	"申请人": "place",
+	"地址": "address",
+	"国省代码": "country",
+	"Applicant": "Applicant",
+	"Inventor": "Inventor",
+	"主分类号": "主分类号",
+	"分类号": "分类号",
+	"Abstract": "Abstract"
+}
+
+function addCreators(names) {
+	return names.split(" ").reduce((a, b) => {
+		a.push({
+			lastName: b,
+			creatorType: "inventor"
+		});
+		return a;
+	}, [])
+}
 
 function detectWeb(doc, url) {
 	var items = getSearchItems(doc);
@@ -47,85 +68,112 @@ function detectWeb(doc, url) {
 	}
 }
 
-function scrape(doc, url, loginStatus) {
+async function scrape(doc, url, loginStatus) {
 	var newItem = new Zotero.Item("patent");
-	var detailtitle = ZU.xpath(doc, "//span[@class='detailtitle']")[0];
-	var title = ZU.xpath(detailtitle, "./h1")[0];
-	title = title.innerText.split(/\s/)[0];
-	var appNo = ZU.xpath(detailtitle, "./strong")[0].innerText.split(/[：\s]/);
-	var appDate = appNo[3];
-	appNo = appNo[1];
-	var ab = ZU.xpath(doc, "//b[contains(text(), '摘要：')]/parent::td")[0].innerText;
-	Z.debug(title + appDate + appNo);
-	newItem.url = url;
-	newItem.title = title;
-	newItem.abstractNote = ab;
-	newItem.applicationNumber = appNo;
-	newItem.filingDate = appDate;
-	newItem.attorneyAgent = ZU.xpath(doc, "//tr[td='专利代理机构']/td[2]")[0].innerText;
-	newItem.assignee = ZU.xpath(doc, "//tr[td='代理人']/td[2]")[0].innerText;
-	var legalStatusNodes = ZU.xpath(detailtitle, "./h1/div");
-	var legalStatus = "";
-	for (var n of legalStatusNodes) {
-		legalStatus += "," + n.innerText;
-	}
-	if (legalStatus) {
-		newItem.legalStatus = legalStatus.substr(1);
-	}
-	var note = ZU.xpath(doc, "//tr[td='主权项']/td[2]")[0].innerText;
-	if (note) {
-		newItem.notes = [{ note: note }];
-	}
-	var inventors = ZU.xpath(doc, "//table[@class='datainfo']//tr[6]/td/a");
-	newItem.creators = [];
-	for (let inventor of inventors) {
-		inventor = inventor.innerText;
-		var creator = {};
-		var lastSpace = inventor.lastIndexOf(' ');
-		if (inventor.search(/[A-Za-z]/) !== -1 && lastSpace !== -1) {
-			// western name. split on last space
-			creator.firstName = inventor.substr(0, lastSpace);
-			creator.lastName = inventor.substr(lastSpace + 1);
+	var detailtitle, title, appNo, appDate, ab, legalStatus
+	if (url.includes("pro.soopat.com")) { // Soopat Pro version
+		detailtitle = ZU.xpath(doc, "//div[@class='detailtitle']")[0];
+		// Z.debug(doc.querySelector("table").innerText);
+		title = ZU.xpath(detailtitle, ".//h1")[0];
+		[title, patentNo] = title.innerText.split(" - ");
+		newItem.title = title.replace(/\[\w+\]/, "");
+		newItem.patentNumber = patentNo;
+		newItem.legalStatus = detailtitle.querySelector("div.lnkLegal").innerText;
+		let tmpStr = detailtitle.querySelector("div.gray").innerText;
+		if (tmpStr.match(/申请号：([\w\.]+)/)) newItem.applicationNumber = tmpStr.match(/申请号：([\w\.]+)/)[1];
+		if (tmpStr.match(/申请日：([\d\-]+)/)) newItem.filingDate = tmpStr.match(/申请日：([\d\-]+)/)[1];
+		var tableRows = ZU.xpath(doc, "//table[@class='datainfo']//tr");
+		for (let row of tableRows) {
+			let tmp = row.innerText.trim().split("：");
+			let key = tmp[0];
+			Z.debug(key, tmp);
+			let content = tmp.slice(1).join("：").trim();
+			switch (key) {
+				case "发明(设计)人":
+					newItem.creators = addCreators(content);
+					break
+				default:
+					newItem[fieldsMap[key]] = content;
+			}
 		}
-		else {
-			// Chinese name. first character is last name, the rest are first name
-			creator.firstName = inventor.substr(1);
-			creator.lastName = inventor.charAt(0);
+		let anNo = doc.querySelector("a.lnkDownload").getAttribute("an");
+		let downPage = await requestDocument("http://pro.soopat.com/Chinese/Download?AN=" + anNo);
+		let appRow = ZU.xpath(downPage, "//table//tr[2]/td[4]/a");
+		let authRow = ZU.xpath(downPage, "//table//tr[3]/td[4]/a");
+		if (appRow) newItem.attachments.push({
+			title: "PDF申请全文",
+			mimeType: "application/pdf",
+			url: appRow[0].href
+		});
+		if (authRow) newItem.attachments.push({
+			title: "PDF授权全文",
+			mimeType: "application/pdf",
+			url: authRow[0].href
+		});
+	} else {  // Free user version
+		detailtitle = ZU.xpath(doc, "//span[@class='detailtitle']")[0];
+		title = ZU.xpath(detailtitle, "./h1")[0];
+		title = title.innerText.split(/\s/)[0];
+		appNo = ZU.xpath(detailtitle, "./strong")[0].innerText.split(/[：\s]/);
+		appDate = appNo[3];
+		appNo = appNo[1];
+		ab = ZU.xpath(doc, "//b[contains(text(), '摘要：')]/parent::td")[0].innerText;
+		Z.debug(title + appDate + appNo);
+		newItem.url = url;
+		newItem.title = title;
+		newItem.abstractNote = ab;
+		newItem.applicationNumber = appNo;
+		newItem.filingDate = appDate;
+		newItem.attorneyAgent = ZU.xpath(doc, "//tr[td='专利代理机构']/td[2]")[0].innerText;
+		newItem.assignee = ZU.xpath(doc, "//tr[td='代理人']/td[2]")[0].innerText;
+		var legalStatusNodes = ZU.xpath(detailtitle, "./h1/div");
+		legalStatus = "";
+		for (var n of legalStatusNodes) {
+			legalStatus += "," + n.innerText;
 		}
-		newItem.creators.push(creator);
+		if (legalStatus) {
+			newItem.legalStatus = legalStatus.substr(1);
+		}
+		var note = ZU.xpath(doc, "//tr[td='主权项']/td[2]")[0].innerText;
+		if (note) {
+			newItem.notes = [{ note: note }];
+		}
+		var inventors = ZU.xpath(doc, "//table[@class='datainfo']//tr[6]/td");
+		newItem.creators = addCreators(inventors[0].innerText.replace("发明(设计)人：", ""));
+		newItem.place = ZU.xpath(doc, "//b[contains(text(), '申请人：')]/parent::td/a")[0].innerText;
+		var downlink = ZU.xpath(doc, "//div[@class='mix']/a[2]")[0].getAttribute('onclick').split("'")[1];
+		// Z.debug(downlink);
+		if (loginStatus) {
+			getPDF(downlink, newItem);
+		}
 	}
-	newItem.place = ZU.xpath(doc, "//b[contains(text(), '申请人：')]/parent::td/a")[0].innerText;
-	var downlink = ZU.xpath(doc, "//div[@class='mix']/a[2]")[0].getAttribute('onclick').split("'")[1];
-	// Z.debug(downlink);
-	if (loginStatus) {
-		getPDF(downlink, newItem);
-	}
-	else {
-		newItem.complete();
-	}
+	newItem.complete();
 }
 
-function doWeb(doc, url) {
+async function doWeb(doc, url) {
 	var loginStatus = detectLogin(doc);
+	// Scrape from search page will triger the CAPTCHA, casuing some errors.
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfos = {};
 		var items = getSearchItems(doc, itemInfos);
-		Z.selectItems(items, function (selectedItems) {
-			if (!selectedItems) return true;
-			// Z.debug(Object.keys(selectedItems));
+		var selectedItems = await Z.selectItems(items);
+		if (selectedItems) {
 			var urls = Object.keys(selectedItems);
-			getItemsFromSearch(urls, itemInfos, loginStatus);
-		});
+			Z.debug(urls[0]);
+			await Promise.all(
+				urls.map(
+					url => {requestDocument(url).then(doc => scrape(doc, url, loginStatus))})
+		);}
 	}
 	else {
-		scrape(doc, url, loginStatus);
+		await scrape(doc, url, loginStatus);
 	}
 }
 
 
 // get item fields from search page
 function getSearchItems(doc, itemInfos) {
-	var patentNodes = ZU.xpath(doc, "//div[@class='PatentBlock']");
+	var patentNodes = ZU.xpath(doc, "//div[@class='PatentBlock'] | //tr[contains(@class, 'PatentBlock')]");
 	var items = {};
 	for (var i = 0, n = patentNodes.length; i < n; i++) {
 		var patent = patentNodes[i];
@@ -146,13 +194,11 @@ function getSearchItems(doc, itemInfos) {
 
 // detect user login state
 function detectLogin(doc) {
-	var loginHeader = ZU.xpath(doc, "//div[@class='login']")[0];
-	var counts = (loginHeader.innerText.match(/登录/g) || []).length;
-	if (counts == 2) {
-		return false;
-	}
-	else {
+	var loginHeader = ZU.xpath(doc, "//a[contains(@href, 'ogout')]")[0];
+	if (loginHeader) {
 		return true;
+	} else {
+		return false;
 	}
 }
 
@@ -168,38 +214,8 @@ function getPDF(downlink, newItem) {
 			mimeType: "application/pdf",
 			url: link.href
 		}];
-		newItem.complete();
 	});
-}
-
-
-function getItemsFromSearch(urls, itemInfos, loginStatus) {
-	if (!urls.length) return;
-	for (var url of urls) {
-		var patent = itemInfos[url];
-		// Z.debug(url);
-		var newItem = new Zotero.Item("patent");
-		newItem.url = url;
-		var patentType = ZU.xpath(patent, ".//h2[@class='PatentTypeBlock']");
-		var headers = patentType[0].innerText.split(/\s/);
-		newItem.title = headers[1];
-		newItem.applicationNumber = headers[3];
-		newItem.filingDate = ZU.xpath(patent, ".//span[@class='PatentAuthorBlock']")[0].innerText.split(/[\s：]/)[4];
-		newItem.abstractNote = ZU.xpath(patent, ".//span[@class='PatentContentBlock']")[0].innerText.replace('摘要:', '');
-		newItem.place = ZU.xpath(doc, "//b[contains(text(), '申请人：')]/parent::td/a")
-		  .map(item => item.innerText).join(';');
-		newItem.legalStatus = ZU.xpath(patent, ".//h2[@class='PatentTypeBlock']")[0].innerText.split(/\s/).slice(4, -1).join(',');
-		var downlink = ZU.xpath(patent, ".//span[@class='PatentBottomBlock']/a[3]")[0].getAttribute('onclick').split("'")[1];
-		if (loginStatus){
-			getPDF(downlink, newItem);
-		}
-		else {
-			newItem.complete();
-		}
-	}
-}
-
-/** BEGIN TEST CASES **/
+}/** BEGIN TEST CASES **/
 var testCases = [
 	{
 		"type": "web",
