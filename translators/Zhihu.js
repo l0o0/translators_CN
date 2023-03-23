@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-03-22 14:57:25"
+	"lastUpdated": "2023-03-23 13:45:34"
 }
 
 /*
@@ -120,7 +120,6 @@ function scrape(ZIDs) {
 		if (ztype === 'answer') {  // For Zhihu answer
 			newItem.postType = '知乎回答';
 			newItem.forumTitle = '知乎';
-			let author = '匿名用户';
 			let parser = new DOMParser();
 			let html = parser.parseFromString(text, 'text/html');
 			newItem.title = html.title.replace(" - 知乎", '');
@@ -130,9 +129,8 @@ function scrape(ZIDs) {
 			newItem.notes.push({ note: noteContent });
 			newItem.date = ZU.xpath(html, "//span[@data-tooltip]")[0].innerText.split(' ').slice(1).join(" ");
 			newItem.websiteType = '知乎回答';
-			let authorMatch = ZU.xpath(html, "//div[@class='AuthorInfo-head']//a");
-			if (authorMatch)  author = authorMatch[0].innerText;
-			newItem.creators.push({lastName: author, createType: 'author'});
+			let authorMatch = ZU.xpathText(html, "//div[@class='AuthorInfo-head']//a");
+			newItem.creators.push({lastName: authorMatch ? authorMatch : '匿名用户', createType: 'author'});
 			if (ZU.xpath(html, "//meta[@itemprop='keywords']")) {
 				ZU.xpath(html, "//meta[@itemprop='keywords']")[0].content.split(",").forEach(t => newItem.tags.push({ tag: t }));
 			}
@@ -150,7 +148,7 @@ function scrape(ZIDs) {
 			newItem.blogTitle = textJson.column ? textJson.column.title : '回答';
 			let content = textJson.content.replace(/<figure.*?<img src="(.*?)".*?<\/figure>/g, "<img src='$1'/>");
 			content = content.replace(/<sup.*?data-text="(.*?)".*?data-url="(.*?)".*?>\[(\d+)\]<\/sup>/g, '<sup><a title="$1" href="$2">[$3]</a></sup>');
-			content = "<p><h1>正文详情</h1></p>" + content;
+			content = "<h1>正文详情</h1>" + content;
 			newItem.creators.push({ lastName: textJson.author.name, creatorType: "author" });
 			newItem.notes.push({ note: content });
 			if (textJson.topics) {
