@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-03-10 14:41:03"
+	"lastUpdated": "2023-03-24 09:38:26"
 }
 
 /*
@@ -31,49 +31,40 @@
 */
 
 // Target regex for default search, advance search, detail page and journal articles pages.
-// Fetches RefWorks records for provided IDs and calls onDataAvailable with resulting text
-// ids should be in the form [{dbname: "CDFDLAST2013", filename: "1013102302.nh"}]
-function getRefWorksByID(ids, onDataAvailable) {
-	if (!ids.length) return;
-	var { dbname, filename, url } = ids.shift();
+// Fetches RefWorks records for provided ID and calls onDataAvailable with resulting text
+// id should be in the form {dbname: "CDFDLAST2013", filename: "1013102302.nh"}
+async function getRefWorksByID(id, onDataAvailable) {
+	if (!id) return;
+	var { dbname, filename, url } = id;
 	let postData = "filename=" + filename + 
 		"&displaymode=Refworks&orderparam=0&ordertype=desc&selectfield=&dbname=" + 
 		dbname + "&random=0.2111567532240084";
-	
-	ZU.doPost('https://kns.cnki.net/KNS8/manage/ShowExport', postData,
-		function (text) {
-			let data = text
-				.replace("<ul class='literature-list'><li>", "")
-				.replace("<br></li></ul>", "")
-				.replace("</li><li>", "") // divide results
-				.replace(/<br>|\r/g, "\n")
-				.replace(/vo (\d+)\n/, "VO $1\n") // Divide VO and IS to different line
-				.replace(/IS 0(\d+)\n/g, "IS $1\n")  // Remove leading 0
-				.replace(/VO 0(\d+)\n/g, "VO $1\n")
-				.replace(/\n+/g, "\n")
-				.replace(/\n([A-Z][A-Z1-9]\s)/g, "<br>$1")
-				.replace(/\n/g, "")
-				.replace(/<br>/g, "\n")
-				.replace(/\t/g, "") // \t in abstract
-				.replace(
-					/^RT\s+Conference Proceeding/gim,
-					"RT Conference Proceedings"
-				)
-				.replace(/^RT\s+Dissertation\/Thesis/gim, "RT Dissertation")
-				.replace(/^(A[1-4]|U2)\s*([^\r\n]+)/gm, function (m, tag, authors) {
-					authors = authors.split(/\s*[;，,]\s*/); // that's a special comma
-					if (!authors[authors.length - 1].trim()) authors.pop();
-					return tag + " " + authors.join("\n" + tag + " ");
-				})
-				.trim();
-			// Z.debug(data);
-			onDataAvailable(data, url);
-			// If more results, keep going
-			if (ids.length) {
-				getRefWorksByID(ids, onDataAvailable);
-			}
-		}
-	);
+	let text = await requestText('https://kns.cnki.net/KNS8/manage/ShowExport?' + postData);
+	return text
+			.replace("<ul class='literature-list'><li>", "")
+			.replace("<br></li></ul>", "")
+			.replace("</li><li>", "") // divide results
+			.replace(/<br>|\r/g, "\n")
+			.replace(/vo (\d+)\n/, "VO $1\n") // Divide VO and IS to different line
+			.replace(/IS 0(\d+)\n/g, "IS $1\n")  // Remove leading 0
+			.replace(/VO 0(\d+)\n/g, "VO $1\n")
+			.replace(/\n+/g, "\n")
+			.replace(/\n([A-Z][A-Z1-9]\s)/g, "<br>$1")
+			.replace(/\n/g, "")
+			.replace(/<br>/g, "\n")
+			.replace(/(K1 .*[\u4e00-\u9fa5]) ([a-zA-Z])/g, "$1;$2")  // cn keywwords and en keywords
+			.replace(/\t/g, "") // \t in abstract
+			.replace(
+				/^RT\s+Conference Proceeding/gim,
+				"RT Conference Proceedings"
+			)
+			.replace(/^RT\s+Dissertation\/Thesis/gim, "RT Dissertation")
+			.replace(/^(A[1-4]|U2)\s*([^\r\n]+)/gm, function (m, tag, authors) {
+				authors = authors.split(/\s*[;，,]\s*/); // that's a special comma
+				if (!authors[authors.length - 1].trim()) authors.pop();
+				return tag + " " + authors.join("\n" + tag + " ");
+			})
+			.trim();
 }
 
 
@@ -218,8 +209,8 @@ function detectWeb(doc, url) {
 	}
 }
 
-function doWeb(doc, url) {
-	Z.debug("----------------CNKI 20221221---------------------");
+async function doWeb(doc, url) {
+	Z.debug("----------------CNKI 20230324---------------------");
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
@@ -231,155 +222,128 @@ function doWeb(doc, url) {
 			for (var url in selectedItems) {
 				ids.push(itemInfo[url].id);
 			}
-			scrape(ids, doc, itemInfo);
+			// await scrape(ids, doc, itemInfo);
 		});
 	}
 	else {
-		scrape([getIDFromPage(doc, url)], doc);
+		await scrape(getIDFromPage(doc, url), doc);
 	}
 }
 
-function scrape(ids, doc, itemInfo) {
-	getRefWorksByID(ids, function (text, url) {
-		var translator = Z.loadTranslator('import');
-		translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86'); // RefWorks Tagged
-		translator.setString(text);
-		translator.setHandler('itemDone', function (obj, newItem) {
-			// add PDF/CAJ attachments
-			var cite = citeStr = pubType = pubTypeStr = "";
-			// If you want CAJ instead of PDF, set keepPDF = false
-			// 如果你想将PDF文件替换为CAJ文件，将下面一行 keepPDF 设为 false
-			var keepPDF = Z.getHiddenPref('CNKIPDF');
-			if (keepPDF === undefined) {
-				keepPDF = true;
+async function scrape(id, doc, itemInfo) {
+	let text = await getRefWorksByID(id);
+	var translator = Z.loadTranslator('import');
+	translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86'); // RefWorks Tagged
+	translator.setString(text);
+	translator.setHandler('itemDone', function (obj, newItem) {
+		// add PDF/CAJ attachments
+		var cite = citeStr = pubType = pubTypeStr = "";
+		// If you want CAJ instead of PDF, set keepPDF = false
+		// 如果你想将PDF文件替换为CAJ文件，将下面一行 keepPDF 设为 false
+		var keepPDF = Z.getHiddenPref('CNKIPDF');
+		if (keepPDF === undefined) keepPDF = true;
+		if (itemInfo) { // search page
+			newItem.attachments = getAttachments(null, keepPDF);
+			cite = itemInfo[id.url].cite;
+		}
+		else if (!itemInfo) { // detail page
+			if (id.url.includes("KXReader/Detail")) {
+				newItem.attachments.push({
+					title: "Snapshot",
+					document: doc
+				});
+			} else {
+				newItem.attachments = getAttachments(doc, keepPDF);
 			}
-			if (itemInfo) { // search page
-				newItem.attachments = getAttachments(null, itemInfo[url].filelink, keepPDF);
-				cite = itemInfo[url].cite;
+			cite = doc.querySelector("span.num");
+			cite = cite ? cite.innerText.split('\n')[0] : "";
+			pubType = ZU.xpath(doc, "//div[@class='top-tip']//a[@class='type']");
+			pubTypeStr = pubType.length > 0 ? "<" + pubType.map(ele => ele.innerText)
+				.join(", ") + ">" : "";
+			var doi = ZU.xpath(doc, "//*[contains(text(), 'DOI')]/parent::li | //div[@class='tips']"); // add DOI
+			if (doi.length > 0 && doi[0].innerText.includes("DOI")) {
+				var DOI = doi[0].innerText.split("DOI");
+				newItem.DOI = DOI[DOI.length - 1].trim().replace(/[：:]/, '');
 			}
-			else if (!itemInfo) { // detail page
-				if (url.includes("KXReader/Detail")) {
-					Z.debug("HTML text");
-					newItem.attachments.push({
-						title: "Snapshot",
-						document: doc
-					});
-				} else {
-					var pdfurl = getPDF(doc, newItem.itemType);
-					var cajurl = getCAJ(doc, newItem.itemType);
-					newItem.attachments = getAttachments(pdfurl, cajurl, keepPDF, url);
-				}
-				cite = doc.querySelector("span.num");
-				cite = cite ? cite.innerText.split('\n')[0] : "";
-				pubType = ZU.xpath(doc, "//div[@class='top-tip']//a[@class='type']");
-				pubTypeStr = pubType.length > 0 ? "<" + pubType.map(ele => ele.innerText)
-					.join(", ") + ">" : "";
-				var doi = ZU.xpath(doc, "//*[contains(text(), 'DOI')]/parent::li | //div[@class='tips']"); // add DOI
-				if (doi.length > 0 && doi[0].innerText.includes("DOI")) {
-					var DOI = doi[0].innerText.split("DOI");
-					newItem.DOI = DOI[DOI.length - 1].trim().replace(/[：:]/, '');
-				}
-				var moreClick = ZU.xpath(doc, "//span/a[@id='ChDivSummaryMore']");
-				if (moreClick.length) {
-					moreClick[0].click();// click to get a full abstract in a single article page
-					newItem.abstractNote = ZU.xpath(doc, "//span[@id='ChDivSummary']")[0].innerText;
-				}
+			var moreClick = ZU.xpath(doc, "//span/a[@id='ChDivSummaryMore']");
+			if (moreClick.length) {
+				moreClick[0].click();// click to get a full abstract in a single article page
+				newItem.abstractNote = ZU.xpath(doc, "//span[@id='ChDivSummary']")[0].innerText;
 			}
-			newItem.attachments[0].referer = url;
-			var timestamp = new Date().toLocaleDateString().replace(/\//g, '-');
-			var citeStr = cite ? `${cite} citations(CNKI)[${timestamp}]` : "";
-			newItem.extra = (citeStr + pubTypeStr).trim();
-			// split names, Chinese name split depends on Zotero Connector preference translators.zhnamesplit
-			var zhnamesplit = Z.getHiddenPref('zhnamesplit');
-			if (zhnamesplit === undefined) {
-				zhnamesplit = true;
+		}
+		newItem.attachments[0].referer = id.url;
+		var timestamp = new Date().toLocaleDateString().replace(/\//g, '-');
+		var citeStr = cite ? `${cite} citations(CNKI)[${timestamp}]` : "";
+		newItem.extra = (citeStr + pubTypeStr).trim();
+		// split names, Chinese name split depends on Zotero Connector preference translators.zhnamesplit
+		var zhnamesplit = Z.getHiddenPref('zhnamesplit');
+		if (zhnamesplit === undefined) zhnamesplit = true;
+		for (var i = 0, n = newItem.creators.length; i < n; i++) {
+			var creator = newItem.creators[i];
+			if (newItem.itemType == 'thesis' && i != 0) {  // Except first author are Advisors in thesis
+				creator.creatorType = 'contributor';  // Here is contributor
 			}
-			for (var i = 0, n = newItem.creators.length; i < n; i++) {
-				var creator = newItem.creators[i];
-				if (newItem.itemType == 'thesis' && i != 0) {  // Except first author are Advisors in thesis
-					creator.creatorType = 'contributor';  // Here is contributor
-				}
-				if (creator.firstName) continue;
+			if (creator.firstName) continue;
 
-				var lastSpace = creator.lastName.lastIndexOf(' ');
-				if (creator.lastName.search(/[A-Za-z]/) !== -1 && lastSpace !== -1) {
-					// western name. split on last space
-					creator.firstName = creator.lastName.substr(0, lastSpace);
-					creator.lastName = creator.lastName.substr(lastSpace + 1);
-				}
-				else if (zhnamesplit) {
-					// zhnamesplit is true, split firstname and lastname.
-					// Chinese name. first character is last name, the rest are first name
-					creator.firstName = creator.lastName.substr(1);
-					creator.lastName = creator.lastName.charAt(0);
-				}
+			var lastSpace = creator.lastName.lastIndexOf(' ');
+			if (creator.lastName.search(/[A-Za-z]/) !== -1 && lastSpace !== -1) {
+				// western name. split on last space
+				creator.firstName = creator.lastName.substr(0, lastSpace);
+				creator.lastName = creator.lastName.substr(lastSpace + 1);
 			}
-
-			// clean up tags. Remove numbers from end
-			for (var j = 0, l = newItem.tags.length; j < l; j++) {
-				newItem.tags[j] = newItem.tags[j].replace(/:\d+$/, '');
+			else if (zhnamesplit) {
+				// zhnamesplit is true, split firstname and lastname.
+				// Chinese name. first character is last name, the rest are first name
+				creator.firstName = creator.lastName.substr(1);
+				creator.lastName = creator.lastName.charAt(0);
 			}
-			newItem.url = url;
+		}
 
-			if (newItem.abstractNote) {
-				newItem.abstractNote = newItem.abstractNote.replace(/\s*[\r\n]\s*/g, '\n')
-					.replace(/&lt;.*?&gt;/g, "");
-			}
-			newItem.title = ZU.trimInternal(newItem.title);
-			// CN 中国刊物编号，非refworks中的callNumber
-			// CN in CNKI refworks format explains Chinese version of ISSN
-			newItem.callNumber = null;
-			newItem.complete();
-		});
+		// clean up tags. Remove numbers from end
+		for (var j = 0, l = newItem.tags.length; j < l; j++) {
+			newItem.tags[j] = newItem.tags[j].replace(/:\d+$/, '');
+		}
+		newItem.url = id.url;
 
-		translator.translate();
+		if (newItem.abstractNote) {
+			newItem.abstractNote = newItem.abstractNote.replace(/\s*[\r\n]\s*/g, '\n')
+				.replace(/&lt;.*?&gt;/g, "");
+		}
+		newItem.title = ZU.trimInternal(newItem.title);
+		// CN 中国刊物编号，非refworks中的callNumber
+		// CN in CNKI refworks format explains Chinese version of ISSN
+		newItem.callNumber = null;
+		newItem.complete();
 	});
+
+	await translator.translate();
 }
 
 // get pdf download link
-function getPDF(doc, itemType) {
+function getPDF(doc) {
 	// retrieve PDF links from CNKI oversea
-	var pdf = '';
-	if (itemType == 'thesis') {
-		pdf = ZU.xpath(doc, "//div[@id='DownLoadParts']//a[contains(text(), 'PDF')]");
-	}
-	else {
-		pdf = ZU.xpath(doc, "//a[@name='pdfDown']");
-	}
+	var pdf = ZU.xpath(doc, "//a[@id='pdfDown1'] | //a[@id='pdfDown']");
 	return pdf.length ? pdf[0].href : false;
 }
 
 // caj download link, default is the whole article for thesis.
-function getCAJ(doc, itemType) {
-	// //div[@id='DownLoadParts']
-	var caj = ZU.xpath(doc, "//a[@name='cajDown']|//div[@id='downLoadFile']//a[@class='titleClass']");
+function getCAJ(doc) {
+	var caj = ZU.xpath(doc, "//a[@id='cajDown']");
 	return caj.length ? caj[0].href : false;
 }
 
 // add pdf or caj to attachments, default is pdf
-function getAttachments(pdfurl, cajurl, keepPDF, weburl) {
+function getAttachments(doc, keepPDF) {
 	var attachments = [];
+	var pdfurl = getPDF(doc);
+	var cajurl = getCAJ(doc);
 	if (keepPDF && pdfurl) {
 		attachments.push({
 			title: "Full Text PDF",
 			mimeType: "application/pdf",
 			url: pdfurl
 		});
-	} else if (keepPDF && !cajurl.includes("bar.cnki.net")) {  //Can not download PDF when contains bar.cnki.net
-		var url = cajurl.includes("&dflag=nhdown") ? cajurl.replace('&dflag=nhdown', '&dflag=pdfdown') : cajurl + '&dflag=pdfdown';
-		attachments.push({
-			title: "Full Text PDF",
-			mimeType: "application/pdf",
-			url: url
-		});
-	} else if (keepPDF && weburl && weburl.includes("kns.cnki.net/kcms/detail/detail.aspx?")) {  //使用海外版进行pdf下载
-		var url = weburl.replace('kns.cnki.net/kcms/detail/detail.aspx?', 'chn.oversea.cnki.net/kns/download?');
-		attachments.push({
-			title: "Full Text PDF",
-			mimeType: "application/pdf",
-			url: url
-		});
-	} else if (cajurl) {
+	} else {
 		attachments.push({
 			title: "Full Text CAJ",
 			mimeType: "application/caj",
