@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-03-26 15:25:39"
+	"lastUpdated": "2023-03-27 06:46:20"
 }
 
 /*
@@ -208,16 +208,17 @@ function detectWeb(doc, url) {
 }
 
 async function doWeb(doc, url) {
-	Z.debug("----------------CNKI 20230326-1-------------------");
+	Z.debug("----------------CNKI 20230326-2-------------------");
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
 		if (!items) return false;// no items
 		let selectItems = await Z.selectItems(items);
+		// Z.debug(itemInfo);
 		if (selectItems) {
 			for (let url in selectItems) {
 				let doc = await requestDocument(url);
-				await scrape(itemInfo[url].id, doc, itemInfo[url].cite);
+				await scrape(itemInfo[url].id, doc, itemInfo[url]);
 			}
 		}
 	}
@@ -239,8 +240,12 @@ async function scrape(id, doc, extraData) {
 		var keepPDF = Z.getHiddenPref('CNKIPDF');
 		if (keepPDF === undefined) keepPDF = true;
 		if (extraData) { // search page
-			newItem.attachments = getAttachments(doc, keepPDF);
-			cite = extraData;
+			newItem.attachments = [{
+				title: "Full Text CAJ",
+				mimeType: "application/caj",
+				url: extraData.filelink
+			}];
+			cite = extraData.cite;
 		} else if (!extraData) { // detail page
 			if (id.url.includes("KXReader/Detail")) {
 				newItem.attachments.push({
