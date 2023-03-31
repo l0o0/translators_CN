@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-03-30 13:46:41"
+	"lastUpdated": "2023-03-31 03:05:50"
 }
 
 /*
@@ -34,17 +34,6 @@
 
 	***** END LICENSE BLOCK *****
 */
-
-// eslint-disable-next-line
-function opt(val) {
-	if (val && val.length > 0) {
-		return val;
-	}
-	else {
-		return '';
-	}
-}
-
 var typeMap = {
 	journalArticle: "中文期刊文章",
 	eJournalArticle: "外文期刊文章",
@@ -232,35 +221,35 @@ async function getPDFUrl(id) {
 }
 
 function getUrl(node, searchUrl) {
-    var id = node.getAttribute("data-id");
-    var type = node.getAttribute("data-name");
-    var datatype = node.getAttribute("data-type");
-    var typename = node.getAttribute("data-type");
-    var barcodenum = "";
-    if (datatype == "中文期刊文章") {
-        datatype = "journalArticle";
-    }
-    if (datatype == "外文期刊文章") {
-        datatype = "eJournalArticle";
-    }
-    if (datatype == "古籍") {
-        barcodenum = node.getAttribute("data-barcodenum");
-        datatype = "Ancient";
-    }
-    if (datatype == "外文图书") {
-        barcodenum = node.getAttribute("data-id");
-        datatype = "Book";
-    }
-    if (datatype == "方志") {
-        datatype = "LocalRecords";
-    }
-    if (datatype == "会议论文") {
-        datatype = "Conference";
-    }
-    if (datatype == "学位论文") {
-        datatype = "Degree";
-    }
-    return encodeURI("https://www.ncpssd.org/Literature/articleinfo?id=" + id + "&type=" + datatype + "&datatype=" + type + "&typename=" + typename + "&nav=0" + "&barcodenum=" + barcodenum);
+	var id = node.getAttribute("data-id");
+	var type = node.getAttribute("data-name");
+	var datatype = node.getAttribute("data-type");
+	var typename = node.getAttribute("data-type");
+	var barcodenum = "";
+	if (datatype == "中文期刊文章") {
+		datatype = "journalArticle";
+	}
+	if (datatype == "外文期刊文章") {
+		datatype = "eJournalArticle";
+	}
+	if (datatype == "古籍") {
+		barcodenum = node.getAttribute("data-barcodenum");
+		datatype = "Ancient";
+	}
+	if (datatype == "外文图书") {
+		barcodenum = node.getAttribute("data-id");
+		datatype = "Book";
+	}
+	if (datatype == "方志") {
+		datatype = "LocalRecords";
+	}
+	if (datatype == "会议论文") {
+		datatype = "Conference";
+	}
+	if (datatype == "学位论文") {
+		datatype = "Degree";
+	}
+	return encodeURI("https://www.ncpssd.org/Literature/articleinfo?id=" + id + "&type=" + datatype + "&datatype=" + type + "&typename=" + typename + "&nav=0" + "&barcodenum=" + barcodenum);
 }/** BEGIN TEST CASES **/
 var testCases = [
 	{
