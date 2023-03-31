@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-03-31 03:05:50"
+	"lastUpdated": "2023-03-31 08:57:36"
 }
 
 /*
@@ -68,7 +68,7 @@ function getIDFromURL(url) {
 	var typename = url.match(/[?&]typename=([^&#]*)/i);
 	var barcodenum = url.match(/[?&]barcodenum=([^&#]*)/i);
 	if (!type || !type[1] || !id || !id[1] || !typename || !typename[1]) return false;
-	useB64 = type[1] % 4 == 0 || id[1] % 4 == 0 || typename[1] % 4 == 0 || type[1].endsWith("=") || id[1].endsWith("=") || typename[1].endsWith("=");
+	useB64 = !(type[1] in typeMap);
 	if (!useB64) {
 		return {
 			type: type[1],
@@ -254,104 +254,8 @@ function getUrl(node, searchUrl) {
 var testCases = [
 	{
 		"type": "web",
-		"url": "http://www.ncpssd.org/Literature/articleinfo.aspx?id=NzAwMTg3ODc4Mw==&type=am91cm5hbEFydGljbGU=&datatype=am91cm5hbEFydGljbGU=&typename=5Lit5paH5pyf5YiK5paH56ug&nav=0&barcodenum=",
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "关键词法在大学英语词汇学习中应用效果的实证研究——以接受性和产出性测试为例",
-				"creators": [
-					{
-						"lastName": "朱珺",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"lastName": "杨继林",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"lastName": "徐方雯",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"lastName": "[1]上饶师范学院外国语学院,江西上饶334001",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"lastName": "[2]上饶师范学院教务处,江西上饶334001",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"abstractNote": "需要学习者在母语与目的语之间找到发音相同或相近的词汇,在两个词汇之间构建语音连接,并以心理意象的形式记忆,利用言语和表象的双重编码过程促进记忆。这种词汇信息处理方式与常见的语义语境法不同,两种词汇学习方法值得进一步比较,为大学英语词汇教学提供启示。采用关键词法和语义语境法进行组间对比研究,可以发现在接受性和产出性两项测验中,前者的成绩皆明显优于后者,说明采取关键词法更能促进英语词汇的短时记忆、长时记忆和理解。",
-				"libraryCatalog": "ncpssd",
-				"pages": "112-118",
-				"publicationTitle": "《上饶师范学院学报》(上饶师范学院学报)",
-				"url": "http://www.ncpssd.org/Literature/articleinfo.aspx?id=NzAwMTg3ODc4Mw==&type=am91cm5hbEFydGljbGU=&datatype=am91cm5hbEFydGljbGU=&typename=5Lit5paH5pyf5YiK5paH56ug&nav=0&barcodenum=",
-				"attachments": [
-					{
-						"title": "Full Text PDF",
-						"mimeType": "application/pdf"
-					}
-				],
-				"tags": [
-					{
-						"tag": "关键词法"
-					},
-					{
-						"tag": "短时记忆"
-					},
-					{
-						"tag": "语义语境法"
-					},
-					{
-						"tag": "长时记忆"
-					}
-				],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
 		"url": "http://www.ncpssd.org/Literature/articlelist.aspx?search=KElLVEU9IumVv+aXtuiusOW/hiIgT1IgSUtTVD0i6ZW/5pe26K6w5b+GIiBPUiBJS0VUPSLplb/ml7borrDlv4YiIE9SIElLU0U9IumVv+aXtuiusOW/hiIp&searchname=6aKY5ZCNL+WFs+mUruivjT0i6ZW/5pe26K6w5b+GIg==&nav=0",
 		"items": "multiple"
-	},
-	{
-		"type": "web",
-		"url": "http://www.ncpssd.org/Literature/articleinfo.aspx?id=Q0FTUzQyODE2Mjc2&type=ZUpvdXJuYWxBcnRpY2xl&typename=5aSW5paH5pyf5YiK5paH56ug&nav=1&langType=2",
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "Patriot",
-				"creators": [
-					{
-						"lastName": "Ross, Rick",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"issue": "2531958",
-				"language": "en",
-				"libraryCatalog": "ncpssd",
-				"pages": "null",
-				"publicationTitle": "《》(Wings of Gold)",
-				"url": "http://www.ncpssd.org/Literature/articleinfo.aspx?id=Q0FTUzQyODE2Mjc2&type=ZUpvdXJuYWxBcnRpY2xl&typename=5aSW5paH5pyf5YiK5paH56ug&nav=1&langType=2",
-				"attachments": [
-					{
-						"title": "Full Text PDF",
-						"mimeType": "application/pdf"
-					}
-				],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
 	},
 	{
 		"type": "web",
@@ -417,6 +321,7 @@ var testCases = [
 				"libraryCatalog": "Ncpssd",
 				"pages": "1-18",
 				"publicationTitle": "International Journal of Information Science and Management (IJISM)",
+				"url": "https://www.ncpssd.org/Literature/articleinfo?id=CASS265584219&type=eJournalArticle&typename=%E5%A4%96%E6%96%87%E6%9C%9F%E5%88%8A%E6%96%87%E7%AB%A0&nav=1&langType=2&pageUrl=https%253A%252F%252Fwww.ncpssd.org%252Fjournal%252Fdetails%253Fgch%253D185079%2526nav%253D1%2526langType%253D2",
 				"volume": "19",
 				"attachments": [],
 				"tags": [
@@ -439,6 +344,99 @@ var testCases = [
 						"tag": "Research collaboration"
 					}
 				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.ncpssd.org/Literature/articleinfo.aspx?id=NzAwMTg3ODc4Mw==&type=am91cm5hbEFydGljbGU=&datatype=am91cm5hbEFydGljbGU=&typename=5Lit5paH5pyf5YiK5paH56ug&nav=0&barcodenum=",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "关键词法在大学英语词汇学习中应用效果的实证研究——以接受性和产出性测试为例",
+				"creators": [
+					{
+						"lastName": "朱珺",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "杨继林",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "徐方雯",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2019-04-01",
+				"ISSN": "1004-2237",
+				"abstractNote": "需要学习者在母语与目的语之间找到发音相同或相近的词汇,在两个词汇之间构建语音连接,并以心理意象的形式记忆,利用言语和表象的双重编码过程促进记忆。这种词汇信息处理方式与常见的语义语境法不同,两种词汇学习方法值得进一步比较,为大学英语词汇教学提供启示。采用关键词法和语义语境法进行组间对比研究,可以发现在接受性和产出性两项测验中,前者的成绩皆明显优于后者,说明采取关键词法更能促进英语词汇的短时记忆、长时记忆和理解。",
+				"issue": "2",
+				"language": "zh-CN",
+				"libraryCatalog": "Ncpssd",
+				"pages": "112-118",
+				"publicationTitle": "上饶师范学院学报",
+				"url": "https://www.ncpssd.org/Literature/articleinfo.aspx?id=NzAwMTg3ODc4Mw==&type=am91cm5hbEFydGljbGU=&datatype=am91cm5hbEFydGljbGU=&typename=5Lit5paH5pyf5YiK5paH56ug&nav=0&barcodenum=",
+				"volume": "39",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "Keyword Method"
+					},
+					{
+						"tag": "Semantic Context Method"
+					},
+					{
+						"tag": "long-term retention"
+					},
+					{
+						"tag": "short-termretention"
+					},
+					{
+						"tag": "关键词法"
+					},
+					{
+						"tag": "短时记忆"
+					},
+					{
+						"tag": "语义语境法"
+					},
+					{
+						"tag": "长时记忆"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.ncpssd.org/Literature/articleinfo.aspx?id=Q0FTUzQyODE2Mjc2&type=ZUpvdXJuYWxBcnRpY2xl&typename=5aSW5paH5pyf5YiK5paH56ug&nav=1&langType=2",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "Patriot",
+				"creators": [
+					{
+						"firstName": "Ross",
+						"lastName": "Rick",
+						"creatorType": "author"
+					}
+				],
+				"ISSN": "0274-7405",
+				"language": "en",
+				"libraryCatalog": "Ncpssd",
+				"publicationTitle": "Wings of Gold",
+				"url": "https://www.ncpssd.org/Literature/articleinfo.aspx?id=Q0FTUzQyODE2Mjc2&type=ZUpvdXJuYWxBcnRpY2xl&typename=5aSW5paH5pyf5YiK5paH56ug&nav=1&langType=2",
+				"volume": "2005",
+				"attachments": [],
+				"tags": [],
 				"notes": [],
 				"seeAlso": []
 			}
