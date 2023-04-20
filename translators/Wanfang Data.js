@@ -3,13 +3,13 @@
 	"label": "Wanfang Data",
 	"creator": "Ace Strong <acestrong@gmail.com>, rnicrosoft",
 	"target": "^https?://[a-z]+\\.wanfangdata\\.com\\.cn",
-	"minVersion": "2.0rc1",
+	"minVersion": "6.0.24",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-11-16 07:42:02"
+	"lastUpdated": "2023-04-20 13:17:19"
 }
 
 /*
@@ -82,15 +82,15 @@ var nodeFieldMapper = {
 	"//div[contains(@class, 'applicantArea')]/div[@class='itemUrl']": 'country',
 	"//div[contains(@class, 'applicant')][1]/div[@class='itemUrl']": 'issuingAuthority',
 	"//div[contains(@class, 'signoryItem')][1]/div[@class='itemUrl']": '权力要求',
-	"//div[contains(@class, 'standardId list')][1]/div[@class='itemUrl']": "code",
-	"//div[contains(@class, 'draftsComp list')]": addCreators, // 购买后查看字段
-	"//div[contains(@class, 'issueOrganization list')][1]/div[@class='itemUrl']": "rights", // 购买后查看字段
-	"//div[contains(@class, 'applyDate list')][1]/div[@class='itemUrl']": "dateEnacted",
-	"//div[contains(@class, 'status list')]": addExtra,
+	"//div[contains(@class, 'standardId list')][1]/div[@class='itemUrl']": "number",
+	"//div[contains(@class, 'draftsComp list')][2]": addCreators, // 购买后查看字段
+	"//div[contains(@class, 'issueOrganization list')][1]/div[@class='itemUrl']": "publisher", // 购买后查看字段
+	"//div[contains(@class, 'issueOrganization list')][2]/div[@class='itemUrl']": "rights", // 购买后查看字段
+	"//div[contains(@class, 'status list')]/div[@class='itemUrl']": "status",
 	"//div[contains(@class, 'isForce list')]": addExtra,
 	"//div[contains(@class, 'applyDate list')]": addExtra,
-	"//div[contains(@class, 'standardPageNum list')][1]/div[@class='itemUrl']": "pages",
-	"//div[contains(@class, 'newStandard list')][1]/div[@class='itemUrl']": addHistory, // 购买后查看字段
+	"//div[contains(@class, 'standardPageNum list')][1]/div[@class='itemUrl']": "numPages",
+	"//div[contains(@class, 'newStandard list')][1]/div[@class='itemUrl']": addExtra, // 购买后查看字段
 };
 
 var nodeFieldMapperForMed = {
@@ -255,7 +255,7 @@ function addHistory(newItem, history) {
 
 
 function scrape(doc) {
-	Z.debug("---------------WanFang Data 20221116---------------");
+	Z.debug("---------------WanFang Data 20230420---------------");
 	var id = getIDFromPage(doc) || getIDFromURL(doc.URL);
 	var newItem = new Zotero.Item(id.dbname);
 	newItem.title = doc.title.replace("-论文-万方医学网", "");
@@ -285,9 +285,6 @@ function scrape(doc) {
 				? addField(newItem, v, texts.join('; '))
 				: v(newItem, texts);
 		}
-	}
-	if (doc.URL.includes("wanfangdata.com.cn/standard/")) {
-		addExtra(newItem, ["Type", "standard"]); // https://forums.zotero.org/discussion/comment/409058/#Comment_409058
 	}
 	newItem.language = 'zh-CN';
 	if (newItem.abstractNote) newItem.abstractNote = newItem.abstractNote.replace(/^摘要：;/, "");
@@ -369,8 +366,8 @@ function getTypeFromDBName(db) {
 		PeriodicalPaper: "journalArticle",  // For med
 		DegreePaper: "thesis",
 		ConferencePaper: "conferencePaper",
-		standard: "statute",
-		Standard: "statute",
+		standard: "standard",
+		Standard: "standard",
 	};
 	if (db) {
 		return dbType[db];
