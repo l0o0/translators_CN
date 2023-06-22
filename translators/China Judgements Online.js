@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-06-21 16:59:00"
+	"lastUpdated": "2023-06-19 23:51:09"
 }
 
 /*
@@ -80,14 +80,24 @@ async function scrape(doc, url = doc.location.href) {
 	item.url = url;
 	item.language = 'zh-CN';
 
+	let title;
+	let cause = '';
+	let caseType; // 民事|刑事|行政
+	let documentType = '判决书';
+	let parties = [];
+
 	let extraFields = {};
 
-	let title = doc.querySelector('.PDF_title');
-	if (title) {
-		item.caseName = title.textContent;
-		let genre = title.textContent.match('(刑事|民事|行政)(判决书|裁定书|调解书|决定书|通知书|令)');
-		if (genre) {
-			extraFields.Genre = genre[0];
+	let titleElement = doc.querySelector('.PDF_title');
+	if (titleElement) {
+		title = titleElement.textContent;
+		let matched = title.match(/(刑事|民事|行政)/);
+		if (matched) {
+			caseType = matched[0];
+		}
+		matched = title.match(/(判决书|裁定书|调解书|决定书|通知书|令)/);
+		if (matched) {
+			extraFields.Genre = matched[0];
 		}
 	}
 
@@ -104,21 +114,52 @@ async function scrape(doc, url = doc.location.href) {
 		let field = parts[0].trim();
 		let value = parts[1].trim();
 
+		if (!value || value === 'undefined') {
+			continue;
+		}
+
 		switch (field) {
 			case '审理法院':
 				item.court = value;
 				break;
 			case '案件类型':
-				if (!extraFields.Genre) {
-					extraFields.Genre = value.replace('案件', '判决书');
+				if (!caseType) {
+					caseType = value.replace(/案件$/, '');
+				}
+				break;
+			case '案由':
+				if (!value.includes('其他')) {
+					cause = value;
 				}
 				break;
 			case '裁判日期':
 				item.date = value;
 				break;
+			case '当事人':
+				parties = value.split(/,\s*/);
+				if (caseType === '刑事') {
+					parties = parties.filter(party => !party.includes('检察院'));
+				}
+				break;
 		}
 	}
 
+	if (caseType === '刑事' && parties.length > 0) {
+		item.caseName = `${parties[0]}${cause}案`;
+	}
+	else if (parties.length > 1) {
+		item.caseName = `${parties[0]}诉${parties[1]}${cause}案`;
+	}
+	else {
+		// “当事人”为空，使用标题
+		// 榆林市凯奇莱能源投资有限公司与西安地质矿产勘查开发院合作勘查合同纠纷一案二审民事判决书
+		title = title.replace(/(一审|二审|再审).*?$/, '');
+		title = title.replace(/一案$/, '案');
+		title = title.replace('与', '诉');
+		item.caseName = title;
+	}
+
+	extraFields.Genre = `${caseType}${documentType}`;
 	item.extra = Object.entries(extraFields).map(entry => entry[0] + ': ' + entry[1]).join('\n');
 
 	item.attachments.push({
