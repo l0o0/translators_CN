@@ -1,7 +1,7 @@
 {
 	"translatorID": "cc6b64f5-5352-40ea-9196-d154cbb00d9a",
 	"label": "National Standards Open System - China",
-	"creator": "Zeping Lee",
+	"creator": "Zeping Lee, rnicrosoft",
 	"target": "https?://openstd\\.samr\\.gov\\.cn/",
 	"minVersion": "3.0",
 	"maxVersion": "",
@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-10-18 13:36:12"
+	"lastUpdated": "2023-06-27 17:01:40"
 }
 
 /*
@@ -35,28 +35,35 @@
 	***** END LICENSE BLOCK *****
 */
 
+function addExtra(newItem, extra) {
+	newItem.extra = (newItem.extra ? newItem.extra + "\n" : "") + extra[0].trim().replace(/[：:]$/, '') + ": " + extra.slice(1).join('; ');
+}
+
 function detectWeb(_doc, _url) {
-	return 'report';
+	return 'standard';
 }
 
 function doWeb(doc, url) {
-	var item = new Zotero.Item('report');
+	var item = new Zotero.Item('standard');
 
 	item.language = 'zh-CN';
 	item.url = url;
 	item.libraryCatalog = '国家标准全文公开系统';
-	item.extra = 'Type: standard';
 
-	item.reportNumber = doc.querySelector('title').textContent.split('|')[1].replace('-', '—');
+	item.number = doc.querySelector('title').textContent.split('|')[1].replace('-', '—');
 
 	for (let td of doc.querySelectorAll('.tdlist td')) {
 		let parts = td.textContent.split('：', 2);
 		if (parts.length === 2) {
 			let field = parts[0];
 			let value = parts[1].trim();
-			if (field === '中文标准名称') {
-				item.title = value;
-				break;
+			switch (field) {
+				case '中文标准名称':
+					item.title = value;
+					break;
+				case '标准状态':
+					item.status = value;
+					break;
 			}
 		}
 	}
@@ -79,10 +86,11 @@ function doWeb(doc, url) {
 			case '实施日期':
 				if (!item.date || item.date.length === 0) {
 					item.date = value;
+				} else {
+					addExtra(item, [field, value]);
 				}
 				break;
 			case '归口部门':
-			// case '归口单位':
 				for (var institute of value.split('、')) {
 					item.creators.push({
 						lastName: institute,
@@ -90,6 +98,9 @@ function doWeb(doc, url) {
 						fieldMode: 1
 					});
 				}
+				break;
+			case '发布单位':
+				item.publisher = value;
 				break;
 			default:
 				break;
@@ -110,9 +121,10 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://openstd.samr.gov.cn/bzgk/gb/newGbInfo?hcno=ADAA308A0BE559EC29E773B71591F463",
+		"detectedItemType": "standard",
 		"items": [
 			{
-				"itemType": "report",
+				"itemType": "standard",
 				"title": "国际单位制及其应用",
 				"creators": [
 					{
@@ -122,10 +134,12 @@ var testCases = [
 					}
 				],
 				"date": "1993-07-01",
-				"extra": "Type: standard",
+				"extra": "实施日期: 1994-07-01",
 				"language": "zh-CN",
-				"libraryCatalog": "全国标准信息公共服务平台",
-				"reportNumber": "GB 3100—1993",
+				"libraryCatalog": "国家标准全文公开系统",
+				"number": "GB 3100—1993",
+				"publisher": "国家技术监督局",
+				"status": "现行",
 				"url": "https://openstd.samr.gov.cn/bzgk/gb/newGbInfo?hcno=ADAA308A0BE559EC29E773B71591F463",
 				"attachments": [
 					{
@@ -142,22 +156,25 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://openstd.samr.gov.cn/bzgk/gb/newGbInfo?hcno=7FA63E9BBA56E60471AEDAEBDE44B14C",
+		"detectedItemType": "standard",
 		"items": [
 			{
-				"itemType": "report",
+				"itemType": "standard",
 				"title": "信息与文献  参考文献著录规则",
 				"creators": [
 					{
-						"lastName": "全国信息与文献标准化技术委员会",
+						"lastName": "国家标准化管理委员会",
 						"creatorType": "author",
 						"fieldMode": 1
 					}
 				],
 				"date": "2015-05-15",
-				"extra": "Type: standard",
+				"extra": "实施日期: 2015-12-01",
 				"language": "zh-CN",
-				"libraryCatalog": "全国标准信息公共服务平台",
-				"reportNumber": "GB/T 7714—2015",
+				"libraryCatalog": "国家标准全文公开系统",
+				"number": "GB/T 7714—2015",
+				"publisher": "中华人民共和国国家质量监督检验检疫总局、中国国家标准化管理委员会",
+				"status": "现行",
 				"url": "https://openstd.samr.gov.cn/bzgk/gb/newGbInfo?hcno=7FA63E9BBA56E60471AEDAEBDE44B14C",
 				"attachments": [
 					{
