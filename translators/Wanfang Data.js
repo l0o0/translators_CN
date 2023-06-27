@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-04-20 13:17:19"
+	"lastUpdated": "2023-06-27 16:59:39"
 }
 
 /*
@@ -82,7 +82,7 @@ var nodeFieldMapper = {
 	"//div[contains(@class, 'applicantArea')]/div[@class='itemUrl']": 'country',
 	"//div[contains(@class, 'applicant')][1]/div[@class='itemUrl']": 'issuingAuthority',
 	"//div[contains(@class, 'signoryItem')][1]/div[@class='itemUrl']": '权力要求',
-	"//div[contains(@class, 'standardId list')][1]/div[@class='itemUrl']": "number",
+	"//div[contains(@class, 'standardId list')][1]/div[@class='itemUrl']": addStandardNumber,
 	"//div[contains(@class, 'draftsComp list')][2]": addCreators, // 购买后查看字段
 	"//div[contains(@class, 'issueOrganization list')][1]/div[@class='itemUrl']": "publisher", // 购买后查看字段
 	"//div[contains(@class, 'issueOrganization list')][2]/div[@class='itemUrl']": "rights", // 购买后查看字段
@@ -248,9 +248,10 @@ function addCreators(newItem, creators) {
 	}
 }
 
-function addHistory(newItem, history) {
-	history.map(ele => ele.replace(/;$/, ''));
-	addField(newItem, "history", history.slice(1).join('; '));
+function addStandardNumber(newItem, number) {
+	// 国标编号使用一字线
+	// 但是目前没有分辨国标的方法，暂时不做替换
+	newItem.number = number[0]; //.replace('-', '—');
 }
 
 
@@ -884,11 +885,10 @@ var testCases = [
 		"url": "https://d.wanfangdata.com.cn/standard/GB%252FT%25252019001-2016",
 		"items": [
 			{
-				"itemType": "statute",
-				"nameOfAct": "万方数据知识服务平台",
+				"itemType": "standard",
 				"creators": [],
-				"extra": "Type: standard",
 				"language": "zh-CN",
+				"libraryCatalog": "Wanfang Data",
 				"url": "https://d.wanfangdata.com.cn/standard/GB%252FT%25252019001-2016",
 				"attachments": [],
 				"tags": [],
