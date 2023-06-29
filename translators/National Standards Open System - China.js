@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-06-27 17:01:40"
+	"lastUpdated": "2023-06-29 06:13:17"
 }
 
 /*
@@ -99,9 +99,9 @@ function doWeb(doc, url) {
 					});
 				}
 				break;
-			case '发布单位':
-				item.publisher = value;
-				break;
+			// case '发布单位':
+			// 	item.publisher = value;
+			// 	break;
 			default:
 				break;
 		}
