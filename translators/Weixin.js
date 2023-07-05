@@ -8,8 +8,8 @@
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
-	"browserSupport": "gcs",
-	"lastUpdated": "2021-03-01 04:36:11"
+	"browserSupport": "gcsibv",
+	"lastUpdated": "2023-07-05 03:39:17"
 }
 
 /*
@@ -29,7 +29,7 @@
 */
 
 function scrape(doc, url) {
-	const item = new Zotero.Item("webpage");
+	const item = new Zotero.Item("blogPost");
 	
 	const ogMetadataCache = new Map();
 	const nodeList = doc.head.querySelectorAll(':scope meta[property^="og:"]');
@@ -38,43 +38,33 @@ function scrape(doc, url) {
 	}
 	
 	item.title = ogMetadataCache.get("og:title");
-	item.websiteTitle = ogMetadataCache.get("og:site_name");
+	item.websiteType = ogMetadataCache.get("og:site_name");
+	item.blogTitle = doc.querySelector("#profileBt > a").innerText 
 	item.url = ogMetadataCache.get("og:url");
 	item.abstractNote = ogMetadataCache.get("og:description");
 	item.creators = getArticleCreator(doc, ogMetadataCache.get("og:article:author"));
-	item.date = getArticleDate(doc);
-	item.accessDate = new Date().toISOString().slice(0, 10);
+	item.date = doc.querySelector("#publish_time").innerText;
 	note_content = doc.body.querySelector("#js_content").innerHTML.trim();
 	note_content = note_content.replace(/\"/g, "'");
 	note_content = note_content.replace(/<img .*?src='(.*?)'.*?>/g, "<img src='$1'\/>");
 	note_content = `<h1>${item.title}</h1>` + note_content;
 	item.notes.push({note:note_content});
-	item.attachments.push({url: url, title: "Snapshot"});
+	item.attachments.push({url: url, title: "Snapshot", document: doc});
 	item.complete();
 }
 
 function detectWeb(doc, url) {
 	const ogType = doc.head.querySelector('meta[property="og:type"]');
 	if (ogType && ogType.content === "article") {
-		return "webpage";
+		return "blogPost";
 	}
 	return false;
 }
 
 function doWeb(doc, url) {
-	if (detectWeb(doc, url) === "webpage") {		
+	if (detectWeb(doc, url) === "blogPost") {
 		scrape(doc, url);
 	}
-}
-
-function getArticleDate(doc) {
-	const script_list = ZU.xpath(doc, "//script");
-	for (const sc of script_list) {
-		if (sc.innerText.includes("今天")) {
-			return sc.innerText.match(/=\"(\d+?-\d+?-\d+?)\"/)[1].trim();
-		}
-	}
-	return "";
 }
 
 function getArticleCreator(doc, authorName) {
@@ -86,3 +76,7 @@ function getArticleCreator(doc, authorName) {
 			{lastName: profileName, creatorType: "author", fieldMode: 1}
 		   ];
 }
+/** BEGIN TEST CASES **/
+var testCases = [
+]
+/** END TEST CASES **/
