@@ -2,14 +2,14 @@
 	"translatorID": "eb876bd2-644c-458e-8d05-bf54b10176f3",
 	"label": "Wanfang Data",
 	"creator": "Ace Strong <acestrong@gmail.com>, rnicrosoft",
-	"target": "^https?://[a-z]+\\.wanfangdata\\.com\\.cn",
-	"minVersion": "6.0.24",
+	"target": "^https?://d|med.wanfangdata\\.com\\.cn",
+	"minVersion": "2.0rc1",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-06-27 16:59:39"
+	"lastUpdated": "2023-07-19 08:48:13"
 }
 
 /*
@@ -72,7 +72,10 @@ var nodeFieldMapper = {
 	"//div[contains(@class, 'meetingDate')]/div[@class='itemUrl']": "date",
 	"//div[contains(@class, 'meetingName')]/a": "conferenceName",
 	"//div[contains(@class, 'mettingCorpus')]/div[@class='itemUrl']": "series",
-	"//div[contains(@class, 'meetingArea')]/div[@class='itemUrl']": "palce",
+	"//div[contains(@class, 'mettingName')]/*[position()=2]": "conferenceName",
+	"//div[contains(@class, 'meetingArea')]/div[@class='itemUrl']": "place",
+	"//div[contains(@class, 'pageNum')]/div[@class='itemUrl']": "page",
+	"//div[contains(@class, 'sponsor')]/div[@class='itemUrl']": "publisher",
 	"//div[contains(@class, 'applicant')][2]": addCreators,
 	"//div[contains(@class, 'agent')]": addCreators,
 	"//div[contains(@class, 'applicationDate')][2]/div[@class='itemUrl']": 'issueDate',
@@ -82,15 +85,15 @@ var nodeFieldMapper = {
 	"//div[contains(@class, 'applicantArea')]/div[@class='itemUrl']": 'country',
 	"//div[contains(@class, 'applicant')][1]/div[@class='itemUrl']": 'issuingAuthority',
 	"//div[contains(@class, 'signoryItem')][1]/div[@class='itemUrl']": '权力要求',
-	"//div[contains(@class, 'standardId list')][1]/div[@class='itemUrl']": addStandardNumber,
-	"//div[contains(@class, 'draftsComp list')][2]": addCreators, // 购买后查看字段
-	"//div[contains(@class, 'issueOrganization list')][1]/div[@class='itemUrl']": "publisher", // 购买后查看字段
-	"//div[contains(@class, 'issueOrganization list')][2]/div[@class='itemUrl']": "rights", // 购买后查看字段
-	"//div[contains(@class, 'status list')]/div[@class='itemUrl']": "status",
+	"//div[contains(@class, 'standardId list')][1]/div[@class='itemUrl']": "code",
+	"//div[contains(@class, 'draftsComp list')]": addCreators, // 购买后查看字段
+	"//div[contains(@class, 'issueOrganization list')][1]/div[@class='itemUrl']": "rights", // 购买后查看字段
+	"//div[contains(@class, 'applyDate list')][1]/div[@class='itemUrl']": "dateEnacted",
+	"//div[contains(@class, 'status list')]": addExtra,
 	"//div[contains(@class, 'isForce list')]": addExtra,
 	"//div[contains(@class, 'applyDate list')]": addExtra,
-	"//div[contains(@class, 'standardPageNum list')][1]/div[@class='itemUrl']": "numPages",
-	"//div[contains(@class, 'newStandard list')][1]/div[@class='itemUrl']": addExtra, // 购买后查看字段
+	"//div[contains(@class, 'standardPageNum list')][1]/div[@class='itemUrl']": "pages",
+	"//div[contains(@class, 'newStandard list')][1]/div[@class='itemUrl']": addHistory, // 购买后查看字段
 };
 
 var nodeFieldMapperForMed = {
@@ -127,7 +130,7 @@ function addField(newItem, field, value) {
 }
 
 function getTextPair(node) {
-	return node.textContent.split(/：\s?/).map(e => e.trim());
+	return node.textContent.split(/[：:]\s/).map(e => e.trim());
 }
 
 // Get nest node text
@@ -152,7 +155,7 @@ function addTagsForMed(newItem, node) {
 }
 
 function addTags(newItem, tags) {
-	newItem.tags = newItem.tags.concat(tags);
+	newItem.tags = newItem.tags.concat(tags.filter(t => t != "关键词："));
 }
 
 function addExtra(newItem, extra) {
@@ -177,9 +180,8 @@ function addDVIForMed(newItem, node) {
 }
 
 function addPages(newItem, pages) {
-	pages = pages[pages.length - 1];
-	pages = pages.replace(/[\(\)]/g, '');
-	newItem.pages = pages;
+	var m = pages.join("").match(/\((.*?)\)/);
+	if (m) newItem.pages = m[1];
 }
 
 function fixCreator(name) {
@@ -248,17 +250,17 @@ function addCreators(newItem, creators) {
 	}
 }
 
-function addStandardNumber(newItem, number) {
-	// 国标编号使用一字线
-	// 但是目前没有分辨国标的方法，暂时不做替换
-	newItem.number = number[0]; //.replace('-', '—');
+function addHistory(newItem, history) {
+	history.map(ele => ele.replace(/;$/, ''));
+	addField(newItem, "history", history.slice(1).join('; '));
 }
 
 
 function scrape(doc) {
-	Z.debug("---------------WanFang Data 20230420---------------");
+	Z.debug("---------------WanFang Data 20230719---------------");
 	var id = getIDFromPage(doc) || getIDFromURL(doc.URL);
 	var newItem = new Zotero.Item(id.dbname);
+	newItem.language = 'zh-CN';
 	newItem.title = doc.title.replace("-论文-万方医学网", "");
 
 	// Display full abstract
@@ -271,6 +273,7 @@ function scrape(doc) {
 		for (let node of nodes) {
 			var nodeTextPair = getTextPair(node);
 			// Z.debug(nodeTextPair);
+			if (nodeTextPair[0] == 'PMID') newItem.language = 'en';  // PMID for English article
 			if (nodeTextPair[0].trim() in nodeFieldMapperForMed) {
 				typeof nodeFieldMapperForMed[nodeTextPair[0]] == "string"
 					? addField(newItem, nodeFieldMapperForMed[nodeTextPair[0]], nodeTextPair[1].trim())
@@ -282,14 +285,21 @@ function scrape(doc) {
 			var foundNodes = ZU.xpath(doc, k);
 			if (foundNodes.length == 0) continue;
 			var texts = getText(foundNodes[0]);
+			if (v == '权力要求') {
+				newItem.notes.push({ note: texts.join("\n") });
+				continue;
+			}
 			typeof v == 'string'
 				? addField(newItem, v, texts.join('; '))
 				: v(newItem, texts);
 		}
 	}
-	newItem.language = 'zh-CN';
+	if (doc.URL.includes("wanfangdata.com.cn/standard/")) {
+		addExtra(newItem, ["Type", "standard"]); // https://forums.zotero.org/discussion/comment/409058/#Comment_409058
+	}
+	
 	if (newItem.abstractNote) newItem.abstractNote = newItem.abstractNote.replace(/^摘要：;/, "");
-	if (newItem.DOI) newItem.DOI = newItem.DOI.replace(/^DOI: /, "");
+	if (newItem.DOI) newItem.DOI = newItem.DOI.replace(/^DOI[:：];?\s?/, "");
 	if (newItem.itemType != 'thesis' && newItem.university) {
 		newItem.extra ? newItem.extra = newItem.extra + "\n地点：" + newItem.university
 			: newItem.extra = "地点：" + newItem.university;
@@ -367,8 +377,8 @@ function getTypeFromDBName(db) {
 		PeriodicalPaper: "journalArticle",  // For med
 		DegreePaper: "thesis",
 		ConferencePaper: "conferencePaper",
-		standard: "standard",
-		Standard: "standard",
+		standard: "statute",
+		Standard: "statute",
 	};
 	if (db) {
 		return dbType[db];
@@ -443,26 +453,25 @@ var testCases = [
 				"title": "微波法制备生物柴油研究进展",
 				"creators": [
 					{
+						"firstName": "辉",
 						"lastName": "商",
-						"creatorType": "author",
-						"firstName": "辉"
+						"creatorType": "author"
 					},
 					{
+						"firstName": "禹",
 						"lastName": "丁",
-						"creatorType": "author",
-						"firstName": "禹"
+						"creatorType": "author"
 					},
 					{
+						"firstName": "文慧",
 						"lastName": "张",
-						"creatorType": "author",
-						"firstName": "文慧"
+						"creatorType": "author"
 					}
 				],
-				"date": "2019-01-01 00:00:00",
+				"date": "2019",
 				"DOI": "10.11949/j.issn.0438?1157.20181400",
-				"ISSN": "0438-1157",
 				"abstractNote": "基于微波的选择性、瞬时性及体积性加热的特点,可以有效提高反应分子的平均能量、分子的碰撞频率,加快反应速率,采用微波辅助催化酯交换反应制备生物柴油近几年得到了国内外学者的广泛关注.将微波能应用于生物柴油制备过程具有显著的优势,与传统加热方式相比,采用微波辐射加热,反应时间明显缩短,产物组成也有所变化.因此主要从酸碱催化剂催化酯交换反应和酯化反应的角度,综述了国内外对微波辅助生物柴油制备的研究进展,并对微波优势及未来发展趋势进行了展望.",
-				"extra": "<北大《中文核心期刊要目总览》, 中国科技论文与引文数据库, 美国《工程索引》>",
+				"extra": "北大核心; CSTPCD; EI\n地点：中国石油大学(北京)重质油国家重点实验室,北京,102249; 中国石油大学(北京)重质油国家重点实验室,北京,102249; 中国石油大学(北京)重质油国家重点实验室,北京,102249",
 				"issue": "z1",
 				"language": "zh-CN",
 				"libraryCatalog": "Wanfang Data",
@@ -507,18 +516,18 @@ var testCases = [
 				"title": "济南市生物多样性评价及与生物入侵关系研究",
 				"creators": [
 					{
+						"firstName": "令玉",
 						"lastName": "孟",
-						"creatorType": "author",
-						"firstName": "令玉"
+						"creatorType": "author"
 					},
 					{
+						"firstName": "爱军",
 						"lastName": "曲",
-						"creatorType": "contributor",
-						"firstName": "爱军"
+						"creatorType": "contributor"
 					}
 				],
-				"date": "2019-06-06 00:00:00",
-				"abstractNote": "生物多样性是我国生态环境的重要组成部分，也是生态文明建设的重要内容。如何更合理的建立评价生物多样性体系及确定威胁生物多样性相关因素，对政府科学制定生物多样性保护战略规划及行动计划极其重要，对生态文明建设具有重要意义。同时，生物多样性是一种资源，是生物资源的基础，具有多种多样的生态和环境服务功能。　　通过济南市生物多样性现状评价，可明确济南市生物多样性现状、威胁因素和保护现状，有助于济南市资源有效利用与保护，以及相关政府部门科学的制定生物多样性保护战略与具体行动计划。本研究依据环保部生物多样性省域评价体系，组建了暖温带生物多样性评价体系，并依据该两种体系对济南市生物多样性进行了系统评价，并根据评估情况提出了相应建议，评估结果如下：　　1、依据省域生物多样性评价体系评估结果表明，济南市生物多样性处于中等水平，分值为2.9591。其中，植物和动物多样性均处于省内较高水平，分值分别为4.83和4.3908，森林生态系统多样性处于省内中游水平，分值为3.0078，微生物多样性和湿地生态系统多样性处于较差水平，分值分别为1和1.3737；威胁最为严重的是外来物种入侵程度（1.6680），其次为环境污染程度（2.2651）、野生资源的过度利用程度（2.7125）和自然生境破坏程度（3.1427）；迁地保护水平、生境恢复和改善水平处于省内较高水平，分值分别为4和4.3329，自然保护区建设管理较差。　　2、本文首次建立了暖温带评价体系，依据该评价体系，在我国暖温带区域内，济南市生物多样性处于较差水平，分值为2.1640。其中动物多样性均处于暖温带较高水平，分值为4.125，植物多样性、森林生态系统多样性处于省内中游水平，分值分别为2.9488和2.9015，微生物多样性和湿地生态系统多样性处于较差水平，分值分别为1分和1.3098；威胁最为严重的是野生资源的过度利用程度（0.5000），其次为环境污染程度（1.1430）、外来物种入侵程度（1.6680）和自然生境破坏程度（1.8255）。迁地保护水平处于暖温带内较高水平，分值为4，自然保护区建设管理，生境恢复和改善水平较差，类似于省内评价结果。　　3、济南市外来入侵物种共19种，外来入侵物种种类比为1.04%，分布较为广泛，济南市几乎全部区域均受到外来物种的影响。其中对济南市生物多样性威胁最为严重的是美国白蛾（Hyphantria cunea）等昆虫，除生物入侵外，环境污染和野生资源过度利用也对济南市生物多样性造成一定影响。　　本文依据的省域和新组建的生物多样性评价指标体系可为其他地区的生物多样评价提供参考，为济南市生物多样性保护工作方向提供依据，为生物入侵管理和济南市生物资源利用奠定基础。",
+				"date": "2019",
+				"abstractNote": "生物多样性是我国生态环境的重要组成部分，也是生态文明建设的重要内容。如何更合理的建立评价生物多样性体系及确定威胁生物多样性相关因素，对政府科学制定生物多样性保护战略规划及行动计划极其重要，对生态文明建设具有重要意义。同时，生物多样性是一种资源，是生物资源的基础，具有多种多样的生态和环境服务功能。　　通过济南市生物多样性现状评价，可明确济南市生物多样性现状、威胁因素和保护现状，有助于济南市资源有效利用与保护，以及相关政府部门科学的制定生物多样性保护战略与具体行动计划。本研究依据环保部生物多样性省域评价体系，组建了暖温带生物多样...",
 				"language": "zh-CN",
 				"libraryCatalog": "Wanfang Data",
 				"thesisType": "硕士",
@@ -532,40 +541,16 @@ var testCases = [
 				],
 				"tags": [
 					{
-						"tag": "外来入侵物种"
-					},
-					{
-						"tag": "外来物种入侵"
-					},
-					{
-						"tag": "微生物多样性"
-					},
-					{
-						"tag": "暖温带"
-					},
-					{
-						"tag": "济南市"
-					},
-					{
-						"tag": "生态文明建设"
-					},
-					{
-						"tag": "生态系统多样性"
-					},
-					{
 						"tag": "生物入侵"
 					},
 					{
-						"tag": "生物多样性保护"
+						"tag": "生物多样性"
 					},
 					{
-						"tag": "生物多样性评价"
+						"tag": "评价指标体系"
 					},
 					{
-						"tag": "评价体系"
-					},
-					{
-						"tag": "野生资源"
+						"tag": "资源利用"
 					}
 				],
 				"notes": [],
@@ -582,51 +567,39 @@ var testCases = [
 				"title": "生物发酵提高芦笋汁生物利用率研究",
 				"creators": [
 					{
+						"firstName": "晓春",
 						"lastName": "吴",
-						"creatorType": "author",
-						"firstName": "晓春"
+						"creatorType": "author"
 					},
 					{
+						"firstName": "惠华",
 						"lastName": "黄",
-						"creatorType": "author",
-						"firstName": "惠华"
+						"creatorType": "author"
 					}
 				],
-				"date": "20181204",
+				"date": "2018-12-04",
 				"abstractNote": "本研究在单因素试验的基础上通过响应面法优化安琪酵母发酵芦笋汁生产工艺,以芦笋汁中总皂苷元含量作为响应值,各影响因素为自变量,设计响应面实验方案.结果表明一次项X1(接种量)、X2(发酵温度)、X3(发酵时间)和所有因素的二次项都达到了极显著水平(P<0.01).并得到安琪酵母发酵芦笋汁的最优生产工艺条件:利用R2A琼脂作为基础培养基接种量0.2％、发酵温度30℃、发酵时间7天.在此条件下重复实验3次,整理结果可知芦笋总皂苷元含量可达到(361.68±8.62)μg.",
 				"conferenceName": "2018年广东省食品学会年会",
+				"extra": "地点：华南理工大学食品科学与工程学院,广东省广州市 510640",
 				"language": "zh-CN",
 				"libraryCatalog": "Wanfang Data",
-				"pages": "69-74",
 				"place": "广州",
-				"proceedingsTitle": "2018年广东省食品学会年会论文集",
 				"publisher": "广东省食品学会",
+				"series": "2018年广东省食品学会年会论文集",
 				"url": "https://d.wanfangdata.com.cn/conference/9534067",
 				"attachments": [],
 				"tags": [
 					{
-						"tag": "发酵时间"
+						"tag": "总皂苷元含量"
 					},
 					{
-						"tag": "发酵温度"
-					},
-					{
-						"tag": "响应面法"
-					},
-					{
-						"tag": "生产工艺"
+						"tag": "生物利用率"
 					},
 					{
 						"tag": "生物发酵"
 					},
 					{
 						"tag": "芦笋汁"
-					},
-					{
-						"tag": "苷元含量"
-					},
-					{
-						"tag": "酵母发酵"
 					}
 				],
 				"notes": [],
@@ -643,42 +616,39 @@ var testCases = [
 				"title": "生物体签名系统及生物体签名方法",
 				"creators": [
 					{
+						"firstName": "贺阳介",
 						"lastName": "加",
-						"creatorType": "inventor",
-						"firstName": "贺阳介"
+						"creatorType": "inventor"
 					},
 					{
+						"firstName": "桥健太",
 						"lastName": "高",
-						"creatorType": "inventor",
-						"firstName": "桥健太"
+						"creatorType": "inventor"
 					},
 					{
+						"firstName": "尾正和",
 						"lastName": "藤",
-						"creatorType": "inventor",
-						"firstName": "尾正和"
+						"creatorType": "inventor"
 					},
 					{
+						"firstName": "伟",
 						"lastName": "陈",
-						"creatorType": "attorneyAgent",
-						"firstName": "伟"
+						"creatorType": "attorneyAgent"
 					},
 					{
+						"firstName": "静",
 						"lastName": "沈",
-						"creatorType": "attorneyAgent",
-						"firstName": "静"
+						"creatorType": "attorneyAgent"
 					}
 				],
-				"issueDate": "2019-10-11 00:00:00",
+				"issueDate": "2019-10-11",
 				"abstractNote": "生物体签名系统保持将从用户的部位得到的第一生物体信息转换而得到的第一模板和通过单向性转换将从该用户的该部位得到的第二生物体信息进行转换而得到的第二模板，根据认证对象的第一生物体信息生成第一模板，对使用参数修正后的认证对象的第一模板与生物体签名系统保持的第一模板之间的相似度高的该参数进行特定，分别根据分别使用包括该特定出的参数在内的规定范围所包括的参数修正后的认证对象的第二生物体信息，生成第二模板，并将该生成的第二模板分别与生物体签名系统保持的第二模板进行比较来判定认证对象的认证成功与否。",
 				"applicationNumber": "CN110326254A",
-				"country": "CN",
-				"filingDate": "2018-02-14 00:00:00",
+				"country": "日本;JP",
+				"filingDate": "2018-02-14",
 				"issuingAuthority": "株式会社日立制作所",
 				"language": "zh-CN",
-				"legalStatus": "在审",
 				"patentNumber": "CN201880013080.0",
-				"place": "日本;JP",
-				"rights": "1.一种生物体签名系统，其特征在于， 包括处理器和存储器， 所述存储器保持第一模板和第二模板，该第一模板表示通过规定的转换将从用户的规定部位得到的第一生物体信息进行转换后的结果，该第二模板表示通过规定的单向性转换将从所述用户的所述规定部位得到的第二生物体信息进行转换后的结果， 所述处理器进行以下处理： 获取认证对象的所述第一生物体信息和所述第二生物体信息， 根据获取到的所述第一生物体信息生成所述认证对象的第一模板， 对使用参数修正后的所述认证对象的第一模板与所述存储器保持的第一模板之间的相似度比规定条件高的所述参数进行特定， 分别使用包括特定出的所述参数在内的规定范围所包括的参数来修正所述认证对象的第二生物体信息， 分别根据修正后的所述第二生物体信息生成所述认证对象的第二模板， 将生成的所述第二模板分别与所述存储器保持的第二模板进行比较来判定所述认证对象的认证成功与否。 2.根据权利要求1所述的生物体签名系统，其特征在于， 所述处理器通过所述规定的转换对获取到的所述第一生物体信息进行转换而生成所述认证对象的第一模板。 3.根据权利要求1所述的生物体签名系统，其特征在于， 所述处理器通过所述规定的单向性转换对修正后的所述第二生物体信息分别进行转换而生成所述认证对象的第二模板。 4.根据权利要求1所述的生物体签名系统，其特征在于， 储存于所述存储器内的第一生物体信息与第二生物体信息的相关系数为规定值以下。 5.根据权利要求1所述的生物体签名系统，其特征在于， 所述参数包括所述第一模板及所述第二模板的修正中的、表示平行移动量的参数和表示旋转量的参数。 6.根据权利要求1所述的生物体签名系统，其特征在于， 所述存储器保持多个用户的第一模板和第二模板， 所述处理器进行以下处理： 对与所述存储器保持的多个第一模板中的、存在所述相似度比规定条件高的所述参数的第一模板对应的用户群进行特定， 关于特定出的所述用户群的每个用户，分别使用包括特定出的参数在内的规定范围所包括的参数来修正所述认证对象的第二生物体信息并生成第二模板，并且将该生成的第二模板分别与该用户的第二模板进行比较， 基于分别针对特定出的所述用户群的比较结果来判定所述认证对象的认证成功与否。 7.一种生物体签名方法，由生物体签名系统进行生物体签名，其特征在于， 所述生物体签名系统保持第一模板和第二模板，该第一模板表示通过规定的转换将从用户的规定部位得到的第一生物体信息进行转换后的结果，该第二模板表示通过规定的单向性转换将从所述用户的所述规定部位得到的第二生物体信息进行转换后的结果， 在所述方法中，所述生物体签名系统进行以下处理： 获取认证对象的所述第一生物体信息和所述第二生物体信息， 根据获取到的所述第一生物体信息生成所述认证对象的第一模板， 对使用参数修正后的所述认证对象的第一模板与所述生物体签名系统保持的第一模板之间的相似度比规定条件高的所述参数进行特定， 分别使用包括特定出的所述参数在内的规定范围所包括的参数来修正所述认证对象的第二生物体信息， 分别从修正后的所述第二生物体信息生成所述认证对象的第二模板， 将生成的所述第二模板分别与所述生物体签名系统保持的第二模板进行比较来判定所述认证对象的认证成功与否。 8.根据权利要求7所述的方法，其特征在于， 在所述方法中，所述生物体签名系统通过所述规定的转换对获取到的所述第一生物体信息进行转换而生成所述认证对象的第一模板。 9.根据权利要求7所述的方法，其特征在于， 在所述方法中，所述生物体签名系统通过所述规定的单向性转换对修正后的所述第二生物体信息分别进行转换而生成所述认证对象的第二模板。 10.根据权利要求7所述的方法，其特征在于， 储存于所述生物体签名系统内的第一生物体信息与第二生物体信息的相关系数为规定值以下。 11.根据权利要求7所述的方法，其特征在于， 所述参数包括所述第一模板及所述第二模板的修正中的、表示平行移动量的参数和表示旋转量的参数。 12.根据权利要求7所述的方法，其特征在于， 所述生物体签名系统保持多个用户的第一模板和第二模板， 在所述方法中，所述生物体签名系统进行以下处理： 对与所述生物体签名系统保持的多个第一模板中的、存在所述相似度比规定条件高的所述参数的第一模板对应的用户群进行特定， 关于特定出的所述用户群的每个用户，分别使用包括特定出的参数在内的规定范围所包括的参数来修正所述认证对象的第二生物体信息并生成第二模板，并且将该生成的第二模板分别与该用户的第二模板进行比较， 基于分别针对特定出的所述用户群的比较结果来判定所述认证对象的认证成功与否。",
 				"url": "https://d.wanfangdata.com.cn/patent/CN201880013080.0",
 				"attachments": [
 					{
@@ -687,46 +657,49 @@ var testCases = [
 					}
 				],
 				"tags": [],
-				"notes": [],
+				"notes": [
+					{
+						"note": "1.一种生物体签名系统，其特征在于， 包括处理器和存储器， 所述存储器保持第一模板和第二模板，该第一模板表示通过规定的转换将从用户的规定部位得到的第一生物体信息进行转换后的结果，该第二模板表示通过规定的单向性转换将从所述用户的所述规定部位得到的第二生物体信息进行转换后的结果， 所述处理器进行以下处理： 获取认证对象的所述第一生物体信息和所述第二生物体信息， 根据获取到的所述第一生物体信息生成所述认证对象的第一模板， 对使用参数修正后的所述认证对象的第一模板与所述存储器保持的第一模板之间的相似度比规定条件高的所述参数进行特定， 分别使用包括特定出的所述参数在内的规定范围所包括的参数来修正所述认证对象的第二生物体信息， 分别根据修正后的所述第二生物体信息生成所述认证对象的第二模板， 将生成的所述第二模板分别与所述存储器保持的第二模板进行比较来判定所述认证对象的认证成功与否。 2.根据权利要求1所述的生物体签名系统，其特征在于， 所述处理器通过所述规定的转换对获取到的所述第一生物体信息进行转换而生成所述认证对象的第一模板。 3.根据权利要求1所述的生物体签名系统，其特征在于， 所述处理器通过所述规定的单向性转换对修正后的所述第二生物体信息分别进行转换而生成所述认证对象的第二模板。 4.根据权利要求1所述的生物体签名系统，其特征在于， 储存于所述存储器内的第一生物体信息与第二生物体信息的相关系数为规定值以下。 5.根据权利要求1所述的生物体签名系统，其特征在于， 所述参数包括所述第一模板及所述第二模板的修正中的、表示平行移动量的参数和表示旋转量的参数。 6.根据权利要求1所述的生物体签名系统，其特征在于， 所述存储器保持多个用户的第一模板和第二模板， 所述处理器进行以下处理： 对与所述存储器保持的多个第一模板中的、存在所述相似度比规定条件高的所述参数的第一模板对应的用户群进行特定， 关于特定出的所述用户群的每个用户，分别使用包括特定出的参数在内的规定范围所包括的参数来修正所述认证对象的第二生物体信息并生成第二模板，并且将该生成的第二模板分别与该用户的第二模板进行比较， 基于分别针对特定出的所述用户群的比较结果来判定所述认证对象的认证成功与否。 7.一种生物体签名方法，由生物体签名系统进行生物体签名，其特征在于， 所述生物体签名系统保持第一模板和第二模板，该第一模板表示通过规定的转换将从用户的规定部位得到的第一生物体信息进行转换后的结果，该第二模板表示通过规定的单向性转换将从所述用户的所述规定部位得到的第二生物体信息进行转换后的结果， 在所述方法中，所述生物体签名系统进行以下处理： 获取认证对象的所述第一生物体信息和所述第二生物体信息， 根据获取到的所述第一生物体信息生成所述认证对象的第一模板， 对使用参数修正后的所述认证对象的第一模板与所述生物体签名系统保持的第一模板之间的相似度比规定条件高的所述参数进行特定， 分别使用包括特定出的所述参数在内的规定范围所包括的参数来修正所述认证对象的第二生物体信息， 分别从修正后的所述第二生物体信息生成所述认证对象的第二模板， 将生成的所述第二模板分别与所述生物体签名系统保持的第二模板进行比较来判定所述认证对象的认证成功与否。 8.根据权利要求7所述的方法，其特征在于， 在所述方法中，所述生物体签名系统通过所述规定的转换对获取到的所述第一生物体信息进行转换而生成所述认证对象的第一模板。 9.根据权利要求7所述的方法，其特征在于， 在所述方法中，所述生物体签名系统通过所述规定的单向性转换对修正后的所述第二生物体信息分别进行转换而生成所述认证对象的第二模板。 10.根据权利要求7所述的方法，其特征在于， 储存于所述生物体签名系统内的第一生物体信息与第二生物体信息的相关系数为规定值以下。 11.根据权利要求7所述的方法，其特征在于， 所述参数包括所述第一模板及所述第二模板的修正中的、表示平行移动量的参数和表示旋转量的参数。 12.根据权利要求7所述的方法，其特征在于， 所述生物体签名系统保持多个用户的第一模板和第二模板， 在所述方法中，所述生物体签名系统进行以下处理： 对与所述生物体签名系统保持的多个第一模板中的、存在所述相似度比规定条件高的所述参数的第一模板对应的用户群进行特定， 关于特定出的所述用户群的每个用户，分别使用包括特定出的参数在内的规定范围所包括的参数来修正所述认证对象的第二生物体信息并生成第二模板，并且将该生成的第二模板分别与该用户的第二模板进行比较， 基于分别针对特定出的所述用户群的比较结果来判定所述认证对象的认证成功与否。"
+					}
+				],
 				"seeAlso": []
 			}
 		]
 	},
 	{
 		"type": "web",
-		"url": "http://med.wanfangdata.com.cn/Paper/Detail?id=PeriodicalPaper_zhyfyx200202011&dbid=WF_QK",
+		"url": "https://med.wanfangdata.com.cn/Paper/Detail?id=PeriodicalPaper_zhyfyx200202011&dbid=WF_QK",
 		"items": [
 			{
 				"itemType": "journalArticle",
 				"title": "SF-36健康调查量表中文版的研制及其性能测试",
 				"creators": [
 					{
+						"firstName": "鲁",
 						"lastName": "李",
-						"creatorType": "author",
-						"firstName": "鲁"
+						"creatorType": "author"
 					},
 					{
+						"firstName": "红妹",
 						"lastName": "王",
-						"creatorType": "author",
-						"firstName": "红妹"
+						"creatorType": "author"
 					},
 					{
+						"firstName": "毅",
 						"lastName": "沈",
-						"creatorType": "author",
-						"firstName": "毅"
+						"creatorType": "author"
 					}
 				],
-				"date": "2002-01-01 00:00:00",
+				"date": "2002",
 				"DOI": "10.3760/j:issn:0253-9624.2002.02.011",
-				"ISSN": "0253-9624",
 				"abstractNote": "目的研制SF-36健康调查量表中文版并验证量表维度建立及记分假设、信度和效度.方法采用多阶段混合型等概率抽样法,用SF-36健康调查量表中文版对1 000户家庭的居民进行自评量表式调查;参照国际生命质量评价项目的标准程序,进行正式的心理测验学试验.结果在收回的1 985份问卷中,18岁以上的有效问卷1 972份,其中应答者1 688人(85.6%),1 316人回答了所有条目,372人有1个或以上的缺失答案,无应答者中文盲、半文盲占65.5%.等距假设在活力(VT)和精神健康(MH)维度被打破了,按重编码后值计算维度分数;条目集群的分布接近源量表及其他2个中文译本;除了生理功能(PF)、躯体疼痛(BP)、社会功能(SF)维度,其余维度有相似的标准差;除了SF、VT维度,其余6个维度条目维度相关一致;除了SF维度,7个维度集合效度成功率范围为75%～100%,区分效度成功率范围为87.5%～100%.一致性信度系数除了SF、VT维度,其余6维度变化范围为0.72～0.88,满足群组比较的要求.两周重测信度变化范围为0.66～0.94.因子分析产生了2个主成分,分别代表生理健康和心理健康,解释了56.3%的总方差.结论为SF-36健康调查量表适用于中国提供了证据,已知群效度试验将为量表效度提供更有意义的证据.",
-				"extra": "<北大《中文核心期刊要目总览》, 中国科技论文与引文数据库>",
+				"extra": "MEDLINE，收录年份：2022\n中国科技核心期刊，收录年份：2021\n北大核心期刊，收录年份：2020\n中国科学引文数据库，收录年份：2021\nBIOSIS Previews，收录年份：2022\n2004-01-08\n浙江省科技计划",
 				"issue": "2",
 				"language": "zh-CN",
 				"libraryCatalog": "Wanfang Data",
 				"pages": "109-113",
 				"publicationTitle": "中华预防医学杂志",
-				"url": "http://med.wanfangdata.com.cn/Paper/Detail?id=PeriodicalPaper_zhyfyx200202011&dbid=WF_QK",
+				"url": "https://med.wanfangdata.com.cn/Paper/Detail?id=PeriodicalPaper_zhyfyx200202011&dbid=WF_QK",
 				"volume": "36",
 				"attachments": [],
 				"tags": [
@@ -734,10 +707,25 @@ var testCases = [
 						"tag": "SF-36量表"
 					},
 					{
+						"tag": "人(Persons)"
+					},
+					{
+						"tag": "健康调查(Health Surveys)"
+					},
+					{
 						"tag": "心理学试验"
 					},
 					{
+						"tag": "心理学试验(Psychological Tests)"
+					},
+					{
 						"tag": "生活质量"
+					},
+					{
+						"tag": "生活质量(Quality of Life)"
+					},
+					{
+						"tag": "目的(Goals)"
 					}
 				],
 				"notes": [],
@@ -750,7 +738,7 @@ var testCases = [
 		"url": "https://d.wanfangdata.com.cn/periodical/ChlQZXJpb2RpY2FsQ0hJTmV3UzIwMjIwNzE5Eg5RSzE5OTgwMTIxODkyMhoIdm9wbzYzZ2k%3D",
 		"items": [
 			{
-				"itemType": "webpage",
+				"itemType": "journalArticle",
 				"title": "个人写作但是在个人与世界之间-肖开愚访谈录",
 				"creators": [
 					{
@@ -764,11 +752,13 @@ var testCases = [
 						"creatorType": "author"
 					}
 				],
-				"date": "1998,          (8)",
-				"abstractNote": "万方数据知识服务平台-中外学术论文、中外标准、中外专利、科技成果、政策法规等科技文献的在线服务平台。",
+				"date": "1998",
+				"issue": "8",
 				"language": "zh-CN",
+				"libraryCatalog": "Wanfang Data",
+				"pages": "97-102",
+				"publicationTitle": "北京文学",
 				"url": "https://d.wanfangdata.com.cn/periodical/ChlQZXJpb2RpY2FsQ0hJTmV3UzIwMjIwNzE5Eg5RSzE5OTgwMTIxODkyMhoIdm9wbzYzZ2k%3D",
-				"websiteTitle": "北京文学",
 				"attachments": [],
 				"tags": [
 					{
@@ -781,16 +771,10 @@ var testCases = [
 						"tag": "书面语言"
 					},
 					{
-						"tag": "余弦"
-					},
-					{
 						"tag": "写作冲动"
 					},
 					{
 						"tag": "动物园"
-					},
-					{
-						"tag": "北京文学"
 					},
 					{
 						"tag": "四川省"
@@ -800,9 +784,6 @@ var testCases = [
 					},
 					{
 						"tag": "抒情诗"
-					},
-					{
-						"tag": "肖开愚"
 					},
 					{
 						"tag": "西方诗歌"
@@ -818,7 +799,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "http://med.wanfangdata.com.cn/Paper/Detail/PeriodicalPaper_PM21270037",
+		"url": "https://med.wanfangdata.com.cn/Paper/Detail/PeriodicalPaper_PM21270037",
 		"items": [
 			{
 				"itemType": "journalArticle",
@@ -842,39 +823,14 @@ var testCases = [
 				],
 				"DOI": "10.1098/rspb.2010.2497",
 				"abstractNote": "Identifying tradeoffs between hunting and scavenging in an ecological context is important for understanding predatory guilds. In the past century, the feeding strategy of one of the largest and best-known terrestrial carnivores, Tyrannosaurus rex, has been the subject of much debate: was it an active predator or an obligate scavenger? Here we look at the feasibility of an adult T. rex being an obligate scavenger in the environmental conditions of Late Cretaceous North America, given the size distributions of sympatric herbivorous dinosaurs and likely competition with more abundant small-bodied theropods. We predict that nearly 50 per cent of herbivores would have been within a 55-85 kg range, and calculate based on expected encounter rates that carcasses from these individuals would have been quickly consumed by smaller theropods. Larger carcasses would have been very rare and heavily competed for, making them an unreliable food source. The potential carcass search rates of smaller theropods are predicted to be 14-60 times that of an adult T. rex. Our results suggest that T. rex and other extremely large carnivorous dinosaurs would have been unable to compete as obligate scavengers and would have primarily hunted large vertebrate prey, similar to many large mammalian carnivores in modern-day ecosystems.",
-				"extra": "Institute of Zoology\n                            [1]\n                        \n                        \n                             Zoological Society of London\n                            [2]\n                        \n                        \n                             Regent's Park\n                            [3]\n                        \n                        \n                             London NW1 4RY\n                            [4]\n                        \n                        \n                             UK. chris.carbone@ioz.ac.uk\n                            [5]\n\n2021-10-20",
-				"language": "zh-CN",
+				"extra": "Institute of Zoology, Zoological Society of London, Regent's Park, London NW1 4RY, UK. chris.carbone@ioz.ac.uk\n                            [1]\n\n2021-10-20",
+				"language": "en",
 				"libraryCatalog": "Wanfang Data",
 				"pages": "2682-90",
 				"publicationTitle": "Proceedings. Biological sciences",
-				"url": "http://med.wanfangdata.com.cn/Paper/Detail/PeriodicalPaper_PM21270037",
+				"url": "https://med.wanfangdata.com.cn/Paper/Detail/PeriodicalPaper_PM21270037",
 				"attachments": [],
-				"tags": [
-					{
-						"tag": "动物(Animals)"
-					},
-					{
-						"tag": "北美洲(North America)"
-					},
-					{
-						"tag": "恐龙(Dinosaurs)"
-					},
-					{
-						"tag": "掠夺行为(Predatory Behavior)"
-					},
-					{
-						"tag": "摄食行为(Feeding Behavior)"
-					},
-					{
-						"tag": "生态系统(Ecosystem)"
-					},
-					{
-						"tag": "竞争行为(Competitive Behavior)"
-					},
-					{
-						"tag": "食人肉癖(Cannibalism)"
-					}
-				],
+				"tags": [],
 				"notes": [],
 				"seeAlso": []
 			}
@@ -885,10 +841,15 @@ var testCases = [
 		"url": "https://d.wanfangdata.com.cn/standard/GB%252FT%25252019001-2016",
 		"items": [
 			{
-				"itemType": "standard",
+				"itemType": "statute",
+				"nameOfAct": "质量管理体系 要求",
 				"creators": [],
+				"dateEnacted": "2017-07-01",
+				"abstractNote": "本标准为下列组织规定了质量管理体系要求:\r\na)需要证实其具有稳定提供满足顾客要求及适用法律法规要求的产品和服务的能力;\r\nb)通过体系的有效应用，包括体系改进的过程，以及保证符合顾客要求和适用的法律法规要求，旨在增强顾客满意。\r\n本标准规定的所有要求是通用的，旨在适用于各种类型、不同规模和提供不同产品和服务的组织。",
+				"code": "GB/T 19001-2016",
+				"extra": "状态: 现行\n强制性标准: 否\n实施日期: 2017-07-01\nType: standard",
 				"language": "zh-CN",
-				"libraryCatalog": "Wanfang Data",
+				"pages": "31",
 				"url": "https://d.wanfangdata.com.cn/standard/GB%252FT%25252019001-2016",
 				"attachments": [],
 				"tags": [],
