@@ -1,7 +1,7 @@
 {
 	"translatorID": "cd01cf63-90ba-42b4-a505-74d8d14f79d6",
 	"label": "National Public Service Platform for Standards Information - China",
-	"creator": "Zeping Lee",
+	"creator": "Zeping Lee, rnicrosoft",
 	"target": "https?://std\\.samr\\.gov\\.cn/",
 	"minVersion": "3.0",
 	"maxVersion": "",
@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-10-18 13:36:12"
+	"lastUpdated": "2023-06-27 17:37:20"
 }
 
 /*
@@ -35,23 +35,50 @@
 	***** END LICENSE BLOCK *****
 */
 
+function addExtra(newItem, extra) {
+	newItem.extra = (newItem.extra ? newItem.extra + "\n" : "") + extra[0].trim().replace(/[：:]$/, '') + ": " + extra.slice(1).join('; ');
+}
+
 function detectWeb(_doc, _url) {
-	return 'report';
+	return 'standard';
 }
 
 function doWeb(doc, url) {
-	var item = new Zotero.Item('report');
+	var item = new Zotero.Item('standard');
 
 	item.language = 'zh-CN';
 	item.url = url;
 	item.libraryCatalog = '全国标准信息公共服务平台';
-	item.extra = 'Type: standard';
 
 	if (doc.querySelector('.label-info').textContent === '国际标准') {
 		item.title = doc.querySelector('.page-header + p').textContent;
 	}
 	else {
 		item.title = doc.querySelector('.page-header h4').textContent;
+	}
+
+	for (let status of doc.querySelectorAll('.page-header .s-status')) {
+		let label = status.textContent;
+		switch (label) { // 英文标准
+			case '现行':
+			case '被代替':
+			case '修订':
+			case '废止':
+				item.status = label;
+			default:
+				// Z.debug(label);
+		}
+	}
+
+	for (let panel of doc.querySelectorAll('.panel')) {
+		let heading = panel.querySelector('.panel-heading').textContent.trim();
+		switch (heading) {
+			case '当前标准':
+			case '当前标准计划':
+				let status = panel.querySelector('.panel-body .s-status').textContent;
+				item.status = status;
+				break;
+		}
 	}
 
 	var dtList = doc.querySelectorAll('dt.basicInfo-item.name');
@@ -79,7 +106,7 @@ function doWeb(doc, url) {
 					// 国标编号使用一字线
 					value = value.replace('-', '—');
 				}
-				item.reportNumber = value;
+				item.number = value;
 				break;
 			case '发布日期':
 				item.date = value;
@@ -87,7 +114,12 @@ function doWeb(doc, url) {
 			case '实施日期':
 				if (!item.date || item.date.length === 0) {
 					item.date = value;
+				} else {
+					addExtra(item, [name, value]);
 				}
+				break;
+			case '全部代替标准':
+				addExtra(item, [name, value]);
 				break;
 			case '归口部门':
 			case '归口单位':
@@ -121,9 +153,10 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://std.samr.gov.cn/gb/search/gbDetailed?id=71F772D7AA78D3A7E05397BE0A0AB82A",
+		"detectedItemType": "standard",
 		"items": [
 			{
-				"itemType": "report",
+				"itemType": "standard",
 				"title": "国际单位制及其应用",
 				"creators": [
 					{
@@ -133,10 +166,11 @@ var testCases = [
 					}
 				],
 				"date": "1993-07-01",
-				"extra": "Type: standard",
+				"extra": "实施日期: 1994-07-01\n全部代替标准: GB 3100-1986",
 				"language": "zh-CN",
 				"libraryCatalog": "全国标准信息公共服务平台",
-				"reportNumber": "GB 3100—1993",
+				"number": "GB 3100—1993",
+				"status": "现行",
 				"url": "https://std.samr.gov.cn/gb/search/gbDetailed?id=71F772D7AA78D3A7E05397BE0A0AB82A",
 				"attachments": [
 					{
@@ -153,9 +187,10 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://std.samr.gov.cn/gb/search/gbDetailed?id=71F772D8055ED3A7E05397BE0A0AB82A",
+		"detectedItemType": "standard",
 		"items": [
 			{
-				"itemType": "report",
+				"itemType": "standard",
 				"title": "信息与文献  参考文献著录规则",
 				"creators": [
 					{
@@ -165,10 +200,11 @@ var testCases = [
 					}
 				],
 				"date": "2015-05-15",
-				"extra": "Type: standard",
+				"extra": "实施日期: 2015-12-01\n全部代替标准: GB/T 7714-2005",
 				"language": "zh-CN",
 				"libraryCatalog": "全国标准信息公共服务平台",
-				"reportNumber": "GB/T 7714—2015",
+				"number": "GB/T 7714—2015",
+				"status": "现行",
 				"url": "https://std.samr.gov.cn/gb/search/gbDetailed?id=71F772D8055ED3A7E05397BE0A0AB82A",
 				"attachments": [
 					{
@@ -185,9 +221,10 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://std.samr.gov.cn/hb/search/stdHBDetailed?id=8B1827F23645BB19E05397BE0A0AB44A",
+		"detectedItemType": "standard",
 		"items": [
 			{
-				"itemType": "report",
+				"itemType": "standard",
 				"title": "中文出版物夹用英文的编辑规范",
 				"creators": [
 					{
@@ -197,10 +234,10 @@ var testCases = [
 					}
 				],
 				"date": "2017-04-17",
-				"extra": "Type: standard",
+				"extra": "实施日期: 2017-04-17",
 				"language": "zh-CN",
 				"libraryCatalog": "全国标准信息公共服务平台",
-				"reportNumber": "CY/T 154—2017",
+				"number": "CY/T 154—2017",
 				"url": "https://std.samr.gov.cn/hb/search/stdHBDetailed?id=8B1827F23645BB19E05397BE0A0AB44A",
 				"attachments": [
 					{
@@ -216,10 +253,11 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=63A23D3AFA47E60C29392465F6A791C3",
+		"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=3E25D6F98CDEEE0578BCF0333B17EECF",
+		"detectedItemType": "standard",
 		"items": [
 			{
-				"itemType": "report",
+				"itemType": "standard",
 				"title": "Information and documentation — Guidelines for bibliographic references and citations to information resources",
 				"creators": [
 					{
@@ -229,11 +267,11 @@ var testCases = [
 					}
 				],
 				"date": "2021-06-11",
-				"extra": "Type: standard",
 				"language": "en",
 				"libraryCatalog": "全国标准信息公共服务平台",
-				"reportNumber": "ISO 690:2021",
-				"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=63A23D3AFA47E60C29392465F6A791C3",
+				"number": "ISO 690:2021",
+				"status": "现行",
+				"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=3E25D6F98CDEEE0578BCF0333B17EECF",
 				"attachments": [
 					{
 						"title": "Snapshot",
@@ -248,10 +286,11 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=DE5099AC5B0BE767513328A92BB85614",
+		"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=373C3505A9085559695051CCF9F59895",
+		"detectedItemType": "standard",
 		"items": [
 			{
-				"itemType": "report",
+				"itemType": "standard",
 				"title": "Information technology — Universal coded character set (UCS)",
 				"creators": [
 					{
@@ -261,11 +300,11 @@ var testCases = [
 					}
 				],
 				"date": "2020-12-21",
-				"extra": "Type: standard",
 				"language": "en",
 				"libraryCatalog": "全国标准信息公共服务平台",
-				"reportNumber": "ISO/IEC 10646:2020",
-				"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=DE5099AC5B0BE767513328A92BB85614",
+				"number": "ISO/IEC 10646:2020",
+				"status": "现行",
+				"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=373C3505A9085559695051CCF9F59895",
 				"attachments": [
 					{
 						"title": "Snapshot",
