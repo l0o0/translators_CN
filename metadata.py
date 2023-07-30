@@ -3,32 +3,8 @@ import os
 
 from datetime import datetime
 
-mapDict = {
-    "Baidu Scholar" : "百度学术",
-    "BiliBili": "Bilibili视频",
-    "CNKI": "中国知网",
-    "Dangdang": "当当图书",
-    "Douban": "豆瓣",
-    "Duxiu": "读秀",
-    "GFSOSO": "谷粉搜搜",
-    "Jd": "京东",
-    "National Public Service Platform for Standards Information - China": "全国标准信息公共服务平台",
-    "National Standards Open System - China": "国家标准全文公开系统",
-    "Ncpssd": "国家哲学社会科学文献中心",
-    "nlc.cn": "国图-中国标准在线服务网",
-    "PatentStar": "专利之星",
-    "ProQuestCN Thesis": "ProQuest学位论文(中国)",
-    "Soopat": "Soopat专利",
-    "Spc.org.cn": "Spc.org.cn",
-    "SuperLib": "全国图书馆联盟",
-    "Wanfang Data": "万方",
-    "WeiPu": "维普",
-    "Weixin": "微信",
-    "Wenjin": "国图-文津",
-    "Zhihu": "知乎",
-    "dpaper": "中国科学院文献情报中心",
-    "xiaoyuzhouFM": "小宇宙FM"
-}
+with open("data/data.json", encoding='utf-8') as handle:
+    mapDict = json.load(handle)
 
 def read_metadata(filename):
     with open(filename, encoding='utf-8') as handle:
