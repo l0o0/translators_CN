@@ -49,4 +49,4 @@ for t in translators:
 
 with open("data/translators.json", 'w', encoding='utf-8') as handle:
     print(translator_metadata)
-    json.dump(translator_metadata, handle, ensure_ascii=False)
+    json.dump(translator_metadata, handle, ensure_ascii=False, indent=4)
