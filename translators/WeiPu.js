@@ -2,14 +2,14 @@
 	"translatorID": "dd9efb0b-ca1d-4634-b480-9aabc84213c0",
 	"label": "WeiPu",
 	"creator": "Xingzhong Lin",
-	"target": "^https?://qikan\\.cqvip\\.com",
+	"target": "^https?://(lib|qikan)\\.cqvip\\.com",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
-	"browserSupport": "gcs",
-	"lastUpdated": "2019-12-13 09:03:39"
+	"browserSupport": "gcsibv",
+	"lastUpdated": "2023-07-31 08:18:15"
 }
 
 /*
