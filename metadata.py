@@ -11,13 +11,13 @@ def read_metadata(filename):
         headers = [next(handle) for x in range(13)]
     return json.loads(''.join(headers))
 
-translators = os.listdir("translators")
+translators = os.listdir(".")
 translators = [t for t in translators if t.endswith('js') and t not in ['RefWorks Tagged.js', 'BibTeX.js']]
 translators = sorted(translators)
 
 translator_metadata = {}
 for t in translators:
-    metadata = read_metadata("translators/" + t)
+    metadata = read_metadata("./" + t)
     translator_metadata[t] = {
         'label': mapDict.get(metadata['label'], metadata['label']),
         'lastUpdated': metadata['lastUpdated']
