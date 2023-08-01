@@ -1,6 +1,9 @@
 name: Auto update translator metadata
 on: 
   push:
+    branches:
+      - master
+      - test
   workflow_dispatch:
 jobs:
   build:
