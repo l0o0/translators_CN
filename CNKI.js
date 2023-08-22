@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-03-27 06:46:20"
+	"lastUpdated": "2023-08-22 15:01:05"
 }
 
 /*
@@ -140,9 +140,8 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 		fileXpath = "./ul/li/a";
 	}
 	else { // for search result page
-		var result = doc.querySelector('table.result-table-list');
 		links = doc.querySelectorAll("table.result-table-list tbody tr");
-		aXpath = './td/a[@class="fz14"]';
+		aXpath = './td[@class="name"]/a';
 		fileXpath = "./td[@class='operat']/a[contains(@class, 'downloadlink')]";
 	}
 	if (!links.length) {
@@ -170,15 +169,15 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 			itemUrl = `https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=${id.dbcode}&dbname=${id.dbname}&filename=${id.filename}&v=`;
 			id.url = itemUrl;
 		}
-		// download link in search result
-		var filelink = ZU.xpath(links[i], fileXpath);
+		// TODO: CAJ link has redirection
+		// var filelink = ZU.xpath(links[i], fileXpath);
 		if (!title || !id) continue;
 		if (itemInfo) {
 			itemInfo[itemUrl] = { id: id };
-			if (filelink.length) {
-				filelink = filelink[0].href;
-				itemInfo[itemUrl].filelink = filelink;
-			}
+			// if (filelink.length) {
+			// 	filelink = filelink[0].href;
+			// 	itemInfo[itemUrl].filelink = filelink;
+			// }
 			var cite = ZU.xpath(links[i], "./td[@class='quote']/span/a");
 			cite = cite.length > 0 ? cite[0].innerText : "";
 			itemInfo[itemUrl].cite = cite;
@@ -208,13 +207,12 @@ function detectWeb(doc, url) {
 }
 
 async function doWeb(doc, url) {
-	Z.debug("----------------CNKI 20230326-2-------------------");
+	Z.debug("----------------CNKI 20230822-------------------");
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
 		if (!items) return false;// no items
 		let selectItems = await Z.selectItems(items);
-		// Z.debug(itemInfo);
 		if (selectItems) {
 			for (let url in selectItems) {
 				let doc = await requestDocument(url);
@@ -239,41 +237,40 @@ async function scrape(id, doc, extraData) {
 		// 如果你想将PDF文件替换为CAJ文件，将下面一行 keepPDF 设为 false
 		var keepPDF = Z.getHiddenPref('CNKIPDF');
 		if (keepPDF === undefined) keepPDF = true;
-		if (extraData) { // search page
-			newItem.attachments = [{
-				title: "Full Text CAJ",
-				mimeType: "application/caj",
-				url: extraData.filelink
-			}];
-			cite = extraData.cite;
-		} else if (!extraData) { // detail page
-			if (id.url.includes("KXReader/Detail")) {
-				newItem.attachments.push({
-					title: "Snapshot",
-					document: doc
-				});
-			} else {
-				newItem.attachments = getAttachments(doc, keepPDF);
-			}
-			let rightCite = doc.querySelector("div#right_part i.icon.icon-arrow");
-			if (rightCite) rightCite.click();
-			cite = innerText(doc, "span.num");
-			cite = cite ? cite.split('\n')[0] : "";
-			pubType = ZU.xpathText(doc, "//div[@class='top-tip']//a[@class='type']");
-			pubTypeStr = pubType ? "Core: " + pubType + "\n" : "";
-			var doi = ZU.xpath(doc, "//*[contains(text(), 'DOI')]/parent::li | //div[@class='tips']"); // add DOI
-			if (doi.length > 0 && doi[0].innerText.includes("DOI")) {
-				var DOI = doi[0].innerText.split("DOI");
-				newItem.DOI = DOI[DOI.length - 1].trim().replace(/[：:]/, '');
-			}
-			var moreClick = ZU.xpath(doc, "//span/a[@id='ChDivSummaryMore']");
-			if (moreClick.length) {
-				moreClick[0].click();// click to get a full abstract in a single article page
-				newItem.abstractNote = ZU.xpath(doc, "//span[@id='ChDivSummary']")[0].innerText;
-			}
+		// if (extraData) { // search page, Disabled 20230822
+		// 	newItem.attachments = [{
+		// 		title: "Full Text CAJ",
+		// 		mimeType: "application/caj",
+		// 		url: extraData.filelink
+		// 	}];
+		// 	cite = extraData.cite;
+		// } else if (!extraData) { // detail page
+		if (id.url.includes("KXReader/Detail")) {
+			newItem.attachments.push({
+				title: "Snapshot",
+				document: doc
+			});
+		} else {
+			newItem.attachments = getAttachments(doc, keepPDF);
 		}
-		var timestamp = new Date().toLocaleDateString().replace(/\//g, '-');
-		var citeStr = cite ? `citations(CNKI):${cite} [${timestamp}]\n` : "";
+		let rightCite = doc.querySelector("div#right_part i.icon.icon-arrow");
+		if (rightCite) rightCite.click();
+		cite = innerText(doc, "span.num");
+		cite = cite ? cite.split('\n')[0] : "";
+		pubType = ZU.xpathText(doc, "//div[@class='top-tip']//a[@class='type']");
+		pubTypeStr = pubType ? "CSSCI: " + pubType + "\n" : "";
+		var doi = ZU.xpath(doc, "//*[contains(text(), 'DOI')]/parent::li | //div[@class='tips']"); // add DOI
+		if (doi.length > 0 && doi[0].innerText.includes("DOI")) {
+			var DOI = doi[0].innerText.split("DOI");
+			newItem.DOI = DOI[DOI.length - 1].trim().replace(/[：:]/, '');
+		}
+		var moreClick = ZU.xpath(doc, "//span/a[@id='ChDivSummaryMore']");
+		if (moreClick.length) {
+			moreClick[0].click();// click to get a full abstract in a single article page
+			newItem.abstractNote = ZU.xpath(doc, "//span[@id='ChDivSummary']")[0].innerText;
+		}
+
+		var citeStr = cite ? `CNKICite:${cite}\n` : "";
 		newItem.extra = (citeStr + pubTypeStr).trim() + "\n" + (newItem.extra ? newItem.extra : "");
 		// split names, Chinese name split depends on Zotero Connector preference translators.zhnamesplit
 		var zhnamesplit = Z.getHiddenPref('zhnamesplit');
@@ -304,10 +301,9 @@ async function scrape(id, doc, extraData) {
 			newItem.tags[j] = newItem.tags[j].replace(/:\d+$/, '');
 		}
 		newItem.url = id.url;
-		if (newItem.abstractNote) {
-			newItem.abstractNote = newItem.abstractNote.replace(/\s*[\r\n]\s*/g, '\n')
-				.replace(/&lt;.*?&gt;/g, "");
-		}
+		newItem.abstractNote = newItem.abstractNote.replace(/\s*[\r\n]\s*/g, '\n')
+			.replace(/&lt;.*?&gt;/g, "")
+			.replace(/^<正>/, "");
 		newItem.title = ZU.trimInternal(newItem.title);
 		// CN 中国刊物编号，非refworks中的callNumber
 		// CN in CNKI refworks format explains Chinese version of ISSN
