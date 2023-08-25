@@ -161,12 +161,10 @@ async function scrape(doc, ZID) {
 
 //Loop to delete the node
 function _delElem(elems) {
-  console.log(elems.length)
   while (elems[0] != undefined) {
     let parent = elems[0].parentElement
     parent.removeChild(elems[0])
   }
-  console.log(elems.length)
 }
 
 // Define delete function
@@ -183,7 +181,6 @@ function load_lazy(doc) {
   let clientHeight = doc.documentElement.clientHeight
   let lastHeight = 0
   let task = setInterval(function () {
-		console.log(lastHeight < scrollHeight)
     if (lastHeight < scrollHeight) {
       window.scrollTo(lastHeight, lastHeight + clientHeight)
       lastHeight += clientHeight
@@ -192,7 +189,6 @@ function load_lazy(doc) {
 			// After loading the image, delete the <noscript> tag.
 			let elems = doc.getElementsByTagName("noscript")
 			_delElem(elems)
-			console.log("cleared", elems.length)
 			
     }
   }, scrollInterval)
@@ -206,6 +202,32 @@ function delElemByTagName(doc, tagName) {
     noscriptElement.parentNode.removeChild(noscriptElement);
   }
 }
+
+function beautifyHtml(doc) {
+	var cssCode = `
+		/* Insert your CSS code here */
+		.Post-RichTextContainer {
+			width: 690px !important;
+			margin: 0 auto !important;
+		}
+		
+		.ContentItem-time {
+			width: 690px !important;
+			margin: 0 auto !important;
+		}
+		
+		.Post-Main, .Post-Sub {
+			width: 690px !important;
+			margin: 0 auto !important;
+		}
+	`;
+
+	var styleElement = document.createElement('style');
+	styleElement.innerHTML = cssCode;
+
+	doc.head.insertAdjacentElement('beforeend', styleElement);
+}
+
 
 function optimalDOM(doc) {
   // Remove the top status bar.
@@ -228,6 +250,8 @@ function optimalDOM(doc) {
 	delElemByClassName(doc, "Reward")
 	// Delete topic
 	delElemByClassName(doc, "Post-topicsAndReviewer")
+	// beautify html
+	beautifyHtml(doc)
 	// Delete comment.
 	// delElemByClassName(doc, "Post-Sub Post-NormalSub")
   // Scroll the page, load images
