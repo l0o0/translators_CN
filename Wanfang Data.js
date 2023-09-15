@@ -163,6 +163,7 @@ function addExtra(newItem, extra) {
 }
 
 function addDVI(newItem, texts) {
+	texts.length === 3 && texts.splice(2, 0, '');
 	newItem.date = texts[1];
 	newItem.volume = texts[2].replace(",", "");
 	newItem.issue = texts[3].replace(/[\(\)]/g, '');
