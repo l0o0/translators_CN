@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-04-03 06:43:09"
+	"lastUpdated": "2023-09-27 07:14:43"
 }
 
 /*
@@ -105,11 +105,11 @@ async function doWeb(doc, url) {
 	}
 	else {
 		var ZID = getIDFromUrl(url);
-		await scrape(ZID);
+		await scrape(ZID, doc);
 	}
 }
 
-async function scrape(ZID) {
+async function scrape(ZID, doc) {
 	var { ztype, zid, url } = ZID;
 	var newItem = new Zotero.Item(ztype === 'answer' ? 'forumPost' : 'blogPost');
 	newItem.url = url;
@@ -141,18 +141,18 @@ async function scrape(ZID) {
 		newItem.date = new Date(createdTime * 1000).toISOString();
 		newItem.websiteType = "知乎专栏文章";
 		newItem.blogTitle = textJson.column ? textJson.column.title : '回答';
-		let content = textJson.content.replace(/<figure.*?<img src="(.*?)".*?<\/figure>/g, "<img src='$1'/>");
-		content = content.replace(/<sup.*?data-text="(.*?)".*?data-url="(.*?)".*?>\[(\d+)\]<\/sup>/g, '<sup><a title="$1" href="$2">[$3]</a></sup>');
-		content = "<h1>正文详情</h1>" + content;
+		// let content = textJson.content.replace(/<figure.*?<img src="(.*?)".*?<\/figure>/g, "<img src='$1'/>");
+		// content = content.replace(/<sup.*?data-text="(.*?)".*?data-url="(.*?)".*?>\[(\d+)\]<\/sup>/g, '<sup><a title="$1" href="$2">[$3]</a></sup>');
+		// content = "<h1>正文详情</h1>" + content;
 		newItem.creators.push({ lastName: textJson.author.name, creatorType: "author" });
-		newItem.notes.push({ note: content });
+		// newItem.notes.push({ note: content });
 		if (textJson.topics) {
 			textJson.topics.forEach(t => newItem.tags.push({ tag: t.name }));
 		}
 		newItem.extra = `赞数:${textJson.voteup_count};`;
 	}
 	newItem.language = 'zh-CN';
-	newItem.attachments.push({ url: url, title: "Snapshot" });
+	newItem.attachments.push({ url: url, title: "Snapshot", document: doc });
 	newItem.complete();
 }
 
