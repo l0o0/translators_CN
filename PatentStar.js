@@ -8,8 +8,8 @@
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
-	"browserSupport": "gc",
-	"lastUpdated": "2021-04-14 12:46:00"
+	"browserSupport": "gcsibv",
+	"lastUpdated": "2023-09-29 06:21:48"
 }
 
 /*
@@ -37,60 +37,58 @@
 
 function detectWeb(doc, url) {
 	if (url.includes('/Detail?')) {
-		
 		return 'patent';
 	}
 	//else if (getSearchResults(doc,true)) {
-	else if(url.includes('/ResultList?')){
+	else if (url.includes('List')) {
 		return 'multiple';
 	}
 	return false;
 }
 
 function getSearchResults(doc, checkOnly) {
-	
-	
-	var mainDomain="https://cprs.patentstar.com.cn";
+
+
+	var mainDomain = "https://cprs.patentstar.com.cn";
 	var items = {};
 	var found = false;
 	var rows = ZU.xpath(doc, "//label[@class='title-color']");
 	Z.debug(rows.length);
 	if (checkOnly) {
-		
+
 		return rows.length ? 'multiple' : false;
 	}
-	for (let i=0; i < rows.length; i++) {
+	for (let i = 0; i < rows.length; i++) {
 		//Z.debug(rows[0]);
 		let title = rows[i].getAttribute('title');
 		let ane = rows[i].getAttribute('data-ane');
 		Z.debug(title);
 		//let click = title.;
 		//Z.debug(click);
-		
 		//Z.debug(href);
-		let href = mainDomain+"/Search/Detail?ANE="+ane;
+		let href = mainDomain + "/Search/Detail?ANE=" + ane;
 		Z.debug(href);
 		//title = ZU.trimInternal(title.textContent);
 		if (!href || !title) continue;
 		found = true;
-		items[href] = (i+1) + " " + title;
+		items[href] = (i + 1) + " " + title;
 		//Z.debug(items[href]);
 	}
 	return found ? items : false;
 }
 
 
-function doWeb(doc, url) {
-	
+async function doWeb(doc, url) {
+
 	if (detectWeb(doc, url) == "multiple") {
 		Zotero.selectItems(getSearchResults(doc, false), function (items) {
 			if (items) {
-					processURL(Object.keys(items));
-				}
+				processURL(Object.keys(items));
+			}
 		});
 	}
 	else {
-		scrape(doc, url);
+		await scrape(doc, url);
 	}//*[@id="summary"]/div/span
 }
 
@@ -99,7 +97,7 @@ function processURL(urls) {
 	var url = urls.pop();
 	//Z.debug(url);
 	//ZU.doGet(url, function(text) {
-	ZU.processDocuments(url,function(doc){
+	ZU.processDocuments(url, function (doc) {
 		//Z.debug(text);
 		//var parser = new DOMParser();
 		//var doc = parser.parseFromString(text, "text/html");
@@ -111,15 +109,15 @@ function processURL(urls) {
 	})
 }
 
-function scrape(doc,url){
-	
+async function scrape(doc, url) {
+
 
 	//var itemURL="http://cprs.patentstar.com.cn/Download/DownloadExcel?ANE=";
-	var newItem=new Zotero.Item('patent');
-	
+	var newItem = new Zotero.Item('patent');
+
 	/**************************************************************************/
 	//直接从加载完成后的页面中提取文献信息
-	
+
 	/*var title=ZU.xpath(doc,"//label[@class='title-color']")[0].getAttribute('title');
 	Z.debug(title);
 	if(title.length){
@@ -199,131 +197,132 @@ function scrape(doc,url){
 	if(rights.length){
 		newItem.rights=ZU.trimInternal(rights);
 	}*/
-	
+
 	/***************************************************************************/
 	//发现新的接口，可以直接提取信息
-	
-	var dataUrl="https://cprs.patentstar.com.cn/"+"Search/GetPatentByIDE"
-	var ANE=url.split('=')[1];
-	var postData="IDE="+ANE;
-	ZU.doPost(dataUrl,postData,function(text){
+
+	var dataUrl = "https://cprs.patentstar.com.cn/" + "Search/GetPatentByIDE"
+	var ANE = url.split('=')[1];
+	var postData = "IDE=" + ANE;
+	ZU.doPost(dataUrl, postData, function (text) {
 		//Z.debug(text);
-		try{
-			var  data=JSON.parse(text);
-			if (data.Ret == 200){
+		try {
+			var data = JSON.parse(text);
+			if (data.Ret == 200) {
 				//Z.debug(JSON.stringify(data.Data['Patent']));
 				//Z.debug(data.Data['Patent']);
-				var patent=data.Data['Patent'];
-				newItem.title=ZU.trimInternal(patent['TI']);
-				
-				var inventors=patent['IN'];
+				var patent = data.Data['Patent'];
+				newItem.title = ZU.trimInternal(patent['TI']);
+
+				var inventors = patent['IN'];
 				//Z.debug(inventors)
 				if (inventors.search(/[A-Za-z]/) !== -1) {
 					inventors = inventors.split(/;/)
-					inventors=inventors.filter((ele) => !ele.match(/^[ ]*$/));//
-				} 
+					inventors = inventors.filter((ele) => !ele.match(/^[ ]*$/));//
+				}
 				else {
 					inventors = inventors.split(/[\s ;]+/);  // Special comma
-					inventors=inventors.filter((ele) => !ele.match(/^[ ]*$/));
+					inventors = inventors.filter((ele) => !ele.match(/^[ ]*$/));
 					//inventors.push(patent['AT']);
 					//Z.debug(inventors);
 				}
 				newItem.creators = handleName(inventors);
-				
-				newItem.applicationNumber=ZU.trimInternal(patent['AN']);
-				
-				newItem.assignee=ZU.trimInternal(patent['PA']);
-				
-				newItem.filingDate=(ZU.trimInternal(patent['AD'])).replace(/(.{4})(.{2})/,"$1-$2-");
-		
-				newItem.place=ZU.trimInternal(patent['CO']);
-				
-				newItem.country="中国";
-				
-				legStatus={
-					1:"有效",
-					2:"失效",
-					3:"审中"
+
+				newItem.applicationNumber = ZU.trimInternal(patent['AN']);
+
+				newItem.assignee = ZU.trimInternal(patent['PA']);
+
+				newItem.filingDate = (ZU.trimInternal(patent['AD'])).replace(/(.{4})(.{2})/, "$1-$2-");
+
+				newItem.place = ZU.trimInternal(patent['CO']);
+
+				newItem.country = "中国";
+
+				legStatus = {
+					1: "有效",
+					2: "失效",
+					3: "审中"
 				}
-				newItem.legalStatus=legStatus[patent['LG']];
-				
-				if(patent['LG']!=2){
-					newItem.patentNumber=patent['AN'];
+				newItem.legalStatus = legStatus[patent['LG']];
+
+				if (patent['LG'] != 2) {
+					newItem.patentNumber = patent['AN'];
 				}
-				
-				if(patent['LG']==3){
-					newItem.issueDate=patent['AD'].substr(0,4);
+
+				if (patent['LG'] == 3) {
+					newItem.issueDate = patent['AD'].substr(0, 4);
 				}
-				else{
-					newItem.issueDate=ZU.trimInternal(patent['GD']).replace(/(.{4})(.{2})/,"$1-$2-");
+				else {
+					newItem.issueDate = ZU.trimInternal(patent['GD']).replace(/(.{4})(.{2})/, "$1-$2-");
 				}
-				
-				newItem.abstractNote=ZU.trimInternal(patent['AB'])
-				
-				newItem.rights=ZU.trimInternal(patent['CL']);
-				
-				type={
-					1:"发明专利",
-					2:"实用新型专利",
-					3:"外观专利"
+
+				newItem.abstractNote = ZU.trimInternal(patent['AB'])
+
+				newItem.rights = ZU.trimInternal(patent['CL']);
+
+				type = {
+					1: "发明专利",
+					2: "实用新型专利",
+					3: "外观专利"
 				}
-				newItem.extra=type[patent['PT']];
-				
-				
-				
+				newItem.extra = type[patent['PT']];
+
+
+
 				/***************************************************************************/
 				//使用api获取pdf,该api返回的Data数据中包含可能包含两个pdf文件的网址
 				//如果有两个网址，则第一个为申请文件，第二个为授权文件
 				//故存在两个网址时，则取第二个作为附件保存
-				
-				if (detectLogin(doc,url)){
-					var pdfGetUrl="https://cprs.patentstar.com.cn/"+"WebService/GetPDFUrl";
-					var ANE=url.split('=')[1];
-	
-					var postData="ANE="+ANE;
-	
+
+				if (detectLogin(doc, url)) {
+					var pdfGetUrl = "https://cprs.patentstar.com.cn/" + "WebService/GetPDFUrl";
+					var ANE = url.split('=')[1];
+
+					var postData = "ANE=" + ANE;
+
 					ZU.doPost(pdfGetUrl, postData,
 						function (text) {
 							//Z.debug(text);
-							try{
-								var  data=JSON.parse(text);
+							try {
+								var data = JSON.parse(text);
 								Z.debug(data);
-								var pdfurl='';
-								if(data.Ret==200){
-									if (data.Data.length > 1){
-										pdfurl =data.Data[1];
+								var pdfurl = '';
+								if (data.Ret == 200) {
+									if (data.Data.length > 1) {
+										pdfurl = data.Data[1];
 									}
-									else{
+									else {
 										pdfurl = data.Data[0];
 									}
-									
+
 									newItem.attachments.push({
 										title: "Full Text PDF",
 										mimeType: "application/pdf",
 										url: pdfurl
 									});
-										
+
 									newItem.url = url;
 									newItem.complete();
 								}
-								else{
+								else {
 									Z.debug("获取pdf地址失败");
 								}
 							}
-							catch(err){
+							catch (err) {
 								Z.debug(err);
 								Z.debug("获取pdf地址出错");
 								newItem.url = url;
 								newItem.complete();
 							}
-					})
+						}
+					)
 				}
 			}
 		}
-		catch{
+		catch {
 			Z.debug("发生异常，获取信息失败");
 		}
-		
+
 	})
 }
 
@@ -337,44 +336,44 @@ function handleName(authors) {
 		if (author.search(/[A-Za-z]/) !== -1 && lastSpace !== -1) {
 			// English
 			creator.firstName = author.slice(0, lastSpace);
-			creator.lastName = author.slice(lastSpace+1);
-			
+			creator.lastName = author.slice(lastSpace + 1);
+
 		} else {
 			// Chinese
 			if (authors.indexOf(author) > -1) {
-				
+
 				//if (author.endsWith("等") || author.endsWith("著")) {
 				//	author = author.slice(0, author.length -1);
 				//作者姓名可能以"等"、"等编"、"编著"、"主编"、"著"这几种形式结尾
-				if (author.indexOf("等") !==-1) {
-					author=author.slice(0,author.indexOf("等"));
+				if (author.indexOf("等") !== -1) {
+					author = author.slice(0, author.indexOf("等"));
 					//Z.debug(author);
 					// 去除等或著后与其他姓名重名，跳过
 					if (authors.indexOf(author) > -1) {
 						continue;
 					}
 				}
-				else if(author.indexOf("主") !==-1){
-					author=author.slice(0,author.indexOf("主"));
+				else if (author.indexOf("主") !== -1) {
+					author = author.slice(0, author.indexOf("主"));
 					if (authors.indexOf(author) > -1) {
 						continue;
 					}
 				}
-				else if(author.indexOf("编") !==-1){
-					author=author.slice(0,author.indexOf("编"));
+				else if (author.indexOf("编") !== -1) {
+					author = author.slice(0, author.indexOf("编"));
 					if (authors.indexOf(author) > -1) {
 						continue;
 					}
 				}
-				else if(author.indexOf("著") !==-1){
-					author=author.slice(0,author.indexOf("著"));
+				else if (author.indexOf("著") !== -1) {
+					author = author.slice(0, author.indexOf("著"));
 					if (authors.indexOf(author) > -1) {
 						continue;
 					}
 				}
-			
-				
-				
+
+
+
 			}
 			//Z.debug(author);
 			creator.firstName = author.slice(1);
@@ -388,12 +387,16 @@ function handleName(authors) {
 	return creators;
 }
 
-function detectLogin(doc,url){
-	var username=ZU.xpath(doc,"//div[@class='username-box f1']");
-	if(!username){
+function detectLogin(doc, url) {
+	var username = ZU.xpath(doc, "//div[@class='username-box f1']");
+	if (!username) {
 		Z.debug("未登陆，无法获取pdf");
 		return false;
 	}
 	else
 		return true;
 }
+/** BEGIN TEST CASES **/
+var testCases = [
+]
+/** END TEST CASES **/
