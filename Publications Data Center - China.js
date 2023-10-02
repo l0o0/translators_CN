@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-02 17:57:10"
+	"lastUpdated": "2023-10-02 18:51:09"
 }
 
 /*
@@ -131,7 +131,7 @@ async function doWeb(doc, url) {
 				}
 				// Z.debug(newItem);
 			};
-			// newItem = Object.assign(newItem, match_text_type(postdata.type));
+			// newItem = Object.assign(newItem, match_text_type(data=bookdata, type=postdata.type));
 			newItem.language = match_text_lang(data = bookdata, labels = "worklanguage"),
 			newItem.creators = match_text_creators(data = bookdata, labels = "firstauthor")[0];
 			newItem.creators_raw = match_text_creators(data = bookdata, labels = "firstauthor")[1];
@@ -171,7 +171,7 @@ function match_text(data, labels) {
 	}
 }
 
-function match_text_type(type) {
+function match_text_type(data, type) {
 	var type_container = {};
 	// Z.debug(type);
 	/* 音像电子 */
@@ -185,7 +185,7 @@ function match_text_type(type) {
 		else if (type.includes('isbn')) {
 			// https://pdc.capub.cn/search.html#/detail?id=vhtadivummqsacsc5ygdxljzrsmvrevrgwvg47sjxodgfzgcx5qa&from=1&type=isbn_ele
 			type_container.archiveLocation = "ISBN";
-			type_container.rights = match_text(data = meta_all, labels = "著作权人");
+			type_container.rights = match_text(data = data, labels = "著作权人");
 		}
 		/* 图书 */
 	} else {
@@ -206,7 +206,7 @@ function match_text_type(type) {
 function match_text_creators(data, labels) {
 	// 作者带有“等”
 	// https://pdc.capub.cn/search.html#/detail?id=lvwm4hubadqj7appufemd6rx24zjequztct3eok3imqvsongueeq&from=1&type=isbn
-	const surffix_patten = ["[编|原]?著", "主?编", "等"];
+	const surffix_patten = ["[编|原]?著?绘", "主?编", "等"];
 	var creators_raw = [];
 	var creators_zh = match_text(data, labels);
 	// Z.debug(creators_zh);
@@ -214,12 +214,13 @@ function match_text_creators(data, labels) {
 		creators_zh = creators_zh.replace(new RegExp(`(.+?)(,? ?\[?${surffix}\]?)\$`), "$1");
 	}
 	creators_zh = creators_zh.split(", ");
+	// Z.debug(creators_zh);
 	var zhnamesplit = Z.getHiddenPref('zhnamesplit');
 	for (let i = 0; i < creators_zh.length; i++) {
 		let creator = creators_zh[i];
 		creator = ZU.trimInternal(creator.toString());
 		/* 英文译名一律不拆分 */
-		if (creator.search(/[A-Za-z]/) !== -1) {
+		if (creator.search(/[A-Za-z]/) !== -1 || creator.includes("·")) {
 			// 英文名去除国籍标识
 			creator = creator.replace(/\([\u4e00-\u9fa5]+\)/, "");
 			// 保留中英对照形式供用户参考
@@ -318,9 +319,9 @@ async function scrape_multi(postdata) {
 						newItem[key] = match_text(data = bookdata, labels = key_map[key]);
 					}
 				};
-				newItem = Object.assign(newItem, match_text_type(postdata.type));
+				newItem = Object.assign(newItem, match_text_type(data = meta_all, type = postdata.type));
 				newItem.language = match_text_lang(data = bookdata, labels = "worklanguage"),
-					newItem.creators = match_text_creators(data = bookdata, labels = firstauthor)[0];
+				newItem.creators = match_text_creators(data = bookdata, labels = firstauthor)[0];
 				newItem.creators_raw = match_text_creators(data = bookdata, labels = firstauthor)[1];
 				newItem.url = `https://pdc.capub.cn/search.html#/detail?id=${postdata.id}&from=1&type=${postdata.type}`,
 					newItem.tags.push({ "tag": match_text(data = meta_all, labels = "keyword") });
@@ -431,13 +432,13 @@ async function scrape(doc, url = doc.location.href) {
 	var newItem = new Z.Item("book");
 	// 标题变为「选题名称」
 	// https://pdc.capub.cn/search.html#/detail?id=3xfbatmnh3626ppgzvztast2odbumgsdujt3eejchz4ovfsqrnfq&from=1&type=isbn_ele
-	newItem.title = match_text(data = meta_all, labels = ["正书名", "电子音像制品名", "选题名称"]);
+	newItem.title = match_text(data = meta_all, labels = ["正书名", "音像电子制品名", "选题名称"]);
 	// Z.debug(newItem.title);
 	newItem.creators = match_text_creators(data = meta_all, labels = ["作者", "著作权人"])[0];
 	newItem.creators_raw = match_text_creators(data = meta_all, labels = ["作者", "著作权人"])[1];
 	newItem.language = match_text_lang(data = meta_all, labels = "正文语种");
 	var type = new URL(url.replace('#', '')).searchParams.get('type');
-	newItem = Object.assign(newItem, match_text_type(type));
+	newItem = Object.assign(newItem, match_text_type(data = meta_all, type = type));
 	// Z.debug(meta_all);
 	newItem.abstractNote = match_text(data = meta_all, labels = "内容摘要");
 	newItem.series = match_text(data = meta_all, labels = "分册名");
@@ -1011,6 +1012,26 @@ var testCases = [
 		"url": "about:blank",
 		"detectedItemType": false,
 		"items": []
+	},
+	{
+		"type": "web",
+		"url": "https://pdc.capub.cn/search.html#/detail?id=5j3ztk3ke3qubcvs7g4ecat7qsve4ieqm34wjat3zjxiowiwbosa&from=1&type=marc_ele",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "量子力学教程",
+				"creators": [],
+				"ISBN": "9787900254313",
+				"archiveLocation": "馆藏",
+				"libraryCatalog": "Publications Data Center - China",
+				"publisher": "科学出版社",
+				"url": "https://pdc.capub.cn/search.html#/detail?id=5j3ztk3ke3qubcvs7g4ecat7qsve4ieqm34wjat3zjxiowiwbosa&from=1&type=marc_ele",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
 	}
 ]
 /** END TEST CASES **/
