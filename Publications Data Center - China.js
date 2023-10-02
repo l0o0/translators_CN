@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-02 16:57:05"
+	"lastUpdated": "2023-10-02 17:57:10"
 }
 
 /*
@@ -146,17 +146,24 @@ async function doWeb(doc, url) {
 }
 
 function match_text(data, labels) {
-	// Z.debug(typeof(data));
+	// Z.debug(labels);
+	var value = "";
 	if (Array.isArray(labels)) {
-		var value = labels.find(
-			function (element, index, array) {
-				data.get(element);
+		for (const label of labels) {
+			// Z.debug(`label = ${label}`);
+			if (data.get(label)) {
+				value = data.get(label);
+				// Z.debug(`get to ${data.get(label)}`)
+				break
+			} else {
+				continue
 			}
-		);
+		}
 	} else {
-		var value = data.get(labels);
+		value = data.get(labels);
 	}
-	if (!value || value == "**") {
+	// Z.debug(`value = ${value}`);
+	if (value == undefined || value == "**") {
 		return "";
 	}
 	else {
@@ -165,9 +172,10 @@ function match_text(data, labels) {
 }
 
 function match_text_type(type) {
+	var type_container = {};
+	// Z.debug(type);
 	/* 音像电子 */
 	if (type.includes('ele')) {
-		var type_container;
 		type_container.medium = "CD";
 		if (type.includes('marc')) {
 			// 馆藏条目无“著作权人”字段
@@ -264,7 +272,6 @@ function match_text_lang(data, labels) {
 }
 
 async function scrape_multi(postdata) {
-	Z.debug(postdata);
 	postdata = JSON.parse(postdata);
 	Z.debug(`id=${postdata.id}&searchType=${postdata.type}`);
 	ZU.doPost(
@@ -272,7 +279,7 @@ async function scrape_multi(postdata) {
 		`id=${postdata.id}&searchType=${postdata.type}`,
 		function (postresult) {
 			Z.debug(postresult);
-			postresult  = JSON.parse(postresult);
+			postresult = JSON.parse(postresult);
 			var statue = postresult["code"]
 			if (statue == "0") {
 				ciphertext = JSON.parse(ciphertext)["result"];
@@ -313,10 +320,10 @@ async function scrape_multi(postdata) {
 				};
 				newItem = Object.assign(newItem, match_text_type(postdata.type));
 				newItem.language = match_text_lang(data = bookdata, labels = "worklanguage"),
-				newItem.creators = match_text_creators(data = bookdata, labels = firstauthor)[0];
+					newItem.creators = match_text_creators(data = bookdata, labels = firstauthor)[0];
 				newItem.creators_raw = match_text_creators(data = bookdata, labels = firstauthor)[1];
 				newItem.url = `https://pdc.capub.cn/search.html#/detail?id=${postdata.id}&from=1&type=${postdata.type}`,
-				newItem.tags.push({ "tag": match_text(data = meta_all, labels = "keyword") });
+					newItem.tags.push({ "tag": match_text(data = meta_all, labels = "keyword") });
 				// 还有一些未能识别的属性
 				// {
 				// 	"applydate": "**",
@@ -416,7 +423,6 @@ async function scrape_multi(postdata) {
 
 async function scrape(doc, url = doc.location.href) {
 	// Z.debug(url);
-	Z.debug(doc);
 	var keys_values = ZU.xpath(doc, "//div[@class='table_wrap']/table/tr/td");
 	var meta_all = new Map();
 	for (let i = 0; i < keys_values.length; i += 2) {
@@ -426,13 +432,13 @@ async function scrape(doc, url = doc.location.href) {
 	// 标题变为「选题名称」
 	// https://pdc.capub.cn/search.html#/detail?id=3xfbatmnh3626ppgzvztast2odbumgsdujt3eejchz4ovfsqrnfq&from=1&type=isbn_ele
 	newItem.title = match_text(data = meta_all, labels = ["正书名", "电子音像制品名", "选题名称"]);
+	// Z.debug(newItem.title);
 	newItem.creators = match_text_creators(data = meta_all, labels = ["作者", "著作权人"])[0];
 	newItem.creators_raw = match_text_creators(data = meta_all, labels = ["作者", "著作权人"])[1];
 	newItem.language = match_text_lang(data = meta_all, labels = "正文语种");
 	var type = new URL(url.replace('#', '')).searchParams.get('type');
 	newItem = Object.assign(newItem, match_text_type(type));
 	// Z.debug(meta_all);
-	Z.debug(type);
 	newItem.abstractNote = match_text(data = meta_all, labels = "内容摘要");
 	newItem.series = match_text(data = meta_all, labels = "分册名");
 	newItem.seriesNumber = match_text(data = meta_all, labels = "分册号");
@@ -996,7 +1002,6 @@ var aescbc = {
 		padding: pkcs7pad,
 		strip: pkcs7strip
 	}
-	,
 };
 
 /** BEGIN TEST CASES **/
