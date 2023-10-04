@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-04 15:04:01"
+	"lastUpdated": "2023-10-04 18:12:02"
 }
 
 /*
@@ -158,12 +158,15 @@ function match_text_type(data, type) {
 function match_text_creators(data, labels) {
 	// 作者带有“等”
 	// https://pdc.capub.cn/search.html#/detail?id=lvwm4hubadqj7appufemd6rx24zjequztct3eok3imqvsongueeq&from=1&type=isbn
-	const surffix_patten = ["[编|原]?著?绘", "主?编", "等"];
+	const surffix_patten = ["编?著", "原?著","编?绘", "主?编", "等"];
 	var creators_raw = [];
 	var creators_zh = match_text(data, labels);
+	creators_zh = creators_zh.replace(/[\[|\]]/g, "");
 	// Z.debug(creators_zh);
 	for (const surffix of surffix_patten) {
-		creators_zh = creators_zh.replace(new RegExp(`(.+?)(,? ?\[?${surffix}\]?)\$`), "$1");
+		if (creators_zh.match(new RegExp(`.+(?=(${surffix}))`))) {
+			creators_zh = creators_zh.match(new RegExp(`.+(?=${surffix})`))[0];
+		}
 	}
 	creators_zh = creators_zh.split(", ");
 	// Z.debug(creators_zh);
@@ -978,22 +981,156 @@ var aescbc = {
 
 
 
+
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
 		"type": "web",
-		"url": "https://pdc.capub.cn/search.html#/detail?id=5j3ztk3ke3qubcvs7g4ecat7qsve4ieqm34wjat3zjxiowiwbosa&from=1&type=marc_ele",
+		"url": "https://pdc.capub.cn/search.html#/quick?type=%E5%9B%BE%E4%B9%A6&search=%E5%89%AA%E7%BA%B8",
+		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://pdc.capub.cn/search.html#/detail?id=o2py6lzfry3cnhuwmwi6dzr4hvthnu2xcvee2h7gzqylkgq3xvra&from=1&type=marc",
 		"items": [
 			{
 				"itemType": "book",
-				"title": "量子力学教程",
+				"title": "结构化学",
+				"creators": [
+					{
+						"firstName": "新义",
+						"lastName": "李",
+						"creatorType": "autor"
+					}
+				],
+				"date": "2018.04",
+				"ISBN": "9787312044403",
+				"abstractNote": "本书分为原子结构与性质、分子结构与性质和晶体结构与性质三个部分，其主要特色是从微观上探析物质结构，通过模型认知化学原理，利用新媒体技术阐述物质的微观结构与宏观性质的相互关系。",
+				"archiveLocation": "馆藏",
+				"callNumber": "G634.83",
+				"language": "zh-CN",
+				"libraryCatalog": "Publications Data Center - China",
+				"place": "合肥",
+				"publisher": "中国科学技术大学出版社",
+				"url": "https://pdc.capub.cn/search.html#/detail?id=o2py6lzfry3cnhuwmwi6dzr4hvthnu2xcvee2h7gzqylkgq3xvra&from=1&type=marc",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [
+					{
+						"tag": "结构化学"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://pdc.capub.cn/search.html#/detail?id=lqnkn7225pikfse54xek4qe6bp3bjgrzlt5dmswezuiv5nahbq7q&from=1&type=marc",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "俄维大词典",
+				"creators": [
+					{
+						"lastName": "孜亚依丁·艾则孜",
+						"creatorType": "autor"
+					}
+				],
+				"date": "2012.09",
+				"ISBN": "9787228157433",
+				"abstractNote": "本书是俄维两种文字混合的工具书之一。本词典共收单字4万余条左右，短语，派生词，复合词4000余条，包括今年以来已进入人们日常生活的大量新词或新义。每个单字和词条释义都用最常用的意义来解释。",
+				"archiveLocation": "馆藏",
+				"callNumber": "H356",
+				"language": "rus;uig",
+				"libraryCatalog": "Publications Data Center - China",
+				"place": "乌鲁木齐",
+				"publisher": "新疆人民出版社",
+				"url": "https://pdc.capub.cn/search.html#/detail?id=lqnkn7225pikfse54xek4qe6bp3bjgrzlt5dmswezuiv5nahbq7q&from=1&type=marc",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [
+					{
+						"tag": "俄语;对照词典"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://pdc.capub.cn/search.html#/detail?id=e25o2y6oxxgsichz6ugozjmjacv647ksy3adn25ccazny3ghqrja&from=1&type=cip",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "朗文少儿语音",
+				"creators": [
+					{
+						"lastName": " 戈登",
+						"creatorType": "autor"
+					},
+					{
+						"lastName": " 孙",
+						"creatorType": "autor"
+					}
+				],
+				"date": "2005.10",
+				"ISBN": "9787506279437",
+				"abstractNote": "本书是《朗文少儿语音》3B。",
+				"archiveLocation": "CIP",
+				"callNumber": "H311",
+				"libraryCatalog": "Publications Data Center - China",
+				"place": "北京",
+				"publisher": "世界图书出版公司北京公司",
+				"seriesNumber": "3B",
+				"url": "https://pdc.capub.cn/search.html#/detail?id=e25o2y6oxxgsichz6ugozjmjacv647ksy3adn25ccazny3ghqrja&from=1&type=cip",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [
+					{
+						"tag": "英语，美国－语音－儿童教育－教材"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://pdc.capub.cn/search.html#/detail?id=7dahxrzkhzanmop46ag7xrgmamkgn37ew2sdi5cnnilkbp73rrtq&from=1&type=marc_ele",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "长征",
 				"creators": [],
-				"ISBN": "9787900254313",
+				"ISBN": "9787883310471",
 				"archiveLocation": "馆藏",
 				"libraryCatalog": "Publications Data Center - China",
-				"publisher": "科学出版社",
-				"url": "https://pdc.capub.cn/search.html#/detail?id=5j3ztk3ke3qubcvs7g4ecat7qsve4ieqm34wjat3zjxiowiwbosa&from=1&type=marc_ele",
-				"attachments": [],
+				"publisher": "北京国家大剧院古典音乐有限责任公司出版",
+				"url": "https://pdc.capub.cn/search.html#/detail?id=7dahxrzkhzanmop46ag7xrgmamkgn37ew2sdi5cnnilkbp73rrtq&from=1&type=marc_ele",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
@@ -1002,8 +1139,58 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://pdc.capub.cn/search.html#/quick?type=%E5%9B%BE%E4%B9%A6&search=%E5%89%AA%E7%BA%B8",
-		"items": "multiple"
+		"url": "https://pdc.capub.cn/search.html#/detail?id=bf6fudz5x2oxcxfcrydehnw3l4sdv7l5exokw5ef5nw4cgfvwa4q&from=1&type=isbn_ele",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "长征组歌——京剧音乐史诗",
+				"creators": [
+					{
+						"firstName": "振强",
+						"lastName": "谢",
+						"creatorType": "autor"
+					}
+				],
+				"ISBN": "9787887333315",
+				"archiveLocation": "ISBN",
+				"libraryCatalog": "Publications Data Center - China",
+				"publisher": "中国文联音像出版公司（中国文联出版社有限公司）",
+				"rights": "谢振强",
+				"url": "https://pdc.capub.cn/search.html#/detail?id=bf6fudz5x2oxcxfcrydehnw3l4sdv7l5exokw5ef5nw4cgfvwa4q&from=1&type=isbn_ele",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://pdc.capub.cn/search.html#/detail?id=ahvu2dxdy7sdhl6f2vgpe6taasmpnohq4tpnrgl3424yx2cr7xma&from=1&type=comics",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "列宁在一九一八",
+				"creators": [],
+				"libraryCatalog": "Publications Data Center - China",
+				"publisher": "上海人民美术出版社",
+				"url": "https://pdc.capub.cn/search.html#/detail?id=ahvu2dxdy7sdhl6f2vgpe6taasmpnohq4tpnrgl3424yx2cr7xma&from=1&type=comics",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
 	}
 ]
 /** END TEST CASES **/
