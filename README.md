@@ -35,7 +35,7 @@
 + [国家图书馆文津搜索](http://find.nlc.cn/) -> [Wenjin.js](./translators/Wenjin.js)
   - [x] 抓取引文信息
   - [x] 支持文献类型：图书，论文
-+ [国家版本馆版权数字中心](https://pdc.capub.cn/) -> [Publications Data Center - China.js](./Publications Data Center - China.js)
++ [国家版本馆版权数字中心](https://pdc.capub.cn/) -> [Publications Data Center - China.js](<./Publications Data Center - China.js>)
   - [x] 抓取引文信息
   - [x] 多条目导出
 + [ProQuest 学位论文全文检索平台](http://www.pqdtcn.com/) -> [ProQuestCN Thesis.js](<./translators/ProQuestCN Thesis.js>)
