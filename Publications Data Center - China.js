@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-02 18:51:09"
+	"lastUpdated": "2023-10-04 15:04:01"
 }
 
 /*
@@ -89,55 +89,7 @@ async function doWeb(doc, url) {
 		// Z.debug(items);
 		if (!items) return;
 		for (let postdata of Object.keys(items)) {
-			// await scrape_multi(postdata);
-			// Z.debug(postdata);
-			// postdata = JSON.parse(postdata);
-			// Z.debug(`id=${postdata.id}&searchType=${postdata.type}`);
-			// await ZU.doPost(
-			// 	"https://pdc.capub.cn/api/index/bookDetail",
-			// 	`id=${postdata.id}&searchType=${postdata.type}`,
-			// 	function (postresult) {
-			// 		Z.debug(postresult);
-			// 	}
-			// )
-			// var test = "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";
-			ciphertext = aescbc.base64.toBytes(test);
-			var key = aescbc.utf8.toBytes("zg35ws76swnxz679");
-			var iv = aescbc.utf8.toBytes("z66qa18l0w9o521k");
-			var cbc = new aescbc.CBC(key, iv);
-			var bookdata = aescbc.utf8.fromBytes(aescbc.pkcs7.strip(cbc.decrypt(ciphertext)));
-			bookdata = new Map(Object.entries(JSON.parse(bookdata)));
-			Z.debug(bookdata);
-			var newItem = new Z.Item("book");
-			var key_map = {
-				"title": "firstbookname",
-				"abstractNote": ["contentsummary", "ontentabstract"],
-				"series": "volumename",
-				"seriesNumber": "volumeno",
-				"edition": "edition",
-				"place": "publisheradd",
-				"publisher": "publisher",
-				"date": ["publishingdate", "publishyear", "publishingyear"],
-				"ISBN": "isbn",
-				"callNumber": "sort",
-				"suite": "secondbookname",
-			};
-			for (const key in key_map) {
-				if (Object.hasOwnProperty.call(key_map, key)) {
-					// Z.debug(key);
-					// Z.debug(key_map[key]);
-					newItem[key] = match_text(data = bookdata, labels = key_map[key]);
-					// Z.debug(newItem.key);
-				}
-				// Z.debug(newItem);
-			};
-			// newItem = Object.assign(newItem, match_text_type(data=bookdata, type=postdata.type));
-			newItem.language = match_text_lang(data = bookdata, labels = "worklanguage"),
-			newItem.creators = match_text_creators(data = bookdata, labels = "firstauthor")[0];
-			newItem.creators_raw = match_text_creators(data = bookdata, labels = "firstauthor")[1];
-			newItem.url = `https://pdc.capub.cn/search.html#/detail?id=${postdata.id}&from=1&type=${postdata.type}`,
-			newItem.tags.push({ "tag": match_text(data = bookdata, labels = "keyword") });
-			newItem.complete(); */
+			await scrape_multi(postdata);
 		}
 	}
 	else {
@@ -274,16 +226,27 @@ function match_text_lang(data, labels) {
 
 async function scrape_multi(postdata) {
 	postdata = JSON.parse(postdata);
-	Z.debug(`id=${postdata.id}&searchType=${postdata.type}`);
+	// Z.debug(postdata);
+	// Z.debug(`id=${postdata.id}&searchType=${postdata.type}`);
+	// 在Scaffold中无法调用下面这个对象，但大部分浏览器是支持的，
+	// 详见 https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage#browser_compatibility
+	let usersessionid = localStorage.getItem("user-token");
+	// 在Scaffold调试时请用浏览器devtools从请求头找到Usersessionid手动复制粘贴到下方
+	// let usersessionid = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+	// Z.debug(usersessionid);
 	ZU.doPost(
 		"https://pdc.capub.cn/api/index/bookDetail",
 		`id=${postdata.id}&searchType=${postdata.type}`,
 		function (postresult) {
-			Z.debug(postresult);
+			// Z.debug(postresult);
+			// postresult = JSON.stringify(postresult);
+			// postresult = JSON.parse(postresult);
+			// Z.debug(typeof(postresult));
 			postresult = JSON.parse(postresult);
 			var statue = postresult["code"]
+			// Z.debug(typeof(statue));
 			if (statue == "0") {
-				ciphertext = JSON.parse(ciphertext)["result"];
+				var ciphertext = postresult["result"];
 				ciphertext = aescbc.base64.toBytes(ciphertext);
 				var key = aescbc.utf8.toBytes("zg35ws76swnxz679");
 				var iv = aescbc.utf8.toBytes("z66qa18l0w9o521k");
@@ -314,17 +277,18 @@ async function scrape_multi(postdata) {
 					// "extra": "其他",
 					"suite": "secondbookname",
 				};
+				// Z.debug(bookdata);
 				for (const key in key_map) {
 					if (Object.hasOwnProperty.call(key_map, key)) {
 						newItem[key] = match_text(data = bookdata, labels = key_map[key]);
 					}
 				};
-				newItem = Object.assign(newItem, match_text_type(data = meta_all, type = postdata.type));
-				newItem.language = match_text_lang(data = bookdata, labels = "worklanguage"),
-				newItem.creators = match_text_creators(data = bookdata, labels = firstauthor)[0];
-				newItem.creators_raw = match_text_creators(data = bookdata, labels = firstauthor)[1];
-				newItem.url = `https://pdc.capub.cn/search.html#/detail?id=${postdata.id}&from=1&type=${postdata.type}`,
-					newItem.tags.push({ "tag": match_text(data = meta_all, labels = "keyword") });
+				newItem = Object.assign(newItem, match_text_type(data = bookdata, type = postdata.type));
+				newItem.language = match_text_lang(data = bookdata, labels = "worklanguage");
+				newItem.creators = match_text_creators(data = bookdata, labels = "firstauthor")[0];
+				newItem.creators_raw = match_text_creators(data = bookdata, labels = "firstauthor")[1];
+				newItem.url = `https://pdc.capub.cn/search.html#/detail?id=${postdata.id}&from=1&type=${postdata.type}`;
+				newItem.tags.push({ "tag": match_text(data = bookdata, labels = "keyword") });
 				// 还有一些未能识别的属性
 				// {
 				// 	"applydate": "**",
@@ -418,7 +382,8 @@ async function scrape_multi(postdata) {
 			else {
 				return false;
 			}
-		}
+		},
+		{ "Usersessionid": usersessionid }
 	)
 }
 
@@ -462,6 +427,11 @@ async function scrape(doc, url = doc.location.href) {
 	// 丛书名示
 	// https://pdc.capub.cn/search.html#/detail?id=6fvn57xzq2kxf7qldopfgfhcr3svtkp6n7a23d7djxgkt6gmpsbxsgvyspiasyexnlbqn6ffm62mw&from=1&type=cip
 	newItem.suite = match_text(data = meta_all, labels = "丛书名");
+	newItem.attachments.push({
+		"url": url,
+		"title": "Snapshot",
+		"mimeType": "text/html"
+	});
 	newItem.complete();
 }
 
@@ -1005,14 +975,11 @@ var aescbc = {
 	}
 };
 
+
+
+
 /** BEGIN TEST CASES **/
 var testCases = [
-	{
-		"type": "web",
-		"url": "about:blank",
-		"detectedItemType": false,
-		"items": []
-	},
 	{
 		"type": "web",
 		"url": "https://pdc.capub.cn/search.html#/detail?id=5j3ztk3ke3qubcvs7g4ecat7qsve4ieqm34wjat3zjxiowiwbosa&from=1&type=marc_ele",
@@ -1032,6 +999,11 @@ var testCases = [
 				"seeAlso": []
 			}
 		]
+	},
+	{
+		"type": "web",
+		"url": "https://pdc.capub.cn/search.html#/quick?type=%E5%9B%BE%E4%B9%A6&search=%E5%89%AA%E7%BA%B8",
+		"items": "multiple"
 	}
 ]
 /** END TEST CASES **/
