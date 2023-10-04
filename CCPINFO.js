@@ -153,12 +153,6 @@ async function scrape(doc, url = doc.location.href) {
 		);
 	/* 请求语言字段 */
 	ZU.doPost(
-		/* 使用形式传参引发TypeError: body.substr is not a function */
-		// postdata={
-		// 	key: 9787119132037,
-		// 	offfset: 1,
-		// 	hasEbook: false
-		// },
 		url="https://book.cppinfo.cn/So/Search/LangSearch",
 		postdata=`key=${newItem.ISBN}&offset=1&hasEbook=false`,
 		// var text = '<a href="/so/home/qhsearch?languages=eng&amp;q=9787119132037">英语<i>(1)</i></a>'
