@@ -56,6 +56,9 @@
   - 摘要信息：作者简介 + 内容简介
   - 目录信息：目录存放至note附件里
   - [详细截图](https://github.com/Captain2021/myTranslator/tree/main)
++ 皮书数据库 -> [Pishu Data.js](./Pishu%20Data.js)
+  - [x] 抓取引文信息
+  - [x] 支持文献类型：报告（记录为bookSection）、图书
 + 来自[道格学社仓库](https://github.com/gezhongran/DougSociety)的翻译器
   - [Bilibili 视频网站](./translators/BiliBili.js)
   - [当当网图书](./translators/Dangdang.js)
