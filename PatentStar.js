@@ -2,14 +2,14 @@
 	"translatorID": "8276f7cf-bc43-45b5-9409-8ba2af369c60",
 	"label": "PatentStar",
 	"creator": "Yizhao Wan",
-	"target": "^https?://cprs.patentstar.com.cn",
+	"target": "^https?://((www)|(cprs)).patentstar.com.cn",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-09-29 06:21:48"
+	"lastUpdated": "2023-10-10 08:43:04"
 }
 
 /*
@@ -270,10 +270,10 @@ async function scrape(doc, url) {
 
 
 				/***************************************************************************/
-				//使用api获取pdf,该api返回的Data数据中包含可能包含两个pdf文件的网址
-				//如果有两个网址，则第一个为申请文件，第二个为授权文件
-				//故存在两个网址时，则取第二个作为附件保存
-
+				// 使用api获取pdf,该api返回的Data数据中包含可能包含两个pdf文件的网址
+				// 如果有两个网址，则第一个为申请文件，第二个为授权文件
+				// 故存在两个网址时，则取第二个作为附件保存
+				// 注：以下代码在Scaffold调试时可能失败，但在浏览器是成功的
 				if (detectLogin(doc, url)) {
 					var pdfGetUrl = "https://cprs.patentstar.com.cn/" + "WebService/GetPDFUrl";
 					var ANE = url.split('=')[1];
@@ -396,7 +396,61 @@ function detectLogin(doc, url) {
 	else
 		return true;
 }
+
 /** BEGIN TEST CASES **/
 var testCases = [
+	{
+		"type": "web",
+		"url": "https://cprs.patentstar.com.cn/Search/ResultList?CurrentQuery=6auY5rip6Zmk5bCYL1lZ&type=cn",
+		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://cprs.patentstar.com.cn/Search/Detail?ANE=8AGA9FGC5BCA9HGH8CFA6GAA9EBF9FHFAIHA9CBB6EBA9FDC",
+		"items": [
+			{
+				"itemType": "patent",
+				"title": "一种复合型耐高温除尘滤料及其制造方法",
+				"creators": [
+					{
+						"firstName": "文镇",
+						"lastName": "翟"
+					},
+					{
+						"firstName": "丽萍",
+						"lastName": "庄"
+					},
+					{
+						"firstName": "连东",
+						"lastName": "高"
+					},
+					{
+						"firstName": "言财",
+						"lastName": "申"
+					},
+					{
+						"firstName": "加富",
+						"lastName": "梁"
+					}
+				],
+				"issueDate": "2023",
+				"abstractNote": "本发明涉及过滤材料领域，公开了一种复合型耐高温除尘滤料及其制造方法，复合型耐高温除尘滤料包括多层基布层，相邻基布层之间纤维层，位于外侧的基布层均涂覆有耐高温涂层，一耐高温涂层外侧涂覆有耐腐蚀层，耐腐蚀层上涂覆有防护层，本发明提出的复合型耐高温除尘滤料，能够实现在高温环境下进行除尘过滤处理，耐高温效果好，具有耐腐蚀能力，同时配合气冲过滤的方式，不会导致纤维材料脱落，纤维材料附着能力强，满足了现在的使用要求。",
+				"applicationNumber": "CN202310922713.2",
+				"assignee": "山东海汇环保设备有限公司",
+				"country": "中国",
+				"extra": "发明专利",
+				"filingDate": "2023-07-26",
+				"legalStatus": "审中",
+				"patentNumber": "CN202310922713.2",
+				"place": "37(山东)",
+				"rights": "1.一种复合型耐高温除尘滤料，其特征在于，包括多层基布层(100)，相邻基布层(100)之间纤维层(200)，位于外侧的基布层(100)均涂覆有耐高温涂层(300)，一耐高温涂层(300)外侧涂覆有耐腐蚀层(400)，耐腐蚀层(400)上涂覆有防护层(500)。",
+				"url": "https://cprs.patentstar.com.cn/Search/Detail?ANE=8AGA9FGC5BCA9HGH8CFA6GAA9EBF9FHFAIHA9CBB6EBA9FDC",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	}
 ]
 /** END TEST CASES **/
