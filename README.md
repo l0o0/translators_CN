@@ -56,6 +56,10 @@
   - 摘要信息：作者简介 + 内容简介
   - 目录信息：目录存放至note附件里
   - [详细截图](https://github.com/Captain2021/myTranslator/tree/main)
++ 玛格泰克 -> [MagTech.js](./MagTech.js)
+  - 支持大部分国内期刊（不一定是中文期刊）
+  - 支持大部分期刊首页或搜索页面的多条目抓取
+  - [x] PDF附件下载
 + 来自[道格学社仓库](https://github.com/gezhongran/DougSociety)的翻译器
   - [Bilibili 视频网站](./translators/BiliBili.js)
   - [当当网图书](./translators/Dangdang.js)
