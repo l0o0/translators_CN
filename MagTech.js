@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-13 05:30:07"
+	"lastUpdated": "2023-10-13 11:15:31"
 }
 
 /*
@@ -96,17 +96,12 @@ const WEBTYPE = [
 		issingle: false,
 		pagekey: 'ul[class="article-list"]  div[class="j-title-1"] > a:first-child'
 	},
+	{
+		name: "manytable",
+		issingle: false,
+		pagekey: 'form[name="AbstractList"] > table td > table td > table td > a:nth-child(1) > u'
+	}
 	// http://www.dwjs.com.cn
-
-	/*****************************************************/
-	/* 不打算支持下列类型的陈旧网页                        */
-	/* 1. 标题不含链接的;                                 */
-	/* 2. 大量嵌套且未使用 class 或 id 属性标识的.         */
-	/* https://www.dangdaiyiyao.com/CN/volumn/home.shtml */
-	/* http://www.qxswhy.com/CN/volumn/home.shtml        */
-	/* http://bjb.tjl.tj.cn/CN/volumn/current.shtml      */
-	/*                                                   */
-	/*****************************************************/
 ];
 
 /* 外来的Metadata.js水土不服，决定自己造轮子 */
@@ -138,7 +133,7 @@ function Metas(doc) {
 	}
 }
 
-const FIELDMAP = {
+const METAMAP = {
 	title: [
 		{ name: "citation_title", },
 		{ name: "DC.Title", },
@@ -244,16 +239,28 @@ const FIELDMAP = {
 	],
 }
 
+const TAGMAP = {
+	title: "T",
+	date: "D",
+	DOI: "R",
+	publicationTitle: "J",
+	pages: "P",
+	volume: "V",
+	issue: "N",
+	abstractNote: "X",
+	url: "U"
+}
+
 function isItem(doc) {
 	var insite = doc.querySelector('a[href^="http://www.magtech.com"]');
-	var havetitle = (new Metas(doc)).getMeta(FIELDMAP.title);
+	var havetitle = (new Metas(doc)).getMeta(METAMAP.title);
 	return (havetitle && insite);
 }
 
 function detectWeb(doc, url) {
 	var type = WEBTYPE.find((element) => (doc.querySelector(element.pagekey)));
 	Z.debug(type);
-	if (isItem(doc) || type.issingle) {
+	if (isItem(doc) || (type && type.issingle)) {
 		return 'journalArticle';
 	}
 	else if ((type) && (getSearchResults(doc, type, true))) {
@@ -265,16 +272,36 @@ function detectWeb(doc, url) {
 function getSearchResults(doc, type, checkOnly) {
 	var items = {};
 	var found = false;
-	var rows = doc.querySelectorAll(type.pagekey);
-	for (let row of rows) {
-		let href = row.href;
-		let title = ZU.trimInternal(row.textContent);
-		if (!href || !title) continue;
-		if (checkOnly) return true;
-		found = true;
-		items[href] = title;
+	if (type.name == 'manytable') {
+		Z.debug('type is manytable');
+		let elements = Array.from(doc.querySelectorAll('form[name="AbstractList"] > table:only-child td:only-child > table td > table'));
+		// Z.debug(elements.map((element) => (element.innerText)));
+		for (let element of elements) {
+			let innerText = element.querySelector('td > a:nth-child(1) > u');
+			if (innerText && innerText.textContent == '摘要') {
+				let href = innerText.parentElement.href;
+				let title = element.querySelector('td > b').innerText;
+				Z.debug(`${href}\n${title}`);
+				if (!href || !title) continue;
+				if (checkOnly) return true;
+				found = true;
+				items[href] = title;
+			}
+		}
+		return found ? items : false;
 	}
-	return found ? items : false;
+	else {
+		var rows = doc.querySelectorAll(type.pagekey)
+		for (let row of rows) {
+			let href = row.href;
+			let title = ZU.trimInternal(row.textContent);
+			if (!href || !title) continue;
+			if (checkOnly) return true;
+			found = true;
+			items[href] = title;
+		}
+		return found ? items : false;
+	}
 }
 
 async function doWeb(doc, url) {
@@ -358,10 +385,10 @@ async function scrape(doc, type, url = doc.location.href) {
 	];
 	language = metas.getMeta(language).toLowerCase();
 	// Z.debug(`document language is ${language}`);
-	var fields = Object.keys(FIELDMAP);
+	var fields = Object.keys(METAMAP);
 	for (let i = 0; i < fields.length; i++) {
 		let key = fields[i];
-		newItem[key] = metas.getMeta(FIELDMAP[key], language);
+		newItem[key] = metas.getMeta(METAMAP[key], language);
 	}
 	newItem.pages = (function () {
 		let firstpage = newItem.firstpage;
@@ -383,15 +410,37 @@ async function scrape(doc, type, url = doc.location.href) {
 		title: 'Full Text PDF',
 		mimeType: 'application/pdf'
 	});
+	if (type.name == 'flat' || type.name == 'notebook_threeD') {
+		var itemPatch = await scrape_from_export(doc, 'a[id="ris_export"]');
+		for (const field in TAGMAP) {
+			if (!newItem.field) {
+				newItem.field = itemPatch.field;
+			}
+		}
+		if (itemPatch.abstractNote) {
+			newItem.abstractNote = itemPatch.abstractNote;
+		}
+	}
 	// Z.debug(newItem);
 	newItem.complete();
 }
 
-
-
-
-
-
+async function scrape_from_export(doc, path) {
+	let risURL = doc.querySelector(path).href;
+	// Z.debug(risURL)
+	let risText = await requestText(risURL);
+	risText = risText.split('\r\n');
+	var itemPatch = {};
+	// Z.debug(risText);
+	for (const field in TAGMAP) {
+		const tag = TAGMAP[field];
+		let value = (risText.find((line) => (line.charAt(1) == tag))).substring(3);
+		value ? value : ""
+		itemPatch[field] = value;
+	}
+	// Z.debug(itemPatch);
+	return itemPatch;
+}
 
 /** BEGIN TEST CASES **/
 var testCases = [
