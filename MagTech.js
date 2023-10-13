@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-13 11:15:31"
+	"lastUpdated": "2023-10-13 12:41:51"
 }
 
 /*
@@ -46,10 +46,16 @@ const WEBTYPE = [
 		pagekey: 'body[id="metaVue"]',
 	},
 	{
-		name: 'notebook_threeD',
+		name: 'notebook_classic',
 		issingle: true,
 		pagekey: 'div[id="tabsDiv"]',
 	},
+	{
+		name: 'notebook_morden',
+		issingle: true,
+		pagekey: 'ul[class="tabs-nav"]'
+	},
+	// http://jst.tsinghuajournals.com/CN/1000-0054/home.shtml
 	{
 		name: 'notebook_flat',
 		issingle: true,
@@ -254,16 +260,24 @@ const TAGMAP = {
 function isItem(doc) {
 	var insite = doc.querySelector('a[href^="http://www.magtech.com"]');
 	var havetitle = (new Metas(doc)).getMeta(METAMAP.title);
-	return (havetitle && insite);
+	if (havetitle && insite) {
+		return {
+			name: 'Unknown-type',
+			issingle: true
+		}
+	};
+	return false
 }
 
 function detectWeb(doc, url) {
 	var type = WEBTYPE.find((element) => (doc.querySelector(element.pagekey)));
+	if (!type) type = isItem(doc);
+	if (!type) return false;
 	Z.debug(type);
-	if (isItem(doc) || (type && type.issingle)) {
+	if (type.issingle) {
 		return 'journalArticle';
 	}
-	else if ((type) && (getSearchResults(doc, type, true))) {
+	else if (getSearchResults(doc, type, true)) {
 		return 'multiple';
 	}
 	return false;
@@ -410,7 +424,7 @@ async function scrape(doc, type, url = doc.location.href) {
 		title: 'Full Text PDF',
 		mimeType: 'application/pdf'
 	});
-	if (type.name == 'flat' || type.name == 'notebook_threeD') {
+	if (type.name == 'flat' || type.name == 'notebook_classic') {
 		var itemPatch = await scrape_from_export(doc, 'a[id="ris_export"]');
 		for (const field in TAGMAP) {
 			if (!newItem.field) {
@@ -441,6 +455,8 @@ async function scrape_from_export(doc, path) {
 	// Z.debug(itemPatch);
 	return itemPatch;
 }
+
+
 
 /** BEGIN TEST CASES **/
 var testCases = [
@@ -481,9 +497,9 @@ var testCases = [
 				"date": "2018-02-08",
 				"DOI": "10.16409/j.cnki.2095-039x.2018.01.002",
 				"ISSN": "2095-039X",
-				"abstractNote": "植食性害虫主要取食植物的茎叶、果实、花蜜等，并且常对某些食物...",
+				"abstractNote": "植食性害虫主要取食植物的茎叶、果实、花蜜等，并且常对某些食物表现出明显的偏好性。植物挥发物在害虫食物偏好选择行为中发挥着重要作用。基于害虫偏好食源或其挥发物研制的食诱剂（也称&quot;植物源引诱剂&quot;），是一类重要的害虫绿色防控产品。20世纪初人们就开始利用发酵糖水、糖醋酒液等传统食诱剂进行害虫诱集防治。随着对害虫食源挥发物中信息物质认识的不断深入，通过组配天然提取或人工合成的挥发物组分，先后研制出实蝇、夜蛾、蓟马、甲虫等多类害虫的新型食诱剂。这些食诱剂大多对雌、雄害虫均有效，已在橘小实蝇<em>Bactrocera dorsalis</em>、地中海实蝇<em>Ceratitis capitata</em>、棉铃虫<em>Helicoverpa armigera</em>、苹果蠹蛾<em>Cydia pomonella</em>、西花蓟马<em>Frankliniella occidentalis</em>、西方玉米根萤叶甲<em>Diabrotica virgifera virgifera</em>、纵坑切梢小蠹<em>Tomicus piniperda</em>等重要害虫的监测和防治中发挥了重要作用。本文总结了已有食诱剂研发与应用过程中的经验和教训，并对今后食诱剂的发展方向与重点方面进行了分析和展望，以期促进植食性害虫食诱剂及其田间使用技术的创新发展。",
 				"issue": "1",
-				"language": "en-US",
+				"language": "zh-CN",
 				"libraryCatalog": "MagTech",
 				"pages": "8",
 				"publicationTitle": "中国生物防治学报",
@@ -514,93 +530,6 @@ var testCases = [
 					},
 					{
 						"tag": "行为调控"
-					}
-				],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "http://www.dwjs.com.cn/Oir0aDrjyvxxcwoH6Tjh9T%2BaSptoGC64gbD7BudaaZ7g2z1wPVjmySHIiokAJfoT?encrypt=1",
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "新型电力系统的“碳视角”：科学问题与研究框架",
-				"creators": [
-					{
-						"firstName": "重庆",
-						"lastName": "康",
-						"creatorType": "author"
-					},
-					{
-						"firstName": "尔顺",
-						"lastName": "杜",
-						"creatorType": "author"
-					},
-					{
-						"firstName": "姚旺",
-						"lastName": "李",
-						"creatorType": "author"
-					},
-					{
-						"firstName": "宁",
-						"lastName": "张",
-						"creatorType": "author"
-					},
-					{
-						"firstName": "启鑫",
-						"lastName": "陈",
-						"creatorType": "author"
-					},
-					{
-						"firstName": "鸿业",
-						"lastName": "郭",
-						"creatorType": "author"
-					},
-					{
-						"firstName": "鹏",
-						"lastName": "王",
-						"creatorType": "author"
-					}
-				],
-				"date": "2022-03-05",
-				"DOI": "doi:10.13335/j.1000-3673.pst.2021.2550",
-				"ISSN": "1000-3673",
-				"abstractNote": "电力在我国能源消费与碳排放中占据重要地位。电力系统低碳转型,构建以新能源为主体的新型电力系统将对我国碳达峰、碳中和战略目标的实现起到关键作用。该文首先分析了从“电视角”到“碳视角”下电力学科研究体系的转变趋势,并对当前“碳视角”下的电力系统研究概况进行了综述。基于“碳视角”下的电力系统研究路径,从电力系统全环节碳排放计量和“战略-技术-市场”协同低碳化解决方案2个方面,分析了电力低碳转型过程中的关键科学问题。在此基础上,从碳计量与碳追踪、碳规划与碳轨迹、碳减排与碳优化、碳市场与碳交易4个方面提出了新型电力系统“碳视角”的研究框架,并对关键研究内容进行了分析和阐述。",
-				"issue": "3",
-				"language": "en-US",
-				"libraryCatalog": "MagTech",
-				"pages": "821-833",
-				"publicationTitle": "电网技术",
-				"url": "http://www.dwjs.com.cn/Oir0aDrjyvxxcwoH6Tjh9T%2BaSptoGC64gbD7BudaaZ7g2z1wPVjmySHIiokAJfoT?encrypt=1",
-				"volume": "46",
-				"attachments": [
-					{
-						"title": "Snapshot",
-						"mimeType": "text/html"
-					},
-					{
-						"title": "Full Text PDF",
-						"mimeType": "application/pdf"
-					}
-				],
-				"tags": [
-					{
-						"tag": "新型电力系统"
-					},
-					{
-						"tag": "碳减排与碳优化"
-					},
-					{
-						"tag": "碳市场与碳交易"
-					},
-					{
-						"tag": "碳规划与碳轨迹"
-					},
-					{
-						"tag": "碳计量和碳追踪"
 					}
 				],
 				"notes": [],
@@ -664,6 +593,73 @@ var testCases = [
 					},
 					{
 						"tag": "量化评价"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "http://www.dwjs.com.cn/CN/10.13335/j.1000-3673.pst.2019.2670",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "智能配电网柔性互联研究现状及发展趋势",
+				"creators": [
+					{
+						"firstName": "琪",
+						"lastName": "祁",
+						"creatorType": "author"
+					},
+					{
+						"firstName": "齐荣",
+						"lastName": "姜",
+						"creatorType": "author"
+					},
+					{
+						"firstName": "彦平",
+						"lastName": "许",
+						"creatorType": "author"
+					}
+				],
+				"date": "2020-12-05",
+				"DOI": "doi:10.13335/j.1000-3673.pst.2019.2670",
+				"ISSN": "1000-3673",
+				"abstractNote": "分布式电源的大规模接入、用电负荷的多元化增长及直流负荷比例的增加,给传统配电网的结构形态与运行方式带来了巨大影响。利用全控型电力电子器件对配电网进行柔性互联改造,有助于提高系统的可控性、可靠性与安全性,促进分布式电源消纳、满足高质量供电需求,是向未来智能配电网演变的重要手段。文章首先介绍了柔性互联配电网的关键环节——柔性互联装置(flexible interconnection device,FID)的基本结构与工作原理;然后结合国内外示范工程,对柔性互联系统3种典型形态及特点进行分析,对运行控制和规划设计方面的关键技术进行了讨论及研究现状总结,并指出现阶段亟需突破的关键问题;最后,为实现柔性互联配电网更广泛的应用,对其发展趋势进行了展望。",
+				"issue": "12",
+				"language": "zh-CN",
+				"libraryCatalog": "MagTech",
+				"pages": "4664-4676",
+				"publicationTitle": "电网技术",
+				"url": "http://www.dwjs.com.cn/CN/10.13335/j.1000-3673.pst.2019.2670",
+				"volume": "44",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					},
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					}
+				],
+				"tags": [
+					{
+						"tag": "分布式电源"
+					},
+					{
+						"tag": "柔性互联装置"
+					},
+					{
+						"tag": "电力电子"
+					},
+					{
+						"tag": "示范工程"
+					},
+					{
+						"tag": "配电网运行控制"
 					}
 				],
 				"notes": [],
