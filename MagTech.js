@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-12 15:37:17"
+	"lastUpdated": "2023-10-13 05:30:07"
 }
 
 /*
@@ -371,7 +371,7 @@ async function scrape(doc, type, url = doc.location.href) {
 		return (firstpage == lastpage || !lastpage) ? firstpage : `${firstpage}-${lastpage}`;
 	})();
 	newItem.language = (function () {
-		return (['zh', 'cn', 'zh-cn', 'chi'].indexOf(language)) ? 'zh-CN' : 'en-US';
+		return (['zh', 'cn', 'zh-cn', 'chi'].indexOf(language) < 0) ? 'en-US' : 'zh-CN';
 	})();
 	newItem.url = url;
 	newItem.attachments.push({
