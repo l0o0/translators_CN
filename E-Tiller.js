@@ -204,7 +204,7 @@ function match_creators(creators) {
 	var zhnamesplit = Z.getHiddenPref('zhnamesplit');
 	for (var i = 0, n = creators.length; i < n; i++) {
 		var creator = creators[i];
-		if (creator.match(/[A-Za-z]/)) {
+		if (creator.search(/[A-Za-z]/) !== -1) {
 			creator = ZU.cleanAuthor(creator, "author");
 		}
 		else {
