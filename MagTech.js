@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-13 12:41:51"
+	"lastUpdated": "2023-10-15 08:56:55"
 }
 
 /*
@@ -191,13 +191,6 @@ const METAMAP = {
 		{ name: "prism.issn" },
 		{ name: "citation_issn" }
 	],
-	// shortTitle: "短标题",
-	// url: "网址",
-	// accessDate: "访问时间",
-	// archive: "档案",
-	// archiveLocation: "存档位置",
-	// libraryCatalog: "文库编目",
-	// callNumber: "索书号",
 	rights: [
 		{ name: "prism.copyright" },
 		{ name: "dc.copyright" }
@@ -425,40 +418,29 @@ async function scrape(doc, type, url = doc.location.href) {
 		mimeType: 'application/pdf'
 	});
 	if (type.name == 'flat' || type.name == 'notebook_classic') {
-		var itemPatch = await scrape_from_export(doc, 'a[id="ris_export"]');
+		let risURL = doc.querySelector('a[id="ris_export"]').href;
+		// Z.debug(risURL)
+		let risText = await requestText(risURL);
+		risText = risText.split('\r\n');
+		var itemPatch = {};
+		// Z.debug(risText);
 		for (const field in TAGMAP) {
-			if (!newItem.field) {
-				newItem.field = itemPatch.field;
+			const tag = TAGMAP[field];
+			var value;
+			try {
+				value = (risText.find((line) => (line.charAt(1) == tag))).substring(3);
 			}
-		}
-		if (itemPatch.abstractNote) {
-			newItem.abstractNote = itemPatch.abstractNote;
+			catch (erro) {
+				value = '';
+			}
+			if (!newItem.field || field == 'abstractNote') {
+				newItem.field = value;
+			}
 		}
 	}
 	// Z.debug(newItem);
 	newItem.complete();
-}
-
-async function scrape_from_export(doc, path) {
-	let risURL = doc.querySelector(path).href;
-	// Z.debug(risURL)
-	let risText = await requestText(risURL);
-	risText = risText.split('\r\n');
-	var itemPatch = {};
-	// Z.debug(risText);
-	for (const field in TAGMAP) {
-		const tag = TAGMAP[field];
-		let value = (risText.find((line) => (line.charAt(1) == tag))).substring(3);
-		value ? value : ""
-		itemPatch[field] = value;
-	}
-	// Z.debug(itemPatch);
-	return itemPatch;
-}
-
-
-
-/** BEGIN TEST CASES **/
+}/** BEGIN TEST CASES **/
 var testCases = [
 	{
 		"type": "web",
