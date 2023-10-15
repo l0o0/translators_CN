@@ -92,7 +92,7 @@ function match_creators(raw_text) {
 	var zhnamesplit = Z.getHiddenPref('zhnamesplit');
 	var creators = raw_text.split(' ');
 	for (var i = 0, n = creators.length; i < n; i++) {
-		creator = creators[i];
+		var creator = creators[i];
 		/* 暂未见西文名案例 */
 		// if (creator.lastName.search(/[A-Za-z]/) !== -1 && lastSpace !== -1) {
 		// 	// western name. split on last space
