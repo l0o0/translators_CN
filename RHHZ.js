@@ -104,7 +104,7 @@ async function scrape(doc, url = doc.location.href) {
 				creator.firstName = creator.lastName.substr(0, lastSpace);
 				creator.lastName = creator.lastName.substr(lastSpace + 1);
 			}
-			else if (zhnamesplit === undefined ? true : zhnamesplit) {
+			else if ((zhnamesplit === undefined) ? true : zhnamesplit) {
 				// zhnamesplit is true, split firstname and lastname.
 				// Chinese name. first character is last name, the rest are first name
 				creator.firstName = creator.lastName.substr(1);
