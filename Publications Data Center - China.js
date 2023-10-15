@@ -190,7 +190,7 @@ function match_text_creators(data, labels) {
 		}
 		/* 中文名根据配置决定是否拆分 */
 		else {
-			if (zhnamesplit === undefined || zhnamesplit) {
+			if ((zhnamesplit === undefined) ? true : zhnamesplit) {
 				// zhnamesplit is true, split firstname and lastname.
 				// Chinese name. first character is last name, the rest are first name
 				// Z.debug(creator);
