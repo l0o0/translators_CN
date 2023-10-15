@@ -87,7 +87,7 @@ function gen_creators(raw_txt) {
 	var zhnamesplit = Z.getHiddenPref('zhnamesplit');
 	for (var i = 0; i < creators.length; i++) {
 			creators[i] = creators[i].replace(/\([\u4e00-\u9fa5]+\)/, "");
-		if (zhnamesplit === undefined || zhnamesplit) {
+		if ((zhnamesplit === undefined) ? true : zhnamesplit) {
 			// zhnamesplit is true, split firstname and lastname.
 			// Chinese name. first character is last name, the rest are first name
 			if (creators[i].toString().indexOf("·") !== -1){
