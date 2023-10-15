@@ -208,7 +208,7 @@ function match_creators(creators) {
 			creator = ZU.cleanAuthor(creator, "author");
 		}
 		else {
-			if (zhnamesplit ? zhnamesplit : true) {
+			if ((zhnamesplit === undefined) ? true : zhnamesplit) {
 				creator = creator.replace(/\s/g, '');
 				// Z.debug(creator);
 				// zhnamesplit is true, split firstname and lastname.
