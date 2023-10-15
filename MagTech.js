@@ -355,7 +355,7 @@ function cleanAutor(creator) {
 	}
 	else {
 		creator = creator.replace(/\s/g, '');
-		if (zhnamesplit ? zhnamesplit : true) {
+		if ((zhnamesplit === undefined) ? true : zhnamesplit) {
 			// zhnamesplit is true, split firstname and lastname.
 			// Chinese name. first character is last name, the rest are first name
 			creator = {
