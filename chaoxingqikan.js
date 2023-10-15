@@ -99,7 +99,7 @@ function match_creators(doc, path) {
 			// western name. split on last space
 			creator = ZU.cleanAuthor(creator, "author");
 		}
-		else if (zhnamesplit ? zhnamesplit : true) {
+		else if ((zhnamesplit === undefined) ? true : zhnamesplit) {
 			// zhnamesplit is true, split firstname and lastname.
 			// Chinese name. first character is last name, the rest are first name
 			creator = {
