@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-04 10:25:54"
+	"lastUpdated": "2023-10-15 14:34:12"
 }
 
 /*
@@ -75,7 +75,7 @@ async function doWeb(doc, url) {
 	}
 }
 
-function get_pure_text(element) {
+function getPureText(element) {
 	// 执行深拷贝以免影响页面元素
 	let element_copy = element.cloneNode(true);
 	while (element_copy.firstElementChild) {
@@ -84,22 +84,17 @@ function get_pure_text(element) {
 	return element_copy.innerText;
 }
 
-function match_creators(doc, path) {
-	var creators = ZU.xpath(doc, "//p[@class='F_name']")[0];
-	// 移除脚注上标
-	creators = get_pure_text(creators);
-	creators = creators.split(/[，|,]/);
-	creators = creators.map((creator) => ZU.trimInternal(creator));
+function matchCreator(creator) {
 	// Z.debug(creators);
 	var zhnamesplit = Z.getHiddenPref('zhnamesplit');
-	for (var i = 0, n = creators.length; i < n; i++) {
-		var creator = creators[i];
-		if (creator.search(/[A-Za-z]/) !== -1) {
-			creator = creator.replace(/\(.*\)/g, "");
-			// western name. split on last space
-			creator = ZU.cleanAuthor(creator, "author");
-		}
-		else if ((zhnamesplit === undefined) ? true : zhnamesplit) {
+	if (creator.search(/[A-Za-z]/) !== -1) {
+		creator = creator.replace(/\(.*\)/g, '');
+		// western name. split on last space
+		creator = ZU.cleanAuthor(creator, "author");
+	}
+	else {
+		creator = creator.replace(/\s/g, '');
+		if ((zhnamesplit === undefined) ? true : zhnamesplit) {
 			// zhnamesplit is true, split firstname and lastname.
 			// Chinese name. first character is last name, the rest are first name
 			creator = {
@@ -108,40 +103,45 @@ function match_creators(doc, path) {
 				"creatorType": "author"
 			}
 		}
-		creators[i] = creator;
+		else {
+			creator = {
+				"lastName": creator,
+				"creatorType": "author"
+			}
+		}
 	}
-	return creators;
+	return creator;
 }
 
-function match_source(element) {
+function matchSource(element) {
 	// Z.debug(element);
 	let source = {};
-	source["publicationTitle"] = ZU.xpath(element, "//a[@class='jourName']")[0].innerText.replace(/[《|》]/g, "");
-	// Z.debug(source["publicationTitle"]);
-	element = get_pure_text(element);
-	source["date"] = element.match(/\d+(?=年)/)[0];
-	// Z.debug(source["date"]);
-	source["issue"] = element.match(/\d+(?=期)/)[0];
-	// Z.debug(source["issue"]);
-	source["pages"] = element.match(/[\d|-]+(?=页)/)[0];
+	source['publicationTitle'] = ZU.xpath(element, '//a[@class="jourName"]')[0].innerText.replace(/[《》]/g, '');
+	// Z.debug(source['publicationTitle']);
+	element = getPureText(element);
+	source['date'] = element.match(/\d+(?=年)/)[0];
+	// Z.debug(source['date']);
+	source['issue'] = element.match(/\d+(?=期)/)[0];
+	// Z.debug(source['issue']);
+	source['pages'] = element.match(/[\d|-]+(?=页)/)[0];
 	return source;
 }
 
-function match_attanchment(element) {
-	var url = ZU.xpath(element, "//a[@class='pdfdown']")[0].href;
+function matchPDF(element) {
+	var url = ZU.xpath(element, '//a[@class="pdfdown"]')[0].href;
 	// Z.debug(url);
 	return url ? {
 		"url": url,
 		"title": "Full Text PDF",
 		"mimeType": "application/pdf"
-	} : "";
+	} : '';
 }
 
-function match_doi(doc, path) {
+function matchDOI(doc, path) {
 	let value = ZU.xpath(doc, path)[0];
-	return (value) ? get_pure_text(value) : "";
+	return (value) ? getPureText(value) : '';
 }
-function match_related(doc, path) {
+function matchRelated(doc, path) {
 	var articals = ZU.xpath(doc, path);
 	articals = articals.map((element) => ({
 		"citation": element.innerText,
@@ -151,58 +151,51 @@ function match_related(doc, path) {
 }
 
 async function scrape(doc, url = doc.location.href) {
-	var newItem = new Z.Item("journalArticle");
-	newItem.title = ZU.xpath(doc, "//h1[@class='F_titel']")[0].innerText;
-	newItem.creators = match_creators(doc, "//p[@class='F_name']");
-	// Z.debug(ZU.xpath(doc, "//a[@class='jourName']"));
-	var data_counts = ZU.xpath(doc, "//div[@class='Fmian1']/table/tbody")[0].children.length;
+	var newItem = new Z.Item('journalArticle');
+	newItem.title = ZU.xpath(doc, '//h1[@class="F_titel"]')[0].innerText;
+	newItem.creators = getPureText(ZU.xpath(doc, "//p[@class='F_name']")[0]).split(/[,，]/).map((element) => 
+		(matchCreator(element))
+	);
+	// Z.debug(ZU.xpath(doc, '//a[@class='jourName']'));
+	let dataCounts = ZU.xpath(doc, '//div[@class="Fmian1"]/table/tbody')[0].children.length;
 	var data = {
-		get_element: function (label) {
-			return (this[label]) ? this[label] : "";
+		getElement: function (label) {
+			return (this[label]) ? this[label] : '';
 		},
-		get_text: function (label) {
-			return (this[label]) ? this[label].innerText : "";
+		getText: function (label) {
+			return (this[label]) ? this[label].innerText : '';
 		},
 	};
-	for (let i = 1; i <= data_counts; i++) {
+	for (let i = 1; i <= dataCounts; i++) {
 		// 重要：如果不去掉多余的空格则无法通过lable索引此属性
-		let label = ZU.xpath(doc, `//div[@class='Fmian1']/table/tbody/tr[${i}]/td[1]`)[0].innerText.replace(/\s/g, "");
+		let label = ZU.xpath(doc, `//div[@class='Fmian1']/table/tbody/tr[${i}]/td[1]`)[0].innerText.replace(/\s/g, '');
 		let value = ZU.xpath(doc, `//div[@class='Fmian1']/table/tbody/tr[${i}]/td[2]`)[0];
 		data[label] = value;
 	}
-	newItem = Object.assign(newItem, match_source(data.get_element("【来源】")));
+	newItem = Object.assign(newItem, matchSource(data.getElement('【来源】')));
 	newItem.url = url;
-	newItem.libraryCatalog = data.get_text("【分类号】");
-	newItem.archiveLocation = data.get_text("【分类导航】");
-	newItem.abstractNote = data.get_text("【摘要】");
-	newItem.tags = data.get_text("【关键词】").split(" ").map((tag) => ({ "tag": tag }));
-	newItem.DOI = match_doi(doc, "//p[@data-meta-name='doi']")
-	newItem.volume = ZU.xpath(doc, "//input[@class='GBTInputId']")[0].defaultValue.match(/\d+(?=卷\(\d+\))/)[0];
-	newItem.seeAlso = match_related(doc, "//div[@id='relatedwritingscontainner']//li");
-	var journal_url = ZU.xpath(doc, "//div[@class='sTopImg']/p[last()]/a")[0].href
-	// Z.debug(journal_url);
-	ZU.doGet(
-		journal_url,
-		function (doc) {
-			// Z.debug(typeof (doc));
-			let parser = new DOMParser();
-			doc = parser.parseFromString(doc, "text/html");
-			// Z.debug(typeof (doc));
-			let journal_info = ZU.xpath(doc, "//div[@class='FbPcon']/p");
-			// Z.debug(journal_info);
-			let data = {};
-			for (let i = 0; i < journal_info.length - 1; i++) {
-				data[journal_info[i].firstElementChild.innerText] = get_pure_text(journal_info[i]);
-			}
-			const lang_map = {
-				"中文": "zh-CN",
-				"英文": "en-US"
-			};
-			newItem.language = lang_map[data["语言："]];
-			newItem.ISSN = data["ISSN："];
-		}
-	)
-	newItem.attachments.push(match_attanchment(data.get_element("【全文获取】")));
+	newItem.libraryCatalog = data.getText('【分类号】');
+	newItem.archiveLocation = data.getText('【分类导航】');
+	newItem.abstractNote = data.getText('【摘要】');
+	newItem.tags = data.getText('【关键词】').split(' ').map((tag) => ({ 'tag': tag }));
+	newItem.DOI = matchDOI(doc, '//p[@data-meta-name="doi"]');
+	newItem.volume = ZU.xpath(doc, '//input[@class="GBTInputId"]')[0].defaultValue.match(/\d+(?=卷\(\d+\))/)[0];
+	newItem.seeAlso = matchRelated(doc, '//div[@id="relatedwritingscontainner"]//li');
+	var journalURL = ZU.xpath(doc, '//div[@class="sTopImg"]/p[last()]/a')[0].href;
+	let parser = new DOMParser();
+	let journalDoc = parser.parseFromString((await requestText(journalURL)), 'text/html');
+	// Z.debug(journalDoc);
+	var journalInfo = {};
+	ZU.xpath(journalDoc, "//div[@class='FbPcon']/p").forEach((element) => {
+		Object.assign(journalInfo, {[element.firstElementChild.innerText]: getPureText(element)})
+	});
+	// Z.debug(journalInfo);
+	newItem.language = {
+		"中文": "zh-CN",
+		"英文": "en-US"
+	}[journalInfo["语言："]];
+	newItem.ISSN = journalInfo["ISSN："];
+	newItem.attachments.push(matchPDF(data.getElement("【全文获取】")));
 	newItem.attachments.push(
 		{
 			"url": url,
@@ -210,18 +203,6 @@ async function scrape(doc, url = doc.location.href) {
 			"document": doc
 		}
 	)
-	//
-	// "series": "系列",
-	// "seriesTitle": "系列标题",
-	// "seriesText": "系列描述",
-	// "journalAbbreviation": "刊名简称",
-	// "language": "语言",
-	// "ISSN": "ISSN",
-	// "shortTitle": "短标题",
-	// "accessDate": "访问时间",
-	// "archive": "档案",
-	// "callNumber": "索书号",
-	// "rights": "版权",
 	newItem.complete()
 }
 
@@ -310,6 +291,5 @@ var testCases = [
 		"url": "https://qikan.chaoxing.com/searchjour?sw=%E9%87%8F%E5%AD%90%E5%8A%9B%E5%AD%A6&size=50&x=0_646",
 		"items": "multiple"
 	}
-	
 ]
 /** END TEST CASES **/
