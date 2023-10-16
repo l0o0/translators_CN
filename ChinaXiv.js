@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-16 11:12:15"
+	"lastUpdated": "2023-10-16 16:06:15"
 }
 
 /*
@@ -81,20 +81,11 @@ function matchCreator(creator) {
 		creator = ZU.cleanAuthor(creator, 'author');
 	}
 	else {
-		if ((zhnamesplit === undefined) ? true : zhnamesplit) {
-			// zhnamesplit is true, split firstname and lastname.
-			// Chinese name. first character is last name, the rest are first name
-			creator = {
-				firstName: creator.substring(1),
-				lastName: creator.charAt(0),
-				creatorType: 'author'
-			}
-		}
-		else {
-			creator = {
-				lastName: creator,
-				creatorType: 'author'
-			}
+		creator = creator.replace(/\s/, '');
+		creator = {
+			lastName: creator,
+			creatorType: 'author',
+			fieldMode: true
 		}
 	}
 	return creator;
@@ -126,7 +117,7 @@ async function scrape(doc, url = doc.location.href) {
 				'div.bd > ul > li >b'), 
 				(node) => (node.innerText == '期刊：'));
 			if (journalNameLable) {
-				item.publicationTitle = journalTititleLable.nextElementSibling.innerText;
+				item.publicationTitle = journalNameLable.nextElementSibling.innerText;
 			}
 			else {
 				item.publicationTitle = '中国科学院科技论文预发布平台';
@@ -146,6 +137,7 @@ async function scrape(doc, url = doc.location.href) {
 		await translator.translate();
 	}
 }
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -157,24 +149,24 @@ var testCases = [
 				"title": "B微合金化对HK40合金铸造疏松的影响",
 				"creators": [
 					{
-						"firstName": "贤飞",
-						"lastName": "丁",
-						"creatorType": "author"
+						"lastName": "丁贤飞",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "东方",
-						"lastName": "刘",
-						"creatorType": "author"
+						"lastName": "刘东方",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "运荣",
-						"lastName": "郑",
-						"creatorType": "author"
+						"lastName": "郑运荣",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "强",
-						"lastName": "冯",
-						"creatorType": "author"
+						"lastName": "冯强",
+						"creatorType": "author",
+						"fieldMode": true
 					}
 				],
 				"abstractNote": "利用SEM, OM和XRD等手段分析了HK40 合金铸件铸造疏松形成原因, 并研究了添加微量B对HK40 合金的凝固组织及疏松形成的影响. 结果表明: HK40 合金铸件主要存在A和B 2 种铸造疏松缺陷. A类疏松主要由于枝晶的快速生长并架桥联接导致架桥枝晶之间区域的补缩不足引起; B类疏松产生原因是相邻枝晶间区域生长的枝晶状M7C3型碳化物堵塞枝晶间补缩通道. B微合金化能降低HK40 合金铸件较强的柱状晶生长趋势, 细化枝晶, 能抑制HK40 合金A类铸造疏松缺陷的产生. 同时, B微合金化增加了HK40 合金枝晶间共晶相的体积分数, 使枝晶间呈枝晶状M7C3型碳化物转变为层片状的M23C6型碳化物析出, 避免碳化物堵塞相邻枝晶间的补缩通道, 因而也减小了B类铸造疏松缺陷的形成倾向.",
@@ -222,19 +214,19 @@ var testCases = [
 				"title": "Gentle代数的矩阵模型及其整体维数",
 				"creators": [
 					{
-						"firstName": "梦蝶",
-						"lastName": "张",
-						"creatorType": "author"
+						"lastName": "张梦蝶",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "雨喆",
-						"lastName": "刘",
-						"creatorType": "author"
+						"lastName": "刘雨喆",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "超",
-						"lastName": "章",
-						"creatorType": "author"
+						"lastName": "章超",
+						"creatorType": "author",
+						"fieldMode": true
 					}
 				],
 				"abstractNote": "该文利用gentle代数的矩阵模型刻画了gentle代数上的单模和投射模, 给出了单模的投射分解的矩阵表示. 由此指出gentle代数的整体维数可以由它的矩阵模型所诱导的一类特殊子矩阵序列进行刻画. 该文进一步指出这一类特殊子矩阵序列对应gentle代数的箭图上的极大非平凡forbidden路, 从而得到gentle代数的整体维数等于它的箭图上的极大非平凡forbidden path的长度.",
@@ -280,8 +272,7 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "http://www.chinaxiv.org/home.htm",
-		"detectedItemType": false,
-		"items": []
+		"items": "multiple"
 	}
 ]
 /** END TEST CASES **/
