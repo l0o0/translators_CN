@@ -327,7 +327,7 @@ async function doWeb(doc, url) {
 }
 
 function cleanAutorArr(creators) {
-	creators = creators.map((creator) => (cleanAutor(creator)));
+	creators = creators.map((creator) => (matchCreator(creator)));
 	return creators;
 }
 
@@ -336,15 +336,11 @@ function cleanAutorStr(creators) {
 	return cleanAutorArr(creators);
 }
 
-function cleanAutor(creator) {
+function matchCreator(creator) {
 	var zhnamesplit = Z.getHiddenPref('zhnamesplit');
 	if (creator.search(/[A-Za-z]/) !== -1) {
 		// western name. split on last space
-		creator = {
-			"firstName": creator.split(' ')[1],
-			"lastName": creator.split(' ')[0],
-			"creatorType": "author"
-		}
+		creator = ZU.cleanAuthor(creator, 'author');
 	}
 	else {
 		creator = creator.replace(/\s/g, '');
