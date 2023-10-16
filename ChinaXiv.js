@@ -76,7 +76,6 @@ async function doWeb(doc, url) {
 
 function matchCreator(creator) {
 	// Z.debug(creators);
-	var zhnamesplit = Z.getHiddenPref('zhnamesplit');
 	if (creator.search(/[A-Za-z]/) !== -1) {
 		creator = ZU.cleanAuthor(creator, 'author');
 	}
