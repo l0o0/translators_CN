@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-15 07:09:42"
+	"lastUpdated": "2023-10-16 02:08:06"
 }
 
 /*
@@ -76,6 +76,33 @@ async function doWeb(doc, url) {
 	}
 }
 
+function matchCreator(creator) {
+	// Z.debug(creators);
+	var zhnamesplit = Z.getHiddenPref('zhnamesplit');
+	if (creator.search(/[A-Za-z]/) !== -1) {
+		creator = ZU.cleanAuthor(creator, "author");
+	}
+	else {
+		creator = creator.replace(/\s/g, '');
+		if ((zhnamesplit === undefined) ? true : zhnamesplit) {
+			// zhnamesplit is true, split firstname and lastname.
+			// Chinese name. first character is last name, the rest are first name
+			creator = {
+				"firstName": creator.substr(1),
+				"lastName": creator.charAt(0),
+				"creatorType": "author"
+			}
+		}
+		else {
+			creator = {
+				"lastName": creator,
+				"creatorType": "author"
+			}
+		}
+	}
+	return creator;
+}
+
 async function scrape(doc, url = doc.location.href) {
 	let translator = Zotero.loadTranslator('web');
 	var pdfURL = '';
@@ -96,22 +123,8 @@ async function scrape(doc, url = doc.location.href) {
 	translator.setTranslator('951c027d-74ac-47d4-a107-9c3069ab7b48');
 	translator.setDocument(doc);
 	translator.setHandler('itemDone', (_obj, item) => {
-		var zhnamesplit = Z.getHiddenPref('zhnamesplit');
-		for (var i = 0, n = item.creators.length; i < n; i++) {
-			var creator = item.creators[i];
-			if (creator.lastName.search(/[A-Za-z]/) !== -1) {
-				// western name. split on last space
-				creator.firstName = creator.lastName.substr(0, lastSpace);
-				creator.lastName = creator.lastName.substr(lastSpace + 1);
-			}
-			else if ((zhnamesplit === undefined) ? true : zhnamesplit) {
-				// zhnamesplit is true, split firstname and lastname.
-				// Chinese name. first character is last name, the rest are first name
-				creator.firstName = creator.lastName.substr(1);
-				creator.lastName = creator.lastName.charAt(0);
-			}
-			item.creators[i] = creator
-		}
+		item.creators = item.creators.map((creator) => (matchCreator(creator.lastName)));
+		item.language = (item.language == 'zh') ? 'zh-CN' : 'en-US';
 		item.attachments = [
 			{
 				url: pdfURL,
@@ -131,6 +144,7 @@ async function scrape(doc, url = doc.location.href) {
 	em.itemType = 'journalArticle';
 	await em.doWeb(doc, url);
 }
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
