@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-15 14:34:12"
+	"lastUpdated": "2023-10-17 06:52:05"
 }
 
 /*
@@ -86,7 +86,6 @@ function getPureText(element) {
 
 function matchCreator(creator) {
 	// Z.debug(creators);
-	var zhnamesplit = Z.getHiddenPref('zhnamesplit');
 	if (creator.search(/[A-Za-z]/) !== -1) {
 		creator = creator.replace(/\(.*\)/g, '');
 		// western name. split on last space
@@ -94,20 +93,10 @@ function matchCreator(creator) {
 	}
 	else {
 		creator = creator.replace(/\s/g, '');
-		if ((zhnamesplit === undefined) ? true : zhnamesplit) {
-			// zhnamesplit is true, split firstname and lastname.
-			// Chinese name. first character is last name, the rest are first name
-			creator = {
-				"firstName": creator.substr(1),
-				"lastName": creator.charAt(0),
-				"creatorType": "author"
-			}
-		}
-		else {
-			creator = {
-				"lastName": creator,
-				"creatorType": "author"
-			}
+		creator = {
+			"lastName": creator,
+			"creatorType": "author",
+			"fieldMode": true
 		}
 	}
 	return creator;
@@ -206,6 +195,7 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.complete()
 }
 
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -217,36 +207,38 @@ var testCases = [
 				"title": "410 t/h燃煤电站高温除尘技术试验研究",
 				"creators": [
 					{
-						"firstName": "桐",
-						"lastName": "司",
-						"creatorType": "author"
+						"lastName": "司桐",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "春波",
-						"lastName": "王",
-						"creatorType": "author"
+						"lastName": "王春波",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "亮",
-						"lastName": "陈",
-						"creatorType": "author"
+						"lastName": "陈亮",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "育杰",
-						"lastName": "任",
-						"creatorType": "author"
+						"lastName": "任育杰",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "福春",
-						"lastName": "任",
-						"creatorType": "author"
+						"lastName": "任福春",
+						"creatorType": "author",
+						"fieldMode": true
 					}
 				],
 				"date": "2023",
 				"DOI": "10.19805/j.cnki.jcspe.2023.07.003",
+				"ISSN": "1674-7607",
 				"abstractNote": "针对燃煤电站SCR脱硝技术中高浓度飞灰造成的催化剂使用寿命缩短、大量氨逃逸及空气预热器堵灰的问题，将高温除尘器布置在SCR反应器之前。在410 t/h燃煤锅炉上对高温除尘技术进行了工程示范研究，分析了高温除尘器的除尘特性对下游脱硝单元和空气预热器性能的影响。结果表明：在70%和90%锅炉负荷下，高温除尘器出口烟尘平均质量浓度均小于8 mg/m~3;90%负荷下，烟气流经高温除尘器的压降仅为500 Pa左右，大幅低于传统布袋除尘器的烟气压降；与典型的超低排放烟气后处理技术相比，应用高温除尘器能实现在相同脱硝效率下显著降低SCR反应器的烟气压降，并能减少相应的气氨消耗量与氨逃逸量；与常规布置布袋除尘器的锅炉环保岛相比，高温除尘器+SCR脱硝单元+空气预热器的模块的烟气压降可降低约500 Pa。",
 				"archiveLocation": "环境科学、安全科学->废物处理与综合利用->动力工业废物处理与综合利用->电力工业",
 				"issue": "7",
+				"language": "zh-CN",
 				"libraryCatalog": "X773",
 				"pages": "829-834",
 				"publicationTitle": "动力工程学报",
@@ -280,9 +272,7 @@ var testCases = [
 					}
 				],
 				"notes": [],
-				"seeAlso": [
-					"https://qikan.chaoxing.com/mag/infos?mags=c5aa19d5a97868b367546ec183fb8453&yearInfo=2023&issueInfo=7"
-				]
+				"seeAlso": []
 			}
 		]
 	},
