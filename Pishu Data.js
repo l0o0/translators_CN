@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-10 16:24:08"
+	"lastUpdated": "2023-10-17 07:22:44"
 }
 
 /*
@@ -87,41 +87,13 @@ async function doWeb(doc, url) {
 	}
 }
 
-function match_creators(raw_text) {
-	raw_text = raw_text.replace(/(&nbsp;)/g, '');
-	var zhnamesplit = Z.getHiddenPref('zhnamesplit');
-	var creators = raw_text.split(' ');
-	for (var i = 0, n = creators.length; i < n; i++) {
-		var creator = creators[i];
-		/* 暂未见西文名案例 */
-		// if (creator.lastName.search(/[A-Za-z]/) !== -1 && lastSpace !== -1) {
-		// 	// western name. split on last space
-		// 	creator.firstName = creator.lastName.substr(0, lastSpace);
-		// 	creator.lastName = creator.lastName.substr(lastSpace + 1);
-		// }
-		// else
-		if ((zhnamesplit === undefined) ? true : zhnamesplit) {
-			// zhnamesplit is true, split firstname and lastname.
-			// Chinese name. first character is last name, the rest are first name
-			creator = {
-				"firstName": creator.substr(1),
-				"lastName": creator.charAt(0),
-				"creatorType": "author",
-			};
-		}
-		else {
-			creator = {
-				"lastName": creator,
-				"creatorType": "author",
-			};
-		}
-		creators[i] = creator;
-	}
-	return creators;
-}
-
-async function scrape_multi(doc, url) {
-
+function matchCreator(creator) {
+	creator = {
+		"lastName": creator,
+		"creatorType": "author",
+		"fieldMode": true
+	};
+	return creator;
 }
 
 async function scrape(doc, url = doc.location.href, type) {
@@ -141,7 +113,9 @@ async function scrape(doc, url = doc.location.href, type) {
 	}
 	var newItem = new Z.Item(type);
 	newItem.title = jsdata.getVar('title');
-	newItem.creators = match_creators(jsdata.getVar('author'));
+	newItem.creators = jsdata.getVar('author').split(' ').map((creator) => (
+		matchCreator(creator.replace(/(&nbsp;)/g, ''))
+	));
 	newItem.date = jsdata.getVar('publishdate');
 	newItem.place = jsdata.getVar('province');
 	newItem.publisher = jsdata.getVar('publishname');
@@ -180,6 +154,7 @@ async function scrape(doc, url = doc.location.href, type) {
 
 
 
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -191,9 +166,9 @@ var testCases = [
 				"title": "以平台经济增加中低收入群体要素收入",
 				"creators": [
 					{
-						"firstName": "利涛",
-						"lastName": "端",
-						"creatorType": "author"
+						"lastName": "端利涛",
+						"creatorType": "author",
+						"fieldMode": true
 					}
 				],
 				"date": "2023-08",
@@ -237,13 +212,13 @@ var testCases = [
 				"title": "从“无理论”的教育到“无教育”的理论",
 				"creators": [
 					{
-						"firstName": "永胜",
-						"lastName": "吴",
-						"creatorType": "author"
+						"lastName": "吴永胜",
+						"creatorType": "author",
+						"fieldMode": true
 					}
 				],
 				"date": "2021-07",
-				"abstractNote": "正如杰克·古迪所说：“人类思维的细分能力，是与社会生活不断分化的进程相随发展的。”伴随着实践领域的日益细分，理论领域也日益走向专业化，各个实践领域都有相对应的理论类型。在教育领域中，“无理论”的教育现象与“无教育”的理论现象的普遍存在，造成了教育理论与实践之间的长期疏离。通过对教育理论的实践性问题的探讨，对这个老问题做出尝试性的新回答，既是学术之需，亦为个人之趣。文献和现实的双重阅读，要求在探讨教育理论的实践性问题时，改变从理论建设的立场去谈教育理论之实践性的原有研究套路。实践之于理论的框架或基底作用决定了有必要尝试彻底地转换思路，即教育实践到底需要什么样的教育理论，已有理论能否满足教育实践的需要，什么样的理论路径才能使之满足教育实践的需要。如此，不再是为理论而理论，而是为实践而理论。\n<<",
+				"abstractNote": "正如杰克·古迪所说：“人类思维的细分能力，是与社会生活不断分化的进程相随发展的。”伴随着实践领域的日益细分，理论领域也日益走向专业化，各个实践领域都有相对应的理论类型。在教育领域中，“无理论”的教育现象与“无教育”的理论现象的普遍存在，造成了教育理论与实践之间的长期疏离。通过对教育理论的实践性问题的探讨，对这个老问题做出尝试性的新回答，既是学术之需，亦为个人之趣。文献和现实的双重阅读，要求在探讨教育理论的实践性问题时，改变从理论建设的立场去谈教育理论之实践性的原有研究套路。实践之于理论的框架或基底作用决定了有必要尝试彻底地转换思路，即教育实践到底需要什么样的教育理论，已有理论能否满足教育实践的需要，什么样的理论路径才能使之满足教育实践的需要。如此，不再是为理论而理论，而是为实践而理论。 <<",
 				"bookTitle": "从批判到重构",
 				"libraryCatalog": "Pishu Data",
 				"pages": "1-29",
@@ -283,14 +258,14 @@ var testCases = [
 				"title": "上海合作组织20年",
 				"creators": [
 					{
-						"firstName": "进峰",
-						"lastName": "李",
-						"creatorType": "author"
+						"lastName": "李进峰",
+						"creatorType": "author",
+						"fieldMode": true
 					}
 				],
 				"date": "2021-07",
 				"ISBN": "9787520178181",
-				"abstractNote": "2021年是上海合作组织成立20周年。20年来，上合组织经受了来自本地区和外部世界的种种考验，不断发展、壮大，自2017年扩员后，上合组织已成为全球人口最多、幅员最辽阔的地区组织，也成为维护世界和平与稳定的重要力量之一。\n\n本书对上合组织20年来的发展历程进行了全面回顾和梳理，总结了20年来上合组织在政治、安全、经济、人文和对外关系五大领域的合作成就，深入分析了上合组织在发展过程中存在的问题和面临的内、外部挑战，以及上合组织未来发展的机遇与前景，提出上合组织的理论基础有三个来源、上合组织发展经历了五次理论创新、上合组织未来发展壮大将取决于三个因素，并对上合组织未来发展预测了三种可能的模式，这些研究结论具有创新性。\n\n本书对上合组织20年发展状况的论述，既有实践分析，又有理论探讨；既有量化研究，也有定性研判；既有问题意识，也有政策建议。本书是上合组织研究领域非常重要也相当权威的一部参考书和工具书。",
+				"abstractNote": "2021年是上海合作组织成立20周年。20年来，上合组织经受了来自本地区和外部世界的种种考验，不断发展、壮大，自2017年扩员后，上合组织已成为全球人口最多、幅员最辽阔的地区组织，也成为维护世界和平与稳定的重要力量之一。 本书对上合组织20年来的发展历程进行了全面回顾和梳理，总结了20年来上合组织在政治、安全、经济、人文和对外关系五大领域的合作成就，深入分析了上合组织在发展过程中存在的问题和面临的内、外部挑战，以及上合组织未来发展的机遇与前景，提出上合组织的理论基础有三个来源、上合组织发展经历了五次理论创新、上合组织未来发展壮大将取决于三个因素，并对上合组织未来发展预测了三种可能的模式，这些研究结论具有创新性。 本书对上合组织20年发展状况的论述，既有实践分析，又有理论探讨；既有量化研究，也有定性研判；既有问题意识，也有政策建议。本书是上合组织研究领域非常重要也相当权威的一部参考书和工具书。",
 				"libraryCatalog": "Pishu Data",
 				"url": "https://www.pishu.com.cn/skwx_ps/bookDetail?SiteID=14&ID=13395521",
 				"attachments": [
