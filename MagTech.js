@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-15 08:56:55"
+	"lastUpdated": "2023-10-17 06:57:22"
 }
 
 /*
@@ -337,27 +337,15 @@ function cleanAutorStr(creators) {
 }
 
 function matchCreator(creator) {
-	var zhnamesplit = Z.getHiddenPref('zhnamesplit');
 	if (creator.search(/[A-Za-z]/) !== -1) {
-		// western name. split on last space
 		creator = ZU.cleanAuthor(creator, 'author');
 	}
 	else {
 		creator = creator.replace(/\s/g, '');
-		if ((zhnamesplit === undefined) ? true : zhnamesplit) {
-			// zhnamesplit is true, split firstname and lastname.
-			// Chinese name. first character is last name, the rest are first name
-			creator = {
-				"firstName": creator.substr(1),
-				"lastName": creator.charAt(0),
-				"creatorType": "author"
-			}
-		}
-		else {
-			creator = {
-				"lastName": creator,
-				"creatorType": "author"
-			}
+		creator = {
+			"lastName": creator,
+			"creatorType": "author",
+			"fieldMode": true
 		}
 	}
 	return creator;
@@ -436,7 +424,8 @@ async function scrape(doc, type, url = doc.location.href) {
 	}
 	// Z.debug(newItem);
 	newItem.complete();
-}/** BEGIN TEST CASES **/
+}
+/** BEGIN TEST CASES **/
 var testCases = [
 	{
 		"type": "web",
@@ -452,30 +441,30 @@ var testCases = [
 				"title": "植食性害虫食诱剂的研究与应用",
 				"creators": [
 					{
-						"firstName": "晓明",
-						"lastName": "蔡",
-						"creatorType": "author"
+						"lastName": "蔡晓明",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "兆群",
-						"lastName": "李",
-						"creatorType": "author"
+						"lastName": "李兆群",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "洪生",
-						"lastName": "潘",
-						"creatorType": "author"
+						"lastName": "潘洪生",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "宴辉",
-						"lastName": "陆",
-						"creatorType": "author"
+						"lastName": "陆宴辉",
+						"creatorType": "author",
+						"fieldMode": true
 					}
 				],
 				"date": "2018-02-08",
 				"DOI": "10.16409/j.cnki.2095-039x.2018.01.002",
 				"ISSN": "2095-039X",
-				"abstractNote": "植食性害虫主要取食植物的茎叶、果实、花蜜等，并且常对某些食物表现出明显的偏好性。植物挥发物在害虫食物偏好选择行为中发挥着重要作用。基于害虫偏好食源或其挥发物研制的食诱剂（也称&quot;植物源引诱剂&quot;），是一类重要的害虫绿色防控产品。20世纪初人们就开始利用发酵糖水、糖醋酒液等传统食诱剂进行害虫诱集防治。随着对害虫食源挥发物中信息物质认识的不断深入，通过组配天然提取或人工合成的挥发物组分，先后研制出实蝇、夜蛾、蓟马、甲虫等多类害虫的新型食诱剂。这些食诱剂大多对雌、雄害虫均有效，已在橘小实蝇<em>Bactrocera dorsalis</em>、地中海实蝇<em>Ceratitis capitata</em>、棉铃虫<em>Helicoverpa armigera</em>、苹果蠹蛾<em>Cydia pomonella</em>、西花蓟马<em>Frankliniella occidentalis</em>、西方玉米根萤叶甲<em>Diabrotica virgifera virgifera</em>、纵坑切梢小蠹<em>Tomicus piniperda</em>等重要害虫的监测和防治中发挥了重要作用。本文总结了已有食诱剂研发与应用过程中的经验和教训，并对今后食诱剂的发展方向与重点方面进行了分析和展望，以期促进植食性害虫食诱剂及其田间使用技术的创新发展。",
+				"abstractNote": "植食性害虫主要取食植物的茎叶、果实、花蜜等，并且常对某些食物...",
 				"issue": "1",
 				"language": "zh-CN",
 				"libraryCatalog": "MagTech",
@@ -524,19 +513,19 @@ var testCases = [
 				"title": "施工粉尘健康损害量化评价",
 				"creators": [
 					{
-						"firstName": "小冬",
-						"lastName": "李",
-						"creatorType": "author"
+						"lastName": "李小冬",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "舒",
-						"lastName": "苏",
-						"creatorType": "author"
+						"lastName": "苏舒",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "天健",
-						"lastName": "黄",
-						"creatorType": "author"
+						"lastName": "黄天健",
+						"creatorType": "author",
+						"fieldMode": true
 					}
 				],
 				"date": "2015-01-20",
@@ -580,26 +569,26 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "http://www.dwjs.com.cn/CN/10.13335/j.1000-3673.pst.2019.2670",
+		"url": "http://www.dwjs.com.cn/f9hw47gJN5D3gkNCvL3iBQnAh7Jlvn6Wu%2BMxbNfFU1fhERdp5zZIVDS2jBgioUot?encrypt=1",
 		"items": [
 			{
 				"itemType": "journalArticle",
 				"title": "智能配电网柔性互联研究现状及发展趋势",
 				"creators": [
 					{
-						"firstName": "琪",
-						"lastName": "祁",
-						"creatorType": "author"
+						"lastName": "祁琪",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "齐荣",
-						"lastName": "姜",
-						"creatorType": "author"
+						"lastName": "姜齐荣",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "彦平",
-						"lastName": "许",
-						"creatorType": "author"
+						"lastName": "许彦平",
+						"creatorType": "author",
+						"fieldMode": true
 					}
 				],
 				"date": "2020-12-05",
@@ -611,7 +600,7 @@ var testCases = [
 				"libraryCatalog": "MagTech",
 				"pages": "4664-4676",
 				"publicationTitle": "电网技术",
-				"url": "http://www.dwjs.com.cn/CN/10.13335/j.1000-3673.pst.2019.2670",
+				"url": "http://www.dwjs.com.cn/f9hw47gJN5D3gkNCvL3iBQnAh7Jlvn6Wu%2BMxbNfFU1fhERdp5zZIVDS2jBgioUot?encrypt=1",
 				"volume": "44",
 				"attachments": [
 					{
