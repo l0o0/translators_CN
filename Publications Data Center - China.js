@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-16 08:33:45"
+	"lastUpdated": "2023-10-17 06:30:22"
 }
 
 /*
@@ -127,8 +127,6 @@ function matchArchiveLocation(type) {
 }
 
 function matchCreator(creator, raw = false) {
-	// Z.debug(creators_zh);
-	var zhnamesplit = Z.getHiddenPref('zhnamesplit');
 	creator = ZU.trimInternal(creator.toString());
 	/* 英文译名一律不拆分 */
 	if (creator.search(/[A-Za-z]/) !== -1 || creator.includes('·')) {
@@ -146,22 +144,11 @@ function matchCreator(creator, raw = false) {
 	}
 	/* 中文名根据配置决定是否拆分 */
 	else {
-		if ((zhnamesplit === undefined) ? true : zhnamesplit) {
-			// zhnamesplit is true, split firstname and lastname.
-			// Chinese name. first character is last name, the rest are first name
-			// Z.debug(creator);
-			creator = {
-				"firstName": creator.substr(1),
-				"lastName": creator.charAt(0),
-				"creatorType": "autor"
-			};
-		}
-		else {
-			creator = {
-				"lastName": "creator",
-				"creatorType": "autor"
-			};
-		}
+		creator = {
+			"lastName": creator,
+			"creatorType": "autor",
+			"fieldMode": true
+		};
 	}
 	return creator;
 }
@@ -203,7 +190,7 @@ const FIELDMAP = {
 		labels: ['正文语种', '语种', '文种'],
 		keys: ['textlangue', 'worklanguage'],
 		callback: function (text) {
-			return (text == 'chi') ? 'zh-CN' : 'en-US';
+			return ((text == '') || (text == 'chi')) ? 'zh-CN' : 'en-US';
 		}
 	},
 	ISBN: {
@@ -896,6 +883,7 @@ var aescbc = {
 
 
 
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -1059,13 +1047,14 @@ var testCases = [
 				"title": "长征组歌——京剧音乐史诗",
 				"creators": [
 					{
-						"firstName": "振强",
-						"lastName": "谢",
-						"creatorType": "autor"
+						"lastName": "谢振强",
+						"creatorType": "autor",
+						"fieldMode": true
 					}
 				],
 				"ISBN": "9787887333315",
 				"archiveLocation": "ISBN",
+				"language": "en-US",
 				"libraryCatalog": "Publications Data Center - China",
 				"publisher": "中国文联音像出版公司（中国文联出版社有限公司）",
 				"rights": "谢振强",
@@ -1105,6 +1094,6 @@ var testCases = [
 				"seeAlso": []
 			}
 		]
-	}
+	},
 ]
 /** END TEST CASES **/
