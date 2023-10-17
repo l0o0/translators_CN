@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-16 02:08:06"
+	"lastUpdated": "2023-10-17 07:01:33"
 }
 
 /*
@@ -77,27 +77,16 @@ async function doWeb(doc, url) {
 }
 
 function matchCreator(creator) {
-	// Z.debug(creators);
-	var zhnamesplit = Z.getHiddenPref('zhnamesplit');
+	// Z.debug(creator);
 	if (creator.search(/[A-Za-z]/) !== -1) {
 		creator = ZU.cleanAuthor(creator, "author");
 	}
 	else {
 		creator = creator.replace(/\s/g, '');
-		if ((zhnamesplit === undefined) ? true : zhnamesplit) {
-			// zhnamesplit is true, split firstname and lastname.
-			// Chinese name. first character is last name, the rest are first name
-			creator = {
-				"firstName": creator.substr(1),
-				"lastName": creator.charAt(0),
-				"creatorType": "author"
-			}
-		}
-		else {
-			creator = {
-				"lastName": creator,
-				"creatorType": "author"
-			}
+		creator = {
+			"lastName": creator,
+			"creatorType": "author",
+			"fieldMode": true
 		}
 	}
 	return creator;
@@ -145,6 +134,7 @@ async function scrape(doc, url = doc.location.href) {
 	await em.doWeb(doc, url);
 }
 
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -156,29 +146,29 @@ var testCases = [
 				"title": "面向生态环境科技成果转化的产业基金研究及实践案例分析",
 				"creators": [
 					{
-						"firstName": "茜",
-						"lastName": "曹",
-						"creatorType": "author"
+						"lastName": "曹茜",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "雯",
-						"lastName": "周",
-						"creatorType": "author"
+						"lastName": "周雯",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "东洋",
-						"lastName": "魏",
-						"creatorType": "author"
+						"lastName": "魏东洋",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "丽杰",
-						"lastName": "段",
-						"creatorType": "author"
+						"lastName": "段丽杰",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "曼",
-						"lastName": "洪",
-						"creatorType": "author"
+						"lastName": "洪曼",
+						"creatorType": "author",
+						"fieldMode": true
 					}
 				],
 				"date": "2023-08-20",
@@ -186,7 +176,7 @@ var testCases = [
 				"ISSN": "1004-6216",
 				"abstractNote": "生态环境科技专项产生了一大批高水准的生态环境科研成果以及专业技术，但这些成果都停留在科学阶段，尚未形成产品，发挥社会价值。目前，国内外已经有很多成功的生态环境产业基金，如美国的清洁水州周转基金和国内的深圳清华大学研究院的力合科创投资孵化基金以及南京扬子江生态文明创新中心的源创基金，可以作为研究案例。文章选取国际国内代表性的运营多年和新兴的产业基金案例，分析生态环境产业基金在产业化过程中发挥的作用，结合调研内容总结产业基金运行模式的特点，根据先进经验提出针对我国生态环境产业基金运行主要存在问题的相关建议。",
 				"issue": "4",
-				"language": "zh",
+				"language": "zh-CN",
 				"libraryCatalog": "www.hjbhkx.cn",
 				"pages": "1-8",
 				"publicationTitle": "环境保护科学",
@@ -234,14 +224,14 @@ var testCases = [
 				"title": "宁夏退耕还林还草成果巩固问题探讨",
 				"creators": [
 					{
-						"firstName": "治啸",
-						"lastName": "王",
-						"creatorType": "author"
+						"lastName": "王治啸",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "红军",
-						"lastName": "高",
-						"creatorType": "author"
+						"lastName": "高红军",
+						"creatorType": "author",
+						"fieldMode": true
 					}
 				],
 				"date": "2023-03-30",
@@ -250,7 +240,7 @@ var testCases = [
 				"abstractNote": "退耕还林还草是中共中央、国务院在20世纪末着眼中华民族长远发展和国家生态安全作出的重大决策。23年来的退耕还林还草工程实践取得了巨大的生态、经济和社会效益,赢得了社会各界赞誉。\"十四五\"以来,国家基于粮食安全和耕地保护考虑,已将工程重心转移到巩固已有建设成果上来。文中基于宁夏回族自治区退耕还林还草工程现状,总结退耕还林还草成果巩固的经验做法,梳理分析现存问题,并提出今后推动退耕还林还草高质量发展的建议:1)深挖后续产业发展潜力,促进\"以林养林\";2)合理优化退耕林地树种组成和植被配置模式,改善退耕林质量;3)提高生态效益补偿标准;4)稳定基层管理队伍。",
 				"issue": "1",
 				"journalAbbreviation": "lczcyj",
-				"language": "zh",
+				"language": "zh-CN",
 				"libraryCatalog": "www.lczcyj.com",
 				"pages": "18-23",
 				"publicationTitle": "林草政策研究",
