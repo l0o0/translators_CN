@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-14 13:58:29"
+	"lastUpdated": "2023-10-17 07:09:31"
 }
 
 /*
@@ -174,7 +174,7 @@ const TABLEIDMAP = {
 			arr = arr.map((element) => (element.replace(/\d/g, '')));
 			arr = cleanArr(arr);
 			arr = arr.filter((element) => (element.length > 1));
-			return match_creators(arr);
+			return arr.map((element) => (matchCreator(element)));
 		}
 	},
 	tags: { 
@@ -199,36 +199,20 @@ function cleanArr(arr) {
 	return arr;
 }
 
-function match_creators(creators) {
+function matchCreator(creator) {
 	// Z.debug(creators);
-	var zhnamesplit = Z.getHiddenPref('zhnamesplit');
-	for (var i = 0, n = creators.length; i < n; i++) {
-		var creator = creators[i];
-		if (creator.search(/[A-Za-z]/) !== -1) {
-			creator = ZU.cleanAuthor(creator, "author");
-		}
-		else {
-			if ((zhnamesplit === undefined) ? true : zhnamesplit) {
-				creator = creator.replace(/\s/g, '');
-				// Z.debug(creator);
-				// zhnamesplit is true, split firstname and lastname.
-				// Chinese name. first character is last name, the rest are first name
-				creator = {
-					firstName: creator.substr(1),
-					lastName: creator.charAt(0),
-					creatorType: 'author'
-				}
-			}
-			else {
-				creator = {
-					lastName: creator,
-					creatorType: 'author'
-				}
-			}
-		}
-		creators[i] = creator;
+	if (creator.search(/[A-Za-z]/) !== -1) {
+		creator = ZU.cleanAuthor(creator, "author");
 	}
-	return creators;
+	else {
+		creator = creator.replace(/\s/g, '');
+		creator = {
+			"lastName": creator,
+			"creatorType": "author",
+			"fieldMode": true
+		}
+	}
+	return creator;
 }
 
 async function scrapeElement(doc, url = doc.location.href) {
@@ -373,7 +357,7 @@ async function scrapeRis(doc, url = doc.location.href) {
 		}
 		newItem[field] = result;
 	}
-	newItem['creators'] = match_creators(risData.getTags('AU'));
+	newItem['creators'] = risData.getTags('AU').map((element) => (matchCreator(element)));
 	// Z.debug(newItem);
 	for (const field in METAMAP) {
 		const recipe = METAMAP[field];
@@ -420,6 +404,7 @@ async function scrapeRis(doc, url = doc.location.href) {
 	});
 	newItem.complete();
 }
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -431,29 +416,29 @@ var testCases = [
 				"title": "大学物理课程教学设计撰写方法探讨",
 				"creators": [
 					{
-						"firstName": "升 ",
-						"lastName": "王",
-						"creatorType": "author"
+						"lastName": "王升",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "贤丽",
-						"lastName": "李",
-						"creatorType": "author"
+						"lastName": "李贤丽",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "鹏程",
-						"lastName": "赵",
-						"creatorType": "author"
+						"lastName": "赵鹏程",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "云 ",
-						"lastName": "康",
-						"creatorType": "author"
+						"lastName": "康云",
+						"creatorType": "author",
+						"fieldMode": true
 					}
 				],
 				"date": "物理通报",
 				"abstractNote": "课程教学设计中不仅包含了课程教学内容, 还蕴含了授课思路、 方式与方法, 以及课程思政元素的融入等因素, 教学设计质量与水平是讲好一堂课的关键. 本研究以绪论课为例, 探讨了大学物理课程教学设计撰写思路与方法",
-				"issue": "429:8-13",
+				"issue": "9",
 				"libraryCatalog": "E-Tiller",
 				"pages": "8-13",
 				"volume": "42",
@@ -461,6 +446,10 @@ var testCases = [
 					{
 						"title": "Full Text PDF",
 						"mimeType": "application/pdf"
+					},
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
 					}
 				],
 				"tags": [
@@ -485,31 +474,32 @@ var testCases = [
 		"items": [
 			{
 				"itemType": "journalArticle",
-				"title": "Development Process of Bird Ingestion Requirements of Aeroengine",
+				"title": "航空发动机吞鸟要求的发展",
 				"creators": [
 					{
-						"firstName": "清",
-						"lastName": "张",
-						"creatorType": "author"
+						"lastName": "张清",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "锡钢",
-						"lastName": "沈",
-						"creatorType": "author"
+						"lastName": "沈锡钢",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "坤",
-						"lastName": "牛",
-						"creatorType": "author"
+						"lastName": "牛坤",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "娜 ",
-						"lastName": "李",
-						"creatorType": "author"
+						"lastName": "李娜",
+						"creatorType": "author",
+						"fieldMode": true
 					}
 				],
 				"date": "航空发动机",
-				"issue": "494:54-67",
+				"abstractNote": "针对中国军用大涵道比涡扇发动机吞鸟验证需求，从美国、欧洲、俄罗斯和中国民用航空发动机适航规章和军用发动机通用规范、适航规章及吞鸟要求衍变历程、衍变内容和应用情况出发，对比分析军、民用吞鸟要求内容和内涵的差异。通过分析航空发动机吞鸟要求与应用的发展，研究吞鸟要求与发动机研制技术的关联性，提出中国自主研制的大涵道比发动机吞鸟要求应用建议。吞鸟要求的升级以更高的安全性需求为出发点，并随航空发动机设计技术提高得以实施和颁布；吞鸟要求的升级又指导着下一代发动机的研制，二者相辅相成螺旋提升；吞鸟要求的具体参数逐渐统一，并呈现越来越严格的特点。根据中国适航规章和通用规范吞鸟要求演变发展特点，结合中国军用大涵道比涡扇发动机研制技术现状，建议目前中国自主研制的大涵道比发动机按照FAR 33.77吞鸟要求的参数进行验证，并最终依托于发动机技术进步实现与现行吞鸟要求的一致性。",
+				"issue": "4",
 				"libraryCatalog": "E-Tiller",
 				"pages": "54-67",
 				"volume": "49",
@@ -517,9 +507,26 @@ var testCases = [
 					{
 						"title": "Full Text PDF",
 						"mimeType": "application/pdf"
+					},
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
 					}
 				],
-				"tags": [],
+				"tags": [
+					{
+						"tag": "吞鸟要求"
+					},
+					{
+						"tag": "航空发动机"
+					},
+					{
+						"tag": "适航规章"
+					},
+					{
+						"tag": "通用规范"
+					}
+				],
 				"notes": [],
 				"seeAlso": []
 			}
@@ -534,24 +541,24 @@ var testCases = [
 				"title": "以症为效：对中医临床疗效评价的再思考<sup>※</sup>",
 				"creators": [
 					{
-						"firstName": "志强",
-						"lastName": "陈",
-						"creatorType": "author"
+						"lastName": "陈志强",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "志",
-						"lastName": "蒋",
-						"creatorType": "author"
+						"lastName": "蒋志",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "英超",
-						"lastName": "肖",
-						"creatorType": "author"
+						"lastName": "肖英超",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "立幸",
-						"lastName": "曹",
-						"creatorType": "author"
+						"lastName": "曹立幸",
+						"creatorType": "author",
+						"fieldMode": true
 					}
 				],
 				"date": "2023-10-13",
@@ -602,29 +609,29 @@ var testCases = [
 				"title": "复杂网络聚类方法",
 				"creators": [
 					{
-						"firstName": " 博",
-						"lastName": "杨",
+						"lastName": "杨博",
+						"creatorType": "author",
+						"fieldMode": true
+					},
+					{
+						"lastName": "刘大有",
+						"creatorType": "author",
+						"fieldMode": true
+					},
+					{
+						"firstName": "L. I. U.",
+						"lastName": "Jiming",
 						"creatorType": "author"
 					},
 					{
-						"firstName": "大有",
-						"lastName": "刘",
-						"creatorType": "author"
+						"lastName": "金弟",
+						"creatorType": "author",
+						"fieldMode": true
 					},
 					{
-						"firstName": "IUJiming",
-						"lastName": "L",
-						"creatorType": "author"
-					},
-					{
-						"firstName": " 弟",
-						"lastName": "金",
-						"creatorType": "author"
-					},
-					{
-						"firstName": "海宾",
-						"lastName": "马",
-						"creatorType": "author"
+						"lastName": "马海宾",
+						"creatorType": "author",
+						"fieldMode": true
 					}
 				],
 				"ISSN": "1000-9825",
@@ -648,7 +655,13 @@ var testCases = [
 				],
 				"tags": [
 					{
-						"tag": "复杂网络;网络聚类;网络簇结构"
+						"tag": "复杂网络"
+					},
+					{
+						"tag": "网络簇结构"
+					},
+					{
+						"tag": "网络聚类"
 					}
 				],
 				"notes": [],
