@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-15 10:54:01"
+	"lastUpdated": "2023-10-17 06:45:50"
 }
 
 /*
@@ -90,8 +90,6 @@ function str2Arr(string) {
 }
 
 function matchCreator(creator) {
-	// split names, Chinese name split depends on Zotero Connector preference translators.zhnamesplit
-	var zhnamesplit = Z.getHiddenPref('zhnamesplit');
 	creator = creator.replace(/\([\u4e00-\u9fa5]+\)/, '');
 	if (creator.indexOf('·') !== -1){
 		creator = {
@@ -100,22 +98,12 @@ function matchCreator(creator) {
 		};
 	}
 	else {
-		if ((zhnamesplit === undefined) ? true : zhnamesplit) {
-			// zhnamesplit is true, split firstname and lastname.
-			// Chinese name. first character is last name, the rest are first name
-			creator = creator.replace(/\s/g, '');
-				creator = {
-				"firstName": creator.substr(1),
-				"lastName": creator.charAt(0),
-				"creatorType": "autor"
-				};
-		}
-		else {
-			creator = {
-				"lastName": creator,
-				"creatorType": "autor",
-			};
-		}
+		creator = creator.replace(/\s/g, '');
+		creator = {
+			"lastName": creator,
+			"creatorType": "autor",
+			"fieldMode": true
+		};
 	}
 	return creator;
 }
@@ -131,7 +119,7 @@ async function scrape(doc, url = doc.location.href) {
 	for (let i = 0; i < keys.length; i++) {
 		metaAll.set(keys[i], values[i]);
 	}
-	newItem.title = metaAll.get('书名');
+	newItem.title = doc.querySelector('.book_intro > h2 > span').innerText;
 	newItem.abstractNote = ZU.xpath(doc, '//div[@class="field_1"]/p')[0].innerText;
 	// newItem.series = meta_all.get('系列');
 	// newItem.seriesNumber = meta_all.get('系列编号');
@@ -184,6 +172,7 @@ async function scrape(doc, url = doc.location.href) {
 	}[langFlag];
 	newItem.complete();
 }
+
 
 
 
@@ -251,14 +240,14 @@ var testCases = [
 				"title": "拜占庭帝国大通史（330—610）",
 				"creators": [
 					{
-						"firstName": "家玲",
-						"lastName": "徐",
-						"creatorType": "autor"
+						"lastName": "徐家玲",
+						"creatorType": "autor",
+						"fieldMode": true
 					},
 					{
-						"firstName": "英",
-						"lastName": "林",
-						"creatorType": "autor"
+						"lastName": "林英",
+						"creatorType": "autor",
+						"fieldMode": true
 					}
 				],
 				"date": "2023-10",
@@ -303,12 +292,12 @@ var testCases = [
 		"items": [
 			{
 				"itemType": "book",
-				"title": "新时代中国之治如何跳出治乱兴衰的历...",
+				"title": "新时代中国之治 如何跳出治乱兴衰的历史周期率(英文)",
 				"creators": [
 					{
-						"firstName": "君如",
-						"lastName": "李",
-						"creatorType": "autor"
+						"lastName": "李君如",
+						"creatorType": "autor",
+						"fieldMode": true
 					}
 				],
 				"date": "2022-11",
