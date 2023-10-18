@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-16 16:06:15"
+	"lastUpdated": "2023-10-18 18:41:31"
 }
 
 /*
@@ -103,6 +103,9 @@ async function scrape(doc, url = doc.location.href) {
 		translator.setTranslator('9cb70025-a888-4a29-a210-93ec52da40d4');
 		translator.setString(bibText);
 		translator.setHandler('itemDone', (_obj, item) => {
+			item.itemType = 'preprint';
+			item.repository = 'ChinaXiv';
+			item.archiveID = url.match(/\/abs\/[\d\.]+/)[0].substring(5);
 			// Z.debug(item);
 			item.title = doc.querySelector('div.hd > h1').innerText;
 			item['titleTranslation'] = doc.querySelector('div.hd > p').innerText;
@@ -137,14 +140,16 @@ async function scrape(doc, url = doc.location.href) {
 	}
 }
 
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
 		"type": "web",
 		"url": "http://www.chinaxiv.org/abs/202303.00566v1",
+		"detectedItemType": "journalArticle",
 		"items": [
 			{
-				"itemType": "journalArticle",
+				"itemType": "preprint",
 				"title": "B微合金化对HK40合金铸造疏松的影响",
 				"creators": [
 					{
@@ -169,8 +174,8 @@ var testCases = [
 					}
 				],
 				"abstractNote": "利用SEM, OM和XRD等手段分析了HK40 合金铸件铸造疏松形成原因, 并研究了添加微量B对HK40 合金的凝固组织及疏松形成的影响. 结果表明: HK40 合金铸件主要存在A和B 2 种铸造疏松缺陷. A类疏松主要由于枝晶的快速生长并架桥联接导致架桥枝晶之间区域的补缩不足引起; B类疏松产生原因是相邻枝晶间区域生长的枝晶状M7C3型碳化物堵塞枝晶间补缩通道. B微合金化能降低HK40 合金铸件较强的柱状晶生长趋势, 细化枝晶, 能抑制HK40 合金A类铸造疏松缺陷的产生. 同时, B微合金化增加了HK40 合金枝晶间共晶相的体积分数, 使枝晶间呈枝晶状M7C3型碳化物转变为层片状的M23C6型碳化物析出, 避免碳化物堵塞相邻枝晶间的补缩通道, 因而也减小了B类铸造疏松缺陷的形成倾向.",
+				"archiveID": "202303.00566",
 				"libraryCatalog": "ChinaXiv",
-				"publicationTitle": "金属学报",
 				"url": "http://www.chinaxiv.org/abs/202303.00566v1",
 				"attachments": [
 					{
@@ -207,9 +212,10 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "http://www.chinaxiv.org/abs/202308.00082",
+		"detectedItemType": "journalArticle",
 		"items": [
 			{
-				"itemType": "journalArticle",
+				"itemType": "preprint",
 				"title": "Gentle代数的矩阵模型及其整体维数",
 				"creators": [
 					{
@@ -229,8 +235,8 @@ var testCases = [
 					}
 				],
 				"abstractNote": "该文利用gentle代数的矩阵模型刻画了gentle代数上的单模和投射模, 给出了单模的投射分解的矩阵表示. 由此指出gentle代数的整体维数可以由它的矩阵模型所诱导的一类特殊子矩阵序列进行刻画. 该文进一步指出这一类特殊子矩阵序列对应gentle代数的箭图上的极大非平凡forbidden路, 从而得到gentle代数的整体维数等于它的箭图上的极大非平凡forbidden path的长度.",
+				"archiveID": "202308.00082",
 				"libraryCatalog": "ChinaXiv",
-				"publicationTitle": "中国科学院科技论文预发布平台",
 				"url": "http://www.chinaxiv.org/abs/202308.00082",
 				"attachments": [
 					{
