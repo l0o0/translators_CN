@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-19 05:38:52"
+	"lastUpdated": "2023-10-19 11:18:36"
 }
 
 /*
@@ -42,172 +42,143 @@ function getIDFromUrl(url) {
 	return ID[0].substring(3);
 }
 
-
 function detectWeb(doc, url) {
   	if (url.includes('/Qikan/Article/Detail')) {
-		return "journalArticle";
+		return 'journalArticle';
   	} else
   	if (getSearchResults(doc, true)) {
-		return "multiple";
+		return 'multiple';
   	}
   	return false;
 }
 
-
-function getSearchResults(doc, itemInfos) {
-  	var items = {};
-  	var searchList = ZU.xpath(doc, "//div[@class='simple-list']//dl");
-  	for (let list of searchList) {
-		var paper = ZU.xpath(list, "./dt/a")[0];
-		var title = ZU.trimInternal(paper.textContent);
-		var href = paper.href;
-		var ID = paper.getAttribute('articleid');
-		var dd = ZU.xpath(list, "./dd")[2]
+function getSearchResults(doc, checkOnly) {
+	var items = {};
+	var found = false;
+	var rows = doc.querySelectorAll('a[href*="/Qikan/Article/Detail?"]');
+	for (let row of rows) {
+		let href = row.href;
+		let title = ZU.trimInternal(row.textContent);
 		if (!href || !title) continue;
-		items[href] = title + " " + dd.innerText;
-		itemInfos[href] = ID;
-  	}
-  	return items;
-}
-
-
-function doWeb(doc, url) {
-	var login = false;
-	var a = ZU.xpath(doc, "//li[@class='app-reg']");
-	if (a.length) { 
-		login = true
-	};
-  	if (detectWeb(doc, url) == "multiple") {
-		var itemInfos = {};
-		var items = getSearchResults(doc, itemInfos);
-		Zotero.selectItems(items, function (selectedItems) {
-	  		if (!selectedItems) return true;
-	  		var ids = [];
-	  		var urls = [];
-	  		for (var url in selectedItems) {
-				ids.push(itemInfos[url]);
-				urls.push(url);
-	  		}
-	  		Z.debug(ids);
-	  		scrape(ids, urls);
-		});
-	} else  {
-		  var ID = getIDFromUrl(url);
-		  var filestr = false;
-		  if (login) {
-			  filestr = ZU.xpath(doc, "//div[@class='article-source']/a")[1].getAttribute('onclick')
-			  filestr = filestr.split(/[,']/)[4];
-		  }
-		scrape([ID], [url], filestr);
-  	}
-}
-
-
-function scrape(ids, urls, filestr=false) {
-  getRefByID(ids, function(xml) {
-	var journals = xml.getElementsByTagName("PeriodicalPaper");
-	if (!journals.length) return;
-  	for (var i=0, n=journals.length; i<n; i++) {
-	  convertJournal(journals[i], urls[i], ids[i], filestr);
+		if (checkOnly) return true;
+		found = true;
+		items[href] = title;
 	}
-  })
+	return found ? items : false;
 }
 
-
-function getRefByID(ids, next) {
-	if (!ids.length) return;
-	var postUrl = "/Qikan/Search/Export?from=Qikan_Search_Index";
-	var ids = "&ids=" + encodeURIComponent(ids.join(','));
-	var postData = ids + "&strType=title_info";
-	ZU.doPost(postUrl, postData, 
-		function(text) {
-			// Z.debug(text);
-			var parser = new DOMParser();
-			var refHtml = parser.parseFromString(text, 'text/html');
-			var refXml = refHtml.getElementById('xmlContent').value;
-			var refXml = parser.parseFromString(refXml, 'text/xml');
-			// Z.debug(1);
-			next(refXml);
+async function doWeb(doc, url) {
+	if (detectWeb(doc, url) == 'multiple') {
+		let items = await Zotero.selectItems(getSearchResults(doc, false));
+		if (!items) return;
+		for (let url of Object.keys(items)) {
+			await scrape(await requestDocument(url));
 		}
-	)
+	}
+	else {
+		await scrape(doc, url);
+	}
 }
 
+const FIELDMAP = {
+	title: "Titles > Title > Text",
+	language: "Titles > Title > Language",
+	abstractNote: "Abstracts > Abstract > Text",
+	publicationTitle: "Periodical > Name",
+	volume: "Volum",
+	issue: "Issue",
+	pages: "Page",
+	date: "PublishDate",
+	ISSN: "Periodical > ISSN",
+}
 
-function convertJournal(journal, url, fileid, filestr) {
-  	var newItem = new Zotero.Item("journalArticle");
-	newItem.abstractNote = journal.getElementsByTagName('Abstract')[0].childNodes[1].textContent;
-	newItem.title = journal.getElementsByTagName('Title')[0].childNodes[3].textContent;
-	let language = journal.getElementsByTagName('Title')[0].childNodes[1].textContent;
-	if (language === 'chi') {
-		newItem.language = 'zh-CN';
-	} else {
-		newItem.language = language;
+const TRANSLATION = {
+	titleTranslation: "div.article-title > em",
+	abstractTranslation: "div.abstract > em:last-of-type > span"
+}
+
+const parser = new DOMParser();
+
+function matchCreator(creator) {
+	if (creator.search(/[A-Za-z]/) !== -1) {
+		creator = ZU.cleanAuthor(creator, 'author');
 	}
-	var volume = journal.getElementsByTagName('Volum')[0].childNodes[0].nodeValue;
-	if (volume != "0") {
-		newItem.volume = volume;
-  	}
-  	var issn = journal.getElementsByTagName('ISSN')[0];
-  	if (issn.childlNodes) {
-		newItem.ISSN = issn.childNodes[0].nodeValue;
-  	}
-	newItem.issue = journal.getElementsByTagName('Issue')[0].childNodes[0].nodeValue;
-	
-	newItem.pages = journal.getElementsByTagName('Page')[0].childNodes[0].nodeValue;
-	newItem.date = journal.getElementsByTagName('PublishDate')[0].childNodes[0].nodeValue.slice(0, 4);
-	newItem.libraryCatalog = 'WeiPu';
-	newItem.creators = [];
-	var names = journal.getElementsByTagName('Name');
-	for (var i = 0, n = names.length; i < n-1; i++) {
-	  	var name = names[i].childNodes[0].nodeValue;
-	  	var creator = {};
-	  	if (name.search(/[A-Za-z]/) !== -1 && lastSpace !== -1) {
-			// western name. split on last space
-			creator.firstName = name.substr(0,lastSpace);
-			creator.lastName = name.substr(lastSpace + 1);
-	  	} else {
-			// Chinese name. first character is last name, the rest are first name
-			creator.firstName = name.substr(1);
-			creator.lastName = name.charAt(0);
-	  }
-	  newItem.creators.push(creator);
+	else {
+		creator = creator.replace(/\s/, '');
+		creator = {
+			lastName: creator,
+			creatorType: 'author',
+			fieldMode: true
+		}
 	}
-	newItem.publicationTitle = names[names.length-1].childNodes[0].nodeValue;
-	newItem.tags = [];
-	var tags = journal.getElementsByTagName('Keyword');
-	for (var i=0, n=tags.length; i < n; i++) {
-	  	newItem.tags[i] = tags[i].childNodes[0].nodeValue;
+	return creator;
+}
+
+async function scrape(doc, url = doc.location.href) {
+	var newItem = new Z.Item('journalArticle');
+	let ID = getIDFromUrl(url);
+	let login = doc.querySelector('li.app-reg');
+	var debugLog = `scraping ${url}\nlogin statue=${login}`;
+	try {
+		/* get data from post */
+		var referText = '';
+		// 以下POST请求需要校验本地cookies,Scaffold不支持,需在浏览器调试
+		referText = await requestText(
+			'http://qikan.cqvip.com/Qikan/Search/Export?from=Qikan_Article_ExportTilte',
+			{
+				method: 'POST',
+				body: `ids=${ID}&strType=title_info&type=endnote`
+			}
+		);
+		debugLog = `Post result is\n${referText}\n`;
+		var postResult = '';
+		// string -> html
+		postResult = parser.parseFromString(referText, "text/html");
+		debugLog += `transform result to ${typeof(postResult)}\n`
+		// html -> string
+		postResult = postResult.querySelector('input#xmlContent').value;
+		debugLog += `get xml:\n${postResult}\n`
+		// string -> xml
+		postResult = parser.parseFromString(postResult, "application/xml");
+		var data = {
+			innerData: postResult,
+			get: function (path) {
+				let result = this.innerData.querySelector(path);
+				result = result ? result.textContent : '';
+				return result ? result : '';
+			},
+			getAll: function (path) {
+				let result = this.innerData.querySelectorAll(path);
+				result = result.length ? Array.from(result).map((element) => (element.textContent)) : [];
+				return result.length ? result : [];
+			}
+		}
+		for (const field in FIELDMAP) {
+			const path = FIELDMAP[field];
+			debugLog += `in field ${field}, I get ${postResult.querySelector(path).textContent}\n`
+			newItem[field] = data.get(path);
+		}
+		newItem.creators = data.getAll('Creators > Creator > Name').map((element) => (matchCreator(element)));
+		newItem.tags = data.getAll('Keywords > Keyword').map((element) => ({ tag: element }));
+		/* get data from page */
+		for (const field in TRANSLATION) {
+			const path = TRANSLATION[field];
+			try {
+				newItem[field] = doc.querySelector(path).innerText;
+			} catch (error) {
+				newItem[field] = '';
+			}
+		}
+		// fix language
+		if (newItem.language == 'chi') newItem.language = 'zh-CN';
+	}
+	catch (error) {
+		newItem.title = 'debug';
+		newItem['debugLog'] = debugLog;
 	}
 	newItem.url = url;
-	if (filestr) {
-		var pdfUrl = getPDF(fileid, filestr);
-		if (pdfUrl) {
-			newItem.attachments = [{
-				title: "Full Text PDF",
-				mimeType: "application/pdf",
-				url: pdfurl
-			}];
-		}
-	}
 	newItem.complete();
 }
-
-
-function getPDF(fileid, filestr) {
-	var postUrl = "/Qikan/Article/ArticleDown";
-	var postData = {
-		id: fileid,
-		info: filestr,
-		ts: (new Date).getTime()
-	}
-	var fileurl = "";
-	ZU.doPost(postUrl, postData, 
-		function (text) {fileurl = text.split(/"/)[3]}
-	)
-	return fileurl
-}
-
-
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
