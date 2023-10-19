@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-07-31 08:18:15"
+	"lastUpdated": "2023-10-19 05:38:52"
 }
 
 /*
@@ -37,16 +37,14 @@
 
 function getIDFromUrl(url) {
 	if (!url) return false;
-	
-	var ID = url.match(/[?&]id=([^&#]*)/i);
-	if (!ID || !ID[1]) return false;
-	return ID[1];
+	let ID = url.match(/id=[\da-zA-z]+/);
+	if (!ID) return false;
+	return ID[0].substring(3);
 }
 
 
 function detectWeb(doc, url) {
   	if (url.includes('/Qikan/Article/Detail')) {
-  	  	var ID = getIDFromUrl(url);
 		return "journalArticle";
   	} else
   	if (getSearchResults(doc, true)) {
