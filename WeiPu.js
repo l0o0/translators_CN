@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-19 21:36:08"
+	"lastUpdated": "2023-10-20 12:36:13"
 }
 
 /*
@@ -118,7 +118,7 @@ async function scrape(doc, url = doc.location.href) {
 	var newItem = new Z.Item('journalArticle');
 	let ID = getIDFromUrl(url);
 	let login = !!doc.querySelector('#Logout'); // '#user-nav>li>#Logout'
-	var debugLog = `scraping ${url}\nlogin statue=${login}`;
+	var debugLog = `scraping ${url}\nlogin statue=${login}\n`;
 	try {
 		/* get data from post */
 		// 以下POST请求需要校验本地cookies,Scaffold不支持,需在浏览器调试
@@ -129,7 +129,7 @@ async function scrape(doc, url = doc.location.href) {
 				body: `ids=${ID}&strType=title_info&type=endnote`
 			}
 		);
-		debugLog = `Post result is\n${referText}\n`;
+		debugLog += `Post result is\n${referText}\n`;
 		// string -> html
 		var postResult = parser.parseFromString(referText, "text/html");
 		debugLog += `transform result to ${typeof(postResult)}\n`
@@ -158,26 +158,36 @@ async function scrape(doc, url = doc.location.href) {
 		}
 		newItem.creators = data.getAll('Creators > Creator > Name').map((element) => (matchCreator(element)));
 		newItem.tags = data.getAll('Keywords > Keyword').map((element) => ({ tag: element }));
-		/* get data from page */
-		for (const field in TRANSLATION) {
-			const path = TRANSLATION[field];
-			try {
-				newItem[field] = doc.querySelector(path).innerText;
-			} catch (error) {
-				newItem[field] = '';
-			}
-		}
-
-		// 修正维普镜像站中摘要内的英文引号异常
-		newItem['abstractNote'] = newItem['abstractNote'].replace(/&quot；/g, '"');
-
 		// fix language
 		if (newItem.language == 'chi') newItem.language = 'zh-CN';
 	}
 	catch (error) {
-		newItem.title = 'debug';
+		newItem.title = doc.querySelector('div.article-title > h1').innerText;
+		newItem.abstractNote = doc.querySelector('span.abstract:nth-of-type(3) > span').innerText;
+		newItem.creators = Array.from(doc.querySelectorAll('div.author > span > span > a > span')).map((element) => (
+			matchCreator(element.innerText)
+		));
+		newItem.publicationTitle = doc.querySelector('div.journal > span.from > a').title;
+		var vol = ZU.trimInternal(doc.querySelector('div.journal > span.from > span.vol').innerText);
+		newItem.date = vol.split('年')[0];
+		newItem.issue = vol.split(/[第期]/)[1];
+		newItem.pages = vol.split(/[期,]/)[1];
+		newItem.tags = Array.from(doc.querySelectorAll('div.subject > span > a')).map((element) => ({
+			tag: element.title
+		}));
 		newItem['debugLog'] = debugLog;
 	}
+	/* get data from page */
+	for (const field in TRANSLATION) {
+		const path = TRANSLATION[field];
+		try {
+			newItem[field] = doc.querySelector(path).innerText;
+		} catch (error) {
+			newItem[field] = '';
+		}
+	}
+	// 修正维普镜像站中摘要内的英文引号异常
+	newItem['abstractNote'] = newItem['abstractNote'].replace(/&quot；/g, '"');
 	newItem.url = url;
 
 	if (login) {
