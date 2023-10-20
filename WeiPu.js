@@ -9,14 +9,14 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-19 11:18:36"
+	"lastUpdated": "2023-10-19 21:36:08"
 }
 
 /*
 	***** BEGIN LICENSE BLOCK *****
 
 	Copyright © 2019 Xingzhong Lin, https://github.com/Zotero-CN/translators_CN
-	
+
 	This file is part of Zotero.
 
 	Zotero is free software: you can redistribute it and/or modify
@@ -117,23 +117,21 @@ function matchCreator(creator) {
 async function scrape(doc, url = doc.location.href) {
 	var newItem = new Z.Item('journalArticle');
 	let ID = getIDFromUrl(url);
-	let login = doc.querySelector('li.app-reg');
+	let login = !!doc.querySelector('#Logout'); // '#user-nav>li>#Logout'
 	var debugLog = `scraping ${url}\nlogin statue=${login}`;
 	try {
 		/* get data from post */
-		var referText = '';
 		// 以下POST请求需要校验本地cookies,Scaffold不支持,需在浏览器调试
-		referText = await requestText(
-			'http://qikan.cqvip.com/Qikan/Search/Export?from=Qikan_Article_ExportTilte',
+		const referText = await requestText(
+			'/Qikan/Search/Export?from=Qikan_Article_ExportTilte',
 			{
 				method: 'POST',
 				body: `ids=${ID}&strType=title_info&type=endnote`
 			}
 		);
 		debugLog = `Post result is\n${referText}\n`;
-		var postResult = '';
 		// string -> html
-		postResult = parser.parseFromString(referText, "text/html");
+		var postResult = parser.parseFromString(referText, "text/html");
 		debugLog += `transform result to ${typeof(postResult)}\n`
 		// html -> string
 		postResult = postResult.querySelector('input#xmlContent').value;
@@ -169,6 +167,10 @@ async function scrape(doc, url = doc.location.href) {
 				newItem[field] = '';
 			}
 		}
+
+		// 修正维普镜像站中摘要内的英文引号异常
+		newItem['abstractNote'] = newItem['abstractNote'].replace(/&quot；/g, '"');
+
 		// fix language
 		if (newItem.language == 'chi') newItem.language = 'zh-CN';
 	}
@@ -177,8 +179,36 @@ async function scrape(doc, url = doc.location.href) {
 		newItem['debugLog'] = debugLog;
 	}
 	newItem.url = url;
+
+	if (login) {
+		let filestr = doc.querySelectorAll('.article-source>a')[1].getAttribute('onclick')
+		let fileid = filestr.split(/[,']/)[1];
+		let filekey = filestr.split(/[,']/)[4];
+		let [pdfUrl, pdfName] = await getPDF(fileid, filekey);
+		if (pdfUrl) {
+			newItem.attachments = [{
+				title: pdfName || "Full Text PDF",
+				mimeType: "application/pdf",
+				url: pdfUrl
+			}];
+		}
+	}
 	newItem.complete();
 }
+
+async function getPDF(fileid, filekey) {
+	let postUrl = "/Qikan/Article/ArticleDown";
+	let postData = `id=${fileid}&info=${filekey}&ts=${(new Date).getTime()}`
+	let res = await requestText(postUrl, {
+		method: 'POST',
+		body: postData
+	});
+	const fileurl = JSON.parse(res).url;
+	let pdfname = decodeURIComponent(fileurl).match(/FileName=(.+?\.pdf)/i);
+	let filename = pdfname ? pdfname[1] : null;
+	return [fileurl, filename];
+}
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
