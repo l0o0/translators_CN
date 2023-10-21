@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-17 07:01:33"
+	"lastUpdated": "2023-10-21 10:06:47"
 }
 
 /*
@@ -124,8 +124,8 @@ async function scrape(doc, url = doc.location.href) {
 		item.attachments.push({
 			url: url,
 			document: doc,
-			title: 'Snapshot',
-			mimeType: 'text/html'
+			title: "Snapshot",
+			mimeType: "text/html"
 		})
 		item.complete();
 	});
@@ -133,8 +133,6 @@ async function scrape(doc, url = doc.location.href) {
 	em.itemType = 'journalArticle';
 	await em.doWeb(doc, url);
 }
-
-
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
