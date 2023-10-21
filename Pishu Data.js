@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-17 07:22:44"
+	"lastUpdated": "2023-10-21 10:09:28"
 }
 
 /*
@@ -72,7 +72,7 @@ async function doWeb(doc, url) {
 		for (let url of Object.keys(items)) {
 			await ZU.doGet(
 				url,
-				function(getresult) {
+				function (getresult) {
 					// Z.debug(getresult);
 					var parser = new DOMParser();
 					getresult = parser.parseFromString(getresult, "text/html");
@@ -105,7 +105,7 @@ async function scrape(doc, url = doc.location.href, type) {
 	}[type];
 	var jsdata = {
 		text: doc.querySelector(jspath).textContent,
-		getVar: function(varname) {
+		getVar: function (varname) {
 			var expression = this.text.match(new RegExp(`var ${varname} = .*`))[0];
 			const vartext = new Function(`${expression};\n return ${varname}`);
 			return vartext();
@@ -129,13 +129,13 @@ async function scrape(doc, url = doc.location.href, type) {
 			data[label] = value;
 		}
 		newItem.ISBN = data['ISBN：'].innerText;
-		newItem.tags = data['关键词：'].textContent.trim().split(/\s/).map((element) => ({"tag": element}));
+		newItem.tags = data['关键词：'].textContent.trim().split(/\s/).map((element) => ({ "tag": element }));
 		newItem.series = data['丛书名：'].innerText;
 	}
 	else {
 		newItem.bookTitle = jsdata.getVar('pertainbook');
 		newItem.pages = jsdata.getVar('ebookNumber');
-		newItem.tags = ZU.xpath(doc, '//div[@class="zl_keywords"][1]//a').map((element) => ({"tag": element.innerText}));
+		newItem.tags = ZU.xpath(doc, '//div[@class="zl_keywords"][1]//a').map((element) => ({ "tag": element.innerText }));
 		newItem.seeAlso.push(ZU.xpath(doc, '//ul[@class="Buy_detail"]/li/a')[0].href);
 	}
 	newItem.attachments.push({
@@ -147,14 +147,6 @@ async function scrape(doc, url = doc.location.href, type) {
 	newItem.url = url;
 	newItem.complete();
 }
-
-
-
-
-
-
-
-
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
