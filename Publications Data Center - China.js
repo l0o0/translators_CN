@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-17 06:30:22"
+	"lastUpdated": "2023-10-21 09:45:01"
 }
 
 /*
@@ -54,9 +54,9 @@ function getSearchResults(doc, checkOnly) {
 	for (let row of rows) {
 		let title = ZU.trimInternal(row.querySelector('.book_title').innerText);
 		let id = row.querySelector('.ant-checkbox-input').value;
-		let type = (function (){
+		let type = (function () {
 			let mediumType = ZU.xpath(doc, '//div[@class="data_classify"]//div[@class="checkbox"]/span[1]').map(
-			(element) => (element).className).indexOf('checkboxkey bcurrent');
+				(element) => (element).className).indexOf('checkboxkey bcurrent');
 			if (mediumType > 1) {
 				return 'comic';
 			} else {
@@ -211,7 +211,7 @@ const FIELDMAP = {
 		callback: function (creators) {
 			// 作者带有“等”
 			// https://pdc.capub.cn/search.html#/detail?id=lvwm4hubadqj7appufemd6rx24zjequztct3eok3imqvsongueeq&from=1&type=isbn
-			const surffix_patten = ['编?著', '原?著','编?绘', '主?编', '等'];
+			const surffix_patten = ['编?著', '原?著', '编?绘', '主?编', '等'];
 			creators = creators.replace(/[\[\]]/g, '');
 			for (const surffix of surffix_patten) {
 				if (creators.match(new RegExp(`.+(?=(${surffix}))`))) {
@@ -225,7 +225,7 @@ const FIELDMAP = {
 		labels: ['主题词'],
 		keys: ['keyword'],
 		callback: function (text) {
-			return [{tag: text}];
+			return [{ tag: text }];
 		}
 	},
 	// 丛书名示例
@@ -266,7 +266,7 @@ async function scrapeSingle(doc, url = doc.location.href) {
 		}
 		newItem[field] = result;
 	}
-	
+
 	let type = new URL(url.replace('#', '')).searchParams.get('type');
 	newItem = Object.assign(newItem, matchArchiveLocation(type));
 	newItem.url = url;
@@ -292,7 +292,7 @@ async function scrapeMulti(postData) {
 		'https://pdc.capub.cn/api/index/bookDetail',
 		{
 			method: 'POST',
-			headers: {"Usersessionid": usersessionid},
+			headers: { "Usersessionid": usersessionid },
 			body: `id=${postData.id}&searchType=${postData.type}`
 		}
 	);
@@ -306,7 +306,7 @@ async function scrapeMulti(postData) {
 	var jsonData = aescbc.utf8.fromBytes(aescbc.pkcs7.strip(cbc.decrypt(ciphertext)));
 	jsonData = new Data(
 		Object.entries(JSON.parse(jsonData)).filter(([key, value]) => (value != '**'))
-		);
+	);
 	// Z.debug(jsonData);
 	var newItem = new Z.Item("book");
 	var result;
@@ -872,17 +872,6 @@ var aescbc = {
 		strip: pkcs7strip
 	}
 };
-
-
-
-
-
-
-
-
-
-
-
 
 /** BEGIN TEST CASES **/
 var testCases = [
