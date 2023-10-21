@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-20 12:36:13"
+	"lastUpdated": "2023-10-21 10:16:14"
 }
 
 /*
@@ -43,13 +43,13 @@ function getIDFromUrl(url) {
 }
 
 function detectWeb(doc, url) {
-  	if (url.includes('/Qikan/Article/Detail')) {
+	if (url.includes('/Qikan/Article/Detail')) {
 		return 'journalArticle';
-  	} else
-  	if (getSearchResults(doc, true)) {
-		return 'multiple';
-  	}
-  	return false;
+	} else
+		if (getSearchResults(doc, true)) {
+			return 'multiple';
+		}
+	return false;
 }
 
 function getSearchResults(doc, checkOnly) {
@@ -132,7 +132,7 @@ async function scrape(doc, url = doc.location.href) {
 		debugLog += `Post result is\n${referText}\n`;
 		// string -> html
 		var postResult = parser.parseFromString(referText, "text/html");
-		debugLog += `transform result to ${typeof(postResult)}\n`
+		debugLog += `transform result to ${typeof (postResult)}\n`
 		// html -> string
 		postResult = postResult.querySelector('input#xmlContent').value;
 		debugLog += `get xml:\n${postResult}\n`
@@ -218,7 +218,6 @@ async function getPDF(fileid, filekey) {
 	let filename = pdfname ? pdfname[1] : null;
 	return [fileurl, filename];
 }
-
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
