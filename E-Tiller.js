@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-17 07:09:31"
+	"lastUpdated": "2023-10-21 10:04:15"
 }
 
 /*
@@ -139,27 +139,27 @@ const TABLEIDMAP = {
 			text.split('.').split(',')[0]
 		}
 	},
-	volume: { 
+	volume: {
 		path: '#ReferenceText',
 		callback: function (text) {
 			text = text.split('.').pop().split(',').pop();
 			return text.match(/\d+(?=())/)[0];
 		}
 	},
-	issue: { 
+	issue: {
 		path: '#ReferenceText',
 		callback: function (text) {
 			text = text.split('.').pop().split(',').pop();
 			return text.match(/\(\d+\)/)[0].slice(1, -1);
 		}
 	},
-	pages: { 
+	pages: {
 		path: '#ReferenceText',
 		callback: function (text) {
 			return text.split(':').pop();
 		}
 	},
-	date: { 
+	date: {
 		path: '#ReferenceText',
 		callback: function (text) {
 			return text.split('.').pop().split(',')[0];
@@ -170,14 +170,14 @@ const TABLEIDMAP = {
 		path: '#Author > table tr td:first-of-type',
 		multiple: true,
 		callback: function (arr) {
-			if (arr[0] == '作者') {arr.shift()};
+			if (arr[0] == '作者') { arr.shift() };
 			arr = arr.map((element) => (element.replace(/\d/g, '')));
 			arr = cleanArr(arr);
 			arr = arr.filter((element) => (element.length > 1));
 			return arr.map((element) => (matchCreator(element)));
 		}
 	},
-	tags: { 
+	tags: {
 		path: '#KeyWord a',
 		multiple: true,
 		callback: function (arr) {
@@ -225,7 +225,7 @@ async function scrapeElement(doc, url = doc.location.href) {
 			if (recipe.multiple) {
 				result = Array.from(doc.querySelectorAll(recipe.path)).map(
 					(element) => (element.innerText)
-					);
+				);
 			}
 			else {
 				result = doc.querySelector(recipe.path);
@@ -250,24 +250,24 @@ async function scrapeElement(doc, url = doc.location.href) {
 		mimeType: 'application/pdf'
 	});
 	newItem.attachments.push({
-		url : url,
-		title : "Snapshot", 
-		mimeType : "text/html"
+		url: url,
+		title: "Snapshot",
+		mimeType: "text/html"
 	});
 	newItem.complete();
 }
 
 const RISMAP = {
 	'title': { tag: 'TI' },
-	'abstractNote': { tag: 'AB'},
+	'abstractNote': { tag: 'AB' },
 	'publicationTitle': { tag: 'JF' },
 	'volume': { tag: 'VL' },
 	'issue': { tag: 'IS' },
-	'date': { tag: 'PY'},
+	'date': { tag: 'PY' },
 	'journalAbbreviation': { tag: 'JA' },
 	'DOI': { tag: 'ID' },
-	'firstpage': { tag: 'SP'},
-	'lastpage': { tag: 'EP'},
+	'firstpage': { tag: 'SP' },
+	'lastpage': { tag: 'EP' },
 	'tags': {
 		tag: 'KW',
 		callback: function (text) {
@@ -325,7 +325,7 @@ async function scrapeRis(doc, url = doc.location.href) {
 	let pdfURL = doc.querySelector('#PdfUrl').href;
 	// Z.debug(pdfURL);
 	let risText = await requestText(
-		risURL, 
+		risURL,
 		{
 			method: 'POST',
 			body: `export_type=ris&include_content=2&article_list=${id}&action_type=export`
@@ -334,7 +334,7 @@ async function scrapeRis(doc, url = doc.location.href) {
 		lines: risText.split('\n'),
 		getTag: function (tag) {
 			try {
-				return this.lines.find((line) => (line.slice(0,2) == tag)).substring(6);
+				return this.lines.find((line) => (line.slice(0, 2) == tag)).substring(6);
 			} catch (error) {
 				return '';
 			}
@@ -342,7 +342,7 @@ async function scrapeRis(doc, url = doc.location.href) {
 		getTags: function (tag) {
 			try {
 				return this.lines.filter(
-					(line) => (line.slice(0,2) == tag)).map(
+					(line) => (line.slice(0, 2) == tag)).map(
 						(line) => (line.substring(6)));
 			} catch (error) {
 				return '';
@@ -390,21 +390,20 @@ async function scrapeRis(doc, url = doc.location.href) {
 		} else {
 			return '';
 		}
-		
+
 	})();
 	newItem.attachments.push({
 		url: pdfURL,
-		title: 'Full Text PDF',
-		mimeType: 'application/pdf'
+		title: "Full Text PDF",
+		mimeType: "application/pdf"
 	});
 	newItem.attachments.push({
-		url : url,
-		title : "Snapshot", 
-		mimeType : "text/html"
+		url: url,
+		title: "Snapshot",
+		mimeType: "text/html"
 	});
 	newItem.complete();
 }
-
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
