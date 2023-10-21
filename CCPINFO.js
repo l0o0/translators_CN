@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-17 06:45:50"
+	"lastUpdated": "2023-10-21 09:55:30"
 }
 
 /*
@@ -80,7 +80,7 @@ async function doWeb(doc, url) {
 function trimAuthor(rawText) {
 	const SURFFIXPATTEN = ["[编原]?著", "主?编", "等"];
 	for (const surffix of SURFFIXPATTEN) {
-		rawText = rawText.replace(new RegExp(`(.+?)(,? ?${surffix})\$`),"$1");
+		rawText = rawText.replace(new RegExp(`(.+?)(,? ?${surffix})\$`), "$1");
 	}
 	return rawText;
 }
@@ -91,10 +91,10 @@ function str2Arr(string) {
 
 function matchCreator(creator) {
 	creator = creator.replace(/\([\u4e00-\u9fa5]+\)/, '');
-	if (creator.indexOf('·') !== -1){
+	if (creator.indexOf('·') !== -1) {
 		creator = {
-		"lastName": creator,
-		"creatorType": "autor",
+			"lastName": creator,
+			"creatorType": "autor",
 		};
 	}
 	else {
@@ -126,10 +126,11 @@ async function scrape(doc, url = doc.location.href) {
 	// newItem.volume = meta_all.get('卷次');
 	// newItem.numberOfVolumes = meta_all.get('卷数',
 	// newItem.edition = meta_all.get('版本');
+	// unable to scrape place
 	// newItem.place = meta_all.get('地点');
 	newItem.publisher = metaAll.get('出版社');
-	newItem.date = (function(){
-		var  dateStr = metaAll.get('出版时间');
+	newItem.date = (function () {
+		var dateStr = metaAll.get('出版时间');
 		if (dateStr.match(/[^\d]$/)) dateStr = dateStr.slice(0, -1);
 		dateStr = dateStr.replace(/[年月日]/g, '-');
 		return dateStr;
@@ -143,14 +144,12 @@ async function scrape(doc, url = doc.location.href) {
 	// newItem.archiveLocation = meta_all.get('档位置');
 	newItem.libraryCatalog = metaAll.get('中图分类');
 	// newItem.callNumber = meta_all.get('书号');
-	// newItem.rights = meta_all.get('版权');
-	// newItem.extra = meta_all.get('其他');
 	newItem.creators = str2Arr(trimAuthor(metaAll.get('著者'))).map(
 		(creator) => (matchCreator(creator))
 	);
 	ZU.xpath(doc, '//div[@class="book_label"]/div[@class="label_in"]/span').map(
 		(element) => (element).innerText).forEach(
-			(element) => newItem.tags.push({"tag": element})
+			(element) => newItem.tags.push({ "tag": element })
 		);
 	/* 请求语言字段 */
 	let searchLang = await requestText(
@@ -172,11 +171,6 @@ async function scrape(doc, url = doc.location.href) {
 	}[langFlag];
 	newItem.complete();
 }
-
-
-
-
-
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
