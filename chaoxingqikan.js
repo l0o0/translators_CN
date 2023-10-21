@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-17 06:52:05"
+	"lastUpdated": "2023-10-21 09:58:09"
 }
 
 /*
@@ -142,7 +142,7 @@ function matchRelated(doc, path) {
 async function scrape(doc, url = doc.location.href) {
 	var newItem = new Z.Item('journalArticle');
 	newItem.title = ZU.xpath(doc, '//h1[@class="F_titel"]')[0].innerText;
-	newItem.creators = getPureText(ZU.xpath(doc, "//p[@class='F_name']")[0]).split(/[,，]/).map((element) => 
+	newItem.creators = getPureText(ZU.xpath(doc, "//p[@class='F_name']")[0]).split(/[,，]/).map((element) =>
 		(matchCreator(element))
 	);
 	// Z.debug(ZU.xpath(doc, '//a[@class='jourName']'));
@@ -176,7 +176,7 @@ async function scrape(doc, url = doc.location.href) {
 	// Z.debug(journalDoc);
 	var journalInfo = {};
 	ZU.xpath(journalDoc, "//div[@class='FbPcon']/p").forEach((element) => {
-		Object.assign(journalInfo, {[element.firstElementChild.innerText]: getPureText(element)})
+		Object.assign(journalInfo, { [element.firstElementChild.innerText]: getPureText(element) })
 	});
 	// Z.debug(journalInfo);
 	newItem.language = {
@@ -194,8 +194,6 @@ async function scrape(doc, url = doc.location.href) {
 	)
 	newItem.complete()
 }
-
-
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
