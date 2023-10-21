@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-18 18:41:31"
+	"lastUpdated": "2023-10-21 10:12:07"
 }
 
 /*
@@ -127,11 +127,11 @@ async function scrape(doc, url = doc.location.href) {
 			let pdfURL = doc.querySelector('div.side div.bd ul:first-of-type li:nth-child(1) a').href;
 			item.attachments.push({
 				url: pdfURL,
-				title: 'Full Text PDF',
-				mimeType: 'application/pdf'
+				title: "Full Text PDF",
+				mimeType: "application/pdf"
 			});
 			item.attachments.push({
-				title: 'Snapshot',
+				title: "Snapshot",
 				document: doc
 			});
 			item.complete();
@@ -139,8 +139,6 @@ async function scrape(doc, url = doc.location.href) {
 		await translator.translate();
 	}
 }
-
-
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
