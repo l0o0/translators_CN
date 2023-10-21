@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-17 06:57:22"
+	"lastUpdated": "2023-10-21 10:00:30"
 }
 
 /*
@@ -113,30 +113,30 @@ const WEBTYPE = [
 /* 外来的Metadata.js水土不服，决定自己造轮子 */
 function Metas(doc) {
 	this.doc = doc,
-	this.getMeta = function (recipes, lang) {
-		var result;
-		try {
-			var recipe = recipes.find((element) => (this.doc.querySelectorAll(`head > meta[name="${element.name}"]`).length));
-			// if (recipe) {
-			result = this.doc.querySelectorAll(`head > meta[name="${recipe.name}"]`);
-			result = Array.from(result);
-			Z.debug(`In recipe ${JSON.stringify(recipe)},I got:\n${result.map((element) => (element.content))}`);
-			result = result.filter((element) => (!element.getAttribute('xml:lang') || (element.getAttribute('xml:lang') == lang)));
-			result = result.map((element) => (element.content));
-			// Z.debug(`after filtrating, result is ${result}`);
-			if (recipe.callback) {
-				result = recipe.callback(result);
-				// Z.debug(`after callbacking, result is ${result}`);
+		this.getMeta = function (recipes, lang) {
+			var result;
+			try {
+				var recipe = recipes.find((element) => (this.doc.querySelectorAll(`head > meta[name="${element.name}"]`).length));
+				// if (recipe) {
+				result = this.doc.querySelectorAll(`head > meta[name="${recipe.name}"]`);
+				result = Array.from(result);
+				Z.debug(`In recipe ${JSON.stringify(recipe)},I got:\n${result.map((element) => (element.content))}`);
+				result = result.filter((element) => (!element.getAttribute('xml:lang') || (element.getAttribute('xml:lang') == lang)));
+				result = result.map((element) => (element.content));
+				// Z.debug(`after filtrating, result is ${result}`);
+				if (recipe.callback) {
+					result = recipe.callback(result);
+					// Z.debug(`after callbacking, result is ${result}`);
+				}
+				else {
+					result = (result.length == 1) ? result[0] : result;
+				}
+				return result;
+				// }
+			} catch (error) {
+				return "";
 			}
-			else {
-				result = (result.length == 1) ? result[0] : result;
-			}
-			return result;
-			// }
-		} catch (error) {
-			return "";
 		}
-	}
 }
 
 const METAMAP = {
@@ -173,7 +173,7 @@ const METAMAP = {
 		{ name: "prism.publicationDate" },
 		{ name: "citation_publication_date" },
 		{ name: "citation_online_date" },
-		{ name: "citation_date"},
+		{ name: "citation_date" },
 		{ name: "dc.date" }
 	],
 	// series: "系列",
@@ -352,7 +352,7 @@ function matchCreator(creator) {
 }
 
 function cleanKeywordsArr(keywords) {
-	keywords = keywords.map((keyword) => ({"tag": keyword}));
+	keywords = keywords.map((keyword) => ({ "tag": keyword }));
 	return keywords;
 }
 
@@ -369,7 +369,7 @@ function str2arr(string) {
 async function scrape(doc, type, url = doc.location.href) {
 	var metas = new Metas(doc);
 	var newItem = new Z.Item('journalArticle');
-	var language =  [
+	var language = [
 		{ name: "citation_language" },
 		{ name: "DC.Language" },
 		{ name: "dc.language" }
@@ -397,7 +397,7 @@ async function scrape(doc, type, url = doc.location.href) {
 		document: doc
 	});
 	newItem.attachments.push({
-		url: metas.getMeta([{name: "citation_pdf_url"}]),
+		url: metas.getMeta([{ name: "citation_pdf_url" }]),
 		title: 'Full Text PDF',
 		mimeType: 'application/pdf'
 	});
