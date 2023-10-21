@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-18 18:38:38"
+	"lastUpdated": "2023-10-21 10:14:30"
 }
 
 /*
@@ -125,13 +125,13 @@ const FIELDMAP = {
 	abstractTranslation: { node: "abal" },
 	titleTranslation: { node: "tial" },
 	publicationTitle: { node: "hasSotit_s" },
-	volume: { 
+	volume: {
 		node: "vol",
 		callback: function (text) {
 			return trimZero(text);
 		}
 	},
-	issue: { 
+	issue: {
 		node: "iss",
 		callback: function (text) {
 			return trimZero(text);
@@ -139,8 +139,8 @@ const FIELDMAP = {
 	},
 	firstPage: { node: "stpa" },
 	lastPage: { node: "enpa" },
-	date: { node: "yea"},
-	language: { 
+	date: { node: "yea" },
+	language: {
 		node: "lan",
 		callback: function (obj) {
 			let lang = Object.keys(obj)[0];
@@ -152,13 +152,13 @@ const FIELDMAP = {
 			return language ? language : 'zh-CN';
 		}
 	},
-	ISSN: { node: "issn"},
-	DOI: { node: "doi"},
+	ISSN: { node: "issn" },
+	DOI: { node: "doi" },
 	archive: { node: "soty" },
 	archiveLocation: { node: "hasHollico" },
 	callNumber: { node: "hasHolhonu" },
 	ISBN: { node: "isbn" },
-	place: { node: "hasPropla"},
+	place: { node: "hasPropla" },
 	meetingName: { node: "hasPronam_s" },
 	bookTitle: { node: "hasSotit_s" },
 	thesisType: { node: "deg" },
@@ -184,7 +184,7 @@ class DATA {
 	constructor(innerData) {
 		this.innerData = innerData;
 	}
-	get(node, str=true) {
+	get(node, str = true) {
 		var result = this.innerData.find((element) => (element.f == node));
 		if (!result) return '';
 		result = result.v;
@@ -218,9 +218,9 @@ async function scrape(doc, url = doc.location.href) {
 		}
 		newItem[field] = result;
 	}
-	newItem.pages = (function(){
+	newItem.pages = (function () {
 		if (newItem.firstPage && newItem.lastPage) {
-			return`${newItem.firstPage}-${newItem.lastPage}`
+			return `${newItem.firstPage}-${newItem.lastPage}`
 		}
 		else {
 			return ''
@@ -244,9 +244,9 @@ async function scrape(doc, url = doc.location.href) {
 		default:
 			try {
 				newItem.creators = data.get('hasAutnam_s', false).map((creator) => (matchCreator(creator)));
-			newItem.tags = data.get('key', false).map((element)=> ({tag: element}));
+				newItem.tags = data.get('key', false).map((element) => ({ tag: element }));
 			}
-			catch(erro) {}
+			catch (erro) { }
 			break;
 	}
 	newItem.attachments.push({
@@ -255,13 +255,6 @@ async function scrape(doc, url = doc.location.href) {
 	});
 	newItem.complete();
 }
-
-
-
-
-
-
-
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
