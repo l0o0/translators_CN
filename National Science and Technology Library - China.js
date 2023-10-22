@@ -99,7 +99,7 @@ function matchCreator(creator) {
 		creator = ZU.cleanAuthor(creator, 'author');
 	}
 	else {
-		creator = creator.replace(/\s/, '');
+		creator = creator.replace(/\s/g, '');
 		creator = {
 			lastName: creator,
 			creatorType: 'author',
