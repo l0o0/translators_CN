@@ -2,7 +2,7 @@
 	"translatorID": "4c4b0a6c-a5e9-42ed-a742-f10f3e2ef711",
 	"label": "CCPINFO",
 	"creator": "jiaojiaodubai23",
-	"target": "https?://book.cppinfo.cn",
+	"target": "^https?://book\\.cppinfo\\.cn",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
