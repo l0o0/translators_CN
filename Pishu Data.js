@@ -2,7 +2,7 @@
 	"translatorID": "8651aa89-eb54-47bc-9916-17720fe22a86",
 	"label": "Pishu Data",
 	"creator": "jiaojiaodubai23",
-	"target": "https?://www.pishu.com.cn",
+	"target": "^https?://www\\.pishu\\.com\\.cn",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
