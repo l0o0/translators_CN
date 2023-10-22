@@ -2,7 +2,7 @@
 	"translatorID": "0fbde090-5376-4ed9-8636-2c39588f7a0c",
 	"label": "National Science and Technology Library - China",
 	"creator": "jiaojiaodubai23",
-	"target": "^https?://www.nstl.gov.cn",
+	"target": "^https?://www\\.nstl\\.gov\\.cn",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
