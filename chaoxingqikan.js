@@ -2,7 +2,7 @@
 	"translatorID": "f7c9342d-3672-4899-b315-3d09ac1b38a8",
 	"label": "chaoxingqikan",
 	"creator": "jiaojiaodubai23",
-	"target": "https?://qikan.chaoxing.com",
+	"target": "^https?://qikan\\.chaoxing\\.com",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
