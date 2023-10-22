@@ -2,7 +2,7 @@
 	"translatorID": "9282aac1-9c13-4591-9c92-4da3a65ff4e5",
 	"label": "ChinaXiv",
 	"creator": "jiaojiaodubai23",
-	"target": "http://www.chinaxiv.org",
+	"target": "^http://www\\.chinaxiv\\.org",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
