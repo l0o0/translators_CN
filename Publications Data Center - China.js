@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-21 09:45:01"
+	"lastUpdated": "2023-10-23 08:40:46"
 }
 
 /*
@@ -34,15 +34,13 @@
 	***** END LICENSE BLOCK *****
 */
 
-
-
 function detectWeb(doc, url) {
 	let multiFlag = url.split(/[/,?]/)[4];
 	if (multiFlag == 'quick') {
-		return "multiple";
+		return 'multiple';
 	}
 	else if (multiFlag == 'detail') {
-		return "book";
+		return 'book';
 	}
 	return false;
 }
@@ -56,21 +54,22 @@ function getSearchResults(doc, checkOnly) {
 		let id = row.querySelector('.ant-checkbox-input').value;
 		let type = (function () {
 			let mediumType = ZU.xpath(doc, '//div[@class="data_classify"]//div[@class="checkbox"]/span[1]').map(
-				(element) => (element).className).indexOf('checkboxkey bcurrent');
+				element => (element).className).indexOf('checkboxkey bcurrent');
 			if (mediumType > 1) {
 				return 'comic';
-			} else {
+			}
+			else {
 				let type = {
-					"CIP数据库": "cip",
-					"馆藏数据库": "marc",
-					"ISBN数据库": "isbn"
+					CIP数据库: 'cip',
+					馆藏数据库: 'marc',
+					ISBN数据库: 'isbn'
 				}[row.querySelector('.data_from span').innerText];
 				return (mediumType == 0) ? type : `${type}_ele`;
 			}
 		})();
 		let postData = `{"id":"${id}","type":"${type}"}`;
 		if (!id || !type || !title) {
-			continue
+			continue;
 		}
 		else {
 			if (checkOnly) return true;
@@ -100,27 +99,27 @@ function matchArchiveLocation(type) {
 	// Z.debug(type);
 	/* 音像电子 */
 	if (type.includes('ele')) {
-		cell.medium = "CD";
+		cell.medium = 'CD';
 		if (type.includes('marc')) {
 			// 馆藏条目无“著作权人”字段
 			// https://pdc.capub.cn/search.html#/detail?id=qketqfp26hwqthuwmwi6dzr4hu27o2efur5pu6ms5szvi6oasvqa&from=1&type=marc_ele
-			cell.archiveLocation = "馆藏";
+			cell.archiveLocation = '馆藏';
 		}
 		else if (type.includes('isbn')) {
 			// https://pdc.capub.cn/search.html#/detail?id=vhtadivummqsacsc5ygdxljzrsmvrevrgwvg47sjxodgfzgcx5qa&from=1&type=isbn_ele
-			cell.archiveLocation = "ISBN";
+			cell.archiveLocation = 'ISBN';
 		}
-		/* 图书 */
-	} else {
+	}
+	else {
 		cell.medium = '';
 		if (type.includes('cip')) {
-			cell.archiveLocation = "CIP";
+			cell.archiveLocation = 'CIP';
 		}
 		else if (type.includes('marc')) {
-			cell.archiveLocation = "馆藏";
+			cell.archiveLocation = '馆藏';
 		}
 		else if (type.includes('isbn')) {
-			cell.archiveLocation = "ISBN";
+			cell.archiveLocation = 'ISBN';
 		}
 	}
 	return cell;
@@ -128,26 +127,24 @@ function matchArchiveLocation(type) {
 
 function matchCreator(creator, raw = false) {
 	creator = ZU.trimInternal(creator.toString());
-	/* 英文译名一律不拆分 */
-	if (creator.search(/[A-Za-z]/) !== -1 || creator.includes('·')) {
+	if (/[A-Za-z]/.test(creator) || creator.includes('·')) {
 		// 英文名去除国籍标识
 		creator = creator.replace(/\([\u4e00-\u9fa5]+\)/, '');
 		// 保留中英对照形式供用户参考
 		if (raw) return creator;
 		// 英文名去除英文原名
-		creator = creator.replace(/ ?\(.+\)/, "");
+		creator = creator.replace(/ ?\(.+\)/, '');
 		creator = {
-			"lastName": creator,
-			"creatorType": "autor",
+			lastName: creator,
+			creatorType: 'autor',
 		};
 		// Z.debug(creator);
 	}
-	/* 中文名根据配置决定是否拆分 */
 	else {
 		creator = {
-			"lastName": creator,
-			"creatorType": "autor",
-			"fieldMode": true
+			lastName: creator,
+			creatorType: 'autor',
+			fieldMode: 1
 		};
 	}
 	return creator;
@@ -211,14 +208,14 @@ const FIELDMAP = {
 		callback: function (creators) {
 			// 作者带有“等”
 			// https://pdc.capub.cn/search.html#/detail?id=lvwm4hubadqj7appufemd6rx24zjequztct3eok3imqvsongueeq&from=1&type=isbn
-			const surffix_patten = ['编?著', '原?著', '编?绘', '主?编', '等'];
-			creators = creators.replace(/[\[\]]/g, '');
-			for (const surffix of surffix_patten) {
+			const surffixPatten = ['编?著', '原?著', '编?绘', '主?编', '等'];
+			creators = creators.replace(/[[\]]/g, '');
+			for (const surffix of surffixPatten) {
 				if (creators.match(new RegExp(`.+(?=(${surffix}))`))) {
 					creators = creators.match(new RegExp(`.+(?=${surffix})`))[0];
 				}
 			}
-			return creators.split(/,\s/g).map((creator) => (matchCreator(creator)));
+			return creators.split(/,\s/g).map(creator => (matchCreator(creator)));
 		}
 	},
 	tags: {
@@ -234,13 +231,13 @@ const FIELDMAP = {
 		labels: ['丛书名'],
 		keys: ['secondbookname']
 	}
-}
+};
 
 class Data extends Map {
 	get(keys) {
 		var value;
 		for (const key of keys) {
-			value = super.get(key)
+			value = super.get(key);
 			if (value) break;
 		}
 		return value ? value : '';
@@ -249,31 +246,30 @@ class Data extends Map {
 
 async function scrapeSingle(doc, url = doc.location.href) {
 	// Z.debug(url);
-	var tableCell = ZU.xpath(doc, "//div[@class='table_wrap']/table/tr/td");
+	var tableCell = ZU.xpath(doc, '//div[@class="table_wrap"]/table/tr/td');
 	var tableData = new Data();
 	for (let i = 0; i < tableCell.length; i += 2) {
 		tableData.set(tableCell[i].innerText, tableCell[i + 1].innerText);
 	}
 	// Z.debug(tableData);
-	var newItem = new Z.Item("book");
+	var newItem = new Z.Item('book');
 	var result = '';
 	for (const field in FIELDMAP) {
 		const recipe = FIELDMAP[field];
 		result = tableData.get(recipe.labels);
-		// Z.debug(`for field ${field}, I get \n${result}`);
+		Z.debug(`for field ${field}, I get \n${result}`);
 		if (recipe.callback) {
 			result = recipe.callback(result);
 		}
 		newItem[field] = result;
 	}
-
 	let type = new URL(url.replace('#', '')).searchParams.get('type');
 	newItem = Object.assign(newItem, matchArchiveLocation(type));
 	newItem.url = url;
 	newItem.attachments.push({
-		"url": url,
-		"title": "Snapshot",
-		"mimeType": "text/html"
+		url: url,
+		title: 'Snapshot',
+		mimeType: 'text/html'
 	});
 	newItem.complete();
 }
@@ -284,31 +280,30 @@ async function scrapeMulti(postData) {
 	// Z.debug(`id=${postData.id}&searchType=${postData.type}`);
 	// 在Scaffold中无法调用下面这个对象，但大部分浏览器是支持的，
 	// 详见 https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage#browser_compatibility
-	let usersessionid = localStorage.getItem("user-token");
+	let usersessionid = localStorage.getItem('user-token');
 	// 在Scaffold调试时请用浏览器devtools从请求头找到Usersessionid手动复制粘贴到下方
-	// let usersessionid = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+	// let usersessionid = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
 	// Z.debug(usersessionid);
 	let postResult = await requestJSON(
 		'https://pdc.capub.cn/api/index/bookDetail',
 		{
 			method: 'POST',
-			headers: { "Usersessionid": usersessionid },
+			headers: { Usersessionid: usersessionid },
 			body: `id=${postData.id}&searchType=${postData.type}`
 		}
 	);
 	// Z.debug(postResult);
-	if (postResult[code] == "0") return false;
-	var ciphertext = postResult["result"];
+	var ciphertext = postResult.result;
 	ciphertext = aescbc.base64.toBytes(ciphertext);
-	let key = aescbc.utf8.toBytes("zg35ws76swnxz679");
-	let iv = aescbc.utf8.toBytes("z66qa18l0w9o521k");
+	let key = aescbc.utf8.toBytes('zg35ws76swnxz679');
+	let iv = aescbc.utf8.toBytes('z66qa18l0w9o521k');
 	let cbc = new aescbc.CBC(key, iv);
-	var jsonData = aescbc.utf8.fromBytes(aescbc.pkcs7.strip(cbc.decrypt(ciphertext)));
-	jsonData = new Data(
-		Object.entries(JSON.parse(jsonData)).filter(([key, value]) => (value != '**'))
+	var plainText = aescbc.utf8.fromBytes(aescbc.pkcs7.strip(cbc.decrypt(ciphertext)));
+	var jsonData = new Data(
+		Object.entries(JSON.parse(plainText)).filter(([_key, value]) => (value != '**'))
 	);
 	// Z.debug(jsonData);
-	var newItem = new Z.Item("book");
+	var newItem = new Z.Item('book');
 	var result;
 	for (const field in FIELDMAP) {
 		const recipe = FIELDMAP[field];
@@ -326,9 +321,9 @@ async function scrapeMulti(postData) {
 	let url = `https://pdc.capub.cn/search.html#/detail?id=${postData.id}&from=1&type=${postData.type}`;
 	newItem.url = url;
 	newItem.attachments.push({
-		"url": url,
-		"title": "Snapshot",
-		"mimeType": "text/html"
+		url: url,
+		title: 'Snapshot',
+		mimeType: 'text/html'
 	});
 	newItem.complete();
 }
@@ -341,7 +336,8 @@ function coerceArray(arg, copy) {
 		if (copy) {
 			if (arg.slice) {
 				arg = arg.slice();
-			} else {
+			}
+			else {
 				arg = Array.prototype.slice.call(arg);
 			}
 		}
@@ -370,10 +366,11 @@ function createArray(length) {
 }
 
 function copyArray(sourceArray, targetArray, targetStart, sourceStart, sourceEnd) {
-	if (sourceStart != null || sourceEnd != null) {
+	if (sourceStart !== null || sourceEnd !== null) {
 		if (sourceArray.slice) {
 			sourceArray = sourceArray.slice(sourceStart, sourceEnd);
-		} else {
+		}
+		else {
 			sourceArray = Array.prototype.slice.call(sourceArray, sourceStart, sourceEnd);
 		}
 	}
@@ -381,147 +378,150 @@ function copyArray(sourceArray, targetArray, targetStart, sourceStart, sourceEnd
 }
 
 var Utf8 = (function () {
-	function toBytes(text) {
-		var result = [], i = 0;
-		text = encodeURI(text);
-		while (i < text.length) {
-			var c = text.charCodeAt(i++);
+function toBytes(text) {
+	var result = [], i = 0;
+	text = encodeURI(text);
+	while (i < text.length) {
+		var c = text.charCodeAt(i++);
 
-			// if it is a % sign, encode the following 2 bytes as a hex value
-			if (c === 37) {
-				result.push(parseInt(text.substr(i, 2), 16))
-				i += 2;
+		// if it is a % sign, encode the following 2 bytes as a hex value
+		if (c === 37) {
+			result.push(parseInt(text.substr(i, 2), 16));
+			i += 2;
 
-				// otherwise, just the actual byte
-			} else {
-				result.push(c)
-			}
+			// otherwise, just the actual byte
 		}
-
-		return coerceArray(result);
-	}
-
-	function fromBytes(bytes) {
-		var result = [], i = 0;
-
-		while (i < bytes.length) {
-			var c = bytes[i];
-
-			if (c < 128) {
-				result.push(String.fromCharCode(c));
-				i++;
-			} else if (c > 191 && c < 224) {
-				result.push(String.fromCharCode(((c & 0x1f) << 6) | (bytes[i + 1] & 0x3f)));
-				i += 2;
-			} else {
-				result.push(String.fromCharCode(((c & 0x0f) << 12) | ((bytes[i + 1] & 0x3f) << 6) | (bytes[i + 2] & 0x3f)));
-				i += 3;
-			}
+		else {
+			result.push(c);
 		}
-
-		return result.join('');
 	}
 
-	return {
-		toBytes: toBytes,
-		fromBytes: fromBytes,
+	return coerceArray(result);
+}
+
+function fromBytes(bytes) {
+	var result = [], i = 0;
+
+	while (i < bytes.length) {
+		var c = bytes[i];
+
+		if (c < 128) {
+			result.push(String.fromCharCode(c));
+			i++;
+		}
+		else if (c > 191 && c < 224) {
+			result.push(String.fromCharCode(((c & 0x1f) << 6) | (bytes[i + 1] & 0x3f)));
+			i += 2;
+		}
+		else {
+			result.push(String.fromCharCode(((c & 0x0f) << 12) | ((bytes[i + 1] & 0x3f) << 6) | (bytes[i + 2] & 0x3f)));
+			i += 3;
+		}
 	}
+
+	return result.join('');
+}
+
+return {
+	toBytes: toBytes,
+	fromBytes: fromBytes,
+};
 })();
 
 // The base64 comes from https://developer.mozilla.org/zh-CN/docs/Glossary/Base64#%E2%80%9Cunicode_%E9%97%AE%E9%A2%98%E2%80%9D
 var Base64 = (function () {
-	// Array of bytes to Base64 string decoding
-	function b64ToUint6(nChr) {
-		return nChr > 64 && nChr < 91
-			? nChr - 65
-			: nChr > 96 && nChr < 123
-				? nChr - 71
-				: nChr > 47 && nChr < 58
-					? nChr + 4
-					: nChr === 43
-						? 62
-						: nChr === 47
-							? 63
-							: 0;
-	}
+// Array of bytes to Base64 string decoding
+function b64ToUint6(nChr) {
+	return nChr > 64 && nChr < 91
+		? nChr - 65
+		: nChr > 96 && nChr < 123
+			? nChr - 71
+			: nChr > 47 && nChr < 58
+				? nChr + 4
+				: nChr === 43
+					? 62
+					: nChr === 47
+						? 63
+						: 0;
+}
 
-	function decBase64ToArr(sBase64, nBlocksSize) {
-		const sB64Enc = sBase64.replace(/[^A-Za-z0-9+/]/g, ""); // Remove any non-base64 characters, such as trailing "=", whitespace, and more.
-		const nInLen = sB64Enc.length;
-		const nOutLen = nBlocksSize
-			? Math.ceil(((nInLen * 3 + 1) >> 2) / nBlocksSize) * nBlocksSize
-			: (nInLen * 3 + 1) >> 2;
-		const taBytes = new Uint8Array(nOutLen);
+function decBase64ToArr(sBase64, nBlocksSize) {
+	const sB64Enc = sBase64.replace(/[^A-Za-z0-9+/]/g, ""); // Remove any non-base64 characters, such as trailing "=", whitespace, and more.
+	const nInLen = sB64Enc.length;
+	const nOutLen = nBlocksSize
+		? Math.ceil(((nInLen * 3 + 1) >> 2) / nBlocksSize) * nBlocksSize
+		: (nInLen * 3 + 1) >> 2;
+	const taBytes = new Uint8Array(nOutLen);
 
-		let nMod3;
-		let nMod4;
-		let nUint24 = 0;
-		let nOutIdx = 0;
-		for (let nInIdx = 0; nInIdx < nInLen; nInIdx++) {
-			nMod4 = nInIdx & 3;
-			nUint24 |= b64ToUint6(sB64Enc.charCodeAt(nInIdx)) << (6 * (3 - nMod4));
-			if (nMod4 === 3 || nInLen - nInIdx === 1) {
-				nMod3 = 0;
-				while (nMod3 < 3 && nOutIdx < nOutLen) {
-					taBytes[nOutIdx] = (nUint24 >>> ((16 >>> nMod3) & 24)) & 255;
-					nMod3++;
-					nOutIdx++;
-				}
-				nUint24 = 0;
+	let nMod3;
+	let nMod4;
+	let nUint24 = 0;
+	let nOutIdx = 0;
+	for (let nInIdx = 0; nInIdx < nInLen; nInIdx++) {
+		nMod4 = nInIdx & 3;
+		nUint24 |= b64ToUint6(sB64Enc.charCodeAt(nInIdx)) << (6 * (3 - nMod4));
+		if (nMod4 === 3 || nInLen - nInIdx === 1) {
+			nMod3 = 0;
+			while (nMod3 < 3 && nOutIdx < nOutLen) {
+				taBytes[nOutIdx] = (nUint24 >>> ((16 >>> nMod3) & 24)) & 255;
+				nMod3++;
+				nOutIdx++;
 			}
+			nUint24 = 0;
 		}
-
-		return taBytes;
 	}
 
-	/* Base64 string to array encoding */
-	function uint6ToB64(nUint6) {
-		return nUint6 < 26
-			? nUint6 + 65
-			: nUint6 < 52
-				? nUint6 + 71
-				: nUint6 < 62
-					? nUint6 - 4
-					: nUint6 === 62
-						? 43
-						: nUint6 === 63
-							? 47
-							: 65;
-	}
+	return taBytes;
+}
 
-	function encArrToBase64(aBytes) {
-		let nMod3 = 2;
-		let sB64Enc = "";
+/* Base64 string to array encoding */
+function uint6ToB64(nUint6) {
+	return nUint6 < 26
+		? nUint6 + 65
+		: nUint6 < 52
+			? nUint6 + 71
+			: nUint6 < 62
+				? nUint6 - 4
+				: nUint6 === 62
+					? 43
+					: nUint6 === 63
+						? 47
+						: 65;
+}
 
-		const nLen = aBytes.length;
-		let nUint24 = 0;
-		for (let nIdx = 0; nIdx < nLen; nIdx++) {
-			nMod3 = nIdx % 3;
-			// To break your base64 into several 80-character lines, add:
-			//   if (nIdx > 0 && ((nIdx * 4) / 3) % 76 === 0) {
-			//      sB64Enc += "\r\n";
-			//    }
+function encArrToBase64(aBytes) {
+	let nMod3 = 2;
+	let sB64Enc = "";
 
-			nUint24 |= aBytes[nIdx] << ((16 >>> nMod3) & 24);
-			if (nMod3 === 2 || aBytes.length - nIdx === 1) {
-				sB64Enc += String.fromCodePoint(
-					uint6ToB64((nUint24 >>> 18) & 63),
-					uint6ToB64((nUint24 >>> 12) & 63),
-					uint6ToB64((nUint24 >>> 6) & 63),
-					uint6ToB64(nUint24 & 63),
-				);
-				nUint24 = 0;
-			}
+	const nLen = aBytes.length;
+	let nUint24 = 0;
+	for (let nIdx = 0; nIdx < nLen; nIdx++) {
+		nMod3 = nIdx % 3;
+		// To break your base64 into several 80-character lines, add:
+		//   if (nIdx > 0 && ((nIdx * 4) / 3) % 76 === 0) {
+		//      sB64Enc += "\r\n";
+		//    }
+
+		nUint24 |= aBytes[nIdx] << ((16 >>> nMod3) & 24);
+		if (nMod3 === 2 || aBytes.length - nIdx === 1) {
+			sB64Enc += String.fromCodePoint(
+				uint6ToB64((nUint24 >>> 18) & 63),
+				uint6ToB64((nUint24 >>> 12) & 63),
+				uint6ToB64((nUint24 >>> 6) & 63),
+				uint6ToB64(nUint24 & 63),
+			);
+			nUint24 = 0;
 		}
-		return (
-			sB64Enc.substring(0, sB64Enc.length - 2 + nMod3) +
-			(nMod3 === 2 ? "" : nMod3 === 1 ? "=" : "==")
-		);
 	}
-	return {
-		toBytes: decBase64ToArr,
-		fromBytes: encArrToBase64
-	}
+	return (
+		sB64Enc.substring(0, sB64Enc.length - 2 + nMod3)
+		+ (nMod3 === 2 ? "" : nMod3 === 1 ? "=" : "==")
+	);
+}
+return {
+	toBytes: decBase64ToArr,
+	fromBytes: encArrToBase64
+};
 })();
 
 function pkcs7pad(data) {
@@ -529,7 +529,7 @@ function pkcs7pad(data) {
 	var padder = 16 - (data.length % 16);
 	var result = createArray(data.length + padder);
 	copyArray(data, result);
-	for (var i = data.length; i < result.length; i++) {
+	for (let i = data.length; i < result.length; i++) {
 		result[i] = padder;
 	}
 	return result;
@@ -537,13 +537,13 @@ function pkcs7pad(data) {
 
 function pkcs7strip(data) {
 	data = coerceArray(data, true);
-	if (data.length < 16) { throw new Error('PKCS#7 invalid length'); }
+	if (data.length < 16) throw new Error('PKCS#7 invalid length');
 
 	var padder = data[data.length - 1];
-	if (padder > 16) { throw new Error('PKCS#7 padding byte out of range'); }
+	if (padder > 16) throw new Error('PKCS#7 padding byte out of range');
 
 	var length = data.length - padder;
-	for (var i = 0; i < padder; i++) {
+	for (let i = 0; i < padder; i++) {
 		if (data[length + i] !== padder) {
 			throw new Error('PKCS#7 invalid padding byte');
 		}
@@ -555,7 +555,7 @@ function pkcs7strip(data) {
 }
 
 // Number of rounds by keysize
-var numberOfRounds = { 16: 10, 24: 12, 32: 14 }
+var numberOfRounds = { 16: 10, 24: 12, 32: 14 };
 
 // Round constant words
 var rcon = [0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a, 0x2f, 0x5e, 0xbc, 0x63, 0xc6, 0x97, 0x35, 0x6a, 0xd4, 0xb3, 0x7d, 0xfa, 0xef, 0xc5, 0x91];
@@ -584,12 +584,12 @@ var U4 = [0x00000000, 0x090d0b0e, 0x121a161c, 0x1b171d12, 0x24342c38, 0x2d392736
 
 function convertToInt32(bytes) {
 	var result = [];
-	for (var i = 0; i < bytes.length; i += 4) {
+	for (let i = 0; i < bytes.length; i += 4) {
 		result.push(
-			(bytes[i] << 24) |
-			(bytes[i + 1] << 16) |
-			(bytes[i + 2] << 8) |
-			bytes[i + 3]
+			(bytes[i] << 24)
+			| (bytes[i + 1] << 16)
+			| (bytes[i + 2] << 8)
+			| bytes[i + 3]
 		);
 	}
 	return result;
@@ -605,12 +605,11 @@ var AES = function (key) {
 	});
 
 	this._prepare();
-}
+};
 
 AES.prototype._prepare = function () {
-
 	var rounds = numberOfRounds[this.key.length];
-	if (rounds == null) {
+	if (rounds === null) {
 		throw new Error('invalid key size (must be 16, 24 or 32 bytes)');
 	}
 
@@ -620,7 +619,7 @@ AES.prototype._prepare = function () {
 	// decryption round keys
 	this._Kd = [];
 
-	for (var i = 0; i <= rounds; i++) {
+	for (let i = 0; i <= rounds; i++) {
 		this._Ke.push([0, 0, 0, 0]);
 		this._Kd.push([0, 0, 0, 0]);
 	}
@@ -633,7 +632,7 @@ AES.prototype._prepare = function () {
 
 	// copy values into round key arrays
 	var index;
-	for (var i = 0; i < KC; i++) {
+	for (let i = 0; i < KC; i++) {
 		index = i >> 2;
 		this._Ke[index][i % 4] = tk[i];
 		this._Kd[rounds - index][i % 4] = tk[i];
@@ -644,32 +643,33 @@ AES.prototype._prepare = function () {
 	var t = KC, tt;
 	while (t < roundKeyCount) {
 		tt = tk[KC - 1];
-		tk[0] ^= ((S[(tt >> 16) & 0xFF] << 24) ^
-			(S[(tt >> 8) & 0xFF] << 16) ^
-			(S[tt & 0xFF] << 8) ^
-			S[(tt >> 24) & 0xFF] ^
-			(rcon[rconpointer] << 24));
+		tk[0] ^= ((S[(tt >> 16) & 0xFF] << 24)
+		^ (S[(tt >> 8) & 0xFF] << 16)
+		^ (S[tt & 0xFF] << 8)
+		^ S[(tt >> 24) & 0xFF]
+		^ (rcon[rconpointer] << 24));
 		rconpointer += 1;
 
 		// key expansion (for non-256 bit)
 		if (KC != 8) {
-			for (var i = 1; i < KC; i++) {
+			for (let i = 1; i < KC; i++) {
 				tk[i] ^= tk[i - 1];
 			}
 
 			// key expansion for 256-bit keys is "slightly different" (fips-197)
-		} else {
-			for (var i = 1; i < (KC / 2); i++) {
+		}
+		else {
+			for (let i = 1; i < (KC / 2); i++) {
 				tk[i] ^= tk[i - 1];
 			}
 			tt = tk[(KC / 2) - 1];
 
-			tk[KC / 2] ^= (S[tt & 0xFF] ^
-				(S[(tt >> 8) & 0xFF] << 8) ^
-				(S[(tt >> 16) & 0xFF] << 16) ^
-				(S[(tt >> 24) & 0xFF] << 24));
+			tk[KC / 2] ^= (S[tt & 0xFF]
+				^ (S[(tt >> 8) & 0xFF] << 8)
+				^ (S[(tt >> 16) & 0xFF] << 16)
+				^ (S[(tt >> 24) & 0xFF] << 24));
 
-			for (var i = (KC / 2) + 1; i < KC; i++) {
+			for (let i = (KC / 2) + 1; i < KC; i++) {
 				tk[i] ^= tk[i - 1];
 			}
 		}
@@ -686,16 +686,16 @@ AES.prototype._prepare = function () {
 	}
 
 	// inverse-cipher-ify the decryption round key (fips-197 section 5.3)
-	for (var r = 1; r < rounds; r++) {
-		for (var c = 0; c < 4; c++) {
+	for (let r = 1; r < rounds; r++) {
+		for (let c = 0; c < 4; c++) {
 			tt = this._Kd[r][c];
-			this._Kd[r][c] = (U1[(tt >> 24) & 0xFF] ^
-				U2[(tt >> 16) & 0xFF] ^
-				U3[(tt >> 8) & 0xFF] ^
-				U4[tt & 0xFF]);
+			this._Kd[r][c] = (U1[(tt >> 24) & 0xFF]
+			^ U2[(tt >> 16) & 0xFF]
+			^ U3[(tt >> 8) & 0xFF]
+			^ U4[tt & 0xFF]);
 		}
 	}
-}
+};
 
 AES.prototype.encrypt = function (plaintext) {
 	if (plaintext.length != 16) {
@@ -707,25 +707,25 @@ AES.prototype.encrypt = function (plaintext) {
 
 	// convert plaintext to (ints ^ key)
 	var t = convertToInt32(plaintext);
-	for (var i = 0; i < 4; i++) {
+	for (let i = 0; i < 4; i++) {
 		t[i] ^= this._Ke[0][i];
 	}
 
 	// apply round transforms
-	for (var r = 1; r < rounds; r++) {
-		for (var i = 0; i < 4; i++) {
-			a[i] = (T1[(t[i] >> 24) & 0xff] ^
-				T2[(t[(i + 1) % 4] >> 16) & 0xff] ^
-				T3[(t[(i + 2) % 4] >> 8) & 0xff] ^
-				T4[t[(i + 3) % 4] & 0xff] ^
-				this._Ke[r][i]);
+	for (let r = 1; r < rounds; r++) {
+		for (let i = 0; i < 4; i++) {
+			a[i] = (T1[(t[i] >> 24) & 0xff]
+			^ T2[(t[(i + 1) % 4] >> 16) & 0xff]
+			^ T3[(t[(i + 2) % 4] >> 8) & 0xff]
+			^ T4[t[(i + 3) % 4] & 0xff]
+			^ this._Ke[r][i]);
 		}
 		t = a.slice();
 	}
 
 	// the last round is special
 	var result = createArray(16), tt;
-	for (var i = 0; i < 4; i++) {
+	for (let i = 0; i < 4; i++) {
 		tt = this._Ke[rounds][i];
 		result[4 * i] = (S[(t[i] >> 24) & 0xff] ^ (tt >> 24)) & 0xff;
 		result[4 * i + 1] = (S[(t[(i + 1) % 4] >> 16) & 0xff] ^ (tt >> 16)) & 0xff;
@@ -734,7 +734,7 @@ AES.prototype.encrypt = function (plaintext) {
 	}
 
 	return result;
-}
+};
 
 AES.prototype.decrypt = function (ciphertext) {
 	if (ciphertext.length != 16) {
@@ -746,25 +746,25 @@ AES.prototype.decrypt = function (ciphertext) {
 
 	// convert plaintext to (ints ^ key)
 	var t = convertToInt32(ciphertext);
-	for (var i = 0; i < 4; i++) {
+	for (let i = 0; i < 4; i++) {
 		t[i] ^= this._Kd[0][i];
 	}
 
 	// apply round transforms
-	for (var r = 1; r < rounds; r++) {
-		for (var i = 0; i < 4; i++) {
-			a[i] = (T5[(t[i] >> 24) & 0xff] ^
-				T6[(t[(i + 3) % 4] >> 16) & 0xff] ^
-				T7[(t[(i + 2) % 4] >> 8) & 0xff] ^
-				T8[t[(i + 1) % 4] & 0xff] ^
-				this._Kd[r][i]);
+	for (let r = 1; r < rounds; r++) {
+		for (let i = 0; i < 4; i++) {
+			a[i] = (T5[(t[i] >> 24) & 0xff]
+			^ T6[(t[(i + 3) % 4] >> 16) & 0xff]
+			^ T7[(t[(i + 2) % 4] >> 8) & 0xff]
+			^ T8[t[(i + 1) % 4] & 0xff]
+			^ this._Kd[r][i]);
 		}
 		t = a.slice();
 	}
 
 	// the last round is special
 	var result = createArray(16), tt;
-	for (var i = 0; i < 4; i++) {
+	for (let i = 0; i < 4; i++) {
 		tt = this._Kd[rounds][i];
 		result[4 * i] = (Si[(t[i] >> 24) & 0xff] ^ (tt >> 24)) & 0xff;
 		result[4 * i + 1] = (Si[(t[(i + 3) % 4] >> 16) & 0xff] ^ (tt >> 16)) & 0xff;
@@ -773,7 +773,7 @@ AES.prototype.decrypt = function (ciphertext) {
 	}
 
 	return result;
-}
+};
 
 /**
 	 *  Mode Of Operation - Cipher Block Chaining (CBC)
@@ -788,15 +788,15 @@ var CBC = function (key, iv) {
 
 	if (!iv) {
 		iv = createArray(16);
-
-	} else if (iv.length != 16) {
+	}
+	else if (iv.length != 16) {
 		throw new Error('invalid initialation vector size (must be 16 bytes)');
 	}
 
 	this._lastCipherblock = coerceArray(iv, true);
 
 	this._aes = new AES(key);
-}
+};
 
 CBC.prototype.encrypt = function (plaintext) {
 	plaintext = coerceArray(plaintext);
@@ -808,10 +808,10 @@ CBC.prototype.encrypt = function (plaintext) {
 	var ciphertext = createArray(plaintext.length);
 	var block = createArray(16);
 
-	for (var i = 0; i < plaintext.length; i += 16) {
+	for (let i = 0; i < plaintext.length; i += 16) {
 		copyArray(plaintext, block, 0, i, i + 16);
 
-		for (var j = 0; j < 16; j++) {
+		for (let j = 0; j < 16; j++) {
 			block[j] ^= this._lastCipherblock[j];
 		}
 
@@ -820,7 +820,7 @@ CBC.prototype.encrypt = function (plaintext) {
 	}
 
 	return ciphertext;
-}
+};
 
 CBC.prototype.decrypt = function (ciphertext) {
 	ciphertext = coerceArray(ciphertext);
@@ -832,11 +832,11 @@ CBC.prototype.decrypt = function (ciphertext) {
 	var plaintext = createArray(ciphertext.length);
 	var block = createArray(16);
 
-	for (var i = 0; i < ciphertext.length; i += 16) {
+	for (let i = 0; i < ciphertext.length; i += 16) {
 		copyArray(ciphertext, block, 0, i, i + 16);
 		block = this._aes.decrypt(block);
 
-		for (var j = 0; j < 16; j++) {
+		for (let j = 0; j < 16; j++) {
 			plaintext[i + j] = block[j] ^ this._lastCipherblock[j];
 		}
 
@@ -844,16 +844,16 @@ CBC.prototype.decrypt = function (ciphertext) {
 	}
 
 	return plaintext;
-}
+};
 
 function checkInt(value) {
 	return (parseInt(value) === value);
 }
 
 function checkInts(arrayish) {
-	if (!checkInt(arrayish.length)) { return false; }
+	if (!checkInt(arrayish.length)) return false;
 
-	for (var i = 0; i < arrayish.length; i++) {
+	for (let i = 0; i < arrayish.length; i++) {
 		if (!checkInt(arrayish[i]) || arrayish[i] < 0 || arrayish[i] > 255) {
 			return false;
 		}
@@ -889,9 +889,9 @@ var testCases = [
 				"title": "结构化学",
 				"creators": [
 					{
-						"firstName": "新义",
-						"lastName": "李",
-						"creatorType": "autor"
+						"lastName": "李新义",
+						"creatorType": "autor",
+						"fieldMode": 1
 					}
 				],
 				"date": "2018.04",
@@ -938,7 +938,7 @@ var testCases = [
 				"abstractNote": "本书是俄维两种文字混合的工具书之一。本词典共收单字4万余条左右，短语，派生词，复合词4000余条，包括今年以来已进入人们日常生活的大量新词或新义。每个单字和词条释义都用最常用的意义来解释。",
 				"archiveLocation": "馆藏",
 				"callNumber": "H356",
-				"language": "rus;uig",
+				"language": "en-US",
 				"libraryCatalog": "Publications Data Center - China",
 				"place": "乌鲁木齐",
 				"publisher": "新疆人民出版社",
@@ -981,6 +981,7 @@ var testCases = [
 				"abstractNote": "本书是《朗文少儿语音》3B。",
 				"archiveLocation": "CIP",
 				"callNumber": "H311",
+				"language": "zh-CN",
 				"libraryCatalog": "Publications Data Center - China",
 				"place": "北京",
 				"publisher": "世界图书出版公司北京公司",
@@ -1012,6 +1013,7 @@ var testCases = [
 				"creators": [],
 				"ISBN": "9787883310471",
 				"archiveLocation": "馆藏",
+				"language": "zh-CN",
 				"libraryCatalog": "Publications Data Center - China",
 				"publisher": "北京国家大剧院古典音乐有限责任公司出版",
 				"url": "https://pdc.capub.cn/search.html#/detail?id=7dahxrzkhzanmop46ag7xrgmamkgn37ew2sdi5cnnilkbp73rrtq&from=1&type=marc_ele",
@@ -1038,12 +1040,12 @@ var testCases = [
 					{
 						"lastName": "谢振强",
 						"creatorType": "autor",
-						"fieldMode": true
+						"fieldMode": 1
 					}
 				],
 				"ISBN": "9787887333315",
 				"archiveLocation": "ISBN",
-				"language": "en-US",
+				"language": "zh-CN",
 				"libraryCatalog": "Publications Data Center - China",
 				"publisher": "中国文联音像出版公司（中国文联出版社有限公司）",
 				"rights": "谢振强",
@@ -1068,7 +1070,7 @@ var testCases = [
 				"itemType": "book",
 				"title": "列宁在一九一八",
 				"creators": [],
-				"language": "en-US",
+				"language": "zh-CN",
 				"libraryCatalog": "Publications Data Center - China",
 				"publisher": "上海人民美术出版社",
 				"url": "https://pdc.capub.cn/search.html#/detail?id=ahvu2dxdy7sdhl6f2vgpe6taasmpnohq4tpnrgl3424yx2cr7xma&from=1&type=comics",
@@ -1083,6 +1085,6 @@ var testCases = [
 				"seeAlso": []
 			}
 		]
-	},
+	}
 ]
 /** END TEST CASES **/
