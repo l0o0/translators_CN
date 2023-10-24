@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-21 10:09:28"
+	"lastUpdated": "2023-10-24 12:12:47"
 }
 
 /*
@@ -34,7 +34,6 @@
 
 	***** END LICENSE BLOCK *****
 */
-
 
 function detectWeb(doc, url) {
 	if (url.includes('/bookDetail?')) {
@@ -75,7 +74,7 @@ async function doWeb(doc, url) {
 				function (getresult) {
 					// Z.debug(getresult);
 					var parser = new DOMParser();
-					getresult = parser.parseFromString(getresult, "text/html");
+					getresult = parser.parseFromString(getresult, 'text/html');
 					var type = detectWeb(doc, url);
 					scrape(getresult, url, type);
 				}
@@ -89,9 +88,9 @@ async function doWeb(doc, url) {
 
 function matchCreator(creator) {
 	creator = {
-		"lastName": creator,
-		"creatorType": "author",
-		"fieldMode": true
+		lastName: creator,
+		creatorType: 'author',
+		fieldMode: 1
 	};
 	return creator;
 }
@@ -100,20 +99,26 @@ async function scrape(doc, url = doc.location.href, type) {
 	// Z.debug(typeof(doc));
 	// Z.debug(url);
 	const jspath = {
-		'book': 'head style:first-of-type + script',
-		'bookSection': 'div.data_foot.margintop20 > script:first-of-type'
+		book: 'head style:first-of-type + script',
+		bookSection: 'div.data_foot.margintop20 > script:first-of-type'
 	}[type];
 	var jsdata = {
 		text: doc.querySelector(jspath).textContent,
 		getVar: function (varname) {
-			var expression = this.text.match(new RegExp(`var ${varname} = .*`))[0];
-			const vartext = new Function(`${expression};\n return ${varname}`);
-			return vartext();
+			try {
+				let expression = this.text.match(new RegExp(`var ${varname} = .*`))[0];
+				expression = expression.match(/".*"/)[0];
+				expression = expression.slice(1, -1);
+				return expression;
+			}
+			catch (error) {
+				return '';
+			}
 		}
-	}
+	};
 	var newItem = new Z.Item(type);
 	newItem.title = jsdata.getVar('title');
-	newItem.creators = jsdata.getVar('author').split(' ').map((creator) => (
+	newItem.creators = jsdata.getVar('author').split(' ').map(creator => (
 		matchCreator(creator.replace(/(&nbsp;)/g, ''))
 	));
 	newItem.date = jsdata.getVar('publishdate');
@@ -122,31 +127,31 @@ async function scrape(doc, url = doc.location.href, type) {
 	newItem.abstractNote = ZU.trimInternal(ZU.xpath(doc, '//div[@class="summaryCon"]')[0].innerText);
 	if (type == 'book') {
 		var data = {};
-		let data_counts = ZU.xpath(doc, '//div[@class="books margintop10"]//table/tbody')[0].childElementCount;
-		for (let i = 1; i <= data_counts; i++) {
+		let dataCounts = ZU.xpath(doc, '//div[@class="books margintop10"]//table/tbody')[0].childElementCount;
+		for (let i = 1; i <= dataCounts; i++) {
 			let label = ZU.xpath(doc, `//div[@class="books margintop10"]//table/tbody/tr[${i}]/td[1]`)[0].innerText.replace(/\s/g, '');
 			let value = ZU.xpath(doc, `//div[@class="books margintop10"]//table/tbody/tr[${i}]/td[2]`)[0];
 			data[label] = value;
 		}
 		newItem.ISBN = data['ISBN：'].innerText;
-		newItem.tags = data['关键词：'].textContent.trim().split(/\s/).map((element) => ({ "tag": element }));
+		newItem.tags = data['关键词：'].textContent.trim().split(/\s/).map(element => ({ tag: element }));
 		newItem.series = data['丛书名：'].innerText;
 	}
 	else {
 		newItem.bookTitle = jsdata.getVar('pertainbook');
 		newItem.pages = jsdata.getVar('ebookNumber');
-		newItem.tags = ZU.xpath(doc, '//div[@class="zl_keywords"][1]//a').map((element) => ({ "tag": element.innerText }));
+		newItem.tags = ZU.xpath(doc, '//div[@class="zl_keywords"][1]//a').map(element => ({ tag: element.innerText }));
 		newItem.seeAlso.push(ZU.xpath(doc, '//ul[@class="Buy_detail"]/li/a')[0].href);
 	}
 	newItem.attachments.push({
-		'url': url,
-		'document': doc,
-		'tittle': 'Snapshot',
-		'mimeType': 'text/html'
+		tittle: 'Snapshot',
+		document: doc,
 	});
 	newItem.url = url;
 	newItem.complete();
 }
+
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -160,7 +165,7 @@ var testCases = [
 					{
 						"lastName": "端利涛",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					}
 				],
 				"date": "2023-08",
@@ -206,7 +211,7 @@ var testCases = [
 					{
 						"lastName": "吴永胜",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					}
 				],
 				"date": "2021-07",
@@ -250,9 +255,19 @@ var testCases = [
 				"title": "上海合作组织20年",
 				"creators": [
 					{
-						"lastName": "李进峰",
+						"lastName": "<a",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
+					},
+					{
+						"lastName": "class='bookNoChangeColor'",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "href='javascript:;'>李进峰</a>",
+						"creatorType": "author",
+						"fieldMode": 1
 					}
 				],
 				"date": "2021-07",
