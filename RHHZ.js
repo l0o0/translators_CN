@@ -36,7 +36,7 @@
 */
 
 
-function detectWeb(doc, url) {
+function detectWeb(doc, _url) {
 	let insite = doc.querySelector('div[class*="foot"] p > a[href*="www.rhhz.net"]');
 	let itemID = doc.querySelector('meta[name="citation_id"]');
 	if (insite && itemID) {
@@ -78,16 +78,16 @@ async function doWeb(doc, url) {
 
 function matchCreator(creator) {
 	// Z.debug(creator);
-	if (creator.search(/[A-Za-z]/) !== -1) {
-		creator = ZU.cleanAuthor(creator, "author");
+	if (/[A-Za-z]/.test(creator)) {
+		creator = ZU.cleanAuthor(creator, 'author');
 	}
 	else {
 		creator = creator.replace(/\s/g, '');
 		creator = {
-			"lastName": creator,
-			"creatorType": "author",
-			"fieldMode": true
-		}
+			lastName: creator,
+			creatorType: 'author',
+			fieldMode: 1
+		};
 	}
 	return creator;
 }
@@ -102,17 +102,18 @@ async function scrape(doc, url = doc.location.href) {
 	}
 	else if (pdfButton) {
 		pdfURL = pdfButton.parentElement.href;
-	} else {
+	}
+	else {
 		let id = doc.querySelector('head > meta[name="citation_id"]').content;
 		let host = (new URL(url)).host;
-		pdfURL = `${url.split('//')[0]}//${host}/article/exportPdf?id=${id}`
+		pdfURL = `${url.split('//')[0]}//${host}/article/exportPdf?id=${id}`;
 	}
 	Z.debug(pdfURL);
 	// Embedded Metadata
 	translator.setTranslator('951c027d-74ac-47d4-a107-9c3069ab7b48');
 	translator.setDocument(doc);
 	translator.setHandler('itemDone', (_obj, item) => {
-		item.creators = item.creators.map((creator) => (matchCreator(creator.lastName)));
+		item.creators = item.creators.map(creator => (matchCreator(creator.lastName)));
 		item.language = (item.language == 'zh') ? 'zh-CN' : 'en-US';
 		item.attachments = [
 			{
@@ -126,13 +127,14 @@ async function scrape(doc, url = doc.location.href) {
 			document: doc,
 			title: "Snapshot",
 			mimeType: "text/html"
-		})
+		});
 		item.complete();
 	});
 	let em = await translator.getTranslatorObject();
 	em.itemType = 'journalArticle';
 	await em.doWeb(doc, url);
 }
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
