@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-21 10:00:30"
+	"lastUpdated": "2023-10-24 08:52:33"
 }
 
 /*
@@ -111,32 +111,36 @@ const WEBTYPE = [
 ];
 
 /* 外来的Metadata.js水土不服，决定自己造轮子 */
-function Metas(doc) {
-	this.doc = doc,
-		this.getMeta = function (recipes, lang) {
-			var result;
-			try {
-				var recipe = recipes.find((element) => (this.doc.querySelectorAll(`head > meta[name="${element.name}"]`).length));
-				// if (recipe) {
-				result = this.doc.querySelectorAll(`head > meta[name="${recipe.name}"]`);
-				result = Array.from(result);
-				Z.debug(`In recipe ${JSON.stringify(recipe)},I got:\n${result.map((element) => (element.content))}`);
-				result = result.filter((element) => (!element.getAttribute('xml:lang') || (element.getAttribute('xml:lang') == lang)));
-				result = result.map((element) => (element.content));
-				// Z.debug(`after filtrating, result is ${result}`);
-				if (recipe.callback) {
-					result = recipe.callback(result);
-					// Z.debug(`after callbacking, result is ${result}`);
-				}
-				else {
-					result = (result.length == 1) ? result[0] : result;
-				}
-				return result;
-				// }
-			} catch (error) {
-				return "";
+class Metas {
+	constructor(doc) {
+		this.doc = doc;
+	}
+
+	getMeta(recipes, lang) {
+		var result;
+		try {
+			var recipe = recipes.find(element => (this.doc.querySelectorAll(`head > meta[name="${element.name}"]`).length));
+			// if (recipe) {
+			result = this.doc.querySelectorAll(`head > meta[name="${recipe.name}"]`);
+			result = Array.from(result);
+			Z.debug(`In recipe ${JSON.stringify(recipe)},I got:\n${result.map(element => (element.content))}`);
+			result = result.filter(element => (!element.getAttribute('xml:lang') || (element.getAttribute('xml:lang') == lang)));
+			result = result.map(element => (element.content));
+			// Z.debug(`after filtrating, result is ${result}`);
+			if (recipe.callback) {
+				result = recipe.callback(result);
+				// Z.debug(`after callbacking, result is ${result}`);
 			}
+			else {
+				result = (result.length == 1) ? result[0] : result;
+			}
+			return result;
+			// }
 		}
+		catch (error) {
+			return '';
+		}
+	}
 }
 
 const METAMAP = {
@@ -236,7 +240,7 @@ const METAMAP = {
 			callback: cleanKeywordsStr
 		}
 	],
-}
+};
 
 const TAGMAP = {
 	title: "T",
@@ -248,7 +252,7 @@ const TAGMAP = {
 	issue: "N",
 	abstractNote: "X",
 	url: "U"
-}
+};
 
 function isItem(doc) {
 	var insite = doc.querySelector('a[href^="http://www.magtech.com"]');
@@ -257,13 +261,13 @@ function isItem(doc) {
 		return {
 			name: 'Unknown-type',
 			issingle: true
-		}
-	};
-	return false
+		};
+	}
+	return false;
 }
 
-function detectWeb(doc, url) {
-	var type = WEBTYPE.find((element) => (doc.querySelector(element.pagekey)));
+function detectWeb(doc, _url) {
+	var type = WEBTYPE.find(element => (doc.querySelector(element.pagekey)));
 	if (!type) type = isItem(doc);
 	if (!type) return false;
 	Z.debug(type);
@@ -298,7 +302,7 @@ function getSearchResults(doc, type, checkOnly) {
 		return found ? items : false;
 	}
 	else {
-		var rows = doc.querySelectorAll(type.pagekey)
+		var rows = doc.querySelectorAll(type.pagekey);
 		for (let row of rows) {
 			let href = row.href;
 			let title = ZU.trimInternal(row.textContent);
@@ -312,7 +316,7 @@ function getSearchResults(doc, type, checkOnly) {
 }
 
 async function doWeb(doc, url) {
-	var type = WEBTYPE.find((element) => (doc.querySelector(element.pagekey)));
+	var type = WEBTYPE.find(element => (doc.querySelector(element.pagekey)));
 	if (detectWeb(doc, url) == 'multiple') {
 		let items = await Zotero.selectItems(getSearchResults(doc, type, false));
 		if (!items) return;
@@ -322,12 +326,12 @@ async function doWeb(doc, url) {
 		}
 	}
 	else {
-		await scrape(doc, type, url)
+		await scrape(doc, type, url);
 	}
 }
 
 function cleanAutorArr(creators) {
-	creators = creators.map((creator) => (matchCreator(creator)));
+	creators = creators.map(creator => (matchCreator(creator)));
 	return creators;
 }
 
@@ -337,22 +341,22 @@ function cleanAutorStr(creators) {
 }
 
 function matchCreator(creator) {
-	if (creator.search(/[A-Za-z]/) !== -1) {
+	if (/[A-Za-z]/.test(creator)) {
 		creator = ZU.cleanAuthor(creator, 'author');
 	}
 	else {
 		creator = creator.replace(/\s/g, '');
 		creator = {
-			"lastName": creator,
-			"creatorType": "author",
-			"fieldMode": true
-		}
+			lastName: creator,
+			creatorType: 'author',
+			fieldMode: 1
+		};
 	}
 	return creator;
 }
 
 function cleanKeywordsArr(keywords) {
-	keywords = keywords.map((keyword) => ({ "tag": keyword }));
+	keywords = keywords.map(keyword => ({ tag: keyword }));
 	return keywords;
 }
 
@@ -389,7 +393,7 @@ async function scrape(doc, type, url = doc.location.href) {
 		return (firstpage == lastpage || !lastpage) ? firstpage : `${firstpage}-${lastpage}`;
 	})();
 	newItem.language = (function () {
-		return (['zh', 'cn', 'zh-cn', 'chi'].indexOf(language) < 0) ? 'en-US' : 'zh-CN';
+		return (['zh', 'cn', 'zh-cn', 'chi'].includes(language)) ? 'zh-CN' : 'en-US';
 	})();
 	newItem.url = url;
 	newItem.attachments.push({
@@ -402,17 +406,16 @@ async function scrape(doc, type, url = doc.location.href) {
 		mimeType: 'application/pdf'
 	});
 	if (type.name == 'flat' || type.name == 'notebook_classic') {
-		let risURL = doc.querySelector('a[id="ris_export"]').href;
+		let risURL = doc.querySelector('#ris_export').href;
 		// Z.debug(risURL)
 		let risText = await requestText(risURL);
 		risText = risText.split('\r\n');
-		var itemPatch = {};
 		// Z.debug(risText);
 		for (const field in TAGMAP) {
 			const tag = TAGMAP[field];
 			var value;
 			try {
-				value = (risText.find((line) => (line.charAt(1) == tag))).substring(3);
+				value = (risText.find(line => (line.charAt(1) == tag))).substring(3);
 			}
 			catch (erro) {
 				value = '';
@@ -425,6 +428,8 @@ async function scrape(doc, type, url = doc.location.href) {
 	// Z.debug(newItem);
 	newItem.complete();
 }
+
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -443,22 +448,22 @@ var testCases = [
 					{
 						"lastName": "蔡晓明",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
 						"lastName": "李兆群",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
 						"lastName": "潘洪生",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
 						"lastName": "陆宴辉",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					}
 				],
 				"date": "2018-02-08",
@@ -515,17 +520,17 @@ var testCases = [
 					{
 						"lastName": "李小冬",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
 						"lastName": "苏舒",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
 						"lastName": "黄天健",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					}
 				],
 				"date": "2015-01-20",
@@ -569,39 +574,59 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "http://www.dwjs.com.cn/f9hw47gJN5D3gkNCvL3iBQnAh7Jlvn6Wu%2BMxbNfFU1fhERdp5zZIVDS2jBgioUot?encrypt=1",
+		"url": "http://www.dwjs.com.cn/%2BUUKgrDk4TYftCzvQD8SfCs_Q474HONlEEX2sxoqsvyyMokDnXYY8PE68c5erlek?encrypt=1",
 		"items": [
 			{
 				"itemType": "journalArticle",
-				"title": "智能配电网柔性互联研究现状及发展趋势",
+				"title": "新型电力系统的“碳视角”：科学问题与研究框架",
 				"creators": [
 					{
-						"lastName": "祁琪",
+						"lastName": "康重庆",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
-						"lastName": "姜齐荣",
+						"lastName": "杜尔顺",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
-						"lastName": "许彦平",
+						"lastName": "李姚旺",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
+					},
+					{
+						"lastName": "张宁",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "陈启鑫",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "郭鸿业",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "王鹏",
+						"creatorType": "author",
+						"fieldMode": 1
 					}
 				],
-				"date": "2020-12-05",
-				"DOI": "doi:10.13335/j.1000-3673.pst.2019.2670",
+				"date": "2022-03-05",
+				"DOI": "doi:10.13335/j.1000-3673.pst.2021.2550",
 				"ISSN": "1000-3673",
-				"abstractNote": "分布式电源的大规模接入、用电负荷的多元化增长及直流负荷比例的增加,给传统配电网的结构形态与运行方式带来了巨大影响。利用全控型电力电子器件对配电网进行柔性互联改造,有助于提高系统的可控性、可靠性与安全性,促进分布式电源消纳、满足高质量供电需求,是向未来智能配电网演变的重要手段。文章首先介绍了柔性互联配电网的关键环节——柔性互联装置(flexible interconnection device,FID)的基本结构与工作原理;然后结合国内外示范工程,对柔性互联系统3种典型形态及特点进行分析,对运行控制和规划设计方面的关键技术进行了讨论及研究现状总结,并指出现阶段亟需突破的关键问题;最后,为实现柔性互联配电网更广泛的应用,对其发展趋势进行了展望。",
-				"issue": "12",
+				"abstractNote": "电力在我国能源消费与碳排放中占据重要地位。电力系统低碳转型,构建以新能源为主体的新型电力系统将对我国碳达峰、碳中和战略目标的实现起到关键作用。该文首先分析了从“电视角”到“碳视角”下电力学科研究体系的转变趋势,并对当前“碳视角”下的电力系统研究概况进行了综述。基于“碳视角”下的电力系统研究路径,从电力系统全环节碳排放计量和“战略-技术-市场”协同低碳化解决方案2个方面,分析了电力低碳转型过程中的关键科学问题。在此基础上,从碳计量与碳追踪、碳规划与碳轨迹、碳减排与碳优化、碳市场与碳交易4个方面提出了新型电力系统“碳视角”的研究框架,并对关键研究内容进行了分析和阐述。",
+				"issue": "3",
 				"language": "zh-CN",
 				"libraryCatalog": "MagTech",
-				"pages": "4664-4676",
+				"pages": "821-833",
 				"publicationTitle": "电网技术",
-				"url": "http://www.dwjs.com.cn/f9hw47gJN5D3gkNCvL3iBQnAh7Jlvn6Wu%2BMxbNfFU1fhERdp5zZIVDS2jBgioUot?encrypt=1",
-				"volume": "44",
+				"url": "http://www.dwjs.com.cn/%2BUUKgrDk4TYftCzvQD8SfCs_Q474HONlEEX2sxoqsvyyMokDnXYY8PE68c5erlek?encrypt=1",
+				"volume": "46",
 				"attachments": [
 					{
 						"title": "Snapshot",
@@ -614,19 +639,19 @@ var testCases = [
 				],
 				"tags": [
 					{
-						"tag": "分布式电源"
+						"tag": "新型电力系统"
 					},
 					{
-						"tag": "柔性互联装置"
+						"tag": "碳减排与碳优化"
 					},
 					{
-						"tag": "电力电子"
+						"tag": "碳市场与碳交易"
 					},
 					{
-						"tag": "示范工程"
+						"tag": "碳规划与碳轨迹"
 					},
 					{
-						"tag": "配电网运行控制"
+						"tag": "碳计量和碳追踪"
 					}
 				],
 				"notes": [],
