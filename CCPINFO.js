@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-21 09:55:30"
+	"lastUpdated": "2023-10-24 08:20:14"
 }
 
 /*
@@ -80,7 +80,7 @@ async function doWeb(doc, url) {
 function trimAuthor(rawText) {
 	const SURFFIXPATTEN = ["[编原]?著", "主?编", "等"];
 	for (const surffix of SURFFIXPATTEN) {
-		rawText = rawText.replace(new RegExp(`(.+?)(,? ?${surffix})\$`), "$1");
+		rawText = rawText.replace(new RegExp(`(.+?)(,? ?${surffix})$`), "$1");
 	}
 	return rawText;
 }
@@ -91,18 +91,18 @@ function str2Arr(string) {
 
 function matchCreator(creator) {
 	creator = creator.replace(/\([\u4e00-\u9fa5]+\)/, '');
-	if (creator.indexOf('·') !== -1) {
+	if (creator.includes('·')) {
 		creator = {
-			"lastName": creator,
-			"creatorType": "autor",
+			lastName: creator,
+			creatorType: "autor",
 		};
 	}
 	else {
 		creator = creator.replace(/\s/g, '');
 		creator = {
-			"lastName": creator,
-			"creatorType": "autor",
-			"fieldMode": true
+			lastName: creator,
+			creatorType: "autor",
+			fieldMode: 1
 		};
 	}
 	return creator;
@@ -111,9 +111,9 @@ function matchCreator(creator) {
 async function scrape(doc, url = doc.location.href) {
 	// Z.debug(doc);
 	var newItem = new Zotero.Item('book');
-	var keys = ZU.xpath(doc, '//div[@class="book_con fr clearfix"]/div/span[1]').map((element) => (element).innerText.replace('：', ''));
+	var keys = ZU.xpath(doc, '//div[@class="book_con fr clearfix"]/div/span[1]').map(element => (element).innerText.replace('：', ''));
 	// Z.debug(keys);
-	var values = ZU.xpath(doc, '//div[@class="book_con fr clearfix"]/div/span[2]').map((element) => (element).innerText);
+	var values = ZU.xpath(doc, '//div[@class="book_con fr clearfix"]/div/span[2]').map(element => (element).innerText);
 	var metaAll = new Map();
 	// Z.debug(values);
 	for (let i = 0; i < keys.length; i++) {
@@ -145,20 +145,19 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.libraryCatalog = metaAll.get('中图分类');
 	// newItem.callNumber = meta_all.get('书号');
 	newItem.creators = str2Arr(trimAuthor(metaAll.get('著者'))).map(
-		(creator) => (matchCreator(creator))
+		creator => (matchCreator(creator))
 	);
 	ZU.xpath(doc, '//div[@class="book_label"]/div[@class="label_in"]/span').map(
-		(element) => (element).innerText).forEach(
-			(element) => newItem.tags.push({ "tag": element })
-		);
-	/* 请求语言字段 */
+		element => (element).innerText).forEach(
+		element => newItem.tags.push({ tag: element })
+	);
 	let searchLang = await requestText(
 		'https://book.cppinfo.cn/So/Search/LangSearch',
 		{
 			method: 'POST',
 			body: `key=${newItem.ISBN}&offset=1&hasEbook=false`
 		}
-	)
+	);
 	// Z.debug(searchLang);
 	let langFlag = searchLang.split('\r\n')[1].match(/([a-z]+)(?=(&))/)[0];
 	Z.debug(langFlag);
@@ -171,6 +170,8 @@ async function scrape(doc, url = doc.location.href) {
 	}[langFlag];
 	newItem.complete();
 }
+
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -236,12 +237,12 @@ var testCases = [
 					{
 						"lastName": "徐家玲",
 						"creatorType": "autor",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
 						"lastName": "林英",
 						"creatorType": "autor",
-						"fieldMode": true
+						"fieldMode": 1
 					}
 				],
 				"date": "2023-10",
@@ -291,7 +292,7 @@ var testCases = [
 					{
 						"lastName": "李君如",
 						"creatorType": "autor",
-						"fieldMode": true
+						"fieldMode": 1
 					}
 				],
 				"date": "2022-11",
