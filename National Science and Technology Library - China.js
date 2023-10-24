@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-21 10:14:30"
+	"lastUpdated": "2023-10-24 12:34:28"
 }
 
 /*
@@ -37,14 +37,14 @@
 
 
 const LABELMAP = {
-	"期刊论文": "journalArticle",
-	"会议论文": "presentation",
-	"学位论文": "thesis",
-	"图书": "bookSection",
-	"文集汇编": "bookSection",
-	"标准": "standard",
-	"专利": "patent"
-}
+	期刊论文: 'journalArticle',
+	会议论文: 'presentation',
+	学位论文: 'thesis',
+	图书: 'bookSection',
+	文集汇编: 'bookSection',
+	标准: 'standard',
+	专利: 'patent'
+};
 
 function detectWeb(doc, url) {
 	// Z.debug(label);
@@ -52,7 +52,7 @@ function detectWeb(doc, url) {
 		let label = doc.querySelector('#title > span.frontLabel');
 		if (!label) return false;
 		label = label.innerText.slice(1, -1);
-		LABELMAP.hasOwnProperty(label)
+		LABELMAP.hasOwnProperty(label);
 		return LABELMAP[label];
 	}
 	else if (getSearchResults(doc, true)) {
@@ -90,12 +90,12 @@ async function doWeb(doc, url) {
 }
 
 function trimZero(string) {
-	(string) ? string.replace(/^0*/, '') : '';
+	return (string) ? string.replace(/^0*/, '') : '';
 }
 
 function matchCreator(creator) {
 	// Z.debug(creators);
-	if (creator.search(/[A-Za-z]/) !== -1) {
+	if (/[A-Za-z]/.test(creator)) {
 		creator = ZU.cleanAuthor(creator, 'author');
 	}
 	else {
@@ -103,45 +103,45 @@ function matchCreator(creator) {
 		creator = {
 			lastName: creator,
 			creatorType: 'author',
-			fieldMode: true
-		}
+			fieldMode: 1
+		};
 	}
 	return creator;
 }
 
 const TYPEMAP = {
-	"JournalPaper": "journalArticle",
-	"ProceedingsPaper": "presentation",
-	"DegreePaper": "thesis",
-	"Book": "bookSection",
-	"CorpusCompile": "bookSection",
-	"StandardLiterature": "standard",
-	"Patent": "patent"
-}
+	JournalPaper: 'journalArticle',
+	ProceedingsPaper: 'presentation',
+	DegreePaper: 'thesis',
+	Book: 'bookSection',
+	CorpusCompile: 'bookSection',
+	StandardLiterature: 'standard',
+	Patent: 'patent'
+};
 
 const FIELDMAP = {
-	title: { node: "tit" },
-	abstractNote: { node: "abs" },
-	abstractTranslation: { node: "abal" },
-	titleTranslation: { node: "tial" },
-	publicationTitle: { node: "hasSotit_s" },
+	title: { node: 'tit' },
+	abstractNote: { node: 'abs' },
+	abstractTranslation: { node: 'abal' },
+	titleTranslation: { node: 'tial' },
+	publicationTitle: { node: 'hasSotit_s' },
 	volume: {
-		node: "vol",
+		node: 'vol',
 		callback: function (text) {
 			return trimZero(text);
 		}
 	},
 	issue: {
-		node: "iss",
+		node: 'iss',
 		callback: function (text) {
 			return trimZero(text);
 		}
 	},
-	firstPage: { node: "stpa" },
-	lastPage: { node: "enpa" },
-	date: { node: "yea" },
+	firstPage: { node: 'stpa' },
+	lastPage: { node: 'enpa' },
+	date: { node: 'yea' },
 	language: {
-		node: "lan",
+		node: 'lan',
 		callback: function (obj) {
 			let lang = Object.keys(obj)[0];
 			let language = {
@@ -152,40 +152,41 @@ const FIELDMAP = {
 			return language ? language : 'zh-CN';
 		}
 	},
-	ISSN: { node: "issn" },
-	DOI: { node: "doi" },
-	archive: { node: "soty" },
-	archiveLocation: { node: "hasHollico" },
-	callNumber: { node: "hasHolhonu" },
-	ISBN: { node: "isbn" },
-	place: { node: "hasPropla" },
-	meetingName: { node: "hasPronam_s" },
-	bookTitle: { node: "hasSotit_s" },
-	thesisType: { node: "deg" },
-	university: { node: "uni_s" },
-	majority: { node: "maj_s" },
-	supervisor: { node: "hasTutnam_s" },
-	publisher: { node: "isbo" },
-	number: { node: "stnu" },
-	applyDate: { node: "vada" },
-	replaced: { node: "rebyst" },
-	replacedBy: { node: "restd" },
-	organization: { mode: "hasCrOrnam_s" },
-	country: { node: "opcoco" },
-	apend: { node: "assignee" },
-	patentNumber: { node: "apnu" },
-	filingDate: { node: "apda" },
-	applicationNumber: { node: "apnu" },
-	issueDate: { node: "opda" },
-	legalStatus: { node: "iast" }
-}
+	ISSN: { node: 'issn' },
+	DOI: { node: 'doi' },
+	archive: { node: 'soty' },
+	archiveLocation: { node: 'hasHollico' },
+	callNumber: { node: 'hasHolhonu' },
+	ISBN: { node: 'isbn' },
+	place: { node: 'hasPropla' },
+	meetingName: { node: 'hasPronam_s' },
+	bookTitle: { node: 'hasSotit_s' },
+	thesisType: { node: 'deg' },
+	university: { node: 'uni_s' },
+	majority: { node: 'maj_s' },
+	supervisor: { node: 'hasTutnam_s' },
+	publisher: { node: 'isbo' },
+	number: { node: 'stnu' },
+	applyDate: { node: 'vada' },
+	replaced: { node: 'rebyst' },
+	replacedBy: { node: 'restd' },
+	organization: { mode: 'hasCrOrnam_s' },
+	country: { node: 'opcoco' },
+	apend: { node: 'assignee' },
+	patentNumber: { node: 'apnu' },
+	filingDate: { node: 'apda' },
+	applicationNumber: { node: 'apnu' },
+	issueDate: { node: 'opda' },
+	legalStatus: { node: 'iast' }
+};
 
 class DATA {
 	constructor(innerData) {
 		this.innerData = innerData;
 	}
+
 	get(node, str = true) {
-		var result = this.innerData.find((element) => (element.f == node));
+		var result = this.innerData.find(element => (element.f == node));
 		if (!result) return '';
 		result = result.v;
 		if (Array.isArray(result) && str) {
@@ -205,7 +206,6 @@ async function scrape(doc, url = doc.location.href) {
 			body: `id=${id}`
 		}
 	);
-	if (requestResult.code > 0) return false;
 	var data = new DATA(requestResult.data);
 	// Z.debug(data);
 	var newItem = new Z.Item(TYPEMAP[data.get('type')]);
@@ -219,34 +219,41 @@ async function scrape(doc, url = doc.location.href) {
 		newItem[field] = result;
 	}
 	newItem.pages = (function () {
-		if (newItem.firstPage && newItem.lastPage) {
-			return `${newItem.firstPage}-${newItem.lastPage}`
+		let firstPage = newItem.firstPage;
+		let lastPage = newItem.lastPage;
+		delete newItem.firstPage;
+		delete newItem.lastPage;
+		if (firstPage && lastPage) {
+			return `${firstPage}-${lastPage}`;
 		}
 		else {
-			return ''
+			return '';
 		}
 	})();
-	delete newItem.firstPage;
-	delete newItem.lastPage;
 	switch (newItem.itemType) {
 		case 'standard':
-			let creator = data.get('creator');
-			if (creator) {
-				newItem.creators = creator.split(';').map((creator) => (matchCreator(creator)));
+			try {
+				newItem.creators = data.get('creator').split(';').map(creator => (matchCreator(creator)));
+			}
+			catch (error) {
+				newItem.creators = [];
 			}
 			break;
 		case 'patent':
 			newItem.place = data.get('add');
-			newItem.creators = data.get('hasAutnam_s', false).map((creator) => (matchCreator(creator)));
+			newItem.creators = data.get('hasAutnam_s', false).map(creator => (matchCreator(creator)));
 			break
 		case 'bookSection':
-			break
+			break;
 		default:
 			try {
-				newItem.creators = data.get('hasAutnam_s', false).map((creator) => (matchCreator(creator)));
-				newItem.tags = data.get('key', false).map((element) => ({ tag: element }));
+				newItem.creators = data.get('hasAutnam_s', false).map(creator => (matchCreator(creator)));
+				newItem.tags = data.get('key', false).map(element => ({ tag: element }));
 			}
-			catch (erro) { }
+			catch (erro) {
+				newItem.creators = [];
+				newItem.tags = [];
+			}
 			break;
 	}
 	newItem.attachments.push({
@@ -255,6 +262,8 @@ async function scrape(doc, url = doc.location.href) {
 	});
 	newItem.complete();
 }
+
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -268,17 +277,17 @@ var testCases = [
 					{
 						"lastName": "王跃",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
 						"lastName": "张可佳",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
 						"lastName": "韩睿",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					}
 				],
 				"date": "2023",
@@ -287,10 +296,12 @@ var testCases = [
 				"archive": "journal",
 				"archiveLocation": "CN111001",
 				"callNumber": "0120230300503894",
+				"issue": "1",
 				"language": "zh-CN",
-				"libraryCatalog": "journalArticle",
+				"libraryCatalog": "National Science and Technology Library - China",
 				"pages": "104-111",
 				"publicationTitle": "量子电子学报",
+				"volume": "40",
 				"attachments": [
 					{
 						"title": "Snapshot",
@@ -438,7 +449,7 @@ var testCases = [
 				"bookTitle": "Practical Creativity and Innovation in Systems Engineering",
 				"callNumber": "Y58124",
 				"language": "en-US",
-				"libraryCatalog": "bookSection",
+				"libraryCatalog": "National Science and Technology Library - China",
 				"pages": "205-325",
 				"attachments": [
 					{
@@ -463,7 +474,7 @@ var testCases = [
 					{
 						"lastName": "温福兰",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					}
 				],
 				"date": "2005",
@@ -472,7 +483,7 @@ var testCases = [
 				"archiveLocation": "CN111001",
 				"callNumber": "Y949023",
 				"language": "zh-CN",
-				"libraryCatalog": "thesis",
+				"libraryCatalog": "National Science and Technology Library - China",
 				"thesisType": "硕士",
 				"university": "江西师范大学",
 				"attachments": [
@@ -518,7 +529,7 @@ var testCases = [
 				"bookTitle": "電気学会研究会資料 バイオ·マイクロシステム研究会 BMS-07-1~6",
 				"callNumber": "3040641",
 				"language": "jp-JP",
-				"libraryCatalog": "bookSection",
+				"libraryCatalog": "National Science and Technology Library - China",
 				"pages": "25-28",
 				"attachments": [
 					{
@@ -543,33 +554,33 @@ var testCases = [
 					{
 						"lastName": "中国制药装备行业协会",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
 						"lastName": "国药集团重庆医药设计院有限公司",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
 						"lastName": "湖南千山制药机械股份有限公司",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
 						"lastName": "浙江厚达智能科技股份有限公司",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
 						"lastName": "山西太钢不锈钢股份有限公司",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					}
 				],
 				"date": "2023",
 				"archiveLocation": "CN111025",
 				"language": "zh-CN",
-				"libraryCatalog": "standard",
+				"libraryCatalog": "National Science and Technology Library - China",
 				"number": "GB/T 42354-2023",
 				"publisher": "CN-GB",
 				"attachments": [
@@ -595,7 +606,7 @@ var testCases = [
 					{
 						"lastName": "黄桂深",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					}
 				],
 				"issueDate": "2023",
