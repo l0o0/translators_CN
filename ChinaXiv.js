@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-21 10:12:07"
+	"lastUpdated": "2023-10-24 12:42:32"
 }
 
 /*
@@ -76,7 +76,7 @@ async function doWeb(doc, url) {
 
 function matchCreator(creator) {
 	// Z.debug(creators);
-	if (creator.search(/[A-Za-z]/) !== -1) {
+	if (/[A-Za-z]/.test(creator)) {
 		creator = ZU.cleanAuthor(creator, 'author');
 	}
 	else {
@@ -84,8 +84,8 @@ function matchCreator(creator) {
 		creator = {
 			lastName: creator,
 			creatorType: 'author',
-			fieldMode: true
-		}
+			fieldMode: 1
+		};
 	}
 	return creator;
 }
@@ -105,19 +105,19 @@ async function scrape(doc, url = doc.location.href) {
 		translator.setHandler('itemDone', (_obj, item) => {
 			item.itemType = 'preprint';
 			item.repository = 'ChinaXiv';
-			item.archiveID = url.match(/\/abs\/[\d\.]+/)[0].substring(5);
+			item.archiveID = url.match(/\/abs\/[\d.]+/)[0].substring(5);
 			// Z.debug(item);
 			item.title = doc.querySelector('div.hd > h1').innerText;
-			item['titleTranslation'] = doc.querySelector('div.hd > p').innerText;
-			item.creators = ZU.xpath(doc, '//div[@class="flex_item content"]/div[@class="bd"][1]//li[1]/a').map((element) => 
-				matchCreator((element.textContent)));
-			item.tags = ZU.xpath(doc, '//span[@class="spankwd"]').map((element) => ({'tag': element.textContent}));
+			item.titleTranslation = doc.querySelector('div.hd > p').innerText;
+			item.creators = ZU.xpath(doc, '//div[@class="flex_item content"]/div[@class="bd"][1]//li[1]/a')
+				.map(element => matchCreator((element.textContent)));
+			item.tags = ZU.xpath(doc, '//span[@class="spankwd"]').map(element => ({ tag: element.textContent }));
 			item.abstractNote = doc.querySelector('div.bd > p:nth-child(1) > b').nextSibling.textContent;
-			item['abstractTranslation'] = doc.querySelector('div.bd > p:nth-child(2) > b').nextSibling.textContent;
+			item.abstractTranslation = doc.querySelector('div.bd > p:nth-child(2) > b').nextSibling.textContent;
 			item.url = url;
 			let journalNameLable = Array.prototype.find.call(doc.querySelectorAll(
-				'div.bd > ul > li >b'), 
-				(node) => (node.innerText == '期刊：'));
+				'div.bd > ul > li >b'),
+			node => (node.innerText == '期刊：'));
 			if (journalNameLable) {
 				item.publicationTitle = journalNameLable.nextElementSibling.innerText;
 			}
@@ -139,6 +139,8 @@ async function scrape(doc, url = doc.location.href) {
 		await translator.translate();
 	}
 }
+
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -153,22 +155,22 @@ var testCases = [
 					{
 						"lastName": "丁贤飞",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
 						"lastName": "刘东方",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
 						"lastName": "郑运荣",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
 						"lastName": "冯强",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					}
 				],
 				"abstractNote": "利用SEM, OM和XRD等手段分析了HK40 合金铸件铸造疏松形成原因, 并研究了添加微量B对HK40 合金的凝固组织及疏松形成的影响. 结果表明: HK40 合金铸件主要存在A和B 2 种铸造疏松缺陷. A类疏松主要由于枝晶的快速生长并架桥联接导致架桥枝晶之间区域的补缩不足引起; B类疏松产生原因是相邻枝晶间区域生长的枝晶状M7C3型碳化物堵塞枝晶间补缩通道. B微合金化能降低HK40 合金铸件较强的柱状晶生长趋势, 细化枝晶, 能抑制HK40 合金A类铸造疏松缺陷的产生. 同时, B微合金化增加了HK40 合金枝晶间共晶相的体积分数, 使枝晶间呈枝晶状M7C3型碳化物转变为层片状的M23C6型碳化物析出, 避免碳化物堵塞相邻枝晶间的补缩通道, 因而也减小了B类铸造疏松缺陷的形成倾向.",
@@ -219,17 +221,17 @@ var testCases = [
 					{
 						"lastName": "张梦蝶",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
 						"lastName": "刘雨喆",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
 						"lastName": "章超",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					}
 				],
 				"abstractNote": "该文利用gentle代数的矩阵模型刻画了gentle代数上的单模和投射模, 给出了单模的投射分解的矩阵表示. 由此指出gentle代数的整体维数可以由它的矩阵模型所诱导的一类特殊子矩阵序列进行刻画. 该文进一步指出这一类特殊子矩阵序列对应gentle代数的箭图上的极大非平凡forbidden路, 从而得到gentle代数的整体维数等于它的箭图上的极大非平凡forbidden path的长度.",
