@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-24 10:25:20"
+	"lastUpdated": "2023-11-02 14:54:26"
 }
 
 /*
@@ -118,7 +118,7 @@ async function scrape(doc, url = doc.location.href) {
 	var newItem = new Z.Item('journalArticle');
 	let ID = getIDFromUrl(url);
 	let login = !!doc.querySelector('#Logout'); // '#user-nav>li>#Logout'
-	var debugLog = `scraping ${url}\nlogin statue=${login}\n`;
+	// var debugLog = `scraping ${url}\nlogin statue=${login}\n`;
 	try {
 		// 以下POST请求需要校验本地cookies,Scaffold不支持,需在浏览器调试
 		const referText = await requestText(
@@ -128,13 +128,13 @@ async function scrape(doc, url = doc.location.href) {
 				body: `ids=${ID}&strType=title_info&type=endnote`
 			}
 		);
-		debugLog += `Post result is\n${referText}\n`;
+		// debugLog += `Post result is\n${referText}\n`;
 		// string -> html
 		var postResult = parser.parseFromString(referText, "text/html");
-		debugLog += `transform result to ${typeof (postResult)}\n`;
+		// debugLog += `transform result to ${typeof (postResult)}\n`;
 		// html -> string
 		postResult = postResult.querySelector('input#xmlContent').value;
-		debugLog += `get xml:\n${postResult}\n`;
+		// debugLog += `get xml:\n${postResult}\n`;
 		// string -> xml
 		postResult = parser.parseFromString(postResult, "application/xml");
 		var data = {
@@ -152,7 +152,7 @@ async function scrape(doc, url = doc.location.href) {
 		};
 		for (const field in FIELDMAP) {
 			const path = FIELDMAP[field];
-			debugLog += `in field ${field}, I get ${postResult.querySelector(path).textContent}\n`;
+			// debugLog += `in field ${field}, I get ${postResult.querySelector(path).textContent}\n`;
 			newItem[field] = data.get(path);
 		}
 		newItem.creators = data.getAll('Creators > Creator > Name').map(element => (matchCreator(element)));
@@ -174,15 +174,17 @@ async function scrape(doc, url = doc.location.href) {
 		newItem.tags = Array.from(doc.querySelectorAll('div.subject > span > a')).map(element => ({
 			tag: element.title
 		}));
-		newItem.debugLog = debugLog;
+		// newItem.debugLog = debugLog;
 	}
+	
+	newItem.extra = '';
 	for (const field in TRANSLATION) {
 		const path = TRANSLATION[field];
 		try {
-			newItem[field] = doc.querySelector(path).innerText;
+			newItem.extra += `\n${field}: ${doc.querySelector(path).innerText}`;
 		}
 		catch (error) {
-			newItem[field] = '';
+			Z.debug("this is an error");
 		}
 	}
 	// 修正维普镜像站中摘要内的英文引号异常
@@ -202,6 +204,7 @@ async function scrape(doc, url = doc.location.href) {
 			}];
 		}
 	}
+	if (newItem.date) newItem.date = newItem.date.split("T")[0];
 	newItem.complete();
 }
 
@@ -220,5 +223,47 @@ async function getPDF(fileid, filekey) {
 
 /** BEGIN TEST CASES **/
 var testCases = [
+	{
+		"type": "web",
+		"url": "https://lib.cqvip.com/Qikan/Article/Detail?id=7109808542&from=Qikan_Search_Index",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "数字时代背景下在线诉讼的发展路径与风险挑战 认领",
+				"creators": [
+					{
+						"lastName": "刘峥",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2023",
+				"abstractNote": "在线诉讼是互联网时代的必然产物,它可能存在发展快或慢的问题,但它的到来不可避免且无法抗拒,其存在的必要性与合理性也是母庸置疑的。现行民事诉讼法已对在线诉讼的效力予以确认。应当明确,基于诉讼活动的特质和规律,目前,在线诉讼只是线下诉讼的有益补充,并非取而代之。本文从《人民法院在线诉讼规则》出发,论述了在线诉讼的时代背景和发展历程,阐明在线诉讼的程序规范性、权利保障性、方式便捷性、模式融合性。同时,在线诉讼将对未来司法制度的完善发展产生巨大推动作用,在理论更新、规则指引、制度完善、技术迭代、安全保障、人才培养等方面均需作出必要的配套跟进。收起",
+				"extra": "titleTranslation: Navigating Online Litigation in the Digital Age:Paths and Challenges\nabstractTranslation: The emergence of online litigation is an inevitable corollary of the Internet era.Although the speed of its development may vary,the necessity and rationality of its existence are indisputable.The Civil Procedure Law of the People's Republic of China has confirmed the legal effects of online litigation.Notably,online litigation currently serves as a complementary tool rather than a substitution for offline litigation,given the nature and law of litigation.Drawing on the Online Litigation Rules of the People's Courts,this article examines online litigation's historical background and development.We illustrate how online litigation standardizes procedures,protects litigants'rights,provides convenience to court users,and integrates different modes of litigation.Furthermore,we argue that online litigation can serve as a driving force behind the future advancement of the judicial system.To achieve this,measures such as theoretical innovation,rules-based guidance,institutional improvement,technological iteration,and talent cultivation need to be implemented.FEWER",
+				"issue": "2",
+				"libraryCatalog": "WeiPu",
+				"pages": "122-135",
+				"publicationTitle": "数字法治",
+				"url": "https://lib.cqvip.com/Qikan/Article/Detail?id=7109808542&from=Qikan_Search_Index",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "在线诉讼"
+					},
+					{
+						"tag": "基本特征"
+					},
+					{
+						"tag": "融合发展"
+					},
+					{
+						"tag": "风险挑战"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	}
 ]
 /** END TEST CASES **/
