@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-06-19 14:56:32"
+	"lastUpdated": "2023-09-05 05:05:44"
 }
 
 /*
@@ -120,8 +120,17 @@ function scrapeStatute(doc, url) {
 		}
 	}
 
-	if (doc.querySelector('#DbId').value === 'eagn') {
-		extraFields.Type = 'treaty';
+	let dbId;
+	if (doc.querySelector('#DbId')) {
+		dbId = doc.querySelector('#DbId').value;
+	}
+	switch (dbId) {
+		case 'lar':  // 地方法规
+			extraFields.Type = 'regulation';
+			break
+		case 'eagn':  // 地方法规
+			extraFields.Type = 'treaty';
+			break
 	}
 
 	item.language = 'zh-CN';
@@ -231,14 +240,8 @@ function scrapeStatute(doc, url) {
 				}
 				break;
 			case '效力位阶':
-				switch (value) {
-					case '国务院规范性文件':
-					case '司法解释':
-					case '司法解释性质文件':
-					case '地方政府规章':
-					case '党内法规制度':
-						extraFields.Type = 'regulation';
-						break;
+				if (value !== '法律' && value !== '有关法律问题和重大问题的决定') {
+					extraFields.Type = 'regulation';
 				}
 				switch (value) {
 					case '有关法律问题和重大问题的决定':
@@ -875,6 +878,32 @@ var testCases = [
 				"language": "zh-CN",
 				"publicLawNumber": "山东省人民政府令第239号",
 				"url": "https://www.pkulaw.com/lar/c74c0e82aa441b08e9ca1ea4cf401f45bdfb.html",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.pkulaw.com/lar/03e98798ef205f4a1faf9c788c472e25bdfb.html",
+		"detectedItemType": "statute",
+		"items": [
+			{
+				"itemType": "statute",
+				"nameOfAct": "德阳市人民政府办公室关于印发《德阳市数据要素市场管理暂行办法》的通知",
+				"creators": [],
+				"dateEnacted": "2022-09-01",
+				"extra": "Type: regulation\n法宝引证码: CLI.12.5537956",
+				"language": "zh-CN",
+				"publicLawNumber": "德办规[2022]10号",
+				"url": "https://www.pkulaw.com/lar/03e98798ef205f4a1faf9c788c472e25bdfb.html",
 				"attachments": [
 					{
 						"title": "Snapshot",
