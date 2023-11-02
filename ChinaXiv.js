@@ -128,7 +128,7 @@ async function scrape(doc, url = doc.location.href) {
 				item.extra += `\nabstractTranslation: ${ZU.trim(doc.querySelector('div.bd > p:nth-child(2) > b').nextSibling.textContent)}`;
 			}
 			catch (error) {
-				Z.debug("There's no translation.")
+				Z.debug("There's no translation.");
 			}
 			let pdfURL = doc.querySelector('div.side div.bd ul:first-of-type li:nth-child(1) a').href;
 			item.attachments.push({
