@@ -9,7 +9,7 @@
     },
     "CNKI.js": {
         "label": "中国知网",
-        "lastUpdated": "2023-08-22 15:01:05"
+        "lastUpdated": "2023-09-11 13:47:11"
     },
     "China Judgements Online.js": {
         "label": "中国裁判文书网",
@@ -75,6 +75,10 @@
         "label": "ProQuest学位论文(中国)",
         "lastUpdated": "2020-09-07 01:24:40"
     },
+    "PubScholar.js": {
+        "label": "PubScholar公益学术平台",
+        "lastUpdated": "2023-11-03 09:13:36"
+    },
     "Soopat.js": {
         "label": "Soopat专利",
         "lastUpdated": "2023-03-28 03:27:19"
@@ -93,7 +97,7 @@
     },
     "WeiPu.js": {
         "label": "维普",
-        "lastUpdated": "2023-07-31 08:18:15"
+        "lastUpdated": "2023-11-02 14:54:26"
     },
     "Weixin.js": {
         "label": "微信",
