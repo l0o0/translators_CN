@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-08-22 15:01:05"
+	"lastUpdated": "2023-09-11 13:47:11"
 }
 
 /*
@@ -301,10 +301,12 @@ async function scrape(id, doc, extraData) {
 			newItem.tags[j] = newItem.tags[j].replace(/:\d+$/, '');
 		}
 		newItem.url = id.url;
-		newItem.abstractNote = newItem.abstractNote.replace(/\s*[\r\n]\s*/g, '\n')
-			.replace(/&lt;.*?&gt;/g, "")
-			.replace(/^<正>/, "");
-		newItem.title = ZU.trimInternal(newItem.title);
+		if (newItem.abstractNote) {
+			newItem.abstractNote = newItem.abstractNote.replace(/\s*[\r\n]\s*/g, '\n')
+				.replace(/&lt;.*?&gt;/g, "")
+				.replace(/^<正>/, "");
+		}
+		newItem.title = ZU.trimInternal(newItem.title ? newItem.title : "");
 		// CN 中国刊物编号，非refworks中的callNumber
 		// CN in CNKI refworks format explains Chinese version of ISSN
 		newItem.callNumber = null;
