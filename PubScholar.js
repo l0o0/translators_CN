@@ -2,14 +2,14 @@
 	"translatorID": "58df4473-a324-4fb5-8a8f-25d1e1897c73",
 	"label": "PubScholar",
 	"creator": "l0o0",
-	"target": "https?://pubscholar.cn/",
+	"target": "https?://pubscholar.cn/(patents|books|articles)",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-11-03 09:13:36"
+	"lastUpdated": "2023-11-06 14:25:21"
 }
 
 /*
@@ -39,21 +39,24 @@ const ItemTypes = {
 	patents: "patent",
 	articles: "journalArticle",
 	books: "book"
-}
+};
 
 const FieldMatch = {
-	author: "//span[@class='AuthorInfo__nameText'] | //div[@class='AuthorInfo__content']",  // 书籍|期刊，过滤等主译，主编，过滤数字
+	author: "//span[@class='AuthorInfo__nameText'] | //div[@class='AuthorInfo__content']", // 书籍|期刊，过滤等主译，主编，过滤数字
 	date: "//span[text()='出版日期:' and @class='ArticleInfo__label']/following-sibling::span[1]",
-	publisher: "//span[text()='出版社:' and @class='ArticleInfo__label']/following-sibling::span[1]",  // book
+	publisher: "//span[text()='出版社:' and @class='ArticleInfo__label']/following-sibling::span[1]", // book
 	publicationTitle: "//span[@class='ArticleInfo__metaSource']", // 期刊
 	ISBN: "//span[text()='ISBN:' and @class='ArticleInfo__label']/following-sibling::span[1]",
-	"学科分类": "//span[text()='学科分类:' and @class='ArticleInfo__label']/following-sibling::span[1]",
-	abstractNote: "//div[contains(@class, 'FullAbstracts')] | //div[@class='ArticleInfo__abstracts']",  // 注意摘要过长会收起
+	学科分类: "//span[text()='学科分类:' and @class='ArticleInfo__label']/following-sibling::span[1]",
+	abstractNote: "//div[contains(@class, 'FullAbstracts')] | //div[@class='ArticleInfo__abstracts']", // Click to get fulltext
 	影响因子: "//div[@class='JournalContent__meta']",
 	tags: "//div[@class='ArticleInfo__keywords']/span[@class='ArticleInfo__keyword']",
 	metadata: "//div[@class='ArticleInfo__source']/span[@class='ArticleInfo__sourceTitle']/span[contains(text(), '年') or contains(text(), '期') or contains(text(), '卷')]",
-
-}
+	filingDate: "//span[text()='申请日:' and @class='ArticleInfo__label']/following-sibling::span[1]",
+	applicationNumber: "//span[text()='申请号:' and @class='ArticleInfo__label']/following-sibling::span[1]",
+	issueDate: "//span[text()='公开日:' and @class='ArticleInfo__label']/following-sibling::span[1]",
+	patentNumber: "//span[text()='公开号:' and @class='ArticleInfo__label']/following-sibling::span[1]",
+};
 
 function parseAuthors(s) {
 	let type = 'author';
@@ -61,13 +64,15 @@ function parseAuthors(s) {
 	if (s.match(/等主译$/)) type = 'translator';
 	if (s.match(/主编$/)) type = 'editor';
 	if (s.match(/^发明人: /)) type = 'inventor';
-	return sclean.split(/[,，]/).map( (c) => {return {lastName: c.replace(/\s?\d+\s?$/, ''), creatorType: type}});
+	return sclean.split(/[,，]/).map((c) => {
+		return { lastName: c.replace(/\s?\d+\s?$/, ''), creatorType: type };
+	});
 }
 
 function parseAuthorStr(s) {
 	let creators = [];
 	const parts = s.split(/[；;]/);
-	parts.forEach( (p) => {
+	parts.forEach((p) => {
 		let pc = parseAuthors(p.trim());
 		creators = creators.concat(pc);
 	});
@@ -75,7 +80,6 @@ function parseAuthorStr(s) {
 }
 
 function parseMetadata(metadata, newItem) {
-	let meta = {};
 	const ymatch = metadata.match(/(\d{4}) 年/);
 	const imatch = metadata.match(/第 (\d+) 期/);
 	const pmatch = metadata.match(/共 (\d+) 页/);
@@ -89,9 +93,9 @@ function parseMetadata(metadata, newItem) {
 }
 
 function parseTags(nodeList) {
-	return nodeList.map( (n) => {
-		return {tag: n.textContent.trim()}
-	})
+	return nodeList.map((n) => {
+		return { tag: n.textContent.trim() };
+	});
 }
 
 function getIDFromUrl(url) {
@@ -100,7 +104,7 @@ function getIDFromUrl(url) {
 	return {
 		type: ItemTypes[mre[1]],
 		id: mre[2]
-	}
+	};
 }
 
 function detectWeb(doc, url) {
@@ -127,7 +131,6 @@ function getSearchResults(doc, checkOnly) {
 }
 
 
-
 async function doWeb(doc, url) {
 	if (detectWeb(doc, url) == 'multiple') {
 		let items = await Zotero.selectItems(getSearchResults(doc, false));
@@ -152,19 +155,22 @@ async function scrape(doc, url = doc.location.href) {
 
 	for (let field in FieldMatch) {
 		// Z.debug(field);
-		let tmp = ZU.xpath(doc, FieldMatch[field])
+		let tmp = ZU.xpath(doc, FieldMatch[field]);
 		if (tmp.length == 0) continue;
 		const v = tmp[0].textContent.trim();
-		
+
 		// Z.debug(tmp[0].textContent);
 		if (field == 'author') {
 			newItem.creators = parseAuthorStr(v);
-		} else if (field == 'metadata') {
+		}
+		else if (field == 'metadata') {
 			newItem = parseMetadata(v, newItem);
-		} else if (field == 'tags') {
+		}
+		else if (field == 'tags') {
 			newItem.tags = parseTags(tmp);
-		}else {
-			newItem[field] = v
+		}
+		else {
+			newItem[field] = v;
 		}
 	}
 	// fix item
@@ -283,7 +289,11 @@ var testCases = [
 						"creatorType": "inventor"
 					}
 				],
+				"issueDate": "2023-08-22",
 				"abstractNote": "本公开提供一种基因编辑构建体及其应用，所述基因编辑构建体用于将外源基因定点整合入基因组的核糖体DNA(rDNA)区，并能高效地表达其携带的外源基因。",
+				"applicationNumber": "CN202310645338.1",
+				"filingDate": "2023-06-01",
+				"patentNumber": "CN116622777A",
 				"url": "https://pubscholar.cn/patents/d1067ea442b3b43a3a301abc252eb139a0fbe21d5ec4e8bb250fde14e9c6a173880526c9b4434ff87754e650b78fecac/0",
 				"attachments": [],
 				"tags": [],
