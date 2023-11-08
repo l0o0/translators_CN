@@ -42,6 +42,9 @@
   - [x] 抓取引文信息
   - [x] 支持文献类型：学位论文
   - [x] PDF附件下载（需要账号或者IP具有下载权限）
++ [中国科学院科技论文预发布平台](http://www.chinaxiv.org/home.htm) -> [ChinaXiv.js](./ChinaXiv.js)
+  - [x] 抓取引文信息
+  - [x] PDF附件下载
 + [专利之星](http://cprs.patentstar.com.cn/) -> [PatentStar.js](./translators/PatentStar.js)
   - [x] 抓取专利引文信息
   - [x] PDF附件下载（需要注册账号） 
