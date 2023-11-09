@@ -35,10 +35,16 @@
 + [国家图书馆文津搜索](http://find.nlc.cn/) -> [Wenjin.js](./translators/Wenjin.js)
   - [x] 抓取引文信息
   - [x] 支持文献类型：图书，论文
++ [国家科技图书文献中心](https://www.nstl.gov.cn/) -> [NSTL.js](./National%20Science%20and%20Technology%20Library%20-%20China.js)
+  - [x] 抓取引文信息
+  - [x] 支持期刊论文、学位论文、会议论文、图书章节、文集、标准、专利
 + [ProQuest 学位论文全文检索平台](http://www.pqdtcn.com/) -> [ProQuestCN Thesis.js](<./translators/ProQuestCN Thesis.js>)
   - [x] 抓取引文信息
   - [x] 支持文献类型：学位论文
   - [x] PDF附件下载（需要账号或者IP具有下载权限）
++ [中国科学院科技论文预发布平台](http://www.chinaxiv.org/home.htm) -> [ChinaXiv.js](./ChinaXiv.js)
+  - [x] 抓取引文信息
+  - [x] PDF附件下载
 + [专利之星](http://cprs.patentstar.com.cn/) -> [PatentStar.js](./translators/PatentStar.js)
   - [x] 抓取专利引文信息
   - [x] PDF附件下载（需要注册账号） 
