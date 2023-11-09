@@ -15,6 +15,10 @@
         "label": "中国裁判文书网",
         "lastUpdated": "2023-06-19 23:51:09"
     },
+    "ChinaXiv.js": {
+        "label": "中国科学院科技论文预发布平台",
+        "lastUpdated": "2023-11-02 16:45:20"
+    },
     "Cubox.js": {
         "label": "Cubox",
         "lastUpdated": "2023-03-14 15:58:02"
@@ -42,6 +46,10 @@
     "National Public Service Platform for Standards Information - China.js": {
         "label": "全国标准信息公共服务平台",
         "lastUpdated": "2023-06-27 17:37:20"
+    },
+    "National Science and Technology Library - China.js": {
+        "label": "国家科技图书文献中心",
+        "lastUpdated": "2023-10-24 12:34:28"
     },
     "National Standards Open System - China.js": {
         "label": "国家标准全文公开系统",
