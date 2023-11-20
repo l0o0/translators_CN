@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-11-19 13:57:30"
+	"lastUpdated": "2023-11-20 08:06:00"
 }
 
 /*
@@ -38,28 +38,22 @@ async function getRefWorksByID(id) {
 	var { dbname, filename, url } = id;
 	const postData = `FileName=${dbname}!${filename}!1!0&DisplayMode=Refworks&OrderParam=0&OrderType=desc&SelectField=&PageIndex=1&PageSize=20&language=&uniplatform=NZKPT&random=0.30585230060685187`;
 	const refer = `https://kns.cnki.net/dm/manage/export.html?filename=${dbname}!${filename}!1!0&displaymode=NEW&uniplatform=NZKPT`;
-	let reftext = await requestText(
-		'https://kns.cnki.net/dm/api/ShowExport', 
+	let reftext = await request(
+		'https://kns.cnki.net/dm/api/ShowExport',
 		{
 			method: "POST",
 			body: postData,
+			responseType: "application/x-www-form-urlencoded",
 			headers: {
-				"Content-Type": "application/x-www-form-urlencoded",
-				"Host": "kns.cnki.net",
-				"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0",
-				"Accept": "text/plain, */*; q=0.01",
-				"Accept-Language": "zh-CN,en-US;q=0.7,en;q=0.3",
-				"Accept-Encoding": "gzip, deflate, br",
-				"X-Requested-With": "XMLHttpRequest",
-				"Content-Length": postData.length,
-				"Origin": "https://kns.cnki.net",
-				"Connection": "keep-alive",
-				"Referer": refer,
-				"Sec-Fetch-Dest": "empty",
-				"Sec-Fetch-Mode": "cors",
-				"Sec-Fetch-Site": "same-origin"
+				"Referer": refer
 			}
-	});
+		}
+	);
+	if (reftext.status == 200) {
+		reftext = reftext.body
+	} else {
+		reftext = "CNKI.js: getRefWorksByID Error."
+	}
 	return reftext
 		.replace("<ul class='literature-list'><li>", "")
 		.replace("<br></li></ul>", "")
