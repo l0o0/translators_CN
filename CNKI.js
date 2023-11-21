@@ -2,14 +2,14 @@
 	"translatorID": "5c95b67b-41c5-4f55-b71a-48d5d7183063",
 	"label": "CNKI",
 	"creator": "Aurimas Vinckevicius, Xingzhong Lin",
-	"target": "https?://.*?/(kns8?/defaultresult/index|kns8?/AdvSearch|kcms/detail|KXReader/Detail\\?|KNavi/|Kreader/CatalogViewPage\\.aspx\\?|kcms2?/article/abstract\\?v=|kcms/doi/)",
+	"target": "https?://.*?/(kns8?s?/defaultresult/index|kns8?s?/AdvSearch|kcms/detail|KXReader/Detail\\?|KNavi/|Kreader/CatalogViewPage\\.aspx\\?|kcms2?/article/abstract\\?v=|kcms/doi/)",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-11-20 08:06:00"
+	"lastUpdated": "2023-11-21 14:49:24"
 }
 
 /*
@@ -45,28 +45,24 @@ async function getRefWorksByID(id) {
 			body: postData,
 			responseType: "application/x-www-form-urlencoded",
 			headers: {
-				"Referer": refer
+				Referer: refer
 			}
 		}
 	);
-	if (reftext.status == 200) {
-		reftext = reftext.body
-	} else {
-		reftext = "CNKI.js: getRefWorksByID Error."
-	}
 	return reftext
+		.body
 		.replace("<ul class='literature-list'><li>", "")
 		.replace("<br></li></ul>", "")
 		.replace("</li><li>", "") // divide results
 		.replace(/<br>|\r/g, "\n")
 		.replace(/vo (\d+)\n/, "VO $1\n") // Divide VO and IS to different line
-		.replace(/IS 0(\d+)\n/g, "IS $1\n")  // Remove leading 0
+		.replace(/IS 0(\d+)\n/g, "IS $1\n")// Remove leading 0
 		.replace(/VO 0(\d+)\n/g, "VO $1\n")
 		.replace(/\n+/g, "\n")
 		.replace(/\n([A-Z][A-Z1-9]\s)/g, "<br>$1")
 		.replace(/\n/g, "")
 		.replace(/<br>/g, "\n")
-		.replace(/(K1 .*[\u4e00-\u9fa5]) ([a-zA-Z])/g, "$1;$2")  // cn keywwords and en keywords
+		.replace(/(K1 .*[\u4e00-\u9fa5]) ([a-zA-Z])/g, "$1;$2")// cn keywwords and en keywords
 		.replace(/\t/g, "") // \t in abstract
 		.replace(
 			/^RT\s+Conference Proceeding/gim,
@@ -89,12 +85,12 @@ function getIDFromURL(url) {
 	var filename = url.match(/[?&]filename=([^&#]*)/i);
 	var dbcode = url.match(/[?&]dbcode=([^&#]*)/i);
 	if (
-		!filename ||
-		!filename[1] ||
-		!dbcode ||
-		!dbcode[1] ||
-		!dbname ||
-		!dbname[1]
+		!filename
+		|| !filename[1]
+		|| !dbcode
+		|| !dbcode[1]
+		|| !dbname
+		|| !dbname[1]
 	)
 		return false;
 	return { dbname: dbname[1], filename: filename[1], dbcode: dbcode[1], url: url };
@@ -106,9 +102,9 @@ function getIDFromHeader(doc, url) {
 	var dbcode = ZU.xpath(doc, "//input[@id='paramdbcode']");
 	var filename = ZU.xpath(doc, "//input[@id='paramfilename']");
 	if (
-		filename.length +
-		dbcode.length +
-		dbname.length < 3
+		filename.length
+		+ dbcode.length
+		+ dbname.length < 3
 	) {
 		return false;
 	}
@@ -142,8 +138,12 @@ function getTypeFromDBName(id) {
 	};
 	var db = id.dbname.substr(0, 4).toUpperCase();
 	return dbType[db] || dbType[id.dbcode];
+}
 
-
+function getIDFromSearchRow(row) {
+	var dbcode = attr(row, "a.icon-collect", "data-dbname");
+	var filename = attr(row, "a.icon-collect", "data-filename");
+	return { dbcode: dbcode, dbname: dbcode, filename: filename };
 }
 
 function getItemsFromSearchResults(doc, url, itemInfo) {
@@ -151,12 +151,12 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 	if (url.includes('JournalDetail')) { // for journal detail page
 		links = ZU.xpath(doc, "//dl[@id='CataLogContent']/dd");
 		aXpath = "./span/a";
-		fileXpath = "./ul/li/a";
+		// fileXpath = "./ul/li/a";
 	}
 	else { // for search result page
 		links = doc.querySelectorAll("table.result-table-list tbody tr");
 		aXpath = './td[@class="name"]/a';
-		fileXpath = "./td[@class='operat']/a[contains(@class, 'downloadlink')]";
+		// fileXpath = "./td[@class='operat']/a[contains(@class, 'downloadlink')]";
 	}
 	if (!links.length) {
 		return false;
@@ -166,7 +166,7 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 		var a = ZU.xpath(links[i], aXpath)[0];
 		var title = a.innerText;
 		if (title) title = ZU.trimInternal(title);
-		var id = getIDFromURL(a.href);
+		var id = getIDFromURL(a.href) || getIDFromSearchRow(links[i]);
 		var itemUrl = "";
 		// Now can get db data from url in new version
 		// English articles
@@ -211,8 +211,8 @@ function detectWeb(doc, url) {
 	else if (
 		url.match(/kns\/brief\/(default_)?result\.aspx/i)
 		|| url.includes("/KNavi/") // Article list in Navigation page
-		|| url.match(/kns8?\/defaultresult\/index/i) // search page
-		|| url.match(/KNS8?\/AdvSearch\?/i)) {  // search page
+		|| url.match(/kns8?s?\/defaultresult\/index/i) // search page
+		|| url.match(/KNS8?s?\/AdvSearch\?/i)) {// search page
 		return "multiple";
 	}
 	else {
@@ -221,7 +221,7 @@ function detectWeb(doc, url) {
 }
 
 async function doWeb(doc, url) {
-	Z.debug("----------------CNKI 20231118-------------------");
+	Z.debug("----------------CNKI 20231121-------------------");
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
@@ -291,8 +291,8 @@ async function scrape(id, doc, extraData) {
 		if (zhnamesplit === undefined) zhnamesplit = true;
 		for (var i = 0, n = newItem.creators.length; i < n; i++) {
 			var creator = newItem.creators[i];
-			if (newItem.itemType == 'thesis' && i != 0) {  // Except first author are Advisors in thesis
-				creator.creatorType = 'contributor';  // Here is contributor
+			if (newItem.itemType == 'thesis' && i != 0) { // Except first author are Advisors in thesis
+				creator.creatorType = 'contributor';// Here is contributor
 			}
 			if (creator.firstName) continue;
 
