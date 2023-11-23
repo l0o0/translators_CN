@@ -2,14 +2,14 @@
 	"translatorID": "8651aa89-eb54-47bc-9916-17720fe22a86",
 	"label": "Pishu Data",
 	"creator": "jiaojiaodubai23",
-	"target": "^https?://www\\.pishu\\.com\\.cn",
+	"target": "^https?://(www|gf)\\.pishu\\.com\\.cn",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-24 12:12:47"
+	"lastUpdated": "2023-11-23 15:35:17"
 }
 
 /*
@@ -69,16 +69,11 @@ async function doWeb(doc, url) {
 		let items = await Zotero.selectItems(getSearchResults(doc, false));
 		if (!items) return;
 		for (let url of Object.keys(items)) {
-			await ZU.doGet(
-				url,
-				function (getresult) {
-					// Z.debug(getresult);
-					var parser = new DOMParser();
-					getresult = parser.parseFromString(getresult, 'text/html');
-					var type = detectWeb(doc, url);
-					scrape(getresult, url, type);
-				}
-			);
+			// let newDoc = await requestText(url);
+			let newDoc = await requestDocument(url);
+			// var parser = new DOMParser();
+			// newDoc = parser.parseFromString(newDoc, 'text/html');
+			scrape(newDoc, url, detectWeb(newDoc, url));
 		}
 	}
 	else {
@@ -96,52 +91,74 @@ function matchCreator(creator) {
 }
 
 async function scrape(doc, url = doc.location.href, type) {
-	// Z.debug(typeof(doc));
-	// Z.debug(url);
-	const jspath = {
-		book: 'head style:first-of-type + script',
-		bookSection: 'div.data_foot.margintop20 > script:first-of-type'
-	}[type];
-	var jsdata = {
-		text: doc.querySelector(jspath).textContent,
-		getVar: function (varname) {
-			try {
-				let expression = this.text.match(new RegExp(`var ${varname} = .*`))[0];
-				expression = expression.match(/".*"/)[0];
-				expression = expression.slice(1, -1);
-				return expression;
-			}
-			catch (error) {
-				return '';
-			}
+	var data = {
+		innerData: {},
+		setFromJS: function () {
+			this.innerData = {};
+			let info = Array.from(doc.querySelectorAll('script[type]')).map(element => element.innerText);
+			info = info.find(element => element.includes('#makeCitation')).match(/var .* = ".*"/g);
+			info.forEach((element) => {
+				let item = element.match(/var (.+) = "(.*)"/);
+				this.innerData[item[1]] = item[2];
+			});
+		},
+		setFromTable: function () {
+			this.innerData = {};
+			let info = doc.querySelector('div.books.margintop10 > table');
+			info = info
+				? info.innerText.replace(/\n([^\t\n]*$)/gm, '$1').split('\n')
+				: [];
+			info.forEach((element) => {
+				let item = element.split('\t');
+				this.innerData[item[0].replace(/[\s：]/g, '')] = item[1];
+			});
+		},
+		setFromList: function () {
+			this.innerData = {};
+			let info = doc.querySelector('ul.Buy_detail');
+			info = info
+				? info.innerText.trim().split('\n')
+				: [];
+			info.forEach((element) => {
+				let item = element.match(/^(.+?)：(.+)$/);
+				this.innerData[item[1].replace(/[\s：]/g, '')] = item[2];
+			});
+		},
+		get: function (key) {
+			return this.innerData.hasOwnProperty(key) ? this.innerData[key] : '';
 		}
+		
 	};
 	var newItem = new Z.Item(type);
-	newItem.title = jsdata.getVar('title');
-	newItem.creators = jsdata.getVar('author').split(' ').map(creator => (
-		matchCreator(creator.replace(/(&nbsp;)/g, ''))
-	));
-	newItem.date = jsdata.getVar('publishdate');
-	newItem.place = jsdata.getVar('province');
-	newItem.publisher = jsdata.getVar('publishname');
-	newItem.abstractNote = ZU.trimInternal(ZU.xpath(doc, '//div[@class="summaryCon"]')[0].innerText);
+	newItem.extra = '';
+	data.setFromJS();
+	// Z.debug(data.innerData);
+	newItem.title = data.get('title');
+	newItem.date = data.get('publishdate');
+	newItem.place = data.get('province');
+	newItem.publisher = data.get('publishname');
+	newItem.abstractNote = ZU.trimInternal(text(doc, 'div.summaryCon'));
+	newItem.extra += `\nabstractTranslation: ${ZU.trimInternal(text(doc, 'en_summaryCon'))}`;
+	let author = data.get('author');
+	newItem.creators = author.replace(/(<a.*?>)(.+?)(<\/a>)/g, '$2 ').split(' ').map(element => matchCreator(element));
 	if (type == 'book') {
-		var data = {};
-		let dataCounts = ZU.xpath(doc, '//div[@class="books margintop10"]//table/tbody')[0].childElementCount;
-		for (let i = 1; i <= dataCounts; i++) {
-			let label = ZU.xpath(doc, `//div[@class="books margintop10"]//table/tbody/tr[${i}]/td[1]`)[0].innerText.replace(/\s/g, '');
-			let value = ZU.xpath(doc, `//div[@class="books margintop10"]//table/tbody/tr[${i}]/td[2]`)[0];
-			data[label] = value;
-		}
-		newItem.ISBN = data['ISBN：'].innerText;
-		newItem.tags = data['关键词：'].textContent.trim().split(/\s/).map(element => ({ tag: element }));
-		newItem.series = data['丛书名：'].innerText;
+		data.setFromTable('div.books.margintop10 > table');
+		// Z.debug(data.innerData);
+		newItem.extra += `\ntitleTranslation: ${data.get('英文名')}`;
+		newItem.series = data.get('从书名');
+		newItem.ISBN = data.get('ISBN');
+		newItem.tags = data.get('关键词').trim().split(/\s/)
+			.map(element => ({ tag: element }));
 	}
 	else {
-		newItem.bookTitle = jsdata.getVar('pertainbook');
-		newItem.pages = jsdata.getVar('ebookNumber');
-		newItem.tags = ZU.xpath(doc, '//div[@class="zl_keywords"][1]//a').map(element => ({ tag: element.innerText }));
-		newItem.seeAlso.push(ZU.xpath(doc, '//ul[@class="Buy_detail"]/li/a')[0].href);
+		newItem.series = data.get('所属丛书');
+		newItem.bookTitle = data.get('pertainbook');
+		newItem.pages = data.get('ebookNumber');
+		data.setFromList();
+		// Z.debug(data.innerData);
+		newItem.tags = Array.from(doc.querySelectorAll('.zl_keywords a')).map(element => ({ tag: element.innerText }));
+		newItem.seeAlso.push(attr(doc, 'a[href*="bookdetail"]', 'href'));
+		// Z.debug(newItem.seeAlso);
 	}
 	newItem.attachments.push({
 		tittle: 'Snapshot',
@@ -255,24 +272,15 @@ var testCases = [
 				"title": "上海合作组织20年",
 				"creators": [
 					{
-						"lastName": "<a",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"lastName": "class='bookNoChangeColor'",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"lastName": "href='javascript:;'>李进峰</a>",
+						"lastName": "李进峰",
 						"creatorType": "author",
 						"fieldMode": 1
 					}
 				],
 				"date": "2021-07",
 				"ISBN": "9787520178181",
-				"abstractNote": "2021年是上海合作组织成立20周年。20年来，上合组织经受了来自本地区和外部世界的种种考验，不断发展、壮大，自2017年扩员后，上合组织已成为全球人口最多、幅员最辽阔的地区组织，也成为维护世界和平与稳定的重要力量之一。 本书对上合组织20年来的发展历程进行了全面回顾和梳理，总结了20年来上合组织在政治、安全、经济、人文和对外关系五大领域的合作成就，深入分析了上合组织在发展过程中存在的问题和面临的内、外部挑战，以及上合组织未来发展的机遇与前景，提出上合组织的理论基础有三个来源、上合组织发展经历了五次理论创新、上合组织未来发展壮大将取决于三个因素，并对上合组织未来发展预测了三种可能的模式，这些研究结论具有创新性。 本书对上合组织20年发展状况的论述，既有实践分析，又有理论探讨；既有量化研究，也有定性研判；既有问题意识，也有政策建议。本书是上合组织研究领域非常重要也相当权威的一部参考书和工具书。",
+				"abstractNote": "2021年是上海合作组织成立20周年。20年来，上合组织经受了来自本地区和外部世界的种种考验，不断发展、壮大，自2017年扩员后，上合组织已成为全球人口最多、幅员最辽阔的地区组织，也成为维护世界和平与稳定的重要力量之一。本书对上合组织20年来的发展历程进行了全面回顾和梳理，总结了20年来上合组织在政治、安全、经济、人文和对外关系五大领域的合作成就，深入分析了上合组织在发展过程中存在的问题和面临的内、外部挑战，以及上合组织未来发展的机遇与前景，提出上合组织的理论基础有三个来源、上合组织发展经历了五次理论创新、上合组织未来发展壮大将取决于三个因素，并对上合组织未来发展预测了三种可能的模式，这些研究结论具有创新性。本书对上合组织20年发展状况的论述，既有实践分析，又有理论探讨；既有量化研究，也有定性研判；既有问题意识，也有政策建议。本书是上合组织研究领域非常重要也相当权威的一部参考书和工具书。<<",
+				"extra": "abstractTranslation: \ntitleTranslation: 20 YEARS OF SHANGHAI COOPERATION ORGANIZATION",
 				"libraryCatalog": "Pishu Data",
 				"url": "https://www.pishu.com.cn/skwx_ps/bookDetail?SiteID=14&ID=13395521",
 				"attachments": [
