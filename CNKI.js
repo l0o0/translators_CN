@@ -2,14 +2,14 @@
 	"translatorID": "5c95b67b-41c5-4f55-b71a-48d5d7183063",
 	"label": "CNKI",
 	"creator": "Aurimas Vinckevicius, Xingzhong Lin",
-	"target": "https?://.*?/(kns8?s?/defaultresult/index|kns8?s?/AdvSearch|kcms/detail|KXReader/Detail\\?|KNavi/|Kreader/CatalogViewPage\\.aspx\\?|kcms2?/article/abstract\\?v=|kcms/doi/)",
+	"target": "https?://.*?/(kns8?s?/search\\?|kns8?s?/defaultresult/index|kns8?s?/AdvSearch|kcms/detail|KXReader/Detail\\?|KNavi/|Kreader/CatalogViewPage\\.aspx\\?|kcms2?/article/abstract\\?v=|kcms/doi/)",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-11-21 14:49:24"
+	"lastUpdated": "2023-11-23 02:13:41"
 }
 
 /*
@@ -43,7 +43,6 @@ async function getRefWorksByID(id) {
 		{
 			method: "POST",
 			body: postData,
-			responseType: "application/x-www-form-urlencoded",
 			headers: {
 				Referer: refer
 			}
@@ -167,7 +166,7 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 		var title = a.innerText;
 		if (title) title = ZU.trimInternal(title);
 		var id = getIDFromURL(a.href) || getIDFromSearchRow(links[i]);
-		var itemUrl = "";
+		var itemUrl = a.href;
 		// Now can get db data from url in new version
 		// English articles
 		if (!id) {
@@ -180,8 +179,7 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 				url: itemUrl
 			};
 		} else {
-			itemUrl = `https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=${id.dbcode}&dbname=${id.dbname}&filename=${id.filename}&v=`;
-			id.url = itemUrl;
+			id.url = a.href;
 		}
 		// TODO: CAJ link has redirection
 		// var filelink = ZU.xpath(links[i], fileXpath);
@@ -202,6 +200,7 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 }
 
 function detectWeb(doc, url) {
+	Z.debug("----------------CNKI 20231123-------------------");
 	var id = getIDFromPage(doc, url);
 	Z.debug(id);
 	if (id) {
@@ -212,7 +211,8 @@ function detectWeb(doc, url) {
 		url.match(/kns\/brief\/(default_)?result\.aspx/i)
 		|| url.includes("/KNavi/") // Article list in Navigation page
 		|| url.match(/kns8?s?\/defaultresult\/index/i) // search page
-		|| url.match(/KNS8?s?\/AdvSearch\?/i)) {// search page
+		|| url.match(/KNS8?s?\/AdvSearch\?/i)// search page
+		|| url.match(/kns8?s?\/search\?/i)) {
 		return "multiple";
 	}
 	else {
@@ -221,7 +221,6 @@ function detectWeb(doc, url) {
 }
 
 async function doWeb(doc, url) {
-	Z.debug("----------------CNKI 20231121-------------------");
 	if (detectWeb(doc, url) == "multiple") {
 		var itemInfo = {};
 		var items = getItemsFromSearchResults(doc, url, itemInfo);
