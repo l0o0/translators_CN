@@ -1,7 +1,7 @@
 {
 	"translatorID": "58df4473-a324-4fb5-8a8f-25d1e1897c73",
 	"label": "PubScholar",
-	"creator": "l0o0",
+	"creator": "l0o0, jiaojiaodubai",
 	"target": "https?://pubscholar\\.cn/",
 	"minVersion": "5.0",
 	"maxVersion": "",
@@ -36,10 +36,10 @@
 */
 
 const URLTypes = {
-	patents: 'patent',
-	articles: 'journalArticle',
-	literatures: 'journalArticle',
-	books: 'book'
+	'/patents/': 'patent',
+	'/articles/': 'journalArticle',
+	'/literatures/': 'journalArticle',
+	'/books/': 'book'
 };
 
 function getTypeFromUrl(url) {
@@ -74,7 +74,7 @@ function parseAuthors(s) {
 	if (s.match(/等主译$/)) type = 'translator';
 	if (s.match(/主编$/)) type = 'editor';
 	if (s.match(/^发明人: /)) type = 'inventor';
-	return sclean.split(/[,，]/).map(c => ({ lastName: c.replace(/\s?\d+\s?$/, ''), creatorType: type }));
+	return sclean.split(/[,，]/).map(c => ({ lastName: c.trim().replace(/\s?\d+\s?$/, ''), creatorType: type }));
 }
 
 function parseAuthorStr(s) {
