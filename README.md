@@ -62,6 +62,9 @@
   - 摘要信息：作者简介 + 内容简介
   - 目录信息：目录存放至note附件里
   - [详细截图](https://github.com/Captain2021/myTranslator/tree/main)
++ 玛格泰克 -> [MagTech.js](./MagTech.js)
+  - 支持大部分国内期刊（不一定是中文期刊）
+  - 支持大部分期刊首页或搜索页面的多条目抓取
 + 勤云科技 -> [E-Tiller](/E-Tiller.js)
   - 支持最新、次新版的勤云科技期刊网站
   - 对照meta标签补全导出结果
