@@ -18,6 +18,9 @@
   - [x] 抓取引文信息  
   - [x] 支持文献类型：期刊，学位论文，专利，会议论文
   - [x] PDF附件下载
++ 皮书数据库 -> [Pishu Data.js](<./Pishu Data.js>)
+  - [x] 抓取引文信息
+  - [x] 支持文献类型：报告（记录为bookSection）、图书
 + [维普](http://www.cqvip.com/) -> [WeiPu.js](./WeiPu.js) ❗
   - [x] 抓取引文信息  
   - [x] 支持文献类型：期刊
