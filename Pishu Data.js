@@ -162,7 +162,7 @@ async function scrape(doc, url = doc.location.href, type) {
 					: Array.from(doc.querySelectorAll('.baogao-list1 li'))
 						.find(element => element.innerText.includes('所属丛书：'))
 						.textContent
-						.match(/所属丛书：(.*)/)[1]
+						.match(/所属丛书：(.*)/)[1];
 			}
 			// 以防无此字段
 			catch (error) {
