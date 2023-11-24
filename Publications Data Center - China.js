@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-11-24 20:16:57"
+	"lastUpdated": "2023-11-24 20:41:06"
 }
 
 /*
@@ -224,7 +224,7 @@ const FIELDMAP = {
 		keys: ['keyword'],
 		callback: function (text) {
 			text = text.split(/\s?[;,，；－]\s?/g);
-			return [{ tag: text }];
+			return text.map(element => ({ tag: element }));
 		}
 	},
 	// 丛书名示例
@@ -953,10 +953,10 @@ var testCases = [
 				],
 				"tags": [
 					{
-						"tag": [
-							"俄语",
-							"对照词典"
-						]
+						"tag": "俄语"
+					},
+					{
+						"tag": "对照词典"
 					}
 				],
 				"notes": [],
@@ -1000,13 +1000,19 @@ var testCases = [
 				],
 				"tags": [
 					{
-						"tag": [
-							"英语",
-							"美国",
-							"语音",
-							"儿童教育",
-							"教材"
-						]
+						"tag": "儿童教育"
+					},
+					{
+						"tag": "教材"
+					},
+					{
+						"tag": "美国"
+					},
+					{
+						"tag": "英语"
+					},
+					{
+						"tag": "语音"
 					}
 				],
 				"notes": [],
