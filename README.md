@@ -62,6 +62,9 @@
   - 摘要信息：作者简介 + 内容简介
   - 目录信息：目录存放至note附件里
   - [详细截图](https://github.com/Captain2021/myTranslator/tree/main)
++ [国家出版发行信息公共服务平台](https://book.cppinfo.cn/home/index) -> [CCPINFO](/translators/CCPINFO.js)
+  - [x] 抓取引文信息
+  - [ ] 匹配出版地址
 + 玛格泰克 -> [MagTech.js](./MagTech.js)
   - 支持大部分国内期刊（不一定是中文期刊）
   - 支持大部分期刊首页或搜索页面的多条目抓取
