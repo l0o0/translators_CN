@@ -9,11 +9,15 @@
     },
     "CNKI.js": {
         "label": "中国知网",
-        "lastUpdated": "2023-08-22 15:01:05"
+        "lastUpdated": "2023-11-23 02:13:41"
     },
     "China Judgements Online.js": {
         "label": "中国裁判文书网",
         "lastUpdated": "2023-06-19 23:51:09"
+    },
+    "ChinaXiv.js": {
+        "label": "中国科学院科技论文预发布平台",
+        "lastUpdated": "2023-11-09 15:02:48"
     },
     "Cubox.js": {
         "label": "Cubox",
@@ -43,6 +47,10 @@
         "label": "全国标准信息公共服务平台",
         "lastUpdated": "2023-06-27 17:37:20"
     },
+    "National Science and Technology Library - China.js": {
+        "label": "国家科技图书文献中心",
+        "lastUpdated": "2023-10-24 12:34:28"
+    },
     "National Standards Open System - China.js": {
         "label": "国家标准全文公开系统",
         "lastUpdated": "2023-06-29 06:13:17"
@@ -57,7 +65,7 @@
     },
     "PKULaw.js": {
         "label": "北大法宝",
-        "lastUpdated": "2023-06-19 14:56:32"
+        "lastUpdated": "2023-09-05 05:05:44"
     },
     "PatentStar.js": {
         "label": "专利之星",
@@ -74,6 +82,10 @@
     "ProQuestCN Thesis.js": {
         "label": "ProQuest学位论文(中国)",
         "lastUpdated": "2020-09-07 01:24:40"
+    },
+    "PubScholar.js": {
+        "label": "PubScholar公益学术平台",
+        "lastUpdated": "2023-11-04 12:16:01"
     },
     "Soopat.js": {
         "label": "Soopat专利",
@@ -93,11 +105,11 @@
     },
     "WeiPu.js": {
         "label": "维普",
-        "lastUpdated": "2023-07-31 08:18:15"
+        "lastUpdated": "2023-11-02 14:54:26"
     },
     "Weixin.js": {
         "label": "微信",
-        "lastUpdated": "2023-07-05 03:39:17"
+        "lastUpdated": "2023-09-27 07:06:52"
     },
     "Wenjin.js": {
         "label": "国图-文津",
@@ -105,7 +117,7 @@
     },
     "Zhihu.js": {
         "label": "知乎",
-        "lastUpdated": "2023-04-03 06:43:09"
+        "lastUpdated": "2023-09-27 07:14:43"
     },
     "dpaper.js": {
         "label": "中国科学院文献情报中心",
