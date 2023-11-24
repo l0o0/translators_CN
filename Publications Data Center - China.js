@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-23 08:40:46"
+	"lastUpdated": "2023-11-24 20:16:57"
 }
 
 /*
@@ -49,8 +49,9 @@ function getSearchResults(doc, checkOnly) {
 	var items = {};
 	var found = false;
 	var rows = doc.querySelectorAll('.book_item');
-	for (let row of rows) {
-		let title = ZU.trimInternal(row.querySelector('.book_title').innerText);
+	for (let i = 0; i < rows.length; i++) {
+		row = rows[i];
+		let title = `【${i + 1}】${ZU.trimInternal(row.querySelector('.book_title').innerText)}`;
 		let id = row.querySelector('.ant-checkbox-input').value;
 		let type = (function () {
 			let mediumType = ZU.xpath(doc, '//div[@class="data_classify"]//div[@class="checkbox"]/span[1]').map(
@@ -222,6 +223,7 @@ const FIELDMAP = {
 		labels: ['主题词'],
 		keys: ['keyword'],
 		callback: function (text) {
+			text = text.split(/\s?[;,，；－]\s?/g);
 			return [{ tag: text }];
 		}
 	},
@@ -951,7 +953,10 @@ var testCases = [
 				],
 				"tags": [
 					{
-						"tag": "俄语;对照词典"
+						"tag": [
+							"俄语",
+							"对照词典"
+						]
 					}
 				],
 				"notes": [],
@@ -995,7 +1000,13 @@ var testCases = [
 				],
 				"tags": [
 					{
-						"tag": "英语，美国－语音－儿童教育－教材"
+						"tag": [
+							"英语",
+							"美国",
+							"语音",
+							"儿童教育",
+							"教材"
+						]
 					}
 				],
 				"notes": [],
