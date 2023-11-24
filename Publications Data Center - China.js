@@ -50,7 +50,7 @@ function getSearchResults(doc, checkOnly) {
 	var found = false;
 	var rows = doc.querySelectorAll('.book_item');
 	for (let i = 0; i < rows.length; i++) {
-		row = rows[i];
+		let row = rows[i];
 		let title = `【${i + 1}】${ZU.trimInternal(row.querySelector('.book_title').innerText)}`;
 		let id = row.querySelector('.ant-checkbox-input').value;
 		let type = (function () {
