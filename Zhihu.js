@@ -98,18 +98,19 @@ async function doWeb(doc, url) {
 		let selectedItems = await Zotero.selectItems(getSearchResults(doc, false, itemInfo));
 		await Promise.all(
 			Object.keys(selectedItems).map(url => {
-				scrape(itemInfo[url]);
+				scrape(doc, itemInfo[url]);
 			}
 			)
 		);
 	}
 	else {
 		var ZID = getIDFromUrl(url);
-		await scrape(ZID, doc);
+		await scrape(doc, ZID);
 	}
 }
 
-async function scrape(ZID, doc) {
+async function scrape(doc, ZID) {
+
 	var { ztype, zid, url } = ZID;
 	var newItem = new Zotero.Item(ztype === 'answer' ? 'forumPost' : 'blogPost');
 	newItem.url = url;
@@ -150,10 +151,113 @@ async function scrape(ZID, doc) {
 			textJson.topics.forEach(t => newItem.tags.push({ tag: t.name }));
 		}
 		newItem.extra = `赞数:${textJson.voteup_count};`;
+		// optimal DOM for zhuanlan post 
+		optimalDOM(doc);
 	}
 	newItem.language = 'zh-CN';
+	newItem.attachments.push({title: 'Snapshot', document: doc});
 	newItem.attachments.push({ url: url, title: "Snapshot", document: doc });
 	newItem.complete();
+}
+
+
+//Loop to delete the node
+function _delElem(elems) {
+  while (elems[0] != undefined) {
+    let parent = elems[0].parentElement
+    parent.removeChild(elems[0])
+  }
+}
+
+// Define delete function
+function delElemByClassName(doc, className) {
+  let elems = doc.getElementsByClassName(className)
+  _delElem(elems)
+}
+
+function load_lazy(doc) {
+  // Page scrolling speed (the time required to scroll through one screen height, the shorter the time, the faster).
+  // If there is slow internet speed, fast scrolling, and lazy loading images cannot be fully displayed, increase this number to try.
+  let scrollInterval = 100
+  let scrollHeight = doc.documentElement.scrollHeight
+  let clientHeight = doc.documentElement.clientHeight
+  let lastHeight = 0
+  let task = setInterval(function () {
+    if (lastHeight < scrollHeight) {
+      window.scrollTo(lastHeight, lastHeight + clientHeight)
+      lastHeight += clientHeight
+    } else {
+      clearInterval(task)
+			// After loading the image, delete the <noscript> tag.
+			let elems = doc.getElementsByTagName("noscript")
+			_delElem(elems)
+			
+    }
+  }, scrollInterval)
+}
+
+// Remove tag elements
+function delElemByTagName(doc, tagName) {
+  let noscriptElements = doc.getElementsByTagName(tagName)
+  for (var i = 0; i < noscriptElements.length; i++) {
+    var noscriptElement = noscriptElements[i];
+    noscriptElement.parentNode.removeChild(noscriptElement);
+  }
+}
+
+function beautifyHtml(doc) {
+	var cssCode = `
+		/* Insert your CSS code here */
+		.Post-RichTextContainer {
+			width: 690px !important;
+			margin: 0 auto !important;
+		}
+		
+		.ContentItem-time {
+			width: 690px !important;
+			margin: 0 auto !important;
+		}
+		
+		.Post-Main, .Post-Sub {
+			width: 690px !important;
+			margin: 0 auto !important;
+		}
+	`;
+
+	var styleElement = document.createElement('style');
+	styleElement.innerHTML = cssCode;
+
+	doc.head.insertAdjacentElement('beforeend', styleElement);
+}
+
+
+function optimalDOM(doc) {
+  // Remove the top status bar.
+	delElemByClassName(doc, "ColumnPageHeader-Wrapper")
+	// Delete top image
+	delElemByClassName(doc, "css-78p1r9")
+	// Delete follow button
+	delElemByClassName(doc, "FollowButton")
+	// Delete the left directory.
+	delElemByClassName(doc, "Catalog")
+	// Remove bottom share.
+	delElemByClassName(doc, "Sticky")
+	// Delete return to top.
+	delElemByClassName(doc, "CornerButtons")
+	// Delete recommended reading
+	delElemByClassName(doc, "Recommendations-Main")
+	// Delete column
+	delElemByClassName(doc, "PostIndex-Contributions")
+	// Remove appreciation
+	delElemByClassName(doc, "Reward")
+	// Delete topic
+	delElemByClassName(doc, "Post-topicsAndReviewer")
+	// beautify html
+	beautifyHtml(doc)
+	// Delete comment.
+	// delElemByClassName(doc, "Post-Sub Post-NormalSub")
+  // Scroll the page, load images
+  load_lazy(doc)
 }
 
 
