@@ -144,6 +144,7 @@ Chrome 浏览器按照下面信息找到更新按钮
 + [How to write a Zotero translator](https://niche-canada.org/member-projects/zotero-guide/about.html)
 
 ## 🦸 其他热心参与者
+[@jiaojiaodubai](https://github.com/jiaojiaodubai)
 [@wanyzh](https://github.com/wanyzh)  
 [@smilevent](https://github.com/smilevent)  
 [@Lemmingh](https://github.com/Lemmingh)  
