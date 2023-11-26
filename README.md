@@ -85,6 +85,10 @@
   - [x] 支持单条目
   - [x] 支持多条目
   - [x] PDF附件下载
++ [全国报刊索引](https://www.cnbksy.cn/home) -> [CNBKSY](./CNBKSY.js)
+  - [x] 抓取引文信息
+  - [x] 支持单条目
+  - [x] 支持多条目
 + 来自[道格学社仓库](https://github.com/gezhongran/DougSociety)的翻译器
   - [Bilibili 视频网站](./BiliBili.js)
   - [当当网图书](./Dangdang.js)
