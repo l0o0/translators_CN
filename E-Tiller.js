@@ -1,3 +1,16 @@
+{
+	"translatorID": "d611008a-850d-4860-b607-54e1ecbcc592",
+	"label": "E-Tiller",
+	"creator": "jiaojiaodubai23",
+	"target": "^https?://.*(/ch/)?.*(.aspx)?",
+	"minVersion": "5.0",
+	"maxVersion": "",
+	"priority": 100,
+	"inRepository": true,
+	"translatorType": 4,
+	"browserSupport": "gcsibv",
+	"lastUpdated": "2023-10-21 10:04:15"
+}
 /*
 	***** BEGIN LICENSE BLOCK *****
 

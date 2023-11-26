@@ -38,6 +38,9 @@
 + [国家图书馆文津搜索](http://find.nlc.cn/) -> [Wenjin.js](./Wenjin.js)
   - [x] 抓取引文信息
   - [x] 支持文献类型：图书，论文
++ [国家版本馆版权数字中心](https://pdc.capub.cn/) -> [Publications Data Center - China.js](<./Publications Data Center - China.js>)
+  - [x] 抓取引文信息
+  - [x] 多条目导出
 + [国家科技图书文献中心](https://www.nstl.gov.cn/) -> [NSTL.js](<./National Science and Technology Library - China.js>)
   - [x] 抓取引文信息
   - [x] 支持期刊论文、学位论文、会议论文、图书章节、文集、标准、专利
@@ -144,6 +147,7 @@ Chrome 浏览器按照下面信息找到更新按钮
 + [How to write a Zotero translator](https://niche-canada.org/member-projects/zotero-guide/about.html)
 
 ## 🦸 其他热心参与者
+[@jiaojiaodubai](https://github.com/jiaojiaodubai)
 [@wanyzh](https://github.com/wanyzh)  
 [@smilevent](https://github.com/smilevent)  
 [@Lemmingh](https://github.com/Lemmingh)  
