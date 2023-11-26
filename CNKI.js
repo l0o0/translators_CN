@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-11-23 02:13:41"
+	"lastUpdated": "2023-11-26 14:54:49"
 }
 
 /*
@@ -35,7 +35,7 @@
 // id should be in the form {dbname: "CDFDLAST2013", filename: "1013102302.nh"}
 async function getRefWorksByID(id) {
 	if (!id) return;
-	var { dbname, filename, url } = id;
+	var { dbname, filename } = id;
 	const postData = `FileName=${dbname}!${filename}!1!0&DisplayMode=Refworks&OrderParam=0&OrderType=desc&SelectField=&PageIndex=1&PageSize=20&language=&uniplatform=NZKPT&random=0.30585230060685187`;
 	const refer = `https://kns.cnki.net/dm/manage/export.html?filename=${dbname}!${filename}!1!0&displaymode=NEW&uniplatform=NZKPT`;
 	let reftext = await request(
@@ -74,6 +74,7 @@ async function getRefWorksByID(id) {
 			return tag + " " + authors.join("\n" + tag + " ");
 		})
 		.replace(/LA 中文;?/g, "LA zh-CN")
+		.replace(/<input id="traceid".*?>$/, "")
 		.trim();
 }
 
@@ -200,7 +201,7 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 }
 
 function detectWeb(doc, url) {
-	Z.debug("----------------CNKI 20231123-------------------");
+	Z.debug("----------------CNKI 20231126-------------------");
 	var id = getIDFromPage(doc, url);
 	Z.debug(id);
 	if (id) {
@@ -240,92 +241,152 @@ async function doWeb(doc, url) {
 
 async function scrape(id, doc, extraData) {
 	let reftext = await getRefWorksByID(id);
+	// Z.debug(reftext);
+	if (reftext) {// Refworks text from api
 	var translator = Z.loadTranslator('import');
 	translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86'); // RefWorks Tagged
 	translator.setString(reftext);
 	translator.setHandler('itemDone', (_, newItem) => {
-		// add PDF/CAJ attachment
-		var cite = citeStr = pubType = pubTypeStr = "";
-		// If you want CAJ instead of PDF, set keepPDF = false
-		// 如果你想将PDF文件替换为CAJ文件，将下面一行 keepPDF 设为 false
-		var keepPDF = Z.getHiddenPref('CNKIPDF');
-		if (keepPDF === undefined) keepPDF = true;
-		// if (extraData) { // search page, Disabled 20230822
-		// 	newItem.attachments = [{
-		// 		title: "Full Text CAJ",
-		// 		mimeType: "application/caj",
-		// 		url: extraData.filelink
-		// 	}];
-		// 	cite = extraData.cite;
-		// } else if (!extraData) { // detail page
-		if (id.url.includes("KXReader/Detail")) {
-			newItem.attachments.push({
-				title: "Snapshot",
-				document: doc
-			});
-		} else {
-			newItem.attachments = getAttachments(doc, keepPDF);
-		}
-		let rightCite = doc.querySelector("div#right_part i.icon.icon-arrow");
-		if (rightCite) rightCite.click();
-		cite = innerText(doc, "span.num");
-		cite = cite ? cite.split('\n')[0] : "";
-		pubType = ZU.xpathText(doc, "//div[@class='top-tip']//a[@class='type']");
-		pubTypeStr = pubType ? "CSSCI: " + pubType + "\n" : "";
-		var doi = ZU.xpath(doc, "//*[contains(text(), 'DOI')]/parent::li | //div[@class='tips']"); // add DOI
-		if (doi.length > 0 && doi[0].innerText.includes("DOI")) {
-			var DOI = doi[0].innerText.split("DOI");
-			newItem.DOI = DOI[DOI.length - 1].trim().replace(/[：:]/, '');
-		}
-		var moreClick = ZU.xpath(doc, "//span/a[@id='ChDivSummaryMore']");
-		if (moreClick.length) {
-			moreClick[0].click();// click to get a full abstract in a single article page
-			newItem.abstractNote = ZU.xpath(doc, "//span[@id='ChDivSummary']")[0].innerText;
-		}
-
-		var citeStr = cite ? `CNKICite:${cite}\n` : "";
-		newItem.extra = (citeStr + pubTypeStr).trim() + "\n" + (newItem.extra ? newItem.extra : "");
-		// split names, Chinese name split depends on Zotero Connector preference translators.zhnamesplit
-		var zhnamesplit = Z.getHiddenPref('zhnamesplit');
-		if (zhnamesplit === undefined) zhnamesplit = true;
-		for (var i = 0, n = newItem.creators.length; i < n; i++) {
-			var creator = newItem.creators[i];
-			if (newItem.itemType == 'thesis' && i != 0) { // Except first author are Advisors in thesis
-				creator.creatorType = 'contributor';// Here is contributor
-			}
-			if (creator.firstName) continue;
-
-			var lastSpace = creator.lastName.lastIndexOf(' ');
-			if (creator.lastName.search(/[A-Za-z]/) !== -1 && lastSpace !== -1) {
-				// western name. split on last space
-				creator.firstName = creator.lastName.substr(0, lastSpace);
-				creator.lastName = creator.lastName.substr(lastSpace + 1);
-			}
-			else if (zhnamesplit) {
-				// zhnamesplit is true, split firstname and lastname.
-				// Chinese name. first character is last name, the rest are first name
-				creator.firstName = creator.lastName.substr(1);
-				creator.lastName = creator.lastName.charAt(0);
-			}
-		}
-
-		// clean up tags. Remove numbers from end
-		for (var j = 0, l = newItem.tags.length; j < l; j++) {
-			newItem.tags[j] = newItem.tags[j].replace(/:\d+$/, '');
-		}
-		newItem.url = id.url;
-		if (newItem.abstractNote) {
-			newItem.abstractNote = newItem.abstractNote.replace(/\s*[\r\n]\s*/g, '\n')
-				.replace(/&lt;.*?&gt;/g, "")
-				.replace(/^<正>/, "");
-		}
-		newItem.title = ZU.trimInternal(newItem.title ? newItem.title : "");
-		// CN 中国刊物编号，非refworks中的callNumber
-		// CN in CNKI refworks format explains Chinese version of ISSN
-		newItem.callNumber = null;
+		newItem = fixItem(newItem, doc, id);
 		newItem.complete();
 	});
 	await translator.translate();
+	} else if (!reftext && extraData === undefined) {// API return empty text, scrape metadata from webpage
+		Z.debug("Empty API result");
+		var fieldMap = {
+			title: "div.doc h1",
+			creators: "div.doc h3",
+			abstractNote: "#ChDivSummary, div.abstract-text",
+			tags: "div.doc p.keywords",
+			top: "//div[@class='top-tip']/*",
+			pages: "div.doc p.total-inform span:nth-child(2)",
+			university: "div.doc h3:nth-child(3)",
+			date: "//span[contains(text(), '报纸日期：') or contains(text(), '会议时间：')]/following-sibling::p",
+			place: "//span[contains(text(), '会议地点：')]/following-sibling::p",
+		};
+
+		newItem = new Zotero.Item(getTypeFromDBName(id));
+		for (let f in fieldMap) {
+			let v =  fieldMap[f].includes("//") ? ZU.xpathText(doc, fieldMap[f]) : text(doc, fieldMap[f]);
+			// Z.debug(f);
+			// Z.debug(v);
+			if (!v) continue;
+			if (f == "creators") {
+				newItem.creators = v
+					.trim().split(/[0-9,]/)
+					.filter( (e) => e)
+					.map( (e) => {
+						return {lastName: e, creatorType: "author", fieldMode: true}
+					})
+			} else if (f == 'tags') {
+				newItem.tags = v
+					.split(/\n/g)
+					.map( e => { return e.trim().replace(/;$/, '') } );
+			} else if (f == 'top') {
+				let tmp = v.split(/[,\n]/).filter( e => e).map( e => e.trim());
+				// Z.debug(tmp);
+				newItem.publicationTitle = tmp[0].replace(/\.$/, '');
+				let regex = new RegExp('\\d+');
+				if (regex.test(tmp[1])) {
+					newItem.date = tmp[1];
+					newItem.volume = tmp[2];
+					if (tmp.length >= 4) newItem.issue = tmp[3].replace(/[\(\)]/g, '');
+				}
+			} else {
+				newItem[f] = v;
+			}
+		}
+		newItem = fixItem(newItem, doc, id)
+		newItem.complete();
+	}
+}
+
+
+
+function fixItem(newItem, doc, id) {
+	// Fill in data from web page and update imperfect data from RefWorks
+	newItem.url = id.url;
+	// conferencePaper
+	// if (newItem.itemType == 'conferencePaper') {
+	// 	let place = ZU.xpathText(doc, "//span[contains(text(), '会议地点：')]/following-sibling::p");
+	// 	if (place) newItem.place = place;
+	// 	let date = ZU.xpathText(doc, "//span[contains(text(), '会议时间：')]/following-sibling::p");
+	// 	if (date) newItem.date = date;
+	// }
+	// add PDF/CAJ attachment
+	var cite = citeStr = pubType = pubTypeStr = "";
+	// If you want CAJ instead of PDF, set keepPDF = false
+	// 如果你想将PDF文件替换为CAJ文件，将下面一行 keepPDF 设为 false
+	var keepPDF = Z.getHiddenPref('CNKIPDF');
+	if (keepPDF === undefined) keepPDF = true;
+	if (id.url.includes("KXReader/Detail")) {
+		newItem.attachments.push({
+			title: "Snapshot",
+			document: doc
+		});
+	} else {
+		newItem.attachments = getAttachments(doc, keepPDF);
+	}
+	let rightCite = doc.querySelector("div#right_part i.icon.icon-arrow");
+	if (rightCite) rightCite.click();
+	cite = innerText(doc, "span.num");
+	cite = cite ? cite.split('\n')[0] : "";
+	pubType = ZU.xpathText(doc, "//div[@class='top-tip']//a[@class='type']");
+	pubTypeStr = pubType ? "CSSCI: " + pubType + "\n" : "";
+	var citeStr = cite ? `CNKICite:${cite}\n` : "";
+	newItem.extra = (citeStr + pubTypeStr).trim() + "\n" + (newItem.extra ? newItem.extra : "");
+	// split names, Chinese name split depends on Zotero Connector preference translators.zhnamesplit
+	var zhnamesplit = Z.getHiddenPref('zhnamesplit');
+	if (zhnamesplit === undefined) zhnamesplit = true;
+	// Due to Chinese CSL update, maybe we don't need this code any more
+	for (var i = 0, n = newItem.creators.length; i < n; i++) {
+		var creator = newItem.creators[i];
+		if (newItem.itemType == 'thesis' && i != 0) { // Except first author are Advisors in thesis
+			creator.creatorType = 'contributor';// Here is contributor
+		}
+		if (creator.firstName) continue;
+
+		var lastSpace = creator.lastName.lastIndexOf(' ');
+		if (creator.lastName.search(/[A-Za-z]/) !== -1 && lastSpace !== -1) {
+			// western name. split on last space
+			creator.firstName = creator.lastName.substr(0, lastSpace);
+			creator.lastName = creator.lastName.substr(lastSpace + 1);
+		}
+		else if (zhnamesplit) {
+			// zhnamesplit is true, split firstname and lastname.
+			// Chinese name. first character is last name, the rest are first name
+			creator.firstName = creator.lastName.substr(1);
+			creator.lastName = creator.lastName.charAt(0);
+		}
+	}
+	// clean up tags. Remove numbers from end
+	for (var j = 0, l = newItem.tags.length; j < l; j++) {
+		newItem.tags[j] = newItem.tags[j].replace(/:\d+$/, '');
+	}
+	// CNKI DOI
+	var doi = ZU.xpath(doc, "//*[contains(text(), 'DOI')]/parent::li | //div[@class='tips']"); // add DOI
+	if (doi.length > 0 && doi[0].innerText.includes("DOI")) {
+		var DOI = doi[0].innerText.split("DOI");
+		newItem.DOI = DOI[DOI.length - 1].trim().replace(/[：:]/, '');
+	}
+	var moreClick = doc.querySelector("span a#ChDivSummaryMore");
+	if (moreClick) {
+		moreClick.click();// click to get a full abstract in a single article page
+		newItem.abstractNote = text(doc, "span#ChDivSummary");
+	}
+	if (newItem.abstractNote) {
+		newItem.abstractNote = newItem.abstractNote.replace(/\s*[\r\n]\s*/g, '\n')
+			.replace(/&lt;.*?&gt;/g, "")
+			.replace(/^<正>/, "");
+	}
+	newItem.title = ZU.trimInternal(newItem.title ? newItem.title : "");
+	if (newItem.pages) newItem.pages = newItem.pages.replace(/[页数码：]/g, "");
+	// CN 中国刊物编号，非refworks中的callNumber
+	// CN in CNKI refworks format explains Chinese version of ISSN
+	newItem.callNumber = null;
+	if (!newItem.language) newItem.language = 'zh-CN';
+	if (newItem.itemType != 'thesis') delete newItem.university;
+	return newItem;
 }
 
 // get pdf download link
@@ -929,6 +990,110 @@ var testCases = [
 					},
 					{
 						"tag": "静载试验"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=aGn3Ey0ZxcBlLeDMSYGC0a381fwEv97wpHetB3caqBEStlYg7EH83TyEoFRgknjbKA-dXXUdxcRehDsaejjypV83IPcUqy0sjGugVgmomBaWH-wWn4H0dQ3F2GoHWy16jlDefvS0DsMyP5MxxE4Zjw==&uniplatform=NZKPT&language=CHS",
+		"items": [
+			{
+				"itemType": "conferencePaper",
+				"title": "转录组学和毒力基因调控揭示了异硫氰酸苄酯对金黄色葡萄球菌的抗菌机制",
+				"creators": [
+					{
+						"lastName": "刘",
+						"creatorType": "author",
+						"fieldMode": true,
+						"firstName": "佳楠"
+					},
+					{
+						"lastName": "侯",
+						"creatorType": "author",
+						"fieldMode": true,
+						"firstName": "红漫"
+					},
+					{
+						"lastName": "张",
+						"creatorType": "author",
+						"fieldMode": true,
+						"firstName": "公亮"
+					}
+				],
+				"date": "2023-10-24",
+				"DOI": "10.26914/c.cnkihy.2023.044794",
+				"abstractNote": "金黄色葡萄球菌是一种常见的病原体,可引起多种严重感染。因此,需要高效实用的技术来对抗金黄色葡萄球菌。本研究利用转录组学评估了金黄色葡萄球菌在使用异硫氰酸苄酯(BITC)处理后的变化,以确定其抗菌作用。结果显示,与对照组相比,1/8 MIC BITC处理组有92个差异表达基因,其中42个基因下调。此外,我们还利用STRING分析揭示了34个基因编码的蛋白质相互作用。然后,我们通过qRT-PCR验证了三个重要的毒力基因,包括胶囊多糖合成酶(cp8F)、胶囊多糖生物合成蛋白(cp5D)和热核酸酶(nuc)。此外,还进行了分子对接分析,以研究BITC与cp8F、cp5D和nuc的编码蛋白的作用位点。结果表明,BITC与所选蛋白质的对接分数在-6.00至-6.60kcal/mol之间,证实了这些复合物的稳定性。BITC与这些蛋白质的氨基酸TRP (130)、GLY (10)、ILE (406)、LYS (368)、TYR (192)和ARG (114)形成疏水、氢键、π-π共轭相互作用。这些发现将有助于今后研究BITC对金黄色葡萄球菌的抗菌机制。",
+				"language": "zh-CN",
+				"libraryCatalog": "CNKI",
+				"pages": "73-74",
+				"place": "中国湖南长沙",
+				"url": "https://kns.cnki.net/kcms2/article/abstract?v=aGn3Ey0ZxcBlLeDMSYGC0a381fwEv97wpHetB3caqBEStlYg7EH83TyEoFRgknjbKA-dXXUdxcRehDsaejjypV83IPcUqy0sjGugVgmomBaWH-wWn4H0dQ3F2GoHWy16jlDefvS0DsMyP5MxxE4Zjw==&uniplatform=NZKPT&language=CHS",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					}
+				],
+				"tags": [
+					{
+						"tag": "下调"
+					},
+					{
+						"tag": "异硫氰酸苄酯"
+					},
+					{
+						"tag": "毒力基因"
+					},
+					{
+						"tag": "转录组学"
+					},
+					{
+						"tag": "金黄色葡萄球菌"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=aGn3Ey0ZxcB3qd8ZIDPhdIVcqqOD2G3mYTE0qdsKQ-VwvIjdQQXfMQSV7kAiKvQjt8i38zficiKlyjDDEZn_XnhjWHvoSEulgeP5CLQQUsnodY8Yoibahn8CTYHy0ibl5k8lgPTODLsy4rUnTVOwgQ==&uniplatform=NZKPT&language=CHS",
+		"items": [
+			{
+				"itemType": "newspaperArticle",
+				"title": "灭绝物种RNA首次分离测序",
+				"creators": [
+					{
+						"lastName": "刘",
+						"creatorType": "author",
+						"fieldMode": true,
+						"firstName": "霞"
+					}
+				],
+				"date": "2023-09-21",
+				"abstractNote": "科技日报北京9月20日电 （记者刘霞）瑞典国家分子生物科学中心科学家首次分离和测序了一个已灭绝物种的RNA分子，从而重建了该灭绝物种（塔斯马尼亚虎）的皮肤和骨骼肌转录组。该项成果对复活塔斯马尼亚虎和毛猛犸象等灭绝物种，以及研究如新冠病毒等RNA病毒具有重要意义。相......",
+				"language": "zh-CN",
+				"libraryCatalog": "CNKI",
+				"pages": "1",
+				"publicationTitle": "科技日报",
+				"url": "https://kns.cnki.net/kcms2/article/abstract?v=aGn3Ey0ZxcB3qd8ZIDPhdIVcqqOD2G3mYTE0qdsKQ-VwvIjdQQXfMQSV7kAiKvQjt8i38zficiKlyjDDEZn_XnhjWHvoSEulgeP5CLQQUsnodY8Yoibahn8CTYHy0ibl5k8lgPTODLsy4rUnTVOwgQ==&uniplatform=NZKPT&language=CHS",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					}
+				],
+				"tags": [
+					{
+						"tag": "RNA"
+					},
+					{
+						"tag": "转录组"
 					}
 				],
 				"notes": [],
