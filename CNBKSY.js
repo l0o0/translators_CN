@@ -2,14 +2,14 @@
 	"translatorID": "bb0d0e84-66b4-46e3-9089-ebc975a86111",
 	"label": "CNBKSY",
 	"creator": "jiaojiaodubai23",
-	"target": "^https?://www\\.cnbksy\\.cn",
+	"target": "^https?://.*(www\\.)?cnbksy\\.(cn|com)",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-11-26 12:41:54"
+	"lastUpdated": "2023-11-27 06:09:47"
 }
 
 /*
