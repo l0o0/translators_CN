@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-11-27 06:09:47"
+	"lastUpdated": "2023-11-28 03:52:36"
 }
 
 /*
@@ -37,6 +37,10 @@
 
 
 function detectWeb(doc, url) {
+	let searchBox = doc.querySelector('.body_box');
+	if (searchBox) {
+		Z.monitorDOMChanges(searchBox, { childList: true, subtree: true });
+	}
 	if (url.includes('/detail/')) {
 		return 'journalArticle';
 	}
@@ -149,6 +153,7 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.url = url;
 	newItem.complete();
 }
+
 
 /** BEGIN TEST CASES **/
 var testCases = [
