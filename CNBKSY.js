@@ -42,6 +42,9 @@ function detectWeb(doc, url) {
 		Z.monitorDOMChanges(searchBox, { childList: true, subtree: true });
 	}
 	if (url.includes('/detail/')) {
+		if (doc.querySelector('.srTable a[href*="/literature/newspaper/"]')) {
+			return 'newspaperArticle';
+		}
 		return 'journalArticle';
 	}
 	else if (url.includes('/picDetail/')) {
@@ -109,11 +112,18 @@ class Table {
 	get(key) {
 		return this.innerData.hasOwnProperty(key) ? this.innerData[key] : '';
 	}
+
+	fuzzyGet(key) {
+		let realKey = this.innerData.keys().find(element => element.includes(key));
+		return realKey
+			? this.get(realKey)
+			: '';
+	}
 }
 
 async function scrape(doc, url = doc.location.href) {
 	var data = new Table(doc);
-	Z.debug(data);
+	// Z.debug(data);
 	let type = detectWeb(doc, url);
 	var newItem = new Z.Item(type);
 	switch (type) {
@@ -130,6 +140,19 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.abstractNote = data.get('摘要');
 			newItem.tags = data.get('主题词').slice(1, -1).split(/[,;，；]/)
 				.map(element => ({ tag: element }));
+			break;
+		case 'newspaperArticle':
+			newItem.title = data.fuzzyGet('标题');
+			newItem.shortTitle = data.get('标题2');
+			newItem.publicationTitle = data.get('文献来源').replace(/^《|》$/g, '');
+			newItem.place = data.get('新闻发布地');
+			newItem.data = data.get('出版时间')
+				.replace(/(^\D*)|(\D*$)/g, '')
+				.replace(/\D+/g, '-')
+				.replace(/-(\d)(?:\D|$)/g, '-0$1');
+			newItem.pages = data.get('版次').replace(/^0*/, '');
+			newItem.creators = matchCreator(data.get('新闻来源'));
+			newItem.extra += `\n类别: ${data.get('类别')}`;
 			break;
 		case 'artwork':
 			newItem.title = data.get('图片标题');
