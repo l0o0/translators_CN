@@ -2,7 +2,7 @@
 	"translatorID": "8651aa89-eb54-47bc-9916-17720fe22a86",
 	"label": "Pishu Data",
 	"creator": "jiaojiaodubai23",
-	"target": "^https?://(www|gf)\\.pishu\\.com\\.cn",
+	"target": "^https?://.*(www|gf)\\.pishu\\.com\\.cn",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
@@ -177,7 +177,9 @@ async function scrape(doc, url = doc.location.href, type) {
 		tittle: 'Snapshot',
 		document: doc,
 	});
-	newItem.url = url;
+	newItem.url = /^https?:\/\/.+(www|gf)\.pishu\.com\.cn/.test(url)
+		? `https://${url.match(/(www|gf)\.pishu\.com\.cn.*/)[0]}`
+		: url;
 	newItem.complete();
 }
 
