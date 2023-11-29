@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-11-26 14:54:49"
+	"lastUpdated": "2023-11-29 09:11:20"
 }
 
 /*
@@ -31,7 +31,7 @@
 */
 
 // Target regex for default search, advance search, detail page and journal articles pages.
-// Fetches RefWorks records text by provided ID 
+// Fetches RefWorks records text by provided ID
 // id should be in the form {dbname: "CDFDLAST2013", filename: "1013102302.nh"}
 async function getRefWorksByID(id) {
 	if (!id) return;
@@ -91,8 +91,7 @@ function getIDFromURL(url) {
 		|| !dbcode[1]
 		|| !dbname
 		|| !dbname[1]
-	)
-		return false;
+	) return false;
 	return { dbname: dbname[1], filename: filename[1], dbcode: dbcode[1], url: url };
 }
 
@@ -155,7 +154,7 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 	}
 	else { // for search result page
 		links = doc.querySelectorAll("table.result-table-list tbody tr");
-		aXpath = './td[@class="name"]/a';
+		aXpath = './td[@class="name"]//a[@class="fz14"]';
 		// fileXpath = "./td[@class='operat']/a[contains(@class, 'downloadlink')]";
 	}
 	if (!links.length) {
@@ -179,7 +178,8 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 				dbcode: td[1].getAttribute("data-dbname"),
 				url: itemUrl
 			};
-		} else {
+		}
+		else {
 			id.url = a.href;
 		}
 		// TODO: CAJ link has redirection
@@ -201,7 +201,7 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 }
 
 function detectWeb(doc, url) {
-	Z.debug("----------------CNKI 20231126-------------------");
+	Z.debug("----------------CNKI 20231129-------------------");
 	var id = getIDFromPage(doc, url);
 	Z.debug(id);
 	if (id) {
@@ -242,20 +242,23 @@ async function doWeb(doc, url) {
 async function scrape(id, doc, extraData) {
 	let reftext = await getRefWorksByID(id);
 	// Z.debug(reftext);
-	if (reftext) {// Refworks text from api
-	var translator = Z.loadTranslator('import');
-	translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86'); // RefWorks Tagged
-	translator.setString(reftext);
-	translator.setHandler('itemDone', (_, newItem) => {
-		newItem = fixItem(newItem, doc, id);
-		newItem.complete();
-	});
-	await translator.translate();
-	} else if (!reftext && extraData === undefined) {// API return empty text, scrape metadata from webpage
+	if (reftext) { // Refworks text from api
+		var translator = Z.loadTranslator('import');
+		translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86'); // RefWorks Tagged
+		translator.setString(reftext);
+		translator.setHandler('itemDone', (_, newItem) => {
+			newItem = fixItem(newItem, doc, id);
+			newItem.complete();
+		});
+		await translator.translate();
+	}
+	// API return empty text, scrape metadata from webpage
+	// 使用图书馆代理访问知网时可能只能抓取网页上的信息
+	else if (!reftext && extraData === undefined) {
 		Z.debug("Empty API result");
 		var fieldMap = {
 			title: "div.doc h1",
-			creators: "div.doc h3",
+			creators: "div.doc h3#authorpart span",
 			abstractNote: "#ChDivSummary, div.abstract-text",
 			tags: "div.doc p.keywords",
 			top: "//div[@class='top-tip']/*",
@@ -267,45 +270,52 @@ async function scrape(id, doc, extraData) {
 
 		newItem = new Zotero.Item(getTypeFromDBName(id));
 		for (let f in fieldMap) {
-			let v =  fieldMap[f].includes("//") ? ZU.xpathText(doc, fieldMap[f]) : text(doc, fieldMap[f]);
+			let v = fieldMap[f].includes("//") ? ZU.xpathText(doc, fieldMap[f]) : text(doc, fieldMap[f]);
 			// Z.debug(f);
 			// Z.debug(v);
 			if (!v) continue;
 			if (f == "creators") {
-				newItem.creators = v
-					.trim().split(/[0-9,]/)
-					.filter( (e) => e)
-					.map( (e) => {
-						return {lastName: e, creatorType: "author", fieldMode: true}
-					})
-			} else if (f == 'tags') {
+				let creators = doc.querySelectorAll(fieldMap[f]);
+				newItem.creators = Array.from(creators)
+					.map(e => e.textContent.trim().replace(/[0-9,]/g, ""))
+					.filter(e => e)
+					.map((e) => {
+						return { lastName: e, creatorType: "author", fieldMode: true };
+					});
+			}
+			else if (f == 'tags') {
 				newItem.tags = v
 					.split(/\n/g)
-					.map( e => { return e.trim().replace(/;$/, '') } );
-			} else if (f == 'top') {
-				let tmp = v.split(/[,\n]/).filter( e => e).map( e => e.trim());
+					.map((e) => {
+						return e.trim().replace(/;$/, '');
+					});
+			}
+			else if (f == 'top') {
+				let tmp = v.split(/[,\n]/).filter(e => e).map(e => e.trim());
 				// Z.debug(tmp);
 				newItem.publicationTitle = tmp[0].replace(/\.$/, '');
 				let regex = new RegExp('\\d+');
 				if (regex.test(tmp[1])) {
 					newItem.date = tmp[1];
-					newItem.volume = tmp[2];
-					if (tmp.length >= 4) newItem.issue = tmp[3].replace(/[\(\)]/g, '');
+					if (tmp.length >= 3) {
+						newItem.volume = tmp[2].split("(")[0];
+						if (tmp[2].match(/\(0?(\d)\)/)) newItem.issue = tmp[2].match(/\(0?(\d)\)/)[1];
+					}
 				}
-			} else {
+			}
+			else {
 				newItem[f] = v;
 			}
 		}
-		newItem = fixItem(newItem, doc, id)
+		newItem = fixItem(newItem, doc, id);
 		newItem.complete();
 	}
 }
 
 
-
 function fixItem(newItem, doc, id) {
 	// Fill in data from web page and update imperfect data from RefWorks
-	newItem.url = id.url;
+	newItem.url = id.url.includes("cnki.net") ? id.url : `https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=${id.dbcode}&dbname=${id.dename}&filename=${id.filename}&v=`;
 	// conferencePaper
 	// if (newItem.itemType == 'conferencePaper') {
 	// 	let place = ZU.xpathText(doc, "//span[contains(text(), '会议地点：')]/following-sibling::p");
@@ -324,7 +334,8 @@ function fixItem(newItem, doc, id) {
 			title: "Snapshot",
 			document: doc
 		});
-	} else {
+	}
+	else {
 		newItem.attachments = getAttachments(doc, keepPDF);
 	}
 	let rightCite = doc.querySelector("div#right_part i.icon.icon-arrow");
@@ -347,7 +358,7 @@ function fixItem(newItem, doc, id) {
 		if (creator.firstName) continue;
 
 		var lastSpace = creator.lastName.lastIndexOf(' ');
-		if (creator.lastName.search(/[A-Za-z]/) !== -1 && lastSpace !== -1) {
+		if (/[A-Za-z]/.test(creator.lastName) && lastSpace !== -1) {
 			// western name. split on last space
 			creator.firstName = creator.lastName.substr(0, lastSpace);
 			creator.lastName = creator.lastName.substr(lastSpace + 1);
@@ -413,7 +424,8 @@ function getAttachments(doc, keepPDF) {
 			mimeType: "application/pdf",
 			url: pdfurl
 		});
-	} else {
+	}
+	else {
 		attachments.push({
 			title: "Full Text CAJ",
 			mimeType: "application/caj",
