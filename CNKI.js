@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-11-29 09:11:20"
+	"lastUpdated": "2023-11-30 06:51:43"
 }
 
 /*
@@ -201,7 +201,7 @@ function getItemsFromSearchResults(doc, url, itemInfo) {
 }
 
 function detectWeb(doc, url) {
-	Z.debug("----------------CNKI 20231129-------------------");
+	Z.debug("----------------CNKI 20231130------------------");
 	var id = getIDFromPage(doc, url);
 	Z.debug(id);
 	if (id) {
@@ -247,7 +247,7 @@ async function scrape(id, doc, extraData) {
 		translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86'); // RefWorks Tagged
 		translator.setString(reftext);
 		translator.setHandler('itemDone', (_, newItem) => {
-			newItem = fixItem(newItem, doc, id);
+			fixItem(newItem, doc, id);
 			newItem.complete();
 		});
 		await translator.translate();
@@ -258,7 +258,7 @@ async function scrape(id, doc, extraData) {
 		Z.debug("Empty API result");
 		var fieldMap = {
 			title: "div.doc h1",
-			creators: "div.doc h3#authorpart span",
+			creators: "div.doc h3#authorpart span a",
 			abstractNote: "#ChDivSummary, div.abstract-text",
 			tags: "div.doc p.keywords",
 			top: "//div[@class='top-tip']/*",
@@ -292,22 +292,19 @@ async function scrape(id, doc, extraData) {
 			}
 			else if (f == 'top') {
 				let tmp = v.split(/[,\n]/).filter(e => e).map(e => e.trim());
-				// Z.debug(tmp);
 				newItem.publicationTitle = tmp[0].replace(/\.$/, '');
 				let regex = new RegExp('\\d+');
 				if (regex.test(tmp[1])) {
 					newItem.date = tmp[1];
-					if (tmp.length >= 3) {
-						newItem.volume = tmp[2].split("(")[0];
-						if (tmp[2].match(/\(0?(\d)\)/)) newItem.issue = tmp[2].match(/\(0?(\d)\)/)[1];
-					}
+					newItem.volume = tmp[2].split("(")[0];
+					if (/\(0?(\d+)\)/.test(tmp.join(",")))  newItem.issue = tmp.join(",").match(/\(0?(\d+)\)/)[1];
 				}
 			}
 			else {
 				newItem[f] = v;
 			}
 		}
-		newItem = fixItem(newItem, doc, id);
+		fixItem(newItem, doc, id);
 		newItem.complete();
 	}
 }
@@ -315,7 +312,7 @@ async function scrape(id, doc, extraData) {
 
 function fixItem(newItem, doc, id) {
 	// Fill in data from web page and update imperfect data from RefWorks
-	newItem.url = id.url.includes("cnki.net") ? id.url : `https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=${id.dbcode}&dbname=${id.dename}&filename=${id.filename}&v=`;
+	newItem.url = id.url.includes("cnki.net") ? id.url : `https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=${id.dbcode}&dbname=${id.dbname}&filename=${id.filename}&v=`;
 	// conferencePaper
 	// if (newItem.itemType == 'conferencePaper') {
 	// 	let place = ZU.xpathText(doc, "//span[contains(text(), '会议地点：')]/following-sibling::p");
@@ -397,7 +394,7 @@ function fixItem(newItem, doc, id) {
 	newItem.callNumber = null;
 	if (!newItem.language) newItem.language = 'zh-CN';
 	if (newItem.itemType != 'thesis') delete newItem.university;
-	return newItem;
+	// return newItem;
 }
 
 // get pdf download link
