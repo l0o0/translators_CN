@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-01 04:14:31"
+	"lastUpdated": "2023-12-01 04:29:13"
 }
 
 /*
@@ -138,7 +138,11 @@ async function scrape(doc, url) {
 		}
 		else {
 			if (field == "出版项" && value.match(/[\d.]+$/)) {
-				item.date = value.match(/[\d.]+$/)[0];
+				let date = value.match(/[\d.]+$/)[0]
+				if (date) {
+					date = date.replace('.', '-');
+					item.date = date;
+				}
 				item.place = value.match(/^(.*)：/)[1];
 				value = value.replace(`${item.place}：`, '').match(/^(.*?) , /)[1];
 			}
@@ -246,7 +250,7 @@ var testCases = [
 						"creatorType": "editor"
 					}
 				],
-				"date": "2019.01",
+				"date": "2019-01",
 				"ISBN": "9787566914798",
 				"abstractNote": "本书以服装以及着装的主体-人作为研究对象，围绕人和服装之间的关系，从服装诱发的心理认知、生理卫生指标、动作行为三方面，将现代服装的一些测量方法进行了系统的介绍。满足市场导向生产模式的需求。本书提供了一些科学性的、有实际使用价值的现代服装测试方法和技术，帮助服装从业人员充分利用人体工效学方法进行科学的服装测量和研究。",
 				"language": "zh-CN",
@@ -340,7 +344,7 @@ var testCases = [
 						"creatorType": "editor"
 					}
 				],
-				"date": "2015.03",
+				"date": "2015-03",
 				"ISBN": "9787560997186",
 				"abstractNote": "本书以基因工程的研究步骤及实际操作中的需要为主线，共分12章，包括基因工程的基本概念、基因工程基本技术原理、基因工程的工具酶和克隆载体、目的基因的克隆、外源基因的原核表达系统等。",
 				"language": "zh-CN",
