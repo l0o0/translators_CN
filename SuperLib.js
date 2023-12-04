@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-01 04:29:13"
+	"lastUpdated": "2023-12-04 10:33:26"
 }
 
 /*
@@ -130,29 +130,41 @@ async function scrape(doc, url) {
 			? { field: match[1].replace(/\s/g, ''), value: ZU.trimInternal(match[2]) }
 			: '';
 	}).filter(element => hashField[element.field]);
-	// Z.debug(contents);
 	for (let { field, value } of contents) {
-		if (['attorneyAgent', 'inventor', 'contributor', 'author'].includes(hashField[field])) {
-			value = value.split(/[,;，；]/).forEach(element => item.creators.push(formatName(element, hashField[field], itemType)
-			));
+		if (ZU.getCreatorsForType(itemType).includes(hashField[field])) {
+			value = value.split(/[;；]/).forEach(element => {
+				element = element.split(/[,，]/);
+				if (/等翻?译$/.test(element[element.length - 1])) {
+					element = element.map(subElement => ({ name: subElement, creatorType: 'translator' }));
+				}
+				else {
+					element = element.map(subElement => {
+						return /译$/.test(subElement)
+							? { name: subElement, creatorType: 'transltor' }
+							: { name: subElement, creatorType: hashField[field] }
+					});
+				}
+				element.forEach(subElement => item.creators.push(formatName(subElement.name, subElement.creatorType)));
+			});
+
+		}
+		else if (field == "出版项" && value.match(/[\d.]+$/)) {
+			let date = value.match(/[\d.]+$/)[0]
+			if (date) {
+				date = date.replace('.', '-');
+				item.date = date;
+			}
+			item.place = value.match(/^(.*)：/)[1];
+			value = value.replace(`${item.place}：`, '').match(/^(.*?) , /)[1];
+		}
+		else if (field == '期号' && value.match(/\d+/)) {
+			value = value.match(/\d+/)[0];
+		}
+		else if (hashField[field] == 'tags') {
+			value = value.split(/[；;-]/g);
+			value.forEach(tag => item.tags.push(tag));
 		}
 		else {
-			if (field == "出版项" && value.match(/[\d.]+$/)) {
-				let date = value.match(/[\d.]+$/)[0]
-				if (date) {
-					date = date.replace('.', '-');
-					item.date = date;
-				}
-				item.place = value.match(/^(.*)：/)[1];
-				value = value.replace(`${item.place}：`, '').match(/^(.*?) , /)[1];
-			}
-			if (field == '期号' && value.match(/\d+/)) {
-				value = value.match(/\d+/)[0];
-			}
-			if (field == "关键词") {
-				value = value.split(/[；;]/);
-				value.forEach(tag => item.tags.push({ tag: tag }));
-			}
 			item[hashField[field]] = value;
 		}
 	}
@@ -160,27 +172,13 @@ async function scrape(doc, url) {
 	item.complete();
 }
 
-function formatName(name, creatorType, itemType) {
-	name = name.replace(/副?主编$|参编$|著$/, "");
+function formatName(name, creatorType) {
+	name = name.replace(/^（.*）|等?(参?副?主?编$|著$|翻?译$)/g, "");
 	var creator = {};
-	var lastSpace = name.lastIndexOf(' ');
-	if (/[A-Za-z]/.test(name) && lastSpace !== -1) {
-		// western name. split on last space
-		creator.firstName = name.substr(0, lastSpace);
-		creator.lastName = name.substr(lastSpace + 1);
+	creator = ZU.cleanAuthor(name, creatorType);
+	if (/[\u4e00-\u9fa5]/.test(name)) {
+		creator.fieldMode = 1;
 	}
-	else if (name.lastIndexOf("·") > 0) {
-		creator.firstName = name;
-		creator.lastName = "";
-	}
-	else {
-		// Chinese name. first character is last name, the rest are first name
-		creator.firstName = name.substr(1);
-		creator.lastName = name.charAt(0);
-	}
-	creator.creatorType = (itemType == 'book')
-		? 'editor'
-		: creatorType;
 	return creator;
 }
 
@@ -195,14 +193,16 @@ var testCases = [
 				"title": "卵巢癌基因共表达网络及预后标志物的研究",
 				"creators": [
 					{
-						"firstName": "云婧",
-						"lastName": "顾",
-						"creatorType": "author"
+						"firstName": "",
+						"lastName": "顾云婧",
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
-						"firstName": "平",
-						"lastName": "朱",
-						"creatorType": "author"
+						"firstName": "",
+						"lastName": "朱平",
+						"creatorType": "author",
+						"fieldMode": 1
 					}
 				],
 				"date": "2020",
@@ -210,7 +210,6 @@ var testCases = [
 				"libraryCatalog": "SuperLib",
 				"publicationTitle": "生物学杂志",
 				"url": "http://jour.ucdrs.superlib.net/views/specific/2929/JourDetail.jsp?dxNumber=100287199277&d=EDA67F761EA0741D8CCBA19AAE292498&s=%E5%9F%BA%E5%9B%A0%E5%85%B1%E8%A1%A8%E8%BE%BE&ecode=utf-8",
-				"volume": "5",
 				"attachments": [],
 				"tags": [
 					{
@@ -240,14 +239,16 @@ var testCases = [
 				"title": "现代服装测试技术",
 				"creators": [
 					{
-						"firstName": "东生",
-						"lastName": "陈",
-						"creatorType": "editor"
+						"firstName": "",
+						"lastName": "陈东生",
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
-						"firstName": "佳",
-						"lastName": "吕",
-						"creatorType": "editor"
+						"firstName": "",
+						"lastName": "吕佳",
+						"creatorType": "author",
+						"fieldMode": 1
 					}
 				],
 				"date": "2019-01",
@@ -257,7 +258,6 @@ var testCases = [
 				"libraryCatalog": "SuperLib",
 				"numPages": "140",
 				"place": "上海",
-				"publisher": "东华大学出版社",
 				"url": "http://book.ucdrs.superlib.net/views/specific/2929/bookDetail.jsp?dxNumber=000017983961&d=215FFAF9EDCF907AB55873FB908C43B2&fenlei=18191301070301",
 				"attachments": [],
 				"tags": [
@@ -279,69 +279,82 @@ var testCases = [
 				"title": "基因工程",
 				"creators": [
 					{
-						"firstName": "振宇",
-						"lastName": "郑",
-						"creatorType": "editor"
+						"firstName": "",
+						"lastName": "郑振宇",
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
-						"firstName": "秀利",
-						"lastName": "王",
-						"creatorType": "editor"
+						"firstName": "",
+						"lastName": "王秀利",
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
-						"firstName": "丹梅",
-						"lastName": "刘",
-						"creatorType": "editor"
+						"firstName": "",
+						"lastName": "刘丹梅",
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
-						"firstName": "运贤",
-						"lastName": "宋",
-						"creatorType": "editor"
+						"firstName": "",
+						"lastName": "宋运贤",
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
-						"firstName": "国梁",
-						"lastName": "陈",
-						"creatorType": "editor"
+						"firstName": "",
+						"lastName": "陈国梁",
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
-						"firstName": "燕",
-						"lastName": "邵",
-						"creatorType": "editor"
+						"firstName": "",
+						"lastName": "邵燕",
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
-						"firstName": "沂淮",
-						"lastName": "胡",
-						"creatorType": "editor"
+						"firstName": "",
+						"lastName": "胡沂淮",
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
-						"firstName": "劲松",
-						"lastName": "阚",
-						"creatorType": "editor"
+						"firstName": "",
+						"lastName": "阚劲松",
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
-						"firstName": "凤桐",
-						"lastName": "韩",
-						"creatorType": "editor"
+						"firstName": "",
+						"lastName": "韩凤桐",
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
-						"firstName": "新城",
-						"lastName": "孙",
-						"creatorType": "editor"
+						"firstName": "",
+						"lastName": "孙新城",
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
-						"firstName": "宏",
-						"lastName": "李",
-						"creatorType": "editor"
+						"firstName": "",
+						"lastName": "李宏",
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
-						"firstName": "锐",
-						"lastName": "张",
-						"creatorType": "editor"
+						"firstName": "",
+						"lastName": "张锐",
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
-						"firstName": "彦芹",
-						"lastName": "王",
-						"creatorType": "editor"
+						"firstName": "",
+						"lastName": "王彦芹",
+						"creatorType": "author",
+						"fieldMode": 1
 					}
 				],
 				"date": "2015-03",
@@ -351,13 +364,18 @@ var testCases = [
 				"libraryCatalog": "SuperLib",
 				"numPages": "375",
 				"place": "武汉",
-				"publisher": "华中科技大学出版社",
 				"series": "全国普通高等院校生物科学类“十二五”规划教材",
 				"url": "http://book.ucdrs.superlib.net/views/specific/2929/bookDetail.jsp?dxNumber=000015416568&d=7C4B0704D86B606CB102A5B3A3EC74CE&fenlei=151206",
 				"attachments": [],
 				"tags": [
 					{
-						"tag": "基因工程-高等学校-教材"
+						"tag": "基因工程"
+					},
+					{
+						"tag": "教材"
+					},
+					{
+						"tag": "高等学校"
 					}
 				],
 				"notes": [],
