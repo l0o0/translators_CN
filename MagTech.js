@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-24 08:52:33"
+	"lastUpdated": "2023-12-01 08:08:32"
 }
 
 /*
@@ -255,9 +255,10 @@ const TAGMAP = {
 };
 
 function isItem(doc) {
-	var insite = doc.querySelector('a[href^="http://www.magtech.com"]');
-	var havetitle = (new Metas(doc)).getMeta(METAMAP.title);
-	if (havetitle && insite) {
+	let insite = doc.querySelector('a[href^="http://www.magtech.com"]');
+	let havetitle = (new Metas(doc)).getMeta(METAMAP.title);
+	let like = doc.querySelector('[class*="magtech"]');
+	if (havetitle && (insite || like)) {
 		return {
 			name: 'Unknown-type',
 			issingle: true
@@ -317,6 +318,7 @@ function getSearchResults(doc, type, checkOnly) {
 
 async function doWeb(doc, url) {
 	var type = WEBTYPE.find(element => (doc.querySelector(element.pagekey)));
+	if (!type) type = isItem(doc);
 	if (detectWeb(doc, url) == 'multiple') {
 		let items = await Zotero.selectItems(getSearchResults(doc, type, false));
 		if (!items) return;
@@ -367,10 +369,11 @@ function cleanKeywordsStr(keywords) {
 }
 
 function str2arr(string) {
-	return string.split(/[(,\s?)|，]/);
+	return string.split(/[,;，；]\s?/);
 }
 
 async function scrape(doc, type, url = doc.location.href) {
+	// Z.debug(type);
 	var metas = new Metas(doc);
 	var newItem = new Z.Item('journalArticle');
 	var language = [
