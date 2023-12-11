@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-10 07:48:12"
+	"lastUpdated": "2023-12-11 14:46:30"
 }
 
 /*
@@ -175,7 +175,7 @@ class ID {
 // var debugMode = false;
 
 function detectWeb(doc, url) {
-	Z.debug("----------------CNKI 2023-12-10 15:45:38------------------");
+	Z.debug("----------------CNKI 2023-12-11 22:04:12------------------");
 	let ids = url.includes('www.cnki.com.cn')
 		// CNKI space
 		? new ID(url)
@@ -309,7 +309,7 @@ function getSearchResults(doc, url, checkOnly) {
 			// In Chinese Mainland, it is usually dynamic,
 			// while overseas is composed of fixed ids.filename.
 			cookieName: attr(row, '[name="CookieName"]', 'value'),
-			downloadlink: attr(row, 'td.operat > a')
+			downloadlink: attr(row, 'td.operat > a.downloadlink', 'href')
 		})] = `【${i + 1}】${title}`;
 		// Z.debug(items);
 	}
@@ -801,15 +801,15 @@ function fixItem(newItem, doc, ids, itemKey) {
 	var keepPDF = Z.getHiddenPref('CNKIPDF');
 	if (keepPDF === undefined) keepPDF = true;
 	if (ids.url.includes('KXReader/Detail')) {
-		newItem.attachments = [
-			{
-				title: 'Snapshot',
-				document: doc
-			}
-		];
+		newItem.attachments.push({
+			title: 'Snapshot',
+			document: doc
+		});
 	}
 	else {
-		newItem.attachments = getAttachments(doc, keepPDF);
+		getAttachments(doc, keepPDF, itemKey).forEach((attachment) => {
+			newItem.attachments.push(attachment);
+		});
 	}
 	return newItem;
 }
@@ -857,10 +857,12 @@ async function scrapeZhBook(doc, url) {
 }
 
 // add pdf or caj to attachments, default is pdf
-function getAttachments(doc, keepPDF) {
+function getAttachments(doc, keepPDF, itemKey) {
 	var attachments = [];
 	let pdfurl = attr(doc, 'a[id^="pdfDown"]', 'href') || attr(doc, 'a[href*="/down/"]', 'href', 1);
-	let cajurl = attr(doc, 'a#cajDown', 'href') || attr(doc, 'a[href*="/down/"]', 'href', 0);
+	Z.debug(`get PDF Link:\n${pdfurl}`);
+	let cajurl = attr(doc, 'a#cajDown', 'href') || attr(doc, 'a[href*="/down/"]', 'href', 0) || itemKey.downloadlink;
+	Z.debug(`get CAJ link:\n${cajurl}`);
 	if (keepPDF && pdfurl) {
 		attachments.push({
 			title: 'Full Text PDF',
@@ -868,12 +870,15 @@ function getAttachments(doc, keepPDF) {
 			url: pdfurl
 		});
 	}
-	else {
+	else if (cajurl) {
 		attachments.push({
 			title: 'Full Text CAJ',
 			mimeType: 'application/caj',
 			url: cajurl
 		});
+	}
+	else {
+		attachments = [];
 	}
 	return attachments;
 }
