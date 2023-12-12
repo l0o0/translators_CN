@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-06-29 06:13:17"
+	"lastUpdated": "2023-12-12 08:43:39"
 }
 
 /*
@@ -121,7 +121,6 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://openstd.samr.gov.cn/bzgk/gb/newGbInfo?hcno=ADAA308A0BE559EC29E773B71591F463",
-		"detectedItemType": "standard",
 		"items": [
 			{
 				"itemType": "standard",
@@ -138,7 +137,6 @@ var testCases = [
 				"language": "zh-CN",
 				"libraryCatalog": "国家标准全文公开系统",
 				"number": "GB 3100—1993",
-				"publisher": "国家技术监督局",
 				"status": "现行",
 				"url": "https://openstd.samr.gov.cn/bzgk/gb/newGbInfo?hcno=ADAA308A0BE559EC29E773B71591F463",
 				"attachments": [
@@ -156,7 +154,6 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://openstd.samr.gov.cn/bzgk/gb/newGbInfo?hcno=7FA63E9BBA56E60471AEDAEBDE44B14C",
-		"detectedItemType": "standard",
 		"items": [
 			{
 				"itemType": "standard",
@@ -173,7 +170,6 @@ var testCases = [
 				"language": "zh-CN",
 				"libraryCatalog": "国家标准全文公开系统",
 				"number": "GB/T 7714—2015",
-				"publisher": "中华人民共和国国家质量监督检验检疫总局、中国国家标准化管理委员会",
 				"status": "现行",
 				"url": "https://openstd.samr.gov.cn/bzgk/gb/newGbInfo?hcno=7FA63E9BBA56E60471AEDAEBDE44B14C",
 				"attachments": [

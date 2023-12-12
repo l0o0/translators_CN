@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-06-27 17:37:20"
+	"lastUpdated": "2023-12-12 08:42:32"
 }
 
 /*
@@ -133,7 +133,11 @@ function doWeb(doc, url) {
 				}
 				break;
 			case '标准语言':
-				item.language = value.toLowerCase();
+				let language = value.toLowerCase();
+				if (language === 'en') {
+					language = 'en-US';
+				}
+				item.language = language;
 				break;
 			default:
 				break;
@@ -153,7 +157,6 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://std.samr.gov.cn/gb/search/gbDetailed?id=71F772D7AA78D3A7E05397BE0A0AB82A",
-		"detectedItemType": "standard",
 		"items": [
 			{
 				"itemType": "standard",
@@ -187,7 +190,6 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://std.samr.gov.cn/gb/search/gbDetailed?id=71F772D8055ED3A7E05397BE0A0AB82A",
-		"detectedItemType": "standard",
 		"items": [
 			{
 				"itemType": "standard",
@@ -221,7 +223,6 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://std.samr.gov.cn/hb/search/stdHBDetailed?id=8B1827F23645BB19E05397BE0A0AB44A",
-		"detectedItemType": "standard",
 		"items": [
 			{
 				"itemType": "standard",
@@ -238,6 +239,7 @@ var testCases = [
 				"language": "zh-CN",
 				"libraryCatalog": "全国标准信息公共服务平台",
 				"number": "CY/T 154—2017",
+				"status": "现行",
 				"url": "https://std.samr.gov.cn/hb/search/stdHBDetailed?id=8B1827F23645BB19E05397BE0A0AB44A",
 				"attachments": [
 					{
@@ -254,7 +256,6 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=3E25D6F98CDEEE0578BCF0333B17EECF",
-		"detectedItemType": "standard",
 		"items": [
 			{
 				"itemType": "standard",
@@ -267,7 +268,7 @@ var testCases = [
 					}
 				],
 				"date": "2021-06-11",
-				"language": "en",
+				"language": "en-US",
 				"libraryCatalog": "全国标准信息公共服务平台",
 				"number": "ISO 690:2021",
 				"status": "现行",
@@ -287,7 +288,6 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=373C3505A9085559695051CCF9F59895",
-		"detectedItemType": "standard",
 		"items": [
 			{
 				"itemType": "standard",
@@ -300,7 +300,7 @@ var testCases = [
 					}
 				],
 				"date": "2020-12-21",
-				"language": "en",
+				"language": "en-US",
 				"libraryCatalog": "全国标准信息公共服务平台",
 				"number": "ISO/IEC 10646:2020",
 				"status": "现行",
@@ -319,10 +319,10 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=B918D134293DC9AF17BD9A5FCB5C24B2",
+		"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=90EA7F0D4DF6771A08464E35E322E8BE",
 		"items": [
 			{
-				"itemType": "report",
+				"itemType": "standard",
 				"title": "Quantities and units — Part 2: Mathematics",
 				"creators": [
 					{
@@ -332,12 +332,12 @@ var testCases = [
 					}
 				],
 				"date": "2019-08-26",
-				"extra": "Type: standard",
-				"language": "en",
+				"language": "en-US",
 				"libraryCatalog": "全国标准信息公共服务平台",
-				"reportNumber": "ISO 80000-2:2019",
+				"number": "ISO 80000-2:2019",
 				"shortTitle": "Quantities and units — Part 2",
-				"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=B918D134293DC9AF17BD9A5FCB5C24B2",
+				"status": "现行",
+				"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=90EA7F0D4DF6771A08464E35E322E8BE",
 				"attachments": [
 					{
 						"title": "Snapshot",
