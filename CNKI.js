@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-11 14:46:30"
+	"lastUpdated": "2023-12-12 10:13:20"
 }
 
 /*
@@ -119,11 +119,6 @@ class ID {
 			CDFD: 'thesis',
 			// 硕士 dissertation zh
 			CMFD: 'thesis',
-			// 下面两个未在页面上见到
-			CDMH: 'thesis',
-			CLKM: 'thesis',
-			CHKN: 'newspaperArticle',
-			CHKJ: 'newspaperArticle',
 			// 报纸 newspaper zh
 			CCND: 'newspaperArticle',
 			// 中国专利 patent zh
@@ -159,6 +154,14 @@ class ID {
 			SOSD: 'standard',
 			// 成果 achievements
 			// SNAD
+			/* hospital */
+			// https://chkdx.cnki.net/kns8/#/
+			CLKM: 'thesis',
+			CHKJ: 'journalArticle',
+			PUBMED: 'journalArticle',
+			CDMH: 'thesis',
+			CHKP: 'conferencePaper',
+			CHKN: 'newspaperArticle'
 		};
 		return typeMap[this.dbcode];
 	}
@@ -175,7 +178,7 @@ class ID {
 // var debugMode = false;
 
 function detectWeb(doc, url) {
-	Z.debug("----------------CNKI 2023-12-11 22:04:12------------------");
+	Z.debug("----------------CNKI 2023-12-12 17:01:15------------------");
 	let ids = url.includes('www.cnki.com.cn')
 		// CNKI space
 		? new ID(url)
@@ -215,15 +218,16 @@ function detectWeb(doc, url) {
 		/search\.cnki\.com/i,
 		// seems outdated
 		/kns\/brief\/(default_)?result\.aspx/i,
-		// seems outdated
-		/kns8\/#\/\?/i
+		// https://chkdx.cnki.net/kns8/#/
+		/kns8\/#\//i
 	];
 	// #ModuleSearchResult for commom CNKI,
 	// #contentPanel for journal/yearbook navigation,
 	// .main_sh for oldversion,
 	// .resault-cont for CNKI space
 	// #content for geology version
-	let searchResult = doc.querySelector('#ModuleSearchResult, #contentPanel, .main_sh, .resault-cont, #content');
+	// .main.clearfix for hospital version
+	let searchResult = doc.querySelector('#ModuleSearchResult, #contentPanel, .main_sh, .resault-cont, #content, .main.clearfix');
 	if (searchResult) {
 		Z.monitorDOMChanges(searchResult, { childList: true, subtree: true });
 	}
@@ -275,18 +279,26 @@ function getSearchResults(doc, url, checkOnly) {
 		},
 
 		/* geology */
+		// https://dizhi.cnki.net/
 		{
 			pattern: /\/search\/index?/i,
 			rowSlector: '.s-single',
 			aSlector: 'h1 > a'
 		},
 
+		/* hospital */
+		// https://chkdx.cnki.net/kns8/#/
+		{
+			pattern: /chkdx\.cnki\.net/,
+			rowSlector: 'table.list_table tbody tr',
+			aSlector: 'td.seq+td > a'
+		},
+
 		/* commom */
 		{
 			pattern: /.*/i,
-			// 'table.list_table tbody tr' design for https://chkdx.cnki.net, the hospital version of CNKI
-			rowSlector: 'table.result-table-list tbody tr,table.list_table tbody tr',
-			aSlector: 'td.name > a,td.seq+td > a'
+			rowSlector: 'table.result-table-list tbody tr',
+			aSlector: 'td.name > a'
 		}
 	];
 	var type = searchTypes.find(element => element.pattern.test(url));
@@ -317,9 +329,9 @@ function getSearchResults(doc, url, checkOnly) {
 }
 
 async function doWeb(doc, url) {
-	// "NZKPT" is marked as Chinese Mainland.
 	// Because CNKI has different APIs inside and outside Chinese Mainland, it needs to be differentiated.
-	const inMainland = doc.querySelector('a[href*="NZKPT"], a[href*="DKCT"], a[href*="cnkispace"]');
+	const inMainland = Boolean(!/oversea/i.test(url));
+	Z.debug(`inMainland: ${inMainland}`);
 	let ids = new ID(doc, url);
 
 	/*
@@ -655,7 +667,7 @@ async function scrapeDoc(doc, ids, itemKey) {
 	/* title */
 	newItem.title = getPureText(doc.querySelector('div.doc h1, .h1-scholar, #chTitle'));
 	if (newItem.title.includes('\n')) {
-		newItem.extra += `titleTranslation: ${newItem.title.split('\n')[1]}`;
+		newItem.extra += addExtra(newItem.title.split('\n')[1], 'titleTranslation');
 		newItem.title = newItem.title.split('\n')[0];
 	}
 	newItem.title = newItem.title.replace(/MT翻译$/, '');
@@ -674,7 +686,7 @@ async function scrapeDoc(doc, ids, itemKey) {
 		// standard
 	].find(element => element.length);
 	newItem.creators = creators.map(element => ZU.cleanAuthor(element, 'author'));
-	let mentor = labels.getWith('导师').split(/[,.，；\d]\s*/);
+	let mentor = labels.getWith('导师').split(/[,;，；\d]\s*/);
 	if (mentor.length) {
 		mentor.forEach(element => newItem.creators.push(ZU.cleanAuthor(element, 'contributor')));
 	}
@@ -711,6 +723,7 @@ function fixItem(newItem, doc, ids, itemKey) {
 	let labels = new Labels(doc, 'div.doc span.rowtit, #content p, .summary li.pdfN');
 	Z.debug('get labels:');
 	Z.debug(labels.innerData.map(element => element.innerText));
+	newItem.extra = newItem.extra ? newItem.extra : '';
 	switch (newItem.itemType) {
 		case 'journalArticle':
 			// CN 中国刊物编号，非refworks中的callNumber
@@ -757,7 +770,7 @@ function fixItem(newItem, doc, ids, itemKey) {
 		.replace(/\s*[\r\n]\s*/g, '\n')
 		.replace(/&lt;.*?&gt;/g, '')
 		.replace(/^＜正＞/, '');
-	if (itemKey.cite) newItem.extra += `\ncite: ${itemKey.cite}`;
+	newItem.extra += addExtra(itemKey.cite, 'cite');
 	// Build a shorter url
 	let url = itemKey.url || ids.url || '';
 	newItem.url = /kcms2/i.test(url)
@@ -775,7 +788,9 @@ function fixItem(newItem, doc, ids, itemKey) {
 		}
 	});
 	if (doc.querySelector('.icon-shoufa')) {
-		newItem.itemType = 'preprint';
+		newItem.extra += 'status: advance online publication\n';
+		newItem.extra += addExtra(newItem.data, 'available-date');
+		// delete newItem.date;
 		newItem.date = tryMatch(innerText(doc, '.head-time, .head-tag'), /：([\d-]*)/, 1);
 	}
 	newItem.language = ids.toLanguage();
@@ -852,7 +867,7 @@ async function scrapeZhBook(doc, url) {
 	bookItem.language = 'zh-CN';
 	bookItem.ISBN = data.get('国际标准书号ISBN');
 	bookItem.libraryCatalog = data.get('所属分类');
-	bookItem.extra = `cite: ${text(doc, '.book_zb_yy span:last-child')}`;
+	bookItem.extra = addExtra(text(doc, '.book_zb_yy span:last-child'), 'cite');
 	bookItem.complete();
 }
 
@@ -889,10 +904,10 @@ class Labels {
 		this.innerData = Array.from(doc.querySelectorAll(selector));
 	}
 
-	getWith(label, next = true) {
+	getWith(label) {
 		if (Array.isArray(label)) {
 			let result = label
-				.map(element => this.getWith(element, next))
+				.map(element => this.getWith(element))
 				.filter(element => element);
 			return result.length
 				? result.find(element => element)
@@ -932,6 +947,12 @@ function getPureText(element) {
 		elementCopy.removeChild(elementCopy.lastElementChild);
 	}
 	return elementCopy.innerText;
+}
+
+function addExtra(value, key) {
+	return value
+		? `${key}: ${value}\n`
+		: '';
 }
 
 /** BEGIN TEST CASES **/
@@ -982,7 +1003,7 @@ var testCases = [
 					}
 				],
 				"date": "2014",
-				"abstractNote": "来自中药的水溶性多糖具有广谱治疗和低毒性特点,是天然药物及保健品研发中的重要组成部分。针对中药多糖结构复杂、难以表征的问题,本文以中药黄芪中的多糖为研究对象,采用\"自下而上\"法完成对黄芪多糖的表征。首先使用部分酸水解方法水解黄芪多糖,分别考察了水解时间、酸浓度和温度的影响。在适宜条件(4 h、1.5mol/L三氟乙酸、80℃)下,黄芪多糖被水解为特征性的寡糖片段。接下来,采用亲水作用色谱与质谱联用对黄芪多糖部分酸水解产物进行分离和结构表征。结果表明,提取得到的黄芪多糖主要为1→4连接线性葡聚糖,水解得到聚合度4~11的葡寡糖。本研究对其他中药多糖的表征具有一定的示范作用。",
+				"abstractNote": "来自中药的水溶性多糖具有广谱治疗和低毒性特点,是天然药物及保健品研发中的重要组成部分。针对中药多糖结构复杂、难以表征的问题,本文以中药黄芪中的多糖为研究对象,采用\"自下而上\"法完成对黄芪多糖的表征。首先使用部分酸水解方法水解黄芪多糖,分别考察了水解时间、酸浓度和温度的影响。在适宜条件（4 h、1.5mol/L三氟乙酸、80℃）下,黄芪多糖被水解为特征性的寡糖片段。接下来,采用亲水作用色谱与质谱联用对黄芪多糖部分酸水解产物进行分离和结构表征。结果表明,提取得到的黄芪多糖主要为1→4连接线性葡聚糖,水解得到聚合度4~11的葡寡糖。本研究对其他中药多糖的表征具有一定的示范作用。",
 				"archiveLocation": "CNKI",
 				"issue": "12",
 				"language": "zh-CN",
@@ -993,8 +1014,8 @@ var testCases = [
 				"volume": "32",
 				"attachments": [
 					{
-						"title": "Full Text CAJ",
-						"mimeType": "application/caj"
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
 					}
 				],
 				"tags": [
@@ -1050,7 +1071,7 @@ var testCases = [
 					}
 				],
 				"date": "2017",
-				"abstractNote": "黄瓜(Cucumis sativus L.)是我国最大的保护地栽培蔬菜作物,也是植物性别发育和维管束运输研究的重要模式植物。黄瓜基因组序列图谱已经构建完成,并且在此基础上又完成了全基因组SSR标记开发和涵盖330万个变异位点变异组图谱,成为黄瓜功能基因研究的重要平台和工具,相关转录组研究也有很多报道,不过共表达网络研究还是空白。本实验以温室型黄瓜9930为研究对象,选取10个不同组织,进行转录组测序,获得10份转录组原始数据。在对原始数据去除接头与低质量读段后,将高质量读段用Tophat2回贴到已经发表的栽培黄瓜基因组序列上。用Cufflinks对回贴后的数据计算FPKM值,获得10份组织的24274基因的表达量数据。计算结果中的回贴率比较理想,不过有些基因的表达量过低。为了防止表达量低的基因对结果的影响,将10份组织中表达量最大小于5的基因去除,得到16924个基因,进行下一步分析。共表达网络的构建过程是将上步获得的表达量数据,利用R语言中WGCNA(weighted gene co-expression network analysis)包构建共表达网络。结果得到的共表达网络包括1134个模块。这些模块中的基因表达模式类似,可以认为是共表达关系。不过结果中一些模块内基因间相关性同其他模块相比比较低,在分析过程中,将模块中基因相关性平均值低于0.9的模块都去除,最终得到839个模块,一共11,844个基因。共表达的基因因其表达模式类似而聚在一起,这些基因可能与10份组织存在特异性关联。为了计算模块与组织间的相关性,首先要对每个模块进行主成分分析(principle component analysis,PCA),获得特征基因(module eigengene,ME),特征基因可以表示这个模块所有基因共有的表达趋势。通过计算特征基因与组织间的相关性,从而挑选出组织特异性模块,这些模块一共有323个。利用topGO功能富集分析的结果表明这些特异性模块所富集的功能与组织相关。共表达基因在染色体上的物理位置经常是成簇分布的。按照基因间隔小于25kb为标准。分别对839个模块进行分析,结果发现在71个模块中共有220个cluster,这些cluster 一般有2～5个基因,cluster中的基因在功能上也表现出一定的联系。共表达基因可能受到相同的转录调控,这些基因在启动子前2kb可能会存在有相同的motif以供反式作用元...",
+				"abstractNote": "黄瓜（Cucumis sativus L.）是我国最大的保护地栽培蔬菜作物,也是植物性别发育和维管束运输研究的重要模式植物。黄瓜基因组序列图谱已经构建完成,并且在此基础上又完成了全基因组SSR标记开发和涵盖330万个变异位点变异组图谱,成为黄瓜功能基因研究的重要平台和工具,相关转录组研究也有很多报道,不过共表达网络研究还是空白。本实验以温室型黄瓜9930为研究对象,选取10个不同组织,进行转录组测序,获得10份转录组原始数据。在对原始数据去除接头与低质量读段后,将高质量读段用Tophat2回贴到已经发表的栽培黄瓜基因组序列上。用Cufflinks对回贴后的数据计算FPKM值,获得10份组织的24274基因的表达量数据。计算结果中的回贴率比较理想,不过有些基因的表达量过低。为了防止表达量低的基因对结果的影响,将10份组织中表达量最大小于5的基因去除,得到16924个基因,进行下一步分析。共表达网络的构建过程是将上步获得的表达量数据,利用R语言中WGCNA（weighted gene co-expression network analysis）包构建共表达网络。结果得到的共表达网络包括1134个模块。这些模块中的基因表达模式类似,可以认为是共表达关系。不过结果中一些模块内基因间相关性同其他模块相比比较低,在分析过程中,将模块中基因相关性平均值低于0.9的模块都去除,最终得到839个模块,一共11,844个基因。共表达的基因因其表达模式类似而聚在一起,这些基因可能与10份组织存在特异性关联。为了计算模块与组织间的相关性,首先要对每个模块进行主成分分析（principle component analysis,PCA）,获得特征基因（module eigengene,ME）,特征基因可以表示这个模块所有基因共有的表达趋势。通过计算特征基因与组织间的相关性,从而挑选出组织特异性模块,这些模块一共有323个。利用topGO功能富集分析的结果表明这些特异性模块所富集的功能与组织相关。共表达基因在染色体上的物理位置经常是成簇分布的。按照基因间隔小于25kb为标准。分别对839个模块进行分析,结果发现在71个模块中共有220个cluster,这些cluster 一般有2～5个基因,cluster中的基因在功能上也表现出一定的联系。共表达基因可能受到相同的转录调控,这些基因在启动子前2kb可能会存在有相同的motif以供反式作用元件的结合起到调控作用。对839个模块中的基因,提取启动子前2kb的序列,上传到PLACE网站进行motif分析。显著性分析的结果表明一共有367个motif存在富集,其中6个motif已经证实在黄瓜属植物中发挥作用。最后结合已经发表的黄瓜苦味生物合成途径研究,找到了 3个模块,已经找到的11个基因中,有10个基因在这4个模块中。这些模块的功能富集也显示与苦味合成相关,同时这些参与合成的基因在染色体上也成簇分布。本论文所描述的方法结合了转录组测序与网络分析方法,发现了黄瓜中的共表达基因模块,为黄瓜基因的共表达分析提供了非常重要的研究基础和数据支持。",
 				"archiveLocation": "CNKI",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
@@ -1059,8 +1080,8 @@ var testCases = [
 				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CMFD&dbname=CMFD201701&filename=1017045605.nh&v=MDc3ODZPZVorVnZGQ3ZrV3JyT1ZGMjZHYk84RzlmTXFwRWJQSVI4ZVgxTHV4WVM3RGgxVDNxVHJXTTFGckNVUkw=",
 				"attachments": [
 					{
-						"title": "Full Text CAJ",
-						"mimeType": "application/caj"
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
 					}
 				],
 				"tags": [
@@ -1098,19 +1119,18 @@ var testCases = [
 					}
 				],
 				"date": "1990-10",
-				"abstractNote": "<正>辽西区的范围从大兴安岭南缘到渤海北岸,西起燕山西段,东止辽河平原,基本上包括内蒙古的赤峰市(原昭乌达盟)、哲里木盟西半部,辽宁省西部和河北省的承德、唐山、廊坊及其邻近的北京、天津等地区。这一地区的古人类遗存自旧石器时代晚期起,就与同属东北的辽东区有着明显的不同,在后来的发展中,构成自具特色的一个考古学文化区,对我国东北部起过不可忽视的作用。以下就辽西地区新石器时代的考古学文化序列、编年、谱系及有关问题简要地谈一下自己的认识。",
+				"abstractNote": "辽西区的范围从大兴安岭南缘到渤海北岸,西起燕山西段,东止辽河平原,基本上包括内蒙古的赤峰市（原昭乌达盟）、哲里木盟西半部,辽宁省西部和河北省的承德、唐山、廊坊及其邻近的北京、天津等地区。这一地区的古人类遗存自旧石器时代晚期起,就与同属东北的辽东区有着明显的不同,在后来的发展中,构成自具特色的一个考古学文化区,对我国东北部起过不可忽视的作用。以下就辽西地区新石器时代的考古学文化序列、编年、谱系及有关问题简要地谈一下自己的认识。",
 				"archiveLocation": "CNKI",
 				"conferenceName": "内蒙古东部地区考古学术研讨会",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "6",
 				"place": "中国内蒙古赤峰",
-				"proceedingsTitle": "内蒙古东部地区考古学术研讨会",
 				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CPFD&dbname=CPFD9908&filename=OYDD199010001004&v=MDI5NTRITnI0OUZaZXNQQ0JOS3VoZGhuajk4VG5qcXF4ZEVlTU9VS3JpZlplWnZGeW5tVTdqSkpWb1RLalRQYXJLeEY5",
 				"attachments": [
 					{
-						"title": "Full Text CAJ",
-						"mimeType": "application/caj"
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
 					}
 				],
 				"tags": [],
@@ -1135,7 +1155,7 @@ var testCases = [
 					},
 					{
 						"firstName": "",
-						"lastName": "陈建康",
+						"lastName": "陈建康fjslcjk@.com",
 						"creatorType": "author",
 						"fieldMode": 1
 					},
@@ -1153,19 +1173,17 @@ var testCases = [
 					}
 				],
 				"date": "2020",
-				"abstractNote": "目的利用生物信息学方法探索2型糖尿病发病的相关基因,并研究这些基因与阿尔茨海默病的关系。方法基因表达汇编(GEO)数据库下载GSE85192、GSE95849、GSE97760、GSE85426数据集,获得健康人和2型糖尿病患者外周血的差异基因,利用加权基因共表达网络(WGCNA)分析差异基因和临床性状的关系。使用DAVID数据库分析与2型糖尿病有关的差异基因的功能与相关通路,筛选关键蛋白。根据结果将Toll样受体4 (TLR4)作为关键基因,利用基因集富集分析(GSEA)分析GSE97760中与高表达TLR4基因相关的信号通路。通过GSE85426验证TLR4的表达量。结果富集分析显示,差异基因主要参与的生物学过程包括炎症反应、Toll样受体(TLR)信号通路、趋化因子产生的正向调节等。差异基因主要参与的信号通路有嘧啶代谢通路、TLR信号通路等。ILF2、TLR4、POLR2G、MMP9为2型糖尿病的关键基因。GSEA显示,TLR4上调可通过影响嘧啶代谢及TLR信号通路而导致2型糖尿病及阿尔茨海默病的发生。TLR4在阿尔茨海默病外周血中高表达。结论 ILF2、TLR4、POLR2G、MMP9为2型糖尿病发病的关键基因,TLR4基因上调与2型糖尿病、阿尔茨海默病发生有关。",
-				"archiveLocation": "CNKI",
+				"abstractNote": "目的利用生物信息学方法探索2型糖尿病发病的相关基因,并研究这些基因与阿尔茨海默病的关系。方法基因表达汇编（GEO）数据库下载GSE85192、GSE95849、GSE97760、GSE85426数据集,获得健康人和2型糖尿病患者外周血的差异基因,利用加权基因共表达网络（WGCNA）分析差异基因和临床性状的关系。使用DAVID数据库分析与2型糖尿病有关的差异基因的功能与相关通路,筛选关键蛋白。根据结果将Toll样受体4 （TLR4）作为关键基因,利用基因集富集分析（GSEA）分析GSE97760中与高表达TLR4基因相关的信号通路。通过GSE85426验证TLR4的表达量。结果富集分析显示,差异基因主要参与的生物学过程包括炎症反应、Toll样受体（TLR）信号通路、趋化因子产生的正向调节等。差异基因主要参与的信号通路有嘧啶代谢通路、TLR信号通路等。ILF2、TLR4、POLR2G、MMP9为2型糖尿病的关键基因。GSEA显示,TLR4上调可通过影响嘧啶代谢及TLR信号通路而导致2型糖尿病及阿尔茨海默病的发生。TLR4在阿尔茨海默病外周血中高表达。结论 ILF2、TLR4、POLR2G、MMP9为2型糖尿病发病的关键基因,TLR4基因上调与2型糖尿病、阿尔茨海默病发生有关。",
 				"issue": "12",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
-				"pages": "1106-1111+1117",
 				"publicationTitle": "中国医科大学学报",
 				"url": "https://chn.oversea.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFD&dbname=CJFDLAST2020&filename=ZGYK202012011&v=%25mmd2BHGGqe3MG%25mmd2FiWsTP5sBgemYG4X5LOYXSuyd0Rs%25mmd2FAl1mzrLs%25mmd2F7KNcFfXQMiFAipAgN",
 				"volume": "49",
 				"attachments": [
 					{
-						"title": "Full Text CAJ",
-						"mimeType": "application/caj"
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
 					}
 				],
 				"tags": [
@@ -1259,7 +1277,6 @@ var testCases = [
 				],
 				"date": "2015",
 				"abstractNote": "8.1||简介\n淀粉是以谷类、薯类、豆类为原料,不经过任何化学方法处理,也不改变淀粉内在的物理和化学特性加工而成的。它是日常生活中必不可少的作料之一,如煎炸烹炒,做汤勾芡都少不了要用到淀粉。随着食用淀粉在现代食品加工业中的广泛应用,淀粉生产和加工贸易取得了较大的发展。常见的产品主要有玉米淀粉、马铃薯淀粉、红薯淀粉和绿豆淀粉等,不同种类的淀粉价格差别较大,有的相差高达10倍以上,但是不同种类淀粉颗粒的宏观外观和普通物化指标差别不明显,无法辨认。由于缺乏相应的食用淀粉鉴别检验技术标准,国内淀粉市场严格监管很难执...",
-				"extra": "cite:",
 				"language": "zh-CN",
 				"publisher": "机械工业出版社",
 				"attachments": [],
@@ -1310,11 +1327,14 @@ var testCases = [
 				],
 				"date": "2014",
 				"abstractNote": "第5代移动通信系统(5G)是面向2020年之后的新一代移动通信系统,其技术发展尚处于探索阶段.结合国内外移动通信发展的最新趋势,本文对5G移动通信发展的基本需求、技术特点与可能发展途径进行了展望,并分无线传输和无线网络两个部分,重点论述了富有发展前景的7项5G移动通信关键技术,包括大规模天线阵列、基于滤波器组的多载波技术、全双工复用、超密集网络、自组织网络、软件定义网络及内容分发网络.本文还概括性地介绍了国内5G移动通信的相关研发活动及其近期发展目标.",
+				"archiveLocation": "CNKI",
 				"issue": "5",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
+				"pages": "551-563",
 				"publicationTitle": "中国科学:信息科学",
 				"url": "https://inds.cnki.net/kcms/detail?dbcode=&dbname=DKCTLKCJFD2014&filename=PZKX201405001&pcode=DKCT&zylx=",
+				"volume": "44",
 				"attachments": [
 					{
 						"title": "Full Text PDF",
@@ -1375,6 +1395,7 @@ var testCases = [
 				],
 				"date": "2023",
 				"abstractNote": "含铜废水污染广泛、毒性大,已严重威胁生态环境和人体健康。吸附法是一种常见的金属铜去除方法,通过物理化学吸附作用广泛应用于富集和分离金属铜。由于环境介质中污染情况复杂,环境污染风险高,因此需要一种针对于目标离子高效去除及选择性识别能力的技术。表面离子印迹技术通过选择合适的功能单体、交联剂及基底材料制备针对于目标离子形成特异性识别位点的材料,具有较高的选择性。本文以氧化石墨烯（GO）为印迹母体材料、四氧化三铁（Fe3O4/M）为磁性组分,二价铜离子（Cu（Ⅱ））作为模版离子,经过有机-无机杂化功能单体ATPES（硅烷偶联剂350）-MAA（甲基丙烯酸）,以及交联剂二甲基丙烯酸乙二醇酯（EGDMA）结合作用,成功制备了高效选择去除铜离子的铜离子表面印迹聚合物（MS/MGO-Cu-iip）。为确定该材料的最佳合成及反应条件,本文通过功能单体喂料比,动力学,热力学分析等进行探究。此外,在印迹材料循环吸附重金属五次后,吸附剂吸附能力下降,对于废弃物处理需要一种经济、高效的手段来有效利用印迹材料。本文制备的铜离子印迹材料不但解决了污水中铜污染的问题,并且将铜离子印迹材料作为一种高效的催化剂活性成分,直接加间接催化降解四环素,大大提高了材料回收利用及环保的经济价值。针对于将MS/MGO-Cu-iip磁性回收并将其作为非均相催化剂结合氧气催化降解四环素（TC）是本研究的亮点,本文主要结论如下:（1）硅烷偶联剂（APTES）和甲基丙烯酸（MAA）的喂料比是材料吸附性能效果的重要因素。最佳合成条件为:APTES 14 m L、MAA 51 m L、Cu（Ⅱ）8 mmol、MGO 0.5 g。探究了Zn（Ⅱ）、Pb（Ⅱ）、Cd（Ⅱ）和Ni（Ⅱ）作为Cu（Ⅱ）的对比离子进行竞争的影响。结果表明,影响吸附容量的因素为金属离子的水合离子半径,并且在双元体系中,MS/MGO-Cu-iip对Cu（II）吸附容量有所下降,但下降效果有限。MS/MGO-Cu-iip对铜离子具有较高的选择性吸附效果。（2）通过扫描电镜（SEM）、磁敏性分析（VSM）、比表面积,孔径分析（BET）、X射线晶体衍射表征分析（XRD）对MS/MGO-Cu-iip进行表征分析。结果表明:反应前MS/MGO-Cu-iip材料表面呈不规则且具有丰富印迹空穴结构,反应后印迹空穴成功捕获铜离子,致使吸附位点充分填充;与磁性氧化石墨烯（MGO）相比,印迹材料的制备导致MS/MGO-Cu-iip比饱和磁场强度在一定程度上减弱,但材料仍为超顺磁性。两者的饱和磁化强度分别为42.2 emu/g和57.3 emu/g。BET分析表明,表面印迹材料为介孔材料,MGO与MS/MGO-Cu-iip的比表面积分别为88.54 m2/g和155.55 m2/g;Fe3O4成功结合在GO之上,且交联过程没有改变材料的基本结构。MS/MGO-Cu-iip在5次循环使用后,可用反应位点不断减少,其对Cu（Ⅱ）吸附性能逐步下降到80%以下。（3）为了使循环后的印迹材料“变废为宝”。针对MS/MGO-Cu-iip作为非均相催化剂高效利用,进行四环素（TC）的催化降解。结果表明,在不同材料投加量和TC初始投加量下,MS/MGO-Cu-iip活化活性氧物质（ROS）对TC的去除效果均好于单独使用GO或MGO。值得注意的是,由于铜离子的介入,致使非均相催化剂相较于传统芬顿反应,在中性条件下也具有良好的TC去除效果。在自由基淬灭试验中,O2·-为TC去除反应的主要活性自由基。此外,依据通氮气和脱附试验计算,TC对MS/MGO-Cu-iip的吸附率和降解率分别为30.98%和63.10%。其中,MS/MGO-Cu-iip对TC的直接降解率和间接降解率分别为45.93%和17.17%。",
+				"archiveLocation": "CNKI",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"thesisType": "硕士",
@@ -1425,7 +1446,56 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=z-q19lQZUWHKwtbssKP1NCvaTen75BAt1H4hllXU6PeIwHvFUpn7OEevEgfhBdBoGIzXGsK9cklpvaeRdS2vmTL-5OMnipsdXEYqZM1l5mkIQVOeEOeeasa7QrP9ssiDf2c6jwKg-4NuosyfYBPL_bNqRxz-xpF4TUp2f9NNass=&uniplatform=NZKPT&language=CHS",
+		"url": "https://www.cnki.com.cn/Article/CJFDTOTAL-ZNJJ202310008.htm",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "“两山”理念的有效载体与实践：林下经济的经济效应、环境效应及其协同逻辑",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "吴伟光",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "许恒",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "王凤婷",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "熊立春",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2023",
+				"abstractNote": "林下经济是生态文明建设背景下推进山区绿色高质量发展、实现“两山”理念的重要载体。本文基于里昂惕夫生产函数和最优生产决策理论刻画林下经济的经济效应、环境效应及其协同的理论模型，并通过对典型案例县的研究，对林下经济的经济效应与环境效应协同发展的理论机制加以印证。研究发现：第一，林下经济经营中，给定其他条件不变，当劳动力投入效率增加时，劳动力投入先增加后降低、林地投入单调递增，林下经济的经济价值也是单调递增，而林下经济的生态价值先增加后降低，林下经济的经济价值和生态价值总和递增；第二，进一步基于扩展模型的分析发现，在适度经营规模下，林下经济产生生态反馈效应，经营主体不再单纯追求经济利润最大化，而是通过降低林地要素的投入来提高林地资源的生态反馈效应，从而提升环境效应，最终实现经济效应和环境效应协同发展；第三，浙江省松阳县的案例剖析表明，在政府的合理扶持下，依靠适度规模经营、生态化种植和三产融合能够实现林下经济的经济效应与环境效应协同发展。因此，林下经济作为“两山”理念的有效载体，应积极推广，通过科学有效经营，能够实现经济效应和环境效应的协同增长。",
+				"archiveLocation": "CNKI",
+				"issue": "10",
+				"language": "zh-CN",
+				"libraryCatalog": "CNKI",
+				"pages": "158-174",
+				"publicationTitle": "中国农村经济",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFD&dbname=CJFDAUTO2023&filename=ZNJJ202310008&v=",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=0kbmF0AymBD1HND9eHRvFYCuAVGD0Nb93xLQ2MKHVCJZJlW_BDgBdYXNnSK5jHWN_iHf2VQVXJsRuu6WpX4kLEFMPSxS1DbJhW7TNKErZpzlKdoxG1iItAP2xfHlxxG7oQnCrw0EDZR3vPEbtpkpLZp7joZ2PGBCCNhcKsdkgB4KuI6Jjpo_7w==&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "book",
@@ -1443,18 +1513,11 @@ var testCases = [
 					}
 				],
 				"ISBN": "9781003326779",
-				"extra": "titleTranslation:",
-				"language": true,
+				"language": "en-US",
 				"libraryCatalog": "CNKI",
 				"shortTitle": "Digital Labour Markets in Central and Eastern European Countries",
-				"url": "https://kns.cnki.net/kcms2/article/abstract?v=z-q19lQZUWHKwtbssKP1NCvaTen75BAt1H4hllXU6PeIwHvFUpn7OEevEgfhBdBoGIzXGsK9cklpvaeRdS2vmTL-5OMnipsdXEYqZM1l5mkIQVOeEOeeasa7QrP9ssiDf2c6jwKg-4NuosyfYBPL_bNqRxz-xpF4TUp2f9NNass=&uniplatform=NZKPT&language=CHS",
-				"attachments": [
-					{
-						"title": "Full Text CAJ",
-						"mimeType": "application/caj",
-						"url": ""
-					}
-				],
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=WWBD&dbname=GARBLAST&filename=STBD4E82AD3A135FE624F109540EB0309791&v=",
+				"attachments": [],
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
@@ -1463,7 +1526,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=UQzSFoOd3Sed1c-wDleVG47j_dcqt6QkqEdpsAOgJS3R4797ADgxz9tJmImFiRC5fn96VbMc8z79zuZu0FEX-656R_KHHjoe2hH5LMSD-f4W7kdVItmGSde3HCUPzakodtORTbqjgVGwpK9sKcA0goOlH_vlgvLqFZ1ZrmGdlIrX6H456mZYfw==&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=0kbmF0AymBAN3G_tA0x3cNr6BW8KkCNRgQMj4ffzWgYqzpiStYZxz-UDBxDYyZZsCrMJafRrp9yHiAK5cEc-5-Ize72bzYYKIb3iJRKUquLF4JkONutAyeMxK_tXjrg3LIuDNh8yBYQrJrl3aWTNoOuaGj5VoS4yj0MKvXeuR0emrm4Sm9y0Dg==&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "book",
@@ -1485,18 +1548,11 @@ var testCases = [
 						"creatorType": "author"
 					}
 				],
-				"extra": "titleTranslation:",
 				"language": "en-US",
 				"libraryCatalog": "CNKI",
 				"shortTitle": "An Optimal Rice Policy for Sierra Leone",
 				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=WWBD&dbname=GARBLAST&filename=SBWB0DC56763FE59D99F4F5419C346A10538&v=",
-				"attachments": [
-					{
-						"title": "Full Text CAJ",
-						"mimeType": "application/caj",
-						"url": ""
-					}
-				],
+				"attachments": [],
 				"tags": [
 					{
 						"tag": "CONSUMER SURPLUS"
@@ -1530,72 +1586,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=UQzSFoOd3SdbBnrSGq7LcuMHMTnkSoLdyyZvMPPpWoI_f6ztm2N9S0xqvj-VQqAvDAR4Rsgm_2PkJCa1KR5Apbt3dPvcD7YnPh_II0FqHvqRAMU6yB5dxBAwPMR0OjB5Lph-OnXIvVK4eNg3uqZ6zZutc7o4QVarVOiNKN2yIKI=&uniplatform=NZKPT&language=CHS",
-		"items": [
-			{
-				"itemType": "conferencePaper",
-				"title": "转录组学和毒力基因调控揭示了异硫氰酸苄酯对金黄色葡萄球菌的抗菌机制",
-				"creators": [
-					{
-						"firstName": "",
-						"lastName": "刘佳楠",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "侯红漫",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "张公亮",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"date": "2023-10-24",
-				"DOI": "10.26914/c.cnkihy.2023.044794",
-				"abstractNote": "金黄色葡萄球菌是一种常见的病原体,可引起多种严重感染。因此,需要高效实用的技术来对抗金黄色葡萄球菌。本研究利用转录组学评估了金黄色葡萄球菌在使用异硫氰酸苄酯(BITC)处理后的变化,以确定其抗菌作用。结果显示,与对照组相比,1/8 MIC BITC处理组有92个差异表达基因,其中42个基因下调。此外,我们还利用STRING分析揭示了34个基因编码的蛋白质相互作用。然后,我们通过qRT-PCR验证了三个重要的毒力基因,包括胶囊多糖合成酶(cp8F)、胶囊多糖生物合成蛋白(cp5D)和热核酸酶(nuc)。此外,还进行了分子对接分析,以研究BITC与cp8F、cp5D和nuc的编码蛋白的作用位点。结果表明,BITC与所选蛋白质的对接分数在-6.00至-6.60kcal/mol之间,证实了这些复合物的稳定性。BITC与这些蛋白质的氨基酸TRP (130)、GLY (10)、ILE (406)、LYS (368)、TYR (192)和ARG (114)形成疏水、氢键、π-π共轭相互作用。这些发现将有助于今后研究BITC对金黄色葡萄球菌的抗菌机制。",
-				"archiveLocation": "CNKI",
-				"conferenceName": "中国食品科学技术学会第二十届年会",
-				"language": "zh-CN",
-				"libraryCatalog": "CNKI",
-				"pages": "2",
-				"place": "中国湖南长沙",
-				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CPFD&dbname=CPFDTEMP&filename=ZGSP202310001012&v=",
-				"attachments": [
-					{
-						"title": "Full Text CAJ",
-						"mimeType": "application/caj"
-					}
-				],
-				"tags": [
-					{
-						"tag": "下调"
-					},
-					{
-						"tag": "异硫氰酸苄酯"
-					},
-					{
-						"tag": "毒力基因"
-					},
-					{
-						"tag": "转录组学"
-					},
-					{
-						"tag": "金黄色葡萄球菌"
-					}
-				],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=UQzSFoOd3ScQwQm3wCi7InRyfzxjaFcCIWM1TfgqicXH5A8wz5A_byK5gYQ0YGsqaQXXTUubuVZtZB32hKTpUCbgx42V72LGUhetdEZ2crL-S5z9-TEpIq-PHnXgk1ko8jhtUiZl-SZqs6R5TSlZB33MopJqKvg4DE8qbf0fQ-8=&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=0kbmF0AymBDSzpcx2urHqMx8lQcW-1F3ZCQgy374ZBRRgARiJ6zHv5JydfUNy5CET8c3v16GHqDNYv2EFJCHoV4Ye6hWNFU4RicQVBRnkFWphDr_-htUvSldCpFzbT78PWQaZxyfMN-U1HPIL0PgNpaUB4R9jBByvv7yU5h-1W8=&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "newspaperArticle",
@@ -1619,8 +1610,8 @@ var testCases = [
 				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CCND&dbname=CCNDLAST2023&filename=KJRB202309210044&v=",
 				"attachments": [
 					{
-						"title": "Full Text CAJ",
-						"mimeType": "application/caj"
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
 					}
 				],
 				"tags": [
@@ -1638,7 +1629,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://t.cnki.net/kcms/article/abstract?v=UQzSFoOd3SdWXxdk8dNI1HXn1jcZcxK8e4IiKPEt-5TsaRYi9gKDUxqgsjrm0u7feqnwZoMci1ilw8hgcwxhIHGfnI-JKGjel6xYy8bfLSCJqXOzqNPLCwwn30jwdaip1hPYnO__wvI=&uniplatform=NZKPT",
+		"url": "https://t.cnki.net/kcms/article/abstract?v=0kbmF0AymBDEmOt31IW7BFNf5ggcPQ3pkmXXzTKvEATvBpR5-Ag_Enz5IBFWOyF4RKBfwUvMgy6hvZGBvgOgWuHfWREZ47LeXX_HgggRLBJxw4SSNr_p5dB29go-CYmkpZQGnmbh1hg=&uniplatform=NZKPT",
 		"items": [
 			{
 				"itemType": "journalArticle",
@@ -1677,19 +1668,19 @@ var testCases = [
 				],
 				"date": "2022",
 				"DOI": "10.13206/j.gjgS22031502",
-				"abstractNote": "金属面夹芯板以其保温绝热、降噪、自重轻和装配效率高等优点在围护结构中得到了很好的应用，基于金属面夹芯板的构造，提出一种新型的压型钢板与聚氨酯组合的夹芯楼板结构。为了研究压型钢板-聚氨酯夹芯楼板的受弯性能，对夹芯楼板试件进行了两点对称静载试验。在试验的基础上，提出并验证了夹芯楼板有限元模型，并对槽钢楼板厚度、压型钢板厚度和聚氨酯密度等进行了参数分析。研究结果表明：夹芯楼板的破坏形式主要表现为挠度过大，最大挠度达到了板跨度的1/42,并且跨中截面处的槽钢出现畸变屈曲；夹芯楼板受弯变形后，槽钢首先达到屈服状态，而受压钢板的材料性能未能得到充分发挥；新型压型钢板聚氨酯夹芯楼板相比传统金属面夹芯板的承载能力和刚度有明显提升，承载力和刚度均提高203%;楼板厚度和压型钢板厚度对夹芯楼板的承载能力和刚度均具有显著影响，而楼板厚度相比压型钢板厚度对刚度的影响效果更明显，当楼板厚度从120 mm增大到160 mm时，夹芯楼板的承载力在正常使用状态下提高87%,在承载能力极限状态下提高63%,刚度提高88%,钢板厚度由1 mm增至3 mm时，夹芯楼板的承载力在正常使用状态下提高59%,在承载能力极限状态下提高84%,刚度提高61%;聚氨酯泡沫密度的变化对夹芯楼板的承载能力和刚度影响较小，当密度从45 kg/m~3变化到90 kg/m~3时，正常使用状态下夹芯楼板的承载力增幅为12%,承载能力极限状态下的承载力增幅仅为2%,刚度增幅为12%。",
+				"abstractNote": "金属面夹芯板以其保温绝热、降噪、自重轻和装配效率高等优点在围护结构中得到了很好的应用，基于金属面夹芯板的构造，提出一种新型的压型钢板与聚氨酯组合的夹芯楼板结构。为了研究压型钢板-聚氨酯夹芯楼板的受弯性能，对夹芯楼板试件进行了两点对称静载试验。在试验的基础上，提出并验证了夹芯楼板有限元模型，并对槽钢楼板厚度、压型钢板厚度和聚氨酯密度等进行了参数分析。研究结果表明：夹芯楼板的破坏形式主要表现为挠度过大，最大挠度达到了板跨度的1/42,并且跨中截面处的槽钢出现畸变屈曲；夹芯楼板受弯变形后，槽钢首先达到屈服状态，而受压钢板的材料性能未能得到充分发挥；新型压型钢板聚氨酯夹芯楼板相比传统金属面夹芯板的承载能力和刚度有明显提升，承载力和刚度均提高203%;楼板厚度和压型钢板厚度对夹芯楼板的承载能力和刚度均具有显著影响，而楼板厚度相比压型钢板厚度对刚度的影响效果更明显，当楼板厚度从120 mm增大到160 mm时，夹芯楼板的承载力在正常使用状态下提高87%,在承载能力极限状态下提高63%,刚度提高88%,钢板厚度由1 mm增至3 mm时，夹芯楼板的承载力在正常使用状态下提高59%,在承载能力极限状态下提高84%,刚度提高61%;聚氨酯泡沫密度的变化对夹芯楼板的承载能力和刚度影响较小，当密度从45 kg/m3变化到90 kg/m3时，正常使用状态下夹芯楼板的承载力增幅为12%,承载能力极限状态下的承载力增幅仅为2%,刚度增幅为12%。",
 				"archiveLocation": "CNKI",
 				"issue": "8",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "9-16",
 				"publicationTitle": "钢结构(中英文)",
-				"url": "https://t.cnki.net/kcms/article/abstract?v=UQzSFoOd3SdWXxdk8dNI1HXn1jcZcxK8e4IiKPEt-5TsaRYi9gKDUxqgsjrm0u7feqnwZoMci1ilw8hgcwxhIHGfnI-JKGjel6xYy8bfLSCJqXOzqNPLCwwn30jwdaip1hPYnO__wvI=&uniplatform=NZKPT",
+				"url": "https://t.cnki.net/kcms/article/abstract?v=0kbmF0AymBDEmOt31IW7BFNf5ggcPQ3pkmXXzTKvEATvBpR5-Ag_Enz5IBFWOyF4RKBfwUvMgy6hvZGBvgOgWuHfWREZ47LeXX_HgggRLBJxw4SSNr_p5dB29go-CYmkpZQGnmbh1hg=&uniplatform=NZKPT",
 				"volume": "37",
 				"attachments": [
 					{
-						"title": "Full Text CAJ",
-						"mimeType": "application/caj"
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
 					}
 				],
 				"tags": [
@@ -1716,7 +1707,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=UQzSFoOd3SdlgpNFXt6ggwIOGkduDwaSsrvH3UbZ_sU64ClElhkYeZ3zNZnxp_be7hrr3QuZlCFfgGizaN9CaMHVp-G1QDeKB6qYKvUiuKEflRJ5IIt8CD8wJxzdsMkqwWqFlemMaPpZaGOBSa34LQ==&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=0kbmF0AymBCRDSFzj-sDAy_AfySwD-Q3yImkOhdltIv7UuUBjYdokmJnEfXxYThERa_-MaMORAaISCiu9fr6COs45ZV-Lpvvye1BaRHeKSQwo2PMkcw4J2WCF7OVs7HID-jTRTn36LaKfvWlUAJP8g==&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "standard",
@@ -1793,13 +1784,7 @@ var testCases = [
 				"status": "现行",
 				"type": "国家标准",
 				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=SCSF&dbname=SCSF&filename=SCSF00058274&v=",
-				"attachments": [
-					{
-						"title": "Full Text CAJ",
-						"mimeType": "application/caj",
-						"url": ""
-					}
-				],
+				"attachments": [],
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
@@ -1808,54 +1793,54 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://www.cnki.com.cn/Article/CJFDTOTAL-ZNJJ202310008.htm",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=0kbmF0AymBAd90v5egXcZSS_rEGOd_aFRUiwmm_zTqY98cCFo2xwndaFDSN-Vi0zKCctyl1I50It6LQThIBi9uOzf-5LwX0IzzWHnrxFOS7sLrpTcEpGzA==&uniplatform=CHKD",
 		"items": [
 			{
 				"itemType": "journalArticle",
-				"title": "“两山”理念的有效载体与实践：林下经济的经济效应、环境效应及其协同逻辑",
+				"title": "略谈肿瘤病的辨治要领",
 				"creators": [
 					{
 						"firstName": "",
-						"lastName": "吴伟光",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "许恒",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "王凤婷",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "熊立春",
+						"lastName": "熊继柏",
 						"creatorType": "author",
 						"fieldMode": 1
 					}
 				],
-				"date": "2023",
-				"abstractNote": "林下经济是生态文明建设背景下推进山区绿色高质量发展、实现“两山”理念的重要载体。本文基于里昂惕夫生产函数和最优生产决策理论刻画林下经济的经济效应、环境效应及其协同的理论模型，并通过对典型案例县的研究，对林下经济的经济效应与环境效应协同发展的理论机制加以印证。研究发现：第一，林下经济经营中，给定其他条件不变，当劳动力投入效率增加时，劳动力投入先增加后降低、林地投入单调递增，林下经济的经济价值也是单调递增，而林下经济的生态价值先增加后降低，林下经济的经济价值和生态价值总和递增；第二，进一步基于扩展模型的分析发现，在适度经营规模下，林下经济产生生态反馈效应，经营主体不再单纯追求经济利润最大化，而是通过降低林地要素的投入来提高林地资源的生态反馈效应，从而提升环境效应，最终实现经济效应和环境效应协同发展；第三，浙江省松阳县的案例剖析表明，在政府的合理扶持下，依靠适度规模经营、生态化种植和三产融合能够实现林下经济的经济效应与环境效应协同发展。因此，林下经济作为“两山”理念的有效载体，应积极推广，通过科学有效经营，能够实现经济效应和环境效应的协同增长。",
+				"date": "2023-11-23",
+				"abstractNote": "笔者根据多年临床实践经验,总结中医诊治肿瘤病的四辨:辨部位、辨痰瘀、辨寒热、辨虚实,阐述肿瘤治疗四法:攻法、消法、散法、补法,并通过临床验案分享诊疗经验,以供同仁参考。",
 				"archiveLocation": "CNKI",
-				"issue": "10",
+				"extra": "status: advance online publication",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
-				"pages": "158-174",
-				"publicationTitle": "中国农村经济",
-				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFD&dbname=CJFDAUTO2023&filename=ZNJJ202310008&v=",
+				"pages": "1-5",
+				"publicationTitle": "湖南中医药大学学报",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CHKJ&dbname=CHKJCAPJ&filename=HNZX20231121001&v=",
 				"attachments": [
 					{
-						"title": "Full Text CAJ",
-						"mimeType": "application/caj",
-						"url": ""
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
 					}
 				],
-				"tags": [],
+				"tags": [
+					{
+						"tag": "中医治法"
+					},
+					{
+						"tag": "临床辨证"
+					},
+					{
+						"tag": "临床验案"
+					},
+					{
+						"tag": "国医大师"
+					},
+					{
+						"tag": "熊继柏"
+					},
+					{
+						"tag": "肿瘤"
+					}
+				],
 				"notes": [],
 				"seeAlso": []
 			}
