@@ -148,9 +148,14 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.creators.push(ZU.cleanAuthor(element.innerText, 'author'));
 		});
 		switch (newItem.itemType) {
+			case 'book':
+				newItem.date = labels.getWith('出版时间');
 			case 'conferencePaper':
 				newItem.conferenceName = labels.getWith('会议名称');
 				newItem.place = labels.getWith('会议地点');
+				break;
+			case 'journalArticle':
+				item.date = labels.getWith('年份');
 				break;
 			case 'report':
 				newItem.date = ZU.strToISO(text(doc, '.year_wr [class^="kw_main"]'));
@@ -198,11 +203,7 @@ function fixItem(item, doc, url) {
 			break;
 		case 'book':
 			item.ISBN = labels.getWith('IGBN');
-			item.date = labels.getWith('出版时间');
 			item.publisher = labels.getWith('出版社');
-			break;
-		case 'journalArticle':
-			item.date = labels.getWith('年份');
 			break;
 		case 'patent':
 			item.country = labels.getWith('国省代号');
