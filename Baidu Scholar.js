@@ -57,6 +57,11 @@ function detectWeb(doc, _url) {
 			return labeMap[key];
 		}
 	}
+
+	let doiText = doc.querySelector('.c_content > [class="doi_wr"]')
+	if (doiText && (/\.issn\./i).test(doiText.innerText)) {
+		return 'journalArticle';
+	}
 	if (doc.querySelectorAll('.bookAuthor')) {
 		return 'book';
 	}
@@ -668,6 +673,76 @@ var testCases = [
 				"url": "https://xueshu.baidu.com/usercenter/paper/show?paperid=f4423dadd27ee5bdf386006d0791548d",
 				"attachments": [],
 				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://xueshu.baidu.com/usercenter/paper/show?paperid=1c590td0hx4304n0ct3c0xk04r264068",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "中国三城市春季大气可吸入颗粒物和细颗粒物来源调查",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "高申",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "潘小川",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "丽娜·马达尼亚孜",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "谢娟",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "何雅晖",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2013",
+				"DOI": "10.3760/cma.j.issn.0253-9624.2013.09.014",
+				"abstractNote": "目的 对北京,乌鲁木齐,青岛市大气可吸入颗粒物(PM10)和细颗粒物(PM2.5)的来源进行探讨.方法 利用2007年5月17日-6月18日采自北京市,2006年4月20日-6月1日采自乌鲁木齐市,2005年4月4日-5月15日采自青岛市的大气PM10和PM2.5中化学成分的检测数据,应用因子分析法和富集因子法进行颗粒物来源分析.结果 北京市大气PM10中主要污染源元素[中位数(最小值～最大值)]为Pb[0.216(0.040～0.795)μg/m3],主要来源于建筑水泥尘,土壤风沙尘(对PM10的方差贡献率为45.35%),工业粉尘,燃煤尘,机动车尾气(31.83%),生物质燃烧尘(13.57%);PM2.5主要污染源元素为Zn[0.365(0.126 ～0.808) μg/m3],污染来源于建筑水泥尘,土壤风沙尘(对PM2.5的方差贡献率为38.86%),工业粉尘,燃煤尘,机动车尾气(25.73%),生物质燃烧尘(13.10%),燃油尘(11.92%).乌鲁木齐大气PM10主要特征污染源元素为Cd[0.463(0.033 ～1.351) ng/m3],污染来源于土壤风沙尘,燃煤尘(对PM10的方差贡献率为49.75%),工业粉尘,机动车尾气,二次粒子尘(30.65%);PM25主要特征污染源元素为As[14.599(1.696 ～36.741) μg/m3],污染来源于土壤风沙尘,燃煤尘(对PM2.5的方差贡献率为43.26%),二次粒子尘(22.29%),工业粉尘,机动车尾气(20.50%).青岛大气PM10主要特征污染源元素为Pb[64.071(5.846～346.831) μg/m3],污染来源于建筑水泥尘(对PM10的方差贡献率为30.91%),机动车尾气,工业粉尘(29.65%),二次粒子尘(28.99%);PM2.5主要特征污染源元素为Pb[57.340(5.004 ～241.559) μg/m3],污染来源于二次粒子尘,工业粉尘,机动车尾气(对PM2.5的方差贡献率为49.82%),建筑水泥尘(33.71%).北京和乌鲁木齐大气PM2.5中重金属元素Zn,Pb,As,Cd的富集因子均高于PM10.结论 北京大气PM10和PM2.5主要来自于建筑水泥尘和土壤风沙尘;乌鲁木齐市则为煤烟沙尘型污染;青岛市大气PM10主要来自于建筑水泥尘,而PM2.5主要来自于二次粒子尘,工业粉尘,机动车尾气污染.重金属元素更易在PM2.5中富集.",
+				"libraryCatalog": "Baidu Scholar",
+				"url": "http://doc.paperpass.com/journal/20130108zhyfyx.html",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "因子分析"
+					},
+					{
+						"tag": "城市"
+					},
+					{
+						"tag": "富集因子"
+					},
+					{
+						"tag": "源解析"
+					},
+					{
+						"tag": "细颗粒物"
+					},
+					{
+						"tag": "颗粒物"
+					}
+				],
 				"notes": [],
 				"seeAlso": []
 			}
