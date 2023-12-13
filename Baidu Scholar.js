@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-13 13:17:10"
+	"lastUpdated": "2023-12-13 13:36:27"
 }
 
 /*
@@ -60,7 +60,7 @@ function detectWeb(doc, _url) {
 		return 'book';
 	}
 	else if (getSearchResults(doc, true)) {
-		return 'multiple';
+		return "multiple";
 	}
 	return false;
 }
@@ -94,7 +94,7 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url = doc.location.href) {
-	let labels = new Labels(doc, '.common_wr');
+	let labels = new Labels(doc, '.c_content > [class$="_wr"]');
 	let id = url.match(/paperid=(\w+)/);
 	let itemType = detectWeb(doc, url);
 	id = false;
@@ -103,7 +103,7 @@ async function scrape(doc, url = doc.location.href) {
 		let bibUrl = `https://xueshu.baidu.com/u/citation?type=bib&${id[0]}`;
 		let bibText = await requestText(bibUrl);
 		Z.debug(bibText);
-		let translator = Zotero.loadTranslator('import');
+		let translator = Zotero.loadTranslator("import");
 		translator.setTranslator('9cb70025-a888-4a29-a210-93ec52da40d4');
 		translator.setString(bibText);
 		translator.setHandler('itemDone', (_obj, item) => {
@@ -151,7 +151,7 @@ async function scrape(doc, url = doc.location.href) {
 				newItem.institution = text(doc, '.publisher_wr [class^="kw_main"]');
 				break;
 			case 'standard':
-				newItem.number = labels.getWith('标准号');
+				newItem.number = labels.getWith('标准号').replace(/(\d)\s*-\s*(\d)/, '$1—$2');
 				newItem.date = labels.getWith('发布日期');
 				newItem.extra += addExtra('CCS number', labels.getWith('CCS'));
 				newItem.extra += addExtra('ICS number', labels.getWith('ICS'));
@@ -165,7 +165,7 @@ async function scrape(doc, url = doc.location.href) {
 }
 
 function fixItem(item, doc, url) {
-	let labels = new Labels(doc, '.common_wr');
+	let labels = new Labels(doc, '.c_content > [class$="_wr"]');
 	Z.debug('fixing item...');
 	Z.debug('labels:');
 	Z.debug(labels.innerData.map(element => [element[0], element[1].innerText]));
@@ -260,6 +260,7 @@ var testCases = [
 						"creatorType": "author"
 					}
 				],
+				"DOI": "info:doi/10.1108/07419051111154758",
 				"abstractNote": "Purpose – The purpose of this paper is to highlight how the open-source bibliographic management program Zotero harnesses Web 2.0 features to make library resources more accessible to casual users without sacrificing advanced features. This reduces the barriers understanding library resources and provides additional functionality when organizing information resources. Design/methodology/approach – The paper reviews select aspects of the program to illustrate how it can be used by patrons and information professionals, and why information professionals should be aware of it. Findings – Zotero has some limitations, but succeeds in meeting the information management needs of a wide variety of users, particularly users who use online resources. Originality/value – This paper is of interest to information professionals seeking free software that can make managing bibliographic information easier for themselves and their patrons.",
 				"libraryCatalog": "Baidu Scholar",
 				"shortTitle": "Zotero",
@@ -408,6 +409,7 @@ var testCases = [
 				"country": "广东",
 				"filingDate": "2004-11-12",
 				"patentNumber": "CN 200420095088",
+				"rights": "1、一种微波加热路面综合养护车,包括有车头(20)、车底盘(21)、车\\r\\r\\r\\r\\n轮(22)及其驱动装置,其特征在于车底盘(21)内装设有动力电流装置(2)、\\r\\r\\r\\r\\n微波加热装置(5)、高压电源(6)、运动驱动装置(12)、电气控制装置(13)、\\r\\r\\r\\r\\n综合养护设备(16)及沥青混凝土加热装置A,其中微波加热装置(5)通过运\\r\\r\\r\\r\\n动驱动装置(12)装设在车底盘(21)的后端,综合养护设备(16)装设在车\\r\\r\\r\\r\\n底盘(21)的前端,沥青混凝土加热装置A装设在车底盘(21)的中部,微波\\r\\r\\r\\r\\n加热装置(5)及沥青混凝土加热装置A与高压电源(6)电连接,运动驱动装\\r\\r\\r\\r\\n置(12)及综合养护设备(16)与动力电流装置(2)电连接,且动力电流装\\r\\r\\r\\r\\n置(2)、微波加热装置(5)、高压电源(6)、运动驱动装置(12)、综合养护\\r\\r\\r\\r\\n设备(16)及沥青混凝土加热装置A均与电气控制装置(13)电连接。 展开",
 				"url": "http://cprs.patentstar.com.cn/Search/Detail?ANE=4CAA0AAA9GFCCFIA9ICD9IED9HCA9AEA9BHD6DCA9CFC9BHA",
 				"attachments": [],
 				"tags": [],
@@ -424,8 +426,11 @@ var testCases = [
 				"itemType": "standard",
 				"title": "信息与文献 参考文献著录规则",
 				"creators": [],
+				"date": "2015-05-15",
 				"abstractNote": "本标准规定了各个学科,各种类型信息资源的参考文献的著录项目,著录顺序,著录用符号,著录用文字,各个著录项目的著录方法以及参考文献在正文中的标注法.本标准适用于著者和编辑著录参考文献,而不是供图书馆员,文献目录编制者以及索引编辑者使用的文献著录规则.",
+				"extra": "CCS number: A 综合-A10/19 经济、文化-A14 图书馆、档案、文献与情报工作\nICS number: 01 综合、术语学、标准化、文献-01.140 信息学、出版-01.140.20 信息学",
 				"libraryCatalog": "Baidu Scholar",
+				"number": "GB/T 7714—2015",
 				"url": "http://www.nssi.org.cn/nssi/front/87860706.html",
 				"attachments": [],
 				"tags": [],
