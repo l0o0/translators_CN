@@ -192,7 +192,11 @@ function fixItem(item, doc, url) {
 			break;
 		case 'book':
 			item.ISBN = labels.getWith('IGBN');
+			item.date = labels.getWith('出版时间');
 			item.publisher = labels.getWith('出版社');
+			break;
+		case 'journalArticle':
+			item.date = labels.getWith('年份');
 			break;
 		case 'patent':
 			item.country = labels.getWith('国省代号');
@@ -515,6 +519,100 @@ var testCases = [
 					},
 					{
 						"tag": "非公有制经济"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://xueshu.baidu.com/usercenter/paper/show?paperid=9151406471e5456fb7183e0ecd035527",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "图解大国陆权",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "哈尔福德・麦金德",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2014.12",
+				"abstractNote": "本书是一本系统介绍英国\"陆权论\"提出者哈尔福德麦金德的陆权思想的书籍,满足了读者了解陆权和地缘政治的需求,文中有陆战分析和历史解读,还配以图片,有助于读者理解麦金德的理论.通过分析各大帝国在\"心脏地带\"的纷乱争斗历史中,麦金德发现有一点是非常明确的,即无论英国与俄国竞争,还是与德国对方,政策的出发点都是一致的,那就是要避免\"心脏地带\"落入陆地强权之手.此后,他提出了著名的麦氏三段论:谁统治了东欧,谁就能控制大陆\"心脏地带\";谁控制大陆\"心脏地带\",谁就能控制\"世界岛(欧亚大陆)\";谁控制了\"世界岛\",谁就能控制整个世界!",
+				"libraryCatalog": "Baidu Scholar",
+				"url": "https://xueshu.baidu.com/usercenter/paper/show?paperid=9151406471e5456fb7183e0ecd035527",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "政治地理学"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://xueshu.baidu.com/usercenter/paper/show?paperid=90b81c383fc4d0c258666fc5be53a6b0",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "欧亚心脏地带的各种梦想——地缘政治学重新崛起",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "克洛弗",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "汤玉鼎",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "1999",
+				"DOI": "CNKI:SUN:WSWZ.0.1999-10-009",
+				"abstractNote": "本文揭示了地缘政治学在俄罗斯政界已重新崛起,并体现在一系列路线、方针和政策中,值得世人关注。",
+				"libraryCatalog": "Baidu Scholar",
+				"url": "http://qikan.cqvip.com/Qikan/Article/Detail?id=687838790199910009",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "亚心"
+					},
+					{
+						"tag": "俄罗斯民族主义"
+					},
+					{
+						"tag": "加诺"
+					},
+					{
+						"tag": "地缘政治学"
+					},
+					{
+						"tag": "心脏地带"
+					},
+					{
+						"tag": "普里马科夫"
+					},
+					{
+						"tag": "欧亚主义"
+					},
+					{
+						"tag": "民族主义者"
+					},
+					{
+						"tag": "泛斯拉夫主义"
+					},
+					{
+						"tag": "重新崛起"
 					}
 				],
 				"notes": [],
