@@ -57,16 +57,14 @@ function detectWeb(doc, _url) {
 			return labeMap[key];
 		}
 	}
-
-	let doiText = doc.querySelector('.c_content > [class="doi_wr"]')
-	if (doiText && (/\.issn\./i).test(doiText.innerText)) {
+	if (/\.issn\./i.test(text(doc, '.c_content > [class="doi_wr"]))) {
 		return 'journalArticle';
 	}
-	if (doc.querySelectorAll('.bookAuthor')) {
+	else if (doc.querySelectorAll('.bookAuthor')) {
 		return 'book';
 	}
 	else if (getSearchResults(doc, true)) {
-		return "multiple";
+		return 'multiple';
 	}
 	return false;
 }
