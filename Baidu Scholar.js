@@ -2,7 +2,7 @@
 	"translatorID": "e034d9be-c420-42cf-8311-23bca5735a32",
 	"label": "Baidu Scholar",
 	"creator": "l0o0<linxzh1989@gmail.com>",
-	"target": "^https?://(www\\.)?xueshu\\.baidu\\.com/",
+	"target": "^https?://(www\\.|a\\.)?xueshu\\.baidu\\.com/",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
