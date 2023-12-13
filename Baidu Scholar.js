@@ -48,7 +48,8 @@ function detectWeb(doc, _url) {
 			期刊: 'journalArticle',
 			会议: 'conferencePaper',
 			学校: 'thesis',
-			出版社: 'book'
+			出版社: 'book',
+			图书: 'book'
 		}[source];
 	}
 	for (const key in labeMap) {
@@ -640,6 +641,31 @@ var testCases = [
 				"country": "CN440303",
 				"patentNumber": "CN201810679432.8",
 				"url": "https://www.zhangqiaokeyan.com/patent-detail/06120111504719.html",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://xueshu.baidu.com/usercenter/paper/show?paperid=f4423dadd27ee5bdf386006d0791548d",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "\"泰国人民之声\"电台热烈欢呼我新的氢弹爆炸和首次地下核试验成功 中国新的成就是毛泽东思想伟大胜利",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "新华社",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "1969.10.21",
+				"libraryCatalog": "Baidu Scholar",
+				"url": "https://xueshu.baidu.com/usercenter/paper/show?paperid=f4423dadd27ee5bdf386006d0791548d",
 				"attachments": [],
 				"tags": [],
 				"notes": [],
