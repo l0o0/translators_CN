@@ -2,7 +2,7 @@
 	"translatorID": "e034d9be-c420-42cf-8311-23bca5735a32",
 	"label": "Baidu Scholar",
 	"creator": "l0o0<linxzh1989@gmail.com>",
-	"target": "^https?://(www\\.)?xueshu\\.baidu\\.com/",
+	"target": "^https?://(www\\.|a\\.)?xueshu\\.baidu\\.com/",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
@@ -48,7 +48,8 @@ function detectWeb(doc, _url) {
 			期刊: 'journalArticle',
 			会议: 'conferencePaper',
 			学校: 'thesis',
-			出版社: 'book'
+			出版社: 'book',
+			图书: 'book'
 		}[source];
 	}
 	for (const key in labeMap) {
@@ -56,11 +57,14 @@ function detectWeb(doc, _url) {
 			return labeMap[key];
 		}
 	}
-	if (doc.querySelectorAll('.bookAuthor')) {
+	if (/\.issn\./i.test(text(doc, '.c_content > [class="doi_wr"]))) {
+		return 'journalArticle';
+	}
+	else if (doc.querySelectorAll('.bookAuthor')) {
 		return 'book';
 	}
 	else if (getSearchResults(doc, true)) {
-		return "multiple";
+		return 'multiple';
 	}
 	return false;
 }
@@ -142,9 +146,14 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.creators.push(ZU.cleanAuthor(element.innerText, 'author'));
 		});
 		switch (newItem.itemType) {
+			case 'book':
+				newItem.date = labels.getWith('出版时间');
 			case 'conferencePaper':
 				newItem.conferenceName = labels.getWith('会议名称');
 				newItem.place = labels.getWith('会议地点');
+				break;
+			case 'journalArticle':
+				item.date = labels.getWith('年份');
 				break;
 			case 'report':
 				newItem.date = ZU.strToISO(text(doc, '.year_wr [class^="kw_main"]'));
@@ -515,6 +524,222 @@ var testCases = [
 					},
 					{
 						"tag": "非公有制经济"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://xueshu.baidu.com/usercenter/paper/show?paperid=9151406471e5456fb7183e0ecd035527",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "图解大国陆权",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "哈尔福德・麦金德",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2014.12",
+				"abstractNote": "本书是一本系统介绍英国\"陆权论\"提出者哈尔福德麦金德的陆权思想的书籍,满足了读者了解陆权和地缘政治的需求,文中有陆战分析和历史解读,还配以图片,有助于读者理解麦金德的理论.通过分析各大帝国在\"心脏地带\"的纷乱争斗历史中,麦金德发现有一点是非常明确的,即无论英国与俄国竞争,还是与德国对方,政策的出发点都是一致的,那就是要避免\"心脏地带\"落入陆地强权之手.此后,他提出了著名的麦氏三段论:谁统治了东欧,谁就能控制大陆\"心脏地带\";谁控制大陆\"心脏地带\",谁就能控制\"世界岛(欧亚大陆)\";谁控制了\"世界岛\",谁就能控制整个世界!",
+				"libraryCatalog": "Baidu Scholar",
+				"url": "https://xueshu.baidu.com/usercenter/paper/show?paperid=9151406471e5456fb7183e0ecd035527",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "政治地理学"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://xueshu.baidu.com/usercenter/paper/show?paperid=90b81c383fc4d0c258666fc5be53a6b0",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "欧亚心脏地带的各种梦想——地缘政治学重新崛起",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "克洛弗",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "汤玉鼎",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "1999",
+				"DOI": "CNKI:SUN:WSWZ.0.1999-10-009",
+				"abstractNote": "本文揭示了地缘政治学在俄罗斯政界已重新崛起,并体现在一系列路线、方针和政策中,值得世人关注。",
+				"libraryCatalog": "Baidu Scholar",
+				"url": "http://qikan.cqvip.com/Qikan/Article/Detail?id=687838790199910009",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "亚心"
+					},
+					{
+						"tag": "俄罗斯民族主义"
+					},
+					{
+						"tag": "加诺"
+					},
+					{
+						"tag": "地缘政治学"
+					},
+					{
+						"tag": "心脏地带"
+					},
+					{
+						"tag": "普里马科夫"
+					},
+					{
+						"tag": "欧亚主义"
+					},
+					{
+						"tag": "民族主义者"
+					},
+					{
+						"tag": "泛斯拉夫主义"
+					},
+					{
+						"tag": "重新崛起"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://xueshu.baidu.com/usercenter/paper/show?paperid=120u04b0932h0e30p8410e10up662850",
+		"items": [
+			{
+				"itemType": "patent",
+				"title": "一种网络小说防盗章方法,装置,存储器和处理器",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "余洋",
+						"creatorType": "inventor"
+					}
+				],
+				"abstractNote": "本发明公开了一种网络小说防盗章方法,装置,存储器和处理器,主要用于实现网络小说正版防盗章的功能,具体流程为当网络小说收费章节更新时向用户账号屏蔽收费章节若干时间,若干时间内,用户账号向网站请求下发收费章节时需回答验证问题,用户账号回答正确时下发真实收费章节,用户账号回答错误时下发特殊章节,若干时间后,用户账号向网站请求下发收费章节时可正常获取收费章节,本技术方案还包括用于执行这一方法的装置,存储器和处理器,本技术方案可以很好的降低网络盗版事件的发生概率,防止自动盗章软件对网络小说的盗章行为.",
+				"applicationNumber": "CN201810679432.8",
+				"assignee": "深圳市必发达科技有限公司",
+				"country": "CN440303",
+				"patentNumber": "CN201810679432.8",
+				"url": "https://www.zhangqiaokeyan.com/patent-detail/06120111504719.html",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://xueshu.baidu.com/usercenter/paper/show?paperid=f4423dadd27ee5bdf386006d0791548d",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "\"泰国人民之声\"电台热烈欢呼我新的氢弹爆炸和首次地下核试验成功 中国新的成就是毛泽东思想伟大胜利",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "新华社",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "1969.10.21",
+				"libraryCatalog": "Baidu Scholar",
+				"url": "https://xueshu.baidu.com/usercenter/paper/show?paperid=f4423dadd27ee5bdf386006d0791548d",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://xueshu.baidu.com/usercenter/paper/show?paperid=1c590td0hx4304n0ct3c0xk04r264068",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "中国三城市春季大气可吸入颗粒物和细颗粒物来源调查",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "高申",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "潘小川",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "丽娜·马达尼亚孜",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "谢娟",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "何雅晖",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2013",
+				"DOI": "10.3760/cma.j.issn.0253-9624.2013.09.014",
+				"abstractNote": "目的 对北京,乌鲁木齐,青岛市大气可吸入颗粒物(PM10)和细颗粒物(PM2.5)的来源进行探讨.方法 利用2007年5月17日-6月18日采自北京市,2006年4月20日-6月1日采自乌鲁木齐市,2005年4月4日-5月15日采自青岛市的大气PM10和PM2.5中化学成分的检测数据,应用因子分析法和富集因子法进行颗粒物来源分析.结果 北京市大气PM10中主要污染源元素[中位数(最小值～最大值)]为Pb[0.216(0.040～0.795)μg/m3],主要来源于建筑水泥尘,土壤风沙尘(对PM10的方差贡献率为45.35%),工业粉尘,燃煤尘,机动车尾气(31.83%),生物质燃烧尘(13.57%);PM2.5主要污染源元素为Zn[0.365(0.126 ～0.808) μg/m3],污染来源于建筑水泥尘,土壤风沙尘(对PM2.5的方差贡献率为38.86%),工业粉尘,燃煤尘,机动车尾气(25.73%),生物质燃烧尘(13.10%),燃油尘(11.92%).乌鲁木齐大气PM10主要特征污染源元素为Cd[0.463(0.033 ～1.351) ng/m3],污染来源于土壤风沙尘,燃煤尘(对PM10的方差贡献率为49.75%),工业粉尘,机动车尾气,二次粒子尘(30.65%);PM25主要特征污染源元素为As[14.599(1.696 ～36.741) μg/m3],污染来源于土壤风沙尘,燃煤尘(对PM2.5的方差贡献率为43.26%),二次粒子尘(22.29%),工业粉尘,机动车尾气(20.50%).青岛大气PM10主要特征污染源元素为Pb[64.071(5.846～346.831) μg/m3],污染来源于建筑水泥尘(对PM10的方差贡献率为30.91%),机动车尾气,工业粉尘(29.65%),二次粒子尘(28.99%);PM2.5主要特征污染源元素为Pb[57.340(5.004 ～241.559) μg/m3],污染来源于二次粒子尘,工业粉尘,机动车尾气(对PM2.5的方差贡献率为49.82%),建筑水泥尘(33.71%).北京和乌鲁木齐大气PM2.5中重金属元素Zn,Pb,As,Cd的富集因子均高于PM10.结论 北京大气PM10和PM2.5主要来自于建筑水泥尘和土壤风沙尘;乌鲁木齐市则为煤烟沙尘型污染;青岛市大气PM10主要来自于建筑水泥尘,而PM2.5主要来自于二次粒子尘,工业粉尘,机动车尾气污染.重金属元素更易在PM2.5中富集.",
+				"libraryCatalog": "Baidu Scholar",
+				"url": "http://doc.paperpass.com/journal/20130108zhyfyx.html",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "因子分析"
+					},
+					{
+						"tag": "城市"
+					},
+					{
+						"tag": "富集因子"
+					},
+					{
+						"tag": "源解析"
+					},
+					{
+						"tag": "细颗粒物"
+					},
+					{
+						"tag": "颗粒物"
 					}
 				],
 				"notes": [],
