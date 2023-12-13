@@ -57,7 +57,7 @@ function detectWeb(doc, _url) {
 			return labeMap[key];
 		}
 	}
-	if (/\.issn\./i.test(text(doc, '.c_content > [class="doi_wr"]))) {
+	if (/\.issn\./i.test(text(doc, '.c_content > [class="doi_wr"]'))) {
 		return 'journalArticle';
 	}
 	else if (doc.querySelectorAll('.bookAuthor')) {
@@ -148,12 +148,13 @@ async function scrape(doc, url = doc.location.href) {
 		switch (newItem.itemType) {
 			case 'book':
 				newItem.date = labels.getWith('出版时间');
+				break;
 			case 'conferencePaper':
 				newItem.conferenceName = labels.getWith('会议名称');
 				newItem.place = labels.getWith('会议地点');
 				break;
 			case 'journalArticle':
-				item.date = labels.getWith('年份');
+				newItem.date = labels.getWith('年份');
 				break;
 			case 'report':
 				newItem.date = ZU.strToISO(text(doc, '.year_wr [class^="kw_main"]'));
