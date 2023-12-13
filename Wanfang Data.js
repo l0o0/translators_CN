@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-07-19 08:48:13"
+	"lastUpdated": "2023-12-13 03:22:37"
 }
 
 /*
@@ -298,9 +298,12 @@ function scrape(doc) {
 	if (doc.URL.includes("wanfangdata.com.cn/standard/")) {
 		addExtra(newItem, ["Type", "standard"]); // https://forums.zotero.org/discussion/comment/409058/#Comment_409058
 	}
-	
+
 	if (newItem.abstractNote) newItem.abstractNote = newItem.abstractNote.replace(/^摘要：;/, "");
 	if (newItem.DOI) newItem.DOI = newItem.DOI.replace(/^DOI[:：];?\s?/, "");
+	if (newItem.thesisType) {
+		newItem.thesisType = `${newItem.thesisType}学位论文`;
+	}
 	if (newItem.itemType != 'thesis' && newItem.university) {
 		newItem.extra ? newItem.extra = newItem.extra + "\n地点：" + newItem.university
 			: newItem.extra = "地点：" + newItem.university;
@@ -531,7 +534,7 @@ var testCases = [
 				"abstractNote": "生物多样性是我国生态环境的重要组成部分，也是生态文明建设的重要内容。如何更合理的建立评价生物多样性体系及确定威胁生物多样性相关因素，对政府科学制定生物多样性保护战略规划及行动计划极其重要，对生态文明建设具有重要意义。同时，生物多样性是一种资源，是生物资源的基础，具有多种多样的生态和环境服务功能。　　通过济南市生物多样性现状评价，可明确济南市生物多样性现状、威胁因素和保护现状，有助于济南市资源有效利用与保护，以及相关政府部门科学的制定生物多样性保护战略与具体行动计划。本研究依据环保部生物多样性省域评价体系，组建了暖温带生物多样...",
 				"language": "zh-CN",
 				"libraryCatalog": "Wanfang Data",
-				"thesisType": "硕士",
+				"thesisType": "硕士学位论文",
 				"university": "山东农业大学",
 				"url": "https://d.wanfangdata.com.cn/thesis/D01698671",
 				"attachments": [

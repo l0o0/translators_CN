@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-24 12:34:28"
+	"lastUpdated": "2023-12-13 03:22:29"
 }
 
 /*
@@ -217,6 +217,9 @@ async function scrape(doc, url = doc.location.href) {
 			result = recipe.callback(result);
 		}
 		newItem[field] = result;
+	}
+	if (newItem.thesisType) {
+		newItem.thesisType = `${newItem.thesisType}学位论文`;
 	}
 	newItem.pages = (function () {
 		let firstPage = newItem.firstPage;
@@ -484,7 +487,7 @@ var testCases = [
 				"callNumber": "Y949023",
 				"language": "zh-CN",
 				"libraryCatalog": "National Science and Technology Library - China",
-				"thesisType": "硕士",
+				"thesisType": "硕士学位论文",
 				"university": "江西师范大学",
 				"attachments": [
 					{

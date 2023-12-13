@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-26 22:29:37"
+	"lastUpdated": "2023-12-13 03:22:15"
 }
 
 /*
@@ -239,7 +239,7 @@ function getSearchResults(doc, checkOnly) {
 		if (!href || !title) continue;
 		if (checkOnly) return true;
 		found = true;
-		
+
 		let metaText = ZU.xpathText(row.parentNode.parentNode, 'dd/span[@class="lzspan"]'); // 知识搜索-链接描述
 		metaText = metaText || ZU.xpathText(row.parentNode.parentNode, 'dd'); // 其他通用
 		let desc = metaText ? title + " - " + metaText : title;
@@ -348,7 +348,7 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 	newItem.abstractNote = "";
 	// extra field to store extra data from Duxiu such as format, price, and/or identifiers.
 	newItem.extra = "";
-	
+
 	// 标题 title.
 	//pattern = /bookname="([\s\S]*?)"/;
 	//Z.debug(page);
@@ -383,7 +383,7 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 
 		authorNames = authorNames.split("，");
 		// Zotero.debug(authorNames);
-		
+
 		// list of role titles. used to remove the role title from the name of the creator.
 		var titleMask = /本书主编$|本书副主编$|总主编$|总编辑$|总编$|编译$|编著$|主编$|副主编$|改编$|编$|著$|译$|选编$|摄影$|整理$|执笔$|合著$|撰$|编纂$|纂$|辑$|集注$|编辑$|原著$|主译$|绘$/;
 
@@ -396,9 +396,9 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 			else {
 				assignedRole = determineRoles(authorNames[i]);
 			}
-			
+
 			var assignedName = ZU.trim(authorNames[i]).replace(titleMask, "");
-			
+
 			switch (assignedRole) {
 				// Not all conditions listed since 编,译,著 catch most of their variations already.
 
@@ -410,7 +410,7 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 						creatorType: "seriesEditor",
 						fieldMode: 1 });
 					break;
-				
+
 				// editor
 				case '编':
 				case '辑':
@@ -420,7 +420,7 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 						creatorType: "editor",
 						fieldMode: 1 });
 					break;
-					
+
 				// author
 				case '著':
 				case '执笔':
@@ -441,7 +441,7 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 						creatorType: "translator",
 						fieldMode: 1 });
 					break;
-				
+
 				// multiple roles
 				case '编著':
 					newItem.creators.push({ lastName: assignedName,
@@ -468,7 +468,7 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 			}
 		}
 	}
-	
+
 	// 出版地点 publication place.
 	let place  = getI(page.match(/<dd>[\s\S]*出版发行[\s\S]*?<\/span>([\s\S]*?)：[\s\S]*?<\/dd>/));
 	if (place) {
@@ -487,7 +487,7 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 			newItem.place = ZU.trim(place);
 		}
 	}
-	
+
 	// 出版社 publisher.
 	let publisher = getI(page.match(/<dd>[\s\S]*出版发行[\s\S]*?：([\s\S]*?),[\s\S]*?<\/dd>/));
 	if (publisher.includes("<dd>")) { // 误匹配其他栏位的冒号
@@ -499,7 +499,7 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 			newItem.publisher = ZU.trim(publisher);
 		}
 	}
-	
+
 	// 出版时间 publication date.
 	let date = getI(page.match(/<dd>[\s\S]*出版发行[\s\S]*?,([\s\S]*?)<\/dd>/));
 	if (!date) {
@@ -511,7 +511,7 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 		date = date.replace(/[^.\d民国清光绪宣统一二三四五六七八九年-]/g, "");
 		newItem.date = ZU.trim(date);
 	}
-	
+
 	// ISBN
 	let isbn = getI(page.match(/<dd>[\s\S]*?ISBN号[\D]*(.*[\d])/));
 	if (isbn) {
@@ -529,7 +529,7 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 	// 页数 number of pages.
 	let numPages = getI(page.match(/页[\s]*数\D*([\s\S]*?)<\/dd>/));
 	newItem.numPages = ZU.trim(numPages);
-	
+
 	// 丛书 book series.
 	let series = trimTags(getI(page.match(/<dd>[\s\S]*丛书名[\s\S]*?>([\s\S]*?)<\/dd>/)));
 	newItem.series = ZU.trim(series);
@@ -539,7 +539,7 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 		newItem.price = price;
 		newItem.extra += "原书定价: " + newItem.price + "\n";
 	}
-	
+
 	// 开本 edition format.
 	let format = ZU.trim(trimTags(getI(page.match(/<dd>[\s\S]*开本[\s\S]*?>([\s\S]*?)<\/dd>/))));
 	if (format) {
@@ -555,23 +555,23 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 	// 中图法分类号 CLC classification number.
 	let callNumber = ZU.trim(trimTags(getI(page.match(/<dd>[\s\S]*中图法分类号[\s\S]*?>([\s\S]*?)<\/dd>/))));
 	newItem.callNumber = callNumber;
-	
+
 	// 参考文献格式 reference format.
 	let refFormat = ZU.trim(trimTags(getI(page.match(/<dd>[\s\S]*参考文献格式[\s\S]*?>([\s\S]*?)<\/dd>/))));
 	if (refFormat) {
 		newItem.refFormat = refFormat;
 		newItem.extra = "参考格式: " + newItem.refFormat + "\n" + newItem.extra;
 	}
-	
+
 	// 内容提要 abstract.
 	let abstractNote = trimTags(getI(page.match(/<dd>[\s\S]*内容提要[\s\S]*?>([\s\S]*?)<\/dd>/)));
 	newItem.abstractNote = ZU.trim(abstractNote).replace(/&mdash;/g, "-") + "\n\n";
-	
+
 	// use subject terms to populate abstract
 	if (newItem.subjectTerms) {
 		newItem.abstractNote = newItem.abstractNote + "主题词: " + newItem.subjectTerms;
 	}
-		
+
 	// start the abstract with the foreign language title if available.
 	if (newItem.foreignTitle) {
 		newItem.abstractNote = "外文题名: " + newItem.foreignTitle + "\n\n" + newItem.abstractNote;
@@ -628,7 +628,7 @@ function scrapeAndParse(doc, url, callback, type = "", rootDoc = doc) {
 		newItem.date = date;
 
 		let thesisType = trimTags(getI(page.match(/<dd><span>学位名称\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
-		newItem.thesisType = thesisType;
+		newItem.thesisType = thesisType ? `${thesisType}学位论文` : '';
 
 		let university = trimTags(getI(page.match(/<dd>\s*<span>学位授予单位\s*:\s*<\/span>([\s\S]*?)<\/dd>/)));
 		newItem.university = university;
@@ -1045,7 +1045,7 @@ var testCases = [
 				"date": "2018",
 				"abstractNote": "《国学丛刊》由国立东南大学国学研究会顾实等人于1923年11月创办,停刊于1926年,是中国近代国学发展史上的重要期刊。本文首先通过对当时的学术背景分析、国学研究会的创办及其指导员和主要活动的介绍等展现了《国学丛刊》从创办到消亡的全过程中所面临的外部状况。继而对几大板块的文本内容和目录进行了详细的讨论和梳理,这也构成了本文的核心内容所在。长期以来,学术界习惯性地将《国学丛刊》与文化保守主义者归为文化“关门主义”的代表,却对其真正内容的特色和发展缺乏深度的理解。《国学丛刊》向后世学者展示的绝不是简单的文化保守,而是在激进的西化大潮中对民族文化的本位坚守,是一种理性和积极乐观的文化立场和态度。在提倡“爱国好学”、坚守传统本位的同时,《国学丛刊》也主张“学融中西”,以包容、开放的态度面对西方学术和文化。丛刊引入了大量的西方学术理论知识并对科学先锋徐寿等人做出了高度的评价,这也是《国学丛刊》精神的可贵所在。同时,丛刊关注辛亥革命等政治变革,收录了大量的爱国主义诗歌和作品。在这些作品中,流露着丛刊作者群体忧国忧民的家国情怀,洋溢着浓厚的爱国主义精神。他们认为,民族命运的变迁和个人息息相关,面对国家危机,知识分子应该拿出勇气和担当。而一个民族的发展离不开本民族文化的强大,因此在近代化的过程中坚守民族文化的本位至关重要。《国学丛刊》代表了 20世纪20年代仁人志士对民族文化命运的一种深刻思考和行动,当下这种思考和行动仍然没有停止,从刊正是为我们展示了这样一种视角和学术理路供我们学习和借鉴。",
 				"libraryCatalog": "Duxiu",
-				"thesisType": "硕士",
+				"thesisType": "硕士学位论文",
 				"university": "武汉大学",
 				"url": "https://jour.duxiu.com/thesisDetail.jsp?dxNumber=390107234763&d=C427F0C1FF6DF58569AA4E671806709F&fenlei=07020202",
 				"attachments": [],
@@ -1092,7 +1092,7 @@ var testCases = [
 				"date": "2022",
 				"abstractNote": "中文拼写纠错任务是检测和纠正句子中拼写错误的汉字,即错别字。它在日常生活和工作中有着广泛的应用。譬如,帮助搜索引擎进行关键词消歧,纠正语音、光学字符识别中出现的错别字,以及辅助作文自动批改等等。同时,中文拼写纠错是一项极具挑战性的任务,因为汉字的组合具有多样性和复杂性,而且错误字符会给句子的语义带来极大的干扰。因此,一个有效的中文拼写纠错解决方案往往需要具备人类级别的语义理解能力。在早期,研究人员利用端到端的机器翻译模型来解决该问题,尝试直接将错误句子翻译成正确的句子。但此方法作为一个序列到序列的通用模型,并没有特别考虑如何利用错误字符的相似性信息。针对此问题,本文展开了第一项研究,尝试利用对比学习来获取错误字符的相似性信息,以此让模型学到更多的错误字符信息。另外,近年来的研究焦点是将BERT与外部知识（例如混淆集以及字符的语音和形态特征）相结合来解决该任务。但BERT本身的错别字检测能力不足仍是这类方法的性能瓶颈。因此本文展开了第二项研究,提出了使用“输入显著性”技术来识别字符错误并将错误信息集成到纠正模型中,以提高整个模型的检测和纠正能力。本文的主要贡献可总结如下:·本文提出一个基于对比学习和指针网络的端到端中文拼写纠错模型,即Contr PN。为了能有效利用错误字符的相似性信息,本文先用混淆集构建和原始错误句子相似的句子,然后使用对比学习使得原始错误句子和通过混淆集构成的错误句子表征距离接近,同时使原始错误句子和训练批次中的随机句子的表征距离变远,从而使得属于同一个混淆集的字符具有更加相似的表征,提高模型纠正错误字符的概率。此外,在Seq2Seq模型的基础上利用指针网络来让模型学习复制句子中的正确字符,而不单从词表中生成候选词,可以减少误纠率。·本文提出一个基于“显著性”信息的中文拼写纠错模型,即Spel LM。本文针对BERT本身错别字检测能力不足,以模仿人类纠正拼写错误的方式来缓解此问题。具体来说,人类会首先根据上下文信息识别拼写错误的字符,然后用正确的字符替代它们。因此,本文提出了一个检测-纠正的两阶段模型,模型在第一阶段识别拼写错误,然后在第二阶段借助错误检测信息来纠正错误。模型使用“输入显著性”技术来识别字符错误并将较精确的错误信息集成到纠正模型BERT中,以提高整个模型的检测和纠正能力。此方法独立于相似性过滤器、混淆集、语音和形态特征或候选依赖特征等现有技术,使其独立且可以灵活地与现有方法结合,且更加高效。·本文将深度模型的可解释技术应用于深度模型,展示了如何利用可解释人工智能（XAI）技术来提升深度学习模型在特定任务中的性能。通过中文拼写纠错这个任务,本文在Spel LM模型中利用输入显著性技术提取字符对于句子错误预测的显著性信息,显著性越高的字符越有可能是错误字符,随后可以利用这个信息与字符纠错模型相结合,提高纠正错误字符的成功率。尽管中文拼写纠错是本研究的重点任务,但我们相信这个思想可以经过迁移,用来解决其他相关任务。综上所述,对于中文拼写纠错任务,本文重点研究了如何在基于端到端的纠错模型中有效利用错误字符的相关性信息,以及如何进一步提高基于BERT的纠错模型的错误检测能力。针对这两个问题,本文分别提出了各自的改进方案,构建了相应的神经网络模型,即上述的Contr PN模型和Spel LM模型。并结合基准模型,利用两种评估矩阵在多个测试集上进行评估,印证了改进方案的有效性和可行性。",
 				"libraryCatalog": "Duxiu",
-				"thesisType": "硕士",
+				"thesisType": "硕士学位论文",
 				"university": "华东师范大学",
 				"url": "https://jour.duxiu.com/thesisDetail.jsp?dxNumber=390109152129&d=67FF0CFDCA295D070C801D4765239348&fenlei=181704110101%3B%7C1817020603",
 				"attachments": [],
