@@ -619,6 +619,33 @@ var testCases = [
 				"seeAlso": []
 			}
 		]
+	},
+	{
+		"type": "web",
+		"url": "https://xueshu.baidu.com/usercenter/paper/show?paperid=120u04b0932h0e30p8410e10up662850",
+		"items": [
+			{
+				"itemType": "patent",
+				"title": "一种网络小说防盗章方法,装置,存储器和处理器",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "余洋",
+						"creatorType": "inventor"
+					}
+				],
+				"abstractNote": "本发明公开了一种网络小说防盗章方法,装置,存储器和处理器,主要用于实现网络小说正版防盗章的功能,具体流程为当网络小说收费章节更新时向用户账号屏蔽收费章节若干时间,若干时间内,用户账号向网站请求下发收费章节时需回答验证问题,用户账号回答正确时下发真实收费章节,用户账号回答错误时下发特殊章节,若干时间后,用户账号向网站请求下发收费章节时可正常获取收费章节,本技术方案还包括用于执行这一方法的装置,存储器和处理器,本技术方案可以很好的降低网络盗版事件的发生概率,防止自动盗章软件对网络小说的盗章行为.",
+				"applicationNumber": "CN201810679432.8",
+				"assignee": "深圳市必发达科技有限公司",
+				"country": "CN440303",
+				"patentNumber": "CN201810679432.8",
+				"url": "https://www.zhangqiaokeyan.com/patent-detail/06120111504719.html",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
 	}
 ]
 /** END TEST CASES **/
