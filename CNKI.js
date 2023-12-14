@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-14 07:54:42"
+	"lastUpdated": "2023-12-14 19:57:15"
 }
 
 /*
@@ -670,10 +670,9 @@ async function scrapeDoc(doc, ids, itemKey) {
 	Z.debug('scraping from document...');
 	var newItem = new Zotero.Item(ids.toItemtype());
 	newItem.extra = newItem.extra ? newItem.extra : '';
-	// rowtit, rowtit2...
-	// "#content p" for geology
-	// ".summary li" for CNKI thingker
-	let labels = new Labels(doc, 'div.doc span[class^="rowtit"], #content p, .summary li');
+	// "#content p, .summary li.pdfN" only found on geology version
+	// in standard page, ".row", ".row_1"
+	let labels = new Labels(doc, 'div.doc div[class^="row"], li.top-space, #content summary > p, .summary li.pdfN');
 
 	/* title */
 	newItem.title = getPureText(doc.querySelector('div.doc h1, .h1-scholar, #chTitle'));
@@ -735,9 +734,10 @@ async function scrapeDoc(doc, ids, itemKey) {
 function fixItem(newItem, doc, ids, itemKey) {
 	Z.debug('fixing item...');
 	// "#content p, .summary li.pdfN" only found on geology version
-	let labels = new Labels(doc, 'div.doc span[class^="rowtit"], #content p, .summary li.pdfN');
+	// in standard page, ".row", ".row_1"
+	let labels = new Labels(doc, 'div.doc div[class^="row"], li.top-space, #content summary > p, .summary li.pdfN');
 	Z.debug('get labels:');
-	Z.debug(labels.innerData.map(element => element.innerText));
+	Z.debug(labels.innerData.map(element => [element[0], ZU.trimInternal(element[1].textContent)]));
 	newItem.extra = newItem.extra ? newItem.extra : '';
 	switch (newItem.itemType) {
 		case 'journalArticle':
@@ -856,33 +856,19 @@ async function scrapeZhBook(doc, url) {
 		.split(/\s/)
 		.map(element => ZU.cleanAuthor(element, 'author'));
 	bookItem.creators.forEach(element => element.fieldMode = 1);
-	let data = innerText(doc, '.bc_a, .desc-info')
-		.split('\n')
-		.map((element) => {
-			return [tryMatch(element, /^(.+)：/, 1).replace(/\s/g, ''), tryMatch(element, /：(.*)/, 1)];
-		})
-		.filter(element => element);
-	data = {
-		innerData: data,
-		get: function (label) {
-			let keyVal = this.innerData.find(element => element[0] == label);
-			return keyVal
-				? keyVal[1]
-				: '';
-		}
-	};
-	Z.debug('scrape zh book with data:');
-	Z.debug('form data, we get labels:');
-	Z.debug(data);
-	bookItem.edition = data.get('版次');
-	bookItem.pages = data.get('页数');
-	bookItem.publisher = text(doc, '.xqy_g') || data.get('出版社');
-	bookItem.date = data.get('出版时间')
+	// ".bc_a > li" for book, and ".desc-info > p" for chapter
+	let labels = new Labels(doc, '.bc_a > li, .desc-info > p');
+	Z.debug('get labels:');
+	Z.debug(labels.innerData.map(element => [element[0], ZU.trimInternal(element[1].textContent)]));
+	bookItem.edition = labels.getWith('版次');
+	bookItem.pages = labels.getWith('页数');
+	bookItem.publisher = text(doc, '.xqy_g') || labels.getWith('出版社');
+	bookItem.date = labels.getWith('出版时间')
 		.replace(/(\d{4})(0?\d{1,2})(\d{1,2})/, '$1-$2-$3')
 		.replace(/-$/, '');
 	bookItem.language = 'zh-CN';
-	bookItem.ISBN = data.get('国际标准书号ISBN');
-	bookItem.libraryCatalog = data.get('所属分类');
+	bookItem.ISBN = labels.getWith('国际标准书号ISBN');
+	bookItem.libraryCatalog = labels.getWith('所属分类');
 	bookItem.extra = addExtra('cite', text(doc, '.book_zb_yy span:last-child'));
 	bookItem.complete();
 }
@@ -919,10 +905,34 @@ function getAttachments(doc, keepPDF, itemKey) {
 /* Util */
 class Labels {
 	constructor(doc, selector) {
-		this.innerData = Array.from(doc.querySelectorAll(selector));
+		this.innerData = [];
+		Array.from(doc.querySelectorAll(selector))
+			// avoid nesting
+			.filter(element => !element.querySelector(selector))
+			// avoid empty
+			.filter(element => element.textContent.replace(/\s/g, ''))
+			.forEach((element) => {
+				let elementCopy = element.cloneNode(true);
+				// avoid empty text
+				while (!elementCopy.firstChild.textContent.replace(/\s/g, '')) {
+					// Z.debug(elementCopy.firstChild.textContent);
+					elementCopy.removeChild(elementCopy.firstChild);
+					// Z.debug(elementCopy.firstChild.textContent);
+				}
+				if (elementCopy.children.length > 1) {
+					let key = elementCopy.removeChild(elementCopy.firstChild).textContent.replace(/\s/g, '');
+					this.innerData.push([key, elementCopy]);
+				}
+				else {
+					let text = ZU.trimInternal(elementCopy.textContent);
+					let key = tryMatch(text, /^[[【]?.*?[】\]:：]/);
+					elementCopy.textContent = text.replace(new RegExp(`^${key}`), '');
+					this.innerData.push([key, elementCopy]);
+				}
+			});
 	}
 
-	getWith(label) {
+	getWith(label, element = false) {
 		if (Array.isArray(label)) {
 			let result = label
 				.map(element => this.getWith(element))
@@ -931,20 +941,11 @@ class Labels {
 				? result.find(element => element)
 				: '';
 		}
-		let test = function (element, label) {
-			if (typeof (label) == typeof (/./)) {
-				return label.test(element.innerText);
-			}
-			else {
-				return element.innerText.includes(label);
-			}
-		};
-		let labelElement = this.innerData.find(element => test(element, label));
-		return labelElement
-			// If the text content of the next element matches the pattern of the label, then the content of this label is actually in the same element as the label itself.
-			? labelElement.nextElementSibling && !/^[\s[【]+.*?[】\]\s]+[:：\s]*/.test(labelElement.nextElementSibling.innerText)
-				? ZU.trimInternal(labelElement.nextElementSibling.innerText)
-				: ZU.trimInternal(labelElement.innerText).replace(new RegExp(`^[\\s[【]*${label}[】\\]:：\\s]*`), '')
+		let pattern = new RegExp(label);
+		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
+		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
+		return keyValPair
+			? ZU.trimInternal(keyValPair[1].textContent)
 			: '';
 	}
 }
@@ -1170,7 +1171,7 @@ var testCases = [
 					},
 					{
 						"firstName": "",
-						"lastName": "陈建康fjslcjk@.com",
+						"lastName": "陈建康",
 						"creatorType": "author",
 						"fieldMode": 1
 					},
@@ -1192,6 +1193,7 @@ var testCases = [
 				"issue": "12",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
+				"pages": "1106-1111+1117",
 				"publicationTitle": "中国医科大学学报",
 				"url": "https://chn.oversea.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFD&dbname=CJFDLAST2020&filename=ZGYK202012011&v=%25mmd2BHGGqe3MG%25mmd2FiWsTP5sBgemYG4X5LOYXSuyd0Rs%25mmd2FAl1mzrLs%25mmd2F7KNcFfXQMiFAipAgN",
 				"volume": "49",
@@ -1253,6 +1255,7 @@ var testCases = [
 				"date": "2015-1-1",
 				"ISBN": "9787111520269",
 				"abstractNote": "本书从社会实际需求出发，根据多年的科研经验和成果，与多年从事测控信息处理、食品等相关专业的研究人员合作，融入许多解决实际问题的研究和实践成果，系统介绍了本课题组基于近红外光谱分析技术在果蔬类农药残留量的检测、食用植物油品质、小麦粉、淀粉的品质检测中的应用研究成",
+				"edition": "1",
 				"extra": "cite: 34",
 				"language": "zh-CN",
 				"publisher": "机械工业出版社",
@@ -1293,7 +1296,6 @@ var testCases = [
 				"date": "2015",
 				"abstractNote": "8.1||简介\n淀粉是以谷类、薯类、豆类为原料,不经过任何化学方法处理,也不改变淀粉内在的物理和化学特性加工而成的。它是日常生活中必不可少的作料之一,如煎炸烹炒,做汤勾芡都少不了要用到淀粉。随着食用淀粉在现代食品加工业中的广泛应用,淀粉生产和加工贸易取得了较大的发展。常见的产品主要有玉米淀粉、马铃薯淀粉、红薯淀粉和绿豆淀粉等,不同种类的淀粉价格差别较大,有的相差高达10倍以上,但是不同种类淀粉颗粒的宏观外观和普通物化指标差别不明显,无法辨认。由于缺乏相应的食用淀粉鉴别检验技术标准,国内淀粉市场严格监管很难执...",
 				"language": "zh-CN",
-				"publisher": "机械工业出版社",
 				"attachments": [],
 				"tags": [],
 				"notes": [],
@@ -1548,7 +1550,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://t.cnki.net/kcms/article/abstract?v=0kbmF0AymBAgLt_uMeABkerbZWimbxXlXezvHzxC0QykRFkYVDxg3f1eFqvHD7YdNzrDJGedA24SQ5O9KaBmytN8XBJe8s1djUdt7neNOLXkso_ooJdqAcW3Cmt34eq0Lb35XSYvhfs=&uniplatform=NZKPT",
+		"url": "https://t.cnki.net/kcms/article/abstract?v=GARc9QQj0GVqOwau9Ql25x4LPidEs5NttsNewjdI7nqLhFpsBL4beWl5I8_0qso6tHZ1npKJqtWKSPcwYYelO2_XbAb4L1p-FtvC2L2D3m42glYrGkEPFeanynAQl07sDmekI_bBQTg=&uniplatform=NZKPT",
 		"items": [
 			{
 				"itemType": "journalArticle",
@@ -1587,13 +1589,13 @@ var testCases = [
 				],
 				"date": "2022",
 				"DOI": "10.13206/j.gjgS22031502",
-				"abstractNote": "金属面夹芯板以其保温绝热、降噪、自重轻和装配效率高等优点在围护结构中得到了很好的应用，基于金属面夹芯板的构造，提出一种新型的压型钢板与聚氨酯组合的夹芯楼板结构。为了研究压型钢板-聚氨酯夹芯楼板的受弯性能，对夹芯楼板试件进行了两点对称静载试验。在试验的基础上，提出并验证了夹芯楼板有限元模型，并对槽钢楼板厚度、压型钢板厚度和聚氨酯密度等进行了参数分析。研究结果表明：夹芯楼板的破坏形式主要表现为挠度过大，最大挠度达到了板跨度的1/42,并且跨中截面处的槽钢出现畸变屈曲；夹芯楼板受弯变形后，槽钢首先达到屈服状态，而受压钢板的材料性能未能得到充分发挥；新型压型钢板聚氨酯夹芯楼板相比传统金属面夹芯板的承载能力和刚度有明显提升，承载力和刚度均提高203%;楼板厚度和压型钢板厚度对夹芯楼板的承载能力和刚度均具有显著影响，而楼板厚度相比压型钢板厚度对刚度的影响效果更明显，当楼板厚度从120 mm增大到160 mm时，夹芯楼板的承载力在正常使用状态下提高87%,在承载能力极限状态下提高63%,刚度提高88%,钢板厚度由1 mm增至3 mm时，夹芯楼板的承载力在正常使用状态下提高59%,在承载能力极限状态下提高84%,刚度提高61%;聚氨酯泡沫密度的变化对夹芯楼板的承载能力和刚度影响较小，当密度从45 kg/m3变化到90 kg/m3时，正常使用状态下夹芯楼板的承载力增幅为12%,承载能力极限状态下的承载力增幅仅为2%,刚度增幅为12%。",
+				"abstractNote": "金属面夹芯板以其保温绝热、降噪、自重轻和装配效率高等优点在围护结构中得到了很好的应用，基于金属面夹芯板的构造，提出一种新型的压型钢板与聚氨酯组合的夹芯楼板结构。为了研究压型钢板-聚氨酯夹芯楼板的受弯性能，对夹芯楼板试件进行了两点对称静载试验。在试验的基础上，提出并验证了夹芯楼板有限元模型，并对槽钢楼板厚度、压型钢板厚度和聚氨酯密度等进行了参数分析。研究结果表明：夹芯楼板的破坏形式主要表现为挠度过大，最大挠度达到了板跨度的1/42,并且跨中截面处的槽钢出现畸变屈曲；夹芯楼板受弯变形后，槽钢首先达到屈服状态，而受压钢板的材料性能未能得到充分发挥；新型压型钢板聚氨酯夹芯楼板相比传统金属面夹芯板的承载能力和刚度有明显提升，承载力和刚度均提高203%;楼板厚度和压型钢板厚度对夹芯楼板的承载能力和刚度均具有显著影响，而楼板厚度相比压型钢板厚度对刚度的影响效果更明显，当楼板厚度从120 mm增大到160 mm时，夹芯楼板的承载力在正常使用状态下提高87%,在承载能力极限状态下提高63%,刚度提高88%,钢板厚度由1 mm增至3 mm时，夹芯楼板的承载力在正常使用状态下提高59%,在承载能力极限状态下提高84%,刚度提高61%;聚氨酯泡沫密度的变化对夹芯楼板的承载能力和刚度影响较小，当密度从45 kg/m<sup>3</sup>变化到90 kg/m<sup>3</sup>时，正常使用状态下夹芯楼板的承载力增幅为12%,承载能力极限状态下的承载力增幅仅为2%,刚度增幅为12%。",
 				"issue": "8",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "9-16",
 				"publicationTitle": "钢结构(中英文)",
-				"url": "https://t.cnki.net/kcms/article/abstract?v=0kbmF0AymBAgLt_uMeABkerbZWimbxXlXezvHzxC0QykRFkYVDxg3f1eFqvHD7YdNzrDJGedA24SQ5O9KaBmytN8XBJe8s1djUdt7neNOLXkso_ooJdqAcW3Cmt34eq0Lb35XSYvhfs=&uniplatform=NZKPT",
+				"url": "https://t.cnki.net/kcms/article/abstract?v=GARc9QQj0GVqOwau9Ql25x4LPidEs5NttsNewjdI7nqLhFpsBL4beWl5I8_0qso6tHZ1npKJqtWKSPcwYYelO2_XbAb4L1p-FtvC2L2D3m42glYrGkEPFeanynAQl07sDmekI_bBQTg=&uniplatform=NZKPT",
 				"volume": "37",
 				"attachments": [
 					{
@@ -1625,7 +1627,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=jeDOxXNM7l5R8YCpxhvksaJGf1JpTmJf_DRtDhv9kHMQGGTzJqEZceGoLzOWvvpc7JhZjQqCn0DIoGWc7TEk8QTankjflUJ4pzl0Xfmxf9uO4JIqtzzIYu-vong2HPyN1F33s-PNv2hZ4ibo5y-5jA==&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=GARc9QQj0GXMgnSbLclQtnSZ16XhOFyqHHvuWffY6olk4I_MefQyvIvmzwnmVwg9vCkHb6yc__vzcxELVjh_zpiKGVp8zT8v8YPoaE_pFGC2LvGi3v9CYP0URYZ8DWCubwjncaO_Xn-oXARFdnKrEA==&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "standard",
@@ -1655,7 +1657,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=0kbmF0AymBAd90v5egXcZSS_rEGOd_aFRUiwmm_zTqY98cCFo2xwndaFDSN-Vi0zKCctyl1I50It6LQThIBi9uOzf-5LwX0IzzWHnrxFOS7sLrpTcEpGzA==&uniplatform=CHKD",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=GARc9QQj0GWKSnDyjl19qeTAxYxzs-LHysT9hQGT--IJMgvFA6CtU84hLvwidq9mJRWZgZSdoDQirnjdPSRB8W8PK9-MmAnBRHZ-v7EpHs8FwEtNbzFfBlsGxYTekAwxTT3dyfuLd9o=&uniplatform=CHKD",
 		"items": [
 			{
 				"itemType": "journalArticle",
@@ -1709,7 +1711,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=0kbmF0AymBCI96c2_MLjVqt7rhasW4AiIpVWjqqhD8sxO-ZdGZznAPnvYKfaOVUsgYQ3QKAJub-jAXgVwGjHi4ZC6vb8c0aPQLV4Z2jHgFJGkDGTQeZbTuYvgwnb-FzVZptj4KUJKiWqL_65p9B3tePQpPz8gcyQSdtroqfZ5WQ=&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=GARc9QQj0GUZrQfLwlgil0QRM4AomttoxUiJOGcvIlCnbGrGLT67bHd-GtUwyXtpgthqcajdIM1rIuqL3agndUq0JRLiB00tvdDtYIuF_Tx4liNaNLx02ePWzc7iCDhpfX-4LA7u57NjqnWBksNTgRlWv2dZC7vhdJqKAzPktJh94mlseZ7PMQ==&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "book",
