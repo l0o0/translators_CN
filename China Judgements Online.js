@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-06-19 23:51:09"
+	"lastUpdated": "2023-12-14 23:05:19"
 }
 
 /*
@@ -75,103 +75,183 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url = doc.location.href) {
-	var item = new Zotero.Item('case');
-
-	item.url = url;
-	item.language = 'zh-CN';
-
-	let title;
-	let cause = '';
-	let caseType; // 民事|刑事|行政
-	let documentType = '判决书';
-	let parties = [];
-
-	let extraFields = {};
-
-	let titleElement = doc.querySelector('.PDF_title');
-	if (titleElement) {
-		title = titleElement.textContent;
-		let matched = title.match(/(刑事|民事|行政)/);
-		if (matched) {
-			caseType = matched[0];
-		}
-		matched = title.match(/(判决书|裁定书|调解书|决定书|通知书|令)/);
-		if (matched) {
-			extraFields.Genre = matched[0];
-		}
-	}
-
-	let number = doc.querySelector('#ahdiv');
-	if (number) {
-		item.docketNumber = number.textContent;
-	}
-
-	for (let h4 of doc.querySelectorAll('.gaiyao_box h4')) {
-		let parts = h4.textContent.split('：', 2);
-		if (parts.length != 2) {
-			continue;
-		}
-		let field = parts[0].trim();
-		let value = parts[1].trim();
-
-		if (!value || value === 'undefined') {
-			continue;
-		}
-
-		switch (field) {
-			case '审理法院':
-				item.court = value;
-				break;
-			case '案件类型':
-				if (!caseType) {
-					caseType = value.replace(/案件$/, '');
-				}
-				break;
-			case '案由':
-				if (!value.includes('其他')) {
-					cause = value;
-				}
-				break;
-			case '裁判日期':
-				item.date = value;
-				break;
-			case '当事人':
-				parties = value.split(/,\s*/);
-				if (caseType === '刑事') {
-					parties = parties.filter(party => !party.includes('检察院'));
-				}
-				break;
-		}
-	}
-
-	if (caseType === '刑事' && parties.length > 0) {
-		item.caseName = `${parties[0]}${cause}案`;
-	}
-	else if (parties.length > 1) {
-		item.caseName = `${parties[0]}诉${parties[1]}${cause}案`;
-	}
-	else {
-		// “当事人”为空，使用标题
-		// 榆林市凯奇莱能源投资有限公司与西安地质矿产勘查开发院合作勘查合同纠纷一案二审民事判决书
-		title = title.replace(/(一审|二审|再审).*?$/, '');
-		title = title.replace(/一案$/, '案');
-		title = title.replace('与', '诉');
-		item.caseName = title;
-	}
-
-	extraFields.Genre = `${caseType}${documentType}`;
-	item.extra = Object.entries(extraFields).map(entry => entry[0] + ': ' + entry[1]).join('\n');
-
-	item.attachments.push({
+	var newItem = new Zotero.Item('case');
+	newItem.extra = '';
+	let labels = new Labels(doc, '.gaiyao_box h4');
+	let pdfTitle = text(doc, '.PDF_title');
+	let caseType = tryMatch(pdfTitle, /(刑事|民事|行政)/)
+		|| labels.getWith('案件类型').replace(/案件$/, '');
+	let caseName = pdfTitle
+			.replace(/(一审|二审|再审).*?$/, '')
+			.replace(/一案$/, '案')
+			.replace('与', '诉')
+			.replace('其他', labels.getWith('案由'));
+	newItem.caseName = `${caseName}${caseName.endsWith('案') ? '' : '案'}`;
+	newItem.court = labels.getWith('审理法院');
+	newItem.dateDecided = labels.getWith('裁判日期');
+	newItem.docketNumber = text(doc, '#ahdiv');
+	let docType = `${caseType}${tryMatch(pdfTitle, /(判决书|裁定书|调解书|决定书|通知书|令)$/)}`;
+	newItem.extra += addExtra('type', docType);
+	newItem.url = url;
+	newItem.language = 'zh-CN';
+	newItem.attachments.push({
 		title: 'Snapshot',
 		document: doc
 	});
 
-	item.complete();
+	newItem.complete();
 }
 
+/* Util */
+class Labels {
+	constructor(doc, selector) {
+		this.innerData = [];
+		Array.from(doc.querySelectorAll(selector))
+			.filter(element => element.firstElementChild)
+			.forEach((element) => {
+				let elementCopy = element.cloneNode(true);
+				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
+				this.innerData.push([key, elementCopy]);
+			});
+	}
+
+	getWith(label, element = false) {
+		if (Array.isArray(label)) {
+			let result = label
+				.map(element => this.getWith(element))
+				.filter(element => element);
+			return result.length
+				? result.find(element => element)
+				: '';
+		}
+		let pattern = new RegExp(label);
+		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
+		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
+		return keyValPair
+			? ZU.trimInternal(keyValPair[1].innerText)
+			: '';
+	}
+}
+
+function tryMatch(string, pattern, index = 0) {
+	if (!string) return '';
+	let match = string.match(pattern);
+	return (match && match[index])
+		? match[index]
+		: '';
+}
+
+function addExtra(key, value) {
+	return value
+		? `${key}: ${value}\n`
+		: '';
+}
 
 /** BEGIN TEST CASES **/
 var testCases = [
+	{
+		"type": "web",
+		"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=8uT/bLVGgtGbCEfXD1fGwRjonlu27L7bE9KWzYhQhrN5Pz5TEm1FHZO3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PELWUlJ6s2F5fFuFZdL2RpR",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "胡令国开设赌场案",
+				"creators": [],
+				"dateDecided": "2023-06-13",
+				"court": "南昌高新技术产业开发区人民法院",
+				"docketNumber": "（2023）赣0191刑初162号",
+				"extra": "type: 刑事判决书",
+				"language": "zh-CN",
+				"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=8uT/bLVGgtGbCEfXD1fGwRjonlu27L7bE9KWzYhQhrN5Pz5TEm1FHZO3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PELWUlJ6s2F5fFuFZdL2RpR",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=jE7iRRnAuVjEio1Wd3wtu9OjiYZqvBTqqfB43om8Hn6ThtwkCS4jSZO3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PEPvebusFpLSzxHNLTvyVXc",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "田永诉北京科技大学教育行政管理（教育）案",
+				"creators": [],
+				"dateDecided": "1999-04-26",
+				"court": "北京市第一中级人民法院",
+				"docketNumber": "（1999）一中行终字第73号",
+				"extra": "type: 行政判决书",
+				"language": "zh-CN",
+				"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=jE7iRRnAuVjEio1Wd3wtu9OjiYZqvBTqqfB43om8Hn6ThtwkCS4jSZO3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PEPvebusFpLSzxHNLTvyVXc",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=yBQdAKheX74FetbBCY9HbwUbrqcXhlxmT1vIZPOsOruWb+MBWQW0jpO3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PGszuyelsyjUPc+SGKerqMp",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "榆林市凯奇莱能源投资有限公司诉榆林市工商行政管理局案",
+				"creators": [],
+				"dateDecided": "2017-07-31",
+				"court": "陕西省榆林市中级人民法院",
+				"docketNumber": "（2017）陕赔辖1号",
+				"extra": "type: 行政裁定书",
+				"language": "zh-CN",
+				"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=yBQdAKheX74FetbBCY9HbwUbrqcXhlxmT1vIZPOsOruWb+MBWQW0jpO3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PGszuyelsyjUPc+SGKerqMp",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=h7gy3em4cb/nEfjW7sMKRpH1M7o33PzGR5xc9mCW/4wvTIXG95ra/5O3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PELWUlJ6s2F5fFuFZdL2RpR",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "马玉刚、马玉行、马玉营、王恩荣诉马君真、马玉林、马玉建、胡昌成土地承包经营权转让合同纠纷案",
+				"creators": [],
+				"dateDecided": "2013-09-10",
+				"court": "山东省济宁市中级人民法院",
+				"docketNumber": "（2013）济民终字第567号",
+				"extra": "type: 民事判决书",
+				"language": "zh-CN",
+				"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=h7gy3em4cb/nEfjW7sMKRpH1M7o33PzGR5xc9mCW/4wvTIXG95ra/5O3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PELWUlJ6s2F5fFuFZdL2RpR",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	}
 ]
 /** END TEST CASES **/
