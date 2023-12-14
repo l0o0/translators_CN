@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-14 05:38:20"
+	"lastUpdated": "2023-12-14 05:54:08"
 }
 
 /*
@@ -359,29 +359,7 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.bilibili.com/video/BV19E41197Kc/",
-		"items": [
-			{
-				"itemType": "videoRecording",
-				"title": "【盛世中华】超燃！数百位8KRAW摄影师联合摄制，10分钟带你看绝美祖国大好河山！",
-				"creators": [
-					{
-						"firstName": "",
-						"lastName": "8KRAW",
-						"creatorType": "director"
-					}
-				],
-				"date": "2019-9-28",
-				"abstractNote": "8KRAW摄影师联合摄制，10分钟的山河壮阔，960万平方公里的华夏大地，14亿人民的生息之所。\n谨以此片，献礼新中国成立七十周年！\n片名：盛世中华\n策划：王源宗、LingChen\n视频制作：LingChen\n出品：8KRAW.COM\n视频拍摄/图：8KRAW摄影师（名单见片尾）\n制片统筹/文：鹿游原\nBGM：Northwind by BrunuhVile、Dance of the River Spirits by Marcus Warner",
-				"extra": "like: 866749\nview: 11160883",
-				"libraryCatalog": "社科·法律·心理",
-				"runningTime": "0:22:33",
-				"url": "https://www.bilibili.com/video/BV19E41197Kc/",
-				"attachments": [],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
+		"items": "multiple"
 	},
 	{
 		"type": "web",
@@ -394,37 +372,43 @@ var testCases = [
 					{
 						"firstName": "",
 						"lastName": "共青团中央",
-						"creatorType": "director"
+						"creatorType": "director",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "柳青瑶本尊",
-						"creatorType": "castMember"
+						"creatorType": "castMember",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "中国鼓王佳男",
-						"creatorType": "castMember"
+						"creatorType": "castMember",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "青瑶原创作品空间",
-						"creatorType": "castMember"
+						"creatorType": "castMember",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "轩龙鸽鸽",
-						"creatorType": "castMember"
+						"creatorType": "castMember",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "金大王gold",
-						"creatorType": "castMember"
+						"creatorType": "castMember",
+						"fieldMode": 1
 					}
 				],
 				"date": "2020-4-2",
 				"abstractNote": "作曲：青瑶\n编曲：金大王gold\n\n\n录音：张洋\n混音：徐晓晖\n琵琶：青瑶\n中国鼓：王佳男（著名国乐大师，中国歌剧舞剧院首席打击乐演奏家）",
-				"extra": "like: 1314077\nview: 21917148",
+				"extra": "like: 1314080\nview: 21917224",
 				"libraryCatalog": "演奏",
 				"runningTime": "0:4:59",
 				"url": "https://www.bilibili.com/video/BV1PK411L7h5/",
@@ -446,43 +430,50 @@ var testCases = [
 					{
 						"firstName": "",
 						"lastName": "逆光飞行",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "十一",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "梁园",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "追梦赤子心",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "张缘",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "翼下之风",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "厦门翼下之风动漫科技有限公司",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					}
 				],
 				"date": "2015-3-5",
 				"abstractNote": "本片讲述了一群兔子是怎么从种花家一穷二白的时候，通过自身的努力与奋斗，蹬了鹰酱一脸血，并且养殖出了自己的大蘑菇，发展成为蓝星最强五流氓之一的故事。本片故事纯属虚构，如有雷同，纯属巧合。本片漫画更新频繁，对于喜欢作者拖更的观众可能会稍感不适。",
 				"episodeNumber": 1,
-				"extra": "like: 2135778\nview: 213710468",
+				"extra": "like: 2135797\nview: 213711534",
 				"libraryCatalog": "BiliBili",
 				"place": "中国大陆",
 				"programTitle": "那年那兔那些事儿 第一季",
@@ -527,7 +518,8 @@ var testCases = [
 					{
 						"firstName": "",
 						"lastName": "陆铭教授",
-						"creatorType": "director"
+						"creatorType": "director",
+						"fieldMode": 1
 					}
 				],
 				"date": "2020-5-7",
@@ -556,22 +548,25 @@ var testCases = [
 					{
 						"firstName": "",
 						"lastName": "彼特·道格特",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "鲍勃·彼德森",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "汤姆·麦卡锡",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					}
 				],
 				"date": "2023-11-26",
 				"abstractNote": "小男孩卡尔（Carl Fredricksen）怀揣着对于冒险的热爱偶遇假小子艾丽（Ellie），而艾丽把整个屋子当成一艘大飞船游戏居然使他对这个女孩子有些着迷，相同的爱好最终使两个人成为了一生的爱侣。 他们有一个梦想，那就是有朝一日要去南美洲的“仙境瀑布”探险，但直到艾丽去世，这个梦想也未能实现。终于有一天，曾经专卖气球的老人卡尔居然用五颜六色的气球拽着他的房子飞上了天空，他决定要去实现他们未曾实现的梦想。令卡尔始料不及的是，门廊居然搭上了一个自称是“荒野开拓者”的小男孩小罗（Russell），小罗的喋喋不休让卡尔对这个小胖墩格外讨厌。",
-				"extra": "like: 14826\nview: 2115241",
+				"extra": "like: 14826\nview: 2115391",
 				"libraryCatalog": "BiliBili",
 				"rights": "bilibili",
 				"runningTime": "1:32:50",
