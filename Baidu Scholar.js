@@ -223,11 +223,13 @@ function fixItem(item, doc, url) {
 class Labels {
 	constructor(doc, selector) {
 		this.innerData = [];
-		Array.from(doc.querySelectorAll(selector)).forEach((element) => {
-			let elementCopy = element.cloneNode(true);
-			let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
-			this.innerData.push([key, elementCopy]);
-		});
+		Array.from(doc.querySelectorAll(selector))
+			.filter(element => element.firstElementChild)
+			.forEach((element) => {
+				let elementCopy = element.cloneNode(true);
+				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
+				this.innerData.push([key, elementCopy]);
+			});
 	}
 
 	getWith(label, element = false) {
