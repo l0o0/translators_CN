@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-13 05:02:08"
+	"lastUpdated": "2023-12-14 07:54:42"
 }
 
 /*
@@ -178,7 +178,7 @@ class ID {
 // var debugMode = false;
 
 function detectWeb(doc, url) {
-	Z.debug("----------------CNKI 2023-12-13 13:02:05------------------");
+	Z.debug("----------------CNKI 2023-12-14 15:54:32------------------");
 	let ids = url.includes('www.cnki.com.cn')
 		// CNKI space
 		? new ID(url)
@@ -686,11 +686,11 @@ async function scrapeDoc(doc, ids, itemKey) {
 	/* creators */
 	var creators = [
 		// Do not use comma separated selector, as there may be duplicate code that is difficult to filter
-		Array.from(doc.querySelectorAll('#authorpart span'))
-			// Clear footnote labels for author names
-			.map(element => element.textContent.trim().replace(/[0-9,;，；]/g, '')),
 		Array.from(doc.querySelectorAll('#authorpart a'))
-			.map(element => element.textContent.trim().replace(/[0-9,;，；]/g, '')),
+			.map(element => element.textContent.trim().replace(/[\d,;，；]/g, '')),
+		Array.from(doc.querySelectorAll('#authorpart span'))
+			// Clear footnote labels ([\d,，]*), email ((\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*)*), saperator ([;；]*) for author names
+			.map(element => element.textContent.trim().replace(/[\d,，]*(\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*)*[;；]*$/g, '')),
 		// For oversea CNKI.
 		text(doc, '.brief h3').split(/[,.，；\d]\s*/).filter(element => element),
 		labels.getWith(['主编单位', '作者']).split(/[,;，；]\s*/),
