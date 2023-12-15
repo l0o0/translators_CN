@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-11-09 15:02:48"
+	"lastUpdated": "2023-12-15 07:49:36"
 }
 
 /*
@@ -37,8 +37,9 @@
 
 
 function detectWeb(doc, url) {
+	Z.debug('---------- 2023-12-15 15:16:20 ----------');
 	if (url.includes('/abs/')) {
-		return 'journalArticle';
+		return 'preprint';
 	}
 	else if (getSearchResults(doc, true)) {
 		return 'multiple';
@@ -74,20 +75,49 @@ async function doWeb(doc, url) {
 	}
 }
 
-function matchCreator(creator) {
-	// Z.debug(creators);
-	if (/[A-Za-z]/.test(creator)) {
-		creator = ZU.cleanAuthor(creator, 'author');
+async function scrape(doc, url = doc.location.href) {
+	try {
+		let bibUrl = doc.querySelector('div.side div.bd ul:first-of-type li:nth-child(2) a').href;
+		let bibText = await request(
+			bibUrl,
+			{ responseType: 'arraybuffer' }
+		);
+		bibText = GBKtoUTF8(bibText.body);
+		let translator = Zotero.loadTranslator('impor');
+		translator.setTranslator('9cb70025-a888-4a29-a210-93ec52da40d4');
+		translator.setString(bibText);
+		translator.setHandler('itemDone', (_obj, item) => {
+			item.extra = '';
+			item.itemType = 'preprint';
+			item.creators = getValuesFromBib(bibText, 'author').map(creator => ZU.cleanAuthor(creator, 'author'));
+			let tags = getValuesFromBib(bibText, 'keywords');
+			tags.forEach((tag) => {
+				item.tags.push(tag);
+			});
+			item = Object.assign(item, fixItem(item, doc, url));
+			item.complete();
+		});
+		await translator.translate();
 	}
-	else {
-		creator = creator.replace(/\s/g, '');
-		creator = {
-			lastName: creator,
-			creatorType: 'author',
-			fieldMode: 1
-		};
+	catch (error) {
+		var newItem = new Z.Item('preprint');
+		newItem.extra = '';
+		let labels = new Labels(doc, '.bd li, .bd > p');
+		newItem.title = text(doc, 'div.hd > h1');
+		newItem.abstractNote = labels.getWith('摘要:');
+		let creators = Array.from(doc.querySelectorAll('div.bd li > a[href*="field=author"]'));
+		creators.forEach((creator) => {
+			newItem.creators.push(ZU.cleanAuthor(ZU.trimInternal(creator.textContent), 'author'));
+		});
+		let tags = Array.from(doc.querySelectorAll('span.spankwd'));
+		tags.forEach((tag) => {
+			newItem.tags.push(tag.textContent);
+		});
+		newItem.date = labels.getWith('提交时间');
+		newItem.DOI = attr(doc, '.bd li > a[href*="dx.doi.org"]', 'href');
+		newItem = Object.assign(newItem, fixItem(newItem, doc, url));
+		newItem.complete();
 	}
-	return creator;
 }
 
 function GBKtoUTF8(gbkArrayBuffer) {
@@ -97,41 +127,61 @@ function GBKtoUTF8(gbkArrayBuffer) {
 	return gbkString;
 }
 
-function patchField(doc, url) {
-	var item = {
-		attachments: []
-	};
+function fixItem(item, doc, url) {
+	let labels = new Labels(doc, '.bd li, .bd > p');
 	item.repository = 'ChinaXiv';
 	item.archiveID = url.match(/\/abs\/[\d.]+/)[0].substring(5);
 	item.url = url;
-	item.extra = '';
-	let journalNameLabel = Array.prototype.find.call(doc.querySelectorAll(
-		'div.bd > ul > li >b'),
-	node => (node.innerText == '期刊：'));
-	if (journalNameLabel) {
-		item.extra += `\npublicationTitle: ${journalNameLabel.nextElementSibling.innerText}`;
-	}
-	else {
-		item.extra += '\npublicationTitle: 中国科学院科技论文预发布平台';
-	}
-	try {
-		item.extra += `\ntitleTranslation: ${doc.querySelector('div.hd > p').innerText}`;
-		item.extra += `\nabstractTranslation: ${ZU.trim(doc.querySelector('div.bd > p:nth-child(2) > b').nextSibling.textContent)}`;
-	}
-	catch (error) {
-		Z.debug("There's no translation.");
-	}
-	let pdfURL = doc.querySelector('div.side div.bd ul:first-of-type li:nth-child(1) a').href;
+	item.creators.forEach((creator) => {
+		if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+			creator.fieldMode = 1;
+		}
+	});
+	item.extra += addExtra('publicationTitle', labels.getWith('期刊') || '中国科学院科技论文预发布平台');
+	item.extra += addExtra('original-title', text(doc, 'div.hd > p'));
+	item.extra += addExtra('original-abstract', labels.getWith('Abstract'));
+	let pdfLink = attr(doc, '.side > .bd a[href*="filetype=pdf"]', 'href');
 	item.attachments.push({
-		url: pdfURL,
-		title: "Full Text PDF",
-		mimeType: "application/pdf"
+		url: pdfLink,
+		title: 'Full Text PDF',
+		mimeType: 'application/pdf'
 	});
 	item.attachments.push({
-		title: "Snapshot",
+		title: 'Snapshot',
 		document: doc
 	});
 	return item;
+}
+
+/* Util */
+class Labels {
+	constructor(doc, selector) {
+		this.innerData = [];
+		Array.from(doc.querySelectorAll(selector))
+			.filter(element => element.firstElementChild)
+			.forEach((element) => {
+				let elementCopy = element.cloneNode(true);
+				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
+				this.innerData.push([key, elementCopy]);
+			});
+	}
+
+	getWith(label, element = false) {
+		if (Array.isArray(label)) {
+			let result = label
+				.map(element => this.getWith(element))
+				.filter(element => element);
+			return result.length
+				? result.find(element => element)
+				: '';
+		}
+		let pattern = new RegExp(label);
+		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
+		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
+		return keyValPair
+			? ZU.trimInternal(keyValPair[1].innerText)
+			: '';
+	}
 }
 
 function getValuesFromBib(bibText, label) {
@@ -147,46 +197,11 @@ function getValuesFromBib(bibText, label) {
 	}
 }
 
-async function scrape(doc, url = doc.location.href) {
-	try {
-		let bibUrl = doc.querySelector('div.side div.bd ul:first-of-type li:nth-child(2) a').href;
-		let bibText = await request(
-			bibUrl,
-			{ responseType: 'arraybuffer' }
-		);
-		bibText = GBKtoUTF8(bibText.body);
-		let translator = Zotero.loadTranslator("import");
-		translator.setTranslator('9cb70025-a888-4a29-a210-93ec52da40d4');
-		translator.setString(bibText);
-		translator.setHandler('itemDone', (_obj, item) => {
-			item.itemType = 'preprint';
-			item.creators = getValuesFromBib(bibText, 'author').map(item => matchCreator(item));
-			item.tags = getValuesFromBib(bibText, 'keywords').map(item => ({ tag: item }));
-			Object.assign(item, patchField(doc, url));
-			item.complete();
-		});
-		await translator.translate();
-	}
-	catch (error) {
-		var newItem = new Z.Item('preprint');
-		newItem.title = text(doc, 'div.hd > h1');
-		newItem.abstractNote = doc.querySelector('.bd > p:first-child > b').nextSibling.textContent;
-		newItem.creators = Array.from(doc.querySelectorAll('div.bd li > a[href*="field=author"]')).map(
-			item => matchCreator(item.textContent)
-		);
-		newItem.tags = Array.from(doc.querySelectorAll('span.spankwd')).map(
-			item => ({ tag: item.textContent })
-		);
-		newItem.date = Array.from(doc.querySelectorAll('.bd li > b')).find(
-			item => (item.textContent == '提交时间：')
-		).nextSibling.textContent;
-		let DOI = doc.querySelector('.bd li > a[href*="dx.doi.org"]');
-		newItem.DOI = DOI ? DOI.href : '';
-		Object.assign(newItem, patchField(doc, url));
-		newItem.complete();
-	}
+function addExtra(key, value) {
+	return value
+		? `${key}: ${value}\n`
+		: '';
 }
-
 
 /** BEGIN TEST CASES **/
 var testCases = [
@@ -198,19 +213,25 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://chinaxiv.org/abs/202310.03455",
-		"detectedItemType": "journalArticle",
 		"items": [
 			{
 				"itemType": "preprint",
-				"title": "A Conversation with ChatGPT: Dialogue of Civilizations in the Age of AI",
+				"title": "A Conversation with ChatGPT:  Dialogue of Civilizations  in the Age of AI",
 				"creators": [
 					{
-						"firstName": "",
+						"firstName": "Chen",
+						"lastName": "Yu",
+						"creatorType": "author"
+					},
+					{
+						"firstName": "Chen",
 						"lastName": "Yu",
 						"creatorType": "author"
 					}
 				],
-				"DOI": "10.12074/202310.03413V1",
+				"date": "2023-10-30",
+				"DOI": "http://dx.doi.org/10.12074/202310.03455V1",
+				"abstractNote": "Purpose/significance ChatGPT is a chatbot program developed by OpenAI in the United States. Conversations with ChatGPT can shed light on Dialogue of Civilizations in the age of AI. Method/process Currently, GPT-3.5 offers users 30 free query credits per day. By creating an outline for the conversation, Chen Yu engaged in a dialog with ChatGPT on various issues of Dialogue of Civilizations. Result/conclusion Today, the Standard of Civilization has long been abandoned, and the Clash of Civilizations has been widely criticized. In the era of AI, the AI technology represented by ChatGPT can help promote the Dialogue of Civilizations, help realize real-time communication between people of different cultural backgrounds, enhance the understanding and appreciation of different civilizations, and identify and alleviate prejudices in the dialogue of civilizations. At the same time, the AI technology represented by ChatGPT can also help promote Dialogue within Civilizations and play a positive role in resolving civil conflicts, promoting the integration of immigrants, protecting the voices of vulnerable groups, giving full play to the unique value of women, and building an age-friendly society. However, AI technologies must be developed and used with caution and with due regard to ethical considerations, in particular to prevent AI algorithms from perpetuating prejudices and reinforcing existing inequalities.",
 				"archiveID": "202310.03455",
 				"extra": "publicationTitle: 中国科学院科技论文预发布平台",
 				"libraryCatalog": "ChinaXiv",
@@ -250,43 +271,39 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://chinaxiv.las.ac.cn/abs/202311.00029",
-		"detectedItemType": "journalArticle",
+		"url": "https://chinaxiv.org/abs/202312.00136",
 		"items": [
 			{
 				"itemType": "preprint",
-				"title": "神经递质在恐惧记忆去稳定和再巩固中的作用",
+				"title": "强流质子同步加速器涂抹注入方法研究",
 				"creators": [
 					{
-						"lastName": "李俊娇",
-						"creatorType": "author",
-						"fieldMode": 1
+						"firstName": "",
+						"lastName": "黄明阳",
+						"creatorType": "author"
 					},
 					{
-						"lastName": "陈伟",
-						"creatorType": "author",
-						"fieldMode": 1
+						"firstName": "",
+						"lastName": "许守彦",
+						"creatorType": "author"
 					},
 					{
-						"lastName": "李常红",
-						"creatorType": "author",
-						"fieldMode": 1
+						"firstName": "",
+						"lastName": "王生",
+						"creatorType": "author"
 					},
 					{
-						"lastName": "刘爱玲",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"lastName": "郑希付",
-						"creatorType": "author",
-						"fieldMode": 1
+						"firstName": "",
+						"lastName": "黄明阳",
+						"creatorType": "author"
 					}
 				],
-				"archiveID": "202311.00029",
-				"extra": "publicationTitle: 中国科学院科技论文预发布平台\ntitleTranslation: The role of neurotransmitters in fear memory destabilization and reconsolidation\nabstractTranslation: Memory is stored in the strength changes of synaptic connections between neurons, and neurotransmitters play a crucial role in regulating synaptic plasticity. Neurons expressing specific types of neurotransmitters can form distinct neurotransmitter systems, including the dopaminergic, noradrenergic, serotonergic, and glutamatergic systems. Studies on the destabilization processes of various types of memories have revealed the important role of acetylcholine in memory destabilization triggered by the retrieval of novel associative information. The resistance of high-intensity fear memories to destabilization and reconsolidation is attributed to the activation of the noradrenergic-locus coeruleus system during the encoding process of such fear memories. Other important neurotransmitters, such as dopamine, glutamate, gamma-aminobutyric acid (GABA), and serotonin, also exert influences on memory plasticity at different stages of memory formation. Neurotransmitters play significant roles in fear memory destabilization and reconsolidation, but these effects are typically not independent; rather, they involve interactions and mutual regulation, such as dopamine-cholinergic interactions and serotonin-glutamate interactions. Furthermore, this summary elaborates on the roles of the aforementioned neurotransmitters in memory reconsolidation and their interactions. The study of neurotransmitters at the molecular level can provide valuable insights for the investigation of interventions targeting fear memory reconsolidation. In the future, research should continue to explore the key factors and methods underlying fear memory destabilization based on the molecular mechanisms of memory destabilization and the role of neurotransmitters, to improve the clinical treatment of PTSD based on the reconsolidation intervene.",
+				"date": "2023-12-14",
+				"abstractNote": "空间电荷效应是强流质子加速器的核心问题之一，在注入和初始加速阶段其影响最大。采用相空间涂抹方法并优化其涂抹过程，可以有效地缓解空间电荷效应对束流注入和加速效率及发射度增长的影响。横向相空间涂抹方法可分为相关涂抹和反相关涂抹。在本文中，首先，我们对强流质子同步加速器的横向相空间涂抹方法进行深入研究，包括不同的涂抹方法和实现方式。其次，基于中国散裂中子源（CSNS）注入系统，对束流注入过程和反相关涂抹设计方案进行详细研究，深入探索实际垂直涂抹范围变小的原因和凸轨磁铁边缘聚焦效应对涂抹效果和束流动力学的影响。同时，简单介绍了在反相关涂抹机械结构基础上实现相关涂抹的方法及其对实现CSNS设计指标起到的关键作用。最后，根据未来加速器对不同涂抹注入方法在线切换的需求，我们提出了一种同时实现相关和反相关涂抹的新注入方案，并对其进行详细地论证、模拟和优化。",
+				"archiveID": "202312.00136",
+				"extra": "publicationTitle: 原子核物理评论\noriginal-title: Study on the painting injection methods for the high intensity proton synchrotron\noriginal-abstract: The space charge effect is the core problem of high intensity proton accelerator, especially at injection and initial acceleration stages. Using the phase space painting with optimized process, will effectively eliminate the influence of space charge effect on injection and acceleration efficiency, and emittance increase. Transverse phase space painting methods can be divided into correlated painting and anti-correlated painting. In this paper, firstly, the transverse phase space paintings for the high intensity proton synchrotron are discussed in detail, including different painting methods and different implementation methods. Secondly, based on the injection system of the China Spallation Neutron Source, the beam injection process and anti-correlated painting design scheme are studied in detail. The reasons for the reduction of the actual vertical painting range and the influence of edge focusing effects of the bump magnets on the painting and beam dynamics are deeply explored. In addition, the method to perform the correlated painting based on the mechanical structure of the anti-correlated painting scheme and its key role in realizing the CSNS design goal are briefly introduced. Finally, according to the requirement of switching between different painting methods online in future accelerators, a new injection scheme that can realize correlated and anti-correlated painting simultaneously has been proposed. The new painting injection scheme has been demonstrated, simulated and optimized in detail.",
 				"libraryCatalog": "ChinaXiv",
-				"url": "https://chinaxiv.las.ac.cn/abs/202311.00029",
+				"url": "https://chinaxiv.org/abs/202312.00136",
 				"attachments": [
 					{
 						"title": "Full Text PDF",
@@ -299,19 +316,16 @@ var testCases = [
 				],
 				"tags": [
 					{
-						"tag": "再巩固"
+						"tag": "注入"
 					},
 					{
-						"tag": "去稳定"
+						"tag": "涂抹"
 					},
 					{
-						"tag": "条件性恐惧记忆"
+						"tag": "空间电荷效应"
 					},
 					{
-						"tag": "神经递质"
-					},
-					{
-						"tag": "突触可塑性"
+						"tag": "质子同步加速器"
 					}
 				],
 				"notes": [],
