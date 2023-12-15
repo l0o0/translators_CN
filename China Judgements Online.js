@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-14 23:05:19"
+	"lastUpdated": "2023-12-15 06:06:50"
 }
 
 /*
@@ -37,6 +37,7 @@
 
 
 function detectWeb(doc, url) {
+	Z.debug('---------- China Judgements Online 2023-12-15 13:29:43 ----------');
 	if (url.includes('/181107ANFZ0BXSK4/')) {
 		return 'case';
 	}
@@ -91,7 +92,7 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.dateDecided = labels.getWith('裁判日期');
 	newItem.docketNumber = text(doc, '#ahdiv');
 	let docType = `${caseType}${tryMatch(pdfTitle, /(判决书|裁定书|调解书|决定书|通知书|令)$/)}`;
-	newItem.extra += addExtra('type', docType);
+	newItem.extra += addExtra('Genre', docType);
 	newItem.url = url;
 	newItem.language = 'zh-CN';
 	newItem.attachments.push({
@@ -151,7 +152,7 @@ function addExtra(key, value) {
 var testCases = [
 	{
 		"type": "web",
-		"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=8uT/bLVGgtGbCEfXD1fGwRjonlu27L7bE9KWzYhQhrN5Pz5TEm1FHZO3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PELWUlJ6s2F5fFuFZdL2RpR",
+		"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=8uT/bLVGgtGbCEfXD1fGwRjonlu27L7bE9KWzYhQhrN5Pz5TEm1FHZO3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PGYibJPkd1KxW+qS8/fsyPs",
 		"items": [
 			{
 				"itemType": "case",
@@ -160,9 +161,9 @@ var testCases = [
 				"dateDecided": "2023-06-13",
 				"court": "南昌高新技术产业开发区人民法院",
 				"docketNumber": "（2023）赣0191刑初162号",
-				"extra": "type: 刑事判决书",
+				"extra": "Genre: 刑事判决书",
 				"language": "zh-CN",
-				"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=8uT/bLVGgtGbCEfXD1fGwRjonlu27L7bE9KWzYhQhrN5Pz5TEm1FHZO3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PELWUlJ6s2F5fFuFZdL2RpR",
+				"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=8uT/bLVGgtGbCEfXD1fGwRjonlu27L7bE9KWzYhQhrN5Pz5TEm1FHZO3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PGYibJPkd1KxW+qS8/fsyPs",
 				"attachments": [
 					{
 						"title": "Snapshot",
@@ -177,18 +178,18 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=jE7iRRnAuVjEio1Wd3wtu9OjiYZqvBTqqfB43om8Hn6ThtwkCS4jSZO3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PEPvebusFpLSzxHNLTvyVXc",
+		"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=HhxJUUuixFAnyeYx/1Qo84KTGq0XPAG6l3+jdgsFdJQQ3ZmXa6nUCJO3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PG/i2X2ygXSJOCAYsDKTT4d",
 		"items": [
 			{
 				"itemType": "case",
-				"caseName": "田永诉北京科技大学教育行政管理（教育）案",
+				"caseName": "田永诉北京科技大学其他行政行为案",
 				"creators": [],
-				"dateDecided": "1999-04-26",
-				"court": "北京市第一中级人民法院",
-				"docketNumber": "（1999）一中行终字第73号",
-				"extra": "type: 行政判决书",
+				"dateDecided": "1999-02-14",
+				"court": "北京市海淀区人民法院",
+				"docketNumber": "（1998）海行初字第142号",
+				"extra": "Genre: 行政判决书",
 				"language": "zh-CN",
-				"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=jE7iRRnAuVjEio1Wd3wtu9OjiYZqvBTqqfB43om8Hn6ThtwkCS4jSZO3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PEPvebusFpLSzxHNLTvyVXc",
+				"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=HhxJUUuixFAnyeYx/1Qo84KTGq0XPAG6l3+jdgsFdJQQ3ZmXa6nUCJO3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PG/i2X2ygXSJOCAYsDKTT4d",
 				"attachments": [
 					{
 						"title": "Snapshot",
@@ -203,18 +204,18 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=yBQdAKheX74FetbBCY9HbwUbrqcXhlxmT1vIZPOsOruWb+MBWQW0jpO3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PGszuyelsyjUPc+SGKerqMp",
+		"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=+yAW0uprWUFOfbNSEdLF+muCzTbMhwoVE5E00QhJqHymvp4gc/575pO3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PG/i2X2ygXSJAkEJbP34MuL",
 		"items": [
 			{
 				"itemType": "case",
-				"caseName": "榆林市凯奇莱能源投资有限公司诉榆林市工商行政管理局案",
+				"caseName": "上诉人榆林市凯奇莱能源投资有限公司诉被上诉人榆林市工商行政管理局工商行政登记及行政赔偿案",
 				"creators": [],
-				"dateDecided": "2017-07-31",
+				"dateDecided": "2021-02-22",
 				"court": "陕西省榆林市中级人民法院",
-				"docketNumber": "（2017）陕赔辖1号",
-				"extra": "type: 行政裁定书",
+				"docketNumber": "（2020）陕08行终48号",
+				"extra": "Genre: 行政判决书",
 				"language": "zh-CN",
-				"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=yBQdAKheX74FetbBCY9HbwUbrqcXhlxmT1vIZPOsOruWb+MBWQW0jpO3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PGszuyelsyjUPc+SGKerqMp",
+				"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=+yAW0uprWUFOfbNSEdLF+muCzTbMhwoVE5E00QhJqHymvp4gc/575pO3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PG/i2X2ygXSJAkEJbP34MuL",
 				"attachments": [
 					{
 						"title": "Snapshot",
@@ -229,7 +230,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=h7gy3em4cb/nEfjW7sMKRpH1M7o33PzGR5xc9mCW/4wvTIXG95ra/5O3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PELWUlJ6s2F5fFuFZdL2RpR",
+		"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=h7gy3em4cb/nEfjW7sMKRpH1M7o33PzGR5xc9mCW/4wvTIXG95ra/5O3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PG/i2X2ygXSJHCJTO6MQWcb",
 		"items": [
 			{
 				"itemType": "case",
@@ -238,9 +239,9 @@ var testCases = [
 				"dateDecided": "2013-09-10",
 				"court": "山东省济宁市中级人民法院",
 				"docketNumber": "（2013）济民终字第567号",
-				"extra": "type: 民事判决书",
+				"extra": "Genre: 民事判决书",
 				"language": "zh-CN",
-				"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=h7gy3em4cb/nEfjW7sMKRpH1M7o33PzGR5xc9mCW/4wvTIXG95ra/5O3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PELWUlJ6s2F5fFuFZdL2RpR",
+				"url": "https://wenshu.court.gov.cn/website/wenshu/181107ANFZ0BXSK4/index.html?docId=h7gy3em4cb/nEfjW7sMKRpH1M7o33PzGR5xc9mCW/4wvTIXG95ra/5O3qNaLMqsJrtmSoLGZMrRbw4YYlPxcEO55A1guaDK+t4Hw4I001PG/i2X2ygXSJHCJTO6MQWcb",
 				"attachments": [
 					{
 						"title": "Snapshot",
