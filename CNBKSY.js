@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-11-28 03:52:36"
+	"lastUpdated": "2023-12-15 18:58:08"
 }
 
 /*
@@ -37,6 +37,7 @@
 
 
 function detectWeb(doc, url) {
+	Z.debug('---------- CNBKSY 2023-12-16 02:58:06 ----------')
 	let searchBox = doc.querySelector('.body_box');
 	if (searchBox) {
 		Z.monitorDOMChanges(searchBox, { childList: true, subtree: true });
@@ -94,75 +95,48 @@ function matchCreator(creator) {
 	return creator;
 }
 
-function tryMatch(string, pattern, index = 1) {
-	let result = string.match(pattern);
-	return result ? result[index] : '';
-}
-
-class Table {
-	constructor(doc) {
-		this.innerData = {};
-		let table = doc.querySelector('.srTable').rows;
-		// 最后一行是下载/购买按钮
-		for (let i = 0; i < table.length - 1; i++) {
-			this.innerData[table[i].cells[0].innerText.replace(/[：:]$/gm, '')] = ZU.trimInternal(table[i].cells[1].innerText);
-		}
-	}
-
-	get(key) {
-		return this.innerData.hasOwnProperty(key) ? this.innerData[key] : '';
-	}
-
-	fuzzyGet(key) {
-		let realKey = this.innerData.keys().find(element => element.includes(key));
-		return realKey
-			? this.get(realKey)
-			: '';
-	}
-}
-
 async function scrape(doc, url = doc.location.href) {
-	var data = new Table(doc);
+	let labels = new Labels(doc, '.detailContainer tbody > tr');
 	// Z.debug(data);
 	let type = detectWeb(doc, url);
 	var newItem = new Z.Item(type);
 	switch (type) {
 		case 'journalArticle':
-			newItem.title = data.get('题名');
-			newItem.creators = data.get('作者').split(/\s/)
+			newItem.title = labels.getWith('题名');
+			newItem.creators = labels.getWith('作者').split(/\s/)
 				.filter(element => !element.match(/[著作译譯词詞曲]$/))
 				.map(element => matchCreator(element));
-			newItem.publicationTitle = data.get('文献来源').replace(/^《|》$/g, '');
-			newItem.date = data.get('出版时间').replace(/年$/, '');
-			newItem.volume = tryMatch(data.get('卷期(页)'), /(\d*)卷/);
-			newItem.issue = tryMatch(data.get('卷期(页)'), /(\d*)期/);
-			newItem.pages = tryMatch(data.get('卷期(页)'), /([\d-.+]*)页/);
-			newItem.abstractNote = data.get('摘要');
-			newItem.tags = data.get('主题词').slice(1, -1).split(/[,;，；]/)
+			newItem.publicationTitle = labels.getWith('文献来源').replace(/^《|》$/g, '');
+			newItem.date = labels.getWith('出版时间').replace(/年$/, '');
+			newItem.volume = tryMatch(labels.getWith('卷期(页)'), /(\d*)卷/, 1);
+			newItem.issue = tryMatch(labels.getWith('卷期(页)'), /(\d*)期/, 1);
+			newItem.pages = tryMatch(labels.getWith('卷期(页)'), /([\d-.+]*)页/, 1);
+			newItem.abstractNote = labels.getWith('摘要');
+			newItem.tags = labels.getWith('主题词').slice(1, -1).split(/[,;，；]/)
 				.map(element => ({ tag: element }));
 			break;
 		case 'newspaperArticle':
 			newItem.title = data.fuzzyGet('标题');
-			newItem.shortTitle = data.get('标题2');
-			newItem.publicationTitle = data.get('文献来源').replace(/^《|》$/g, '');
-			newItem.place = data.get('新闻发布地');
-			newItem.data = data.get('出版时间')
+			newItem.shortTitle = labels.getWith('标题2');
+			newItem.publicationTitle = labels.getWith('文献来源').replace(/^《|》$/g, '');
+			newItem.place = labels.getWith('新闻发布地');
+			newItem.data = labels.getWith('出版时间')
 				.replace(/(^\D*)|(\D*$)/g, '')
 				.replace(/\D+/g, '-')
 				.replace(/-(\d)(?:\D|$)/g, '-0$1');
-			newItem.pages = data.get('版次').replace(/^0*/, '');
-			newItem.creators = matchCreator(data.get('新闻来源'));
-			newItem.extra += `\n类别: ${data.get('类别')}`;
+			newItem.pages = labels.getWith('版次').replace(/^0*/, '');
+			newItem.creators = matchCreator(labels.getWith('新闻来源'));
+			newItem.extra += `\n类别: ${labels.getWith('类别')}`;
 			break;
 		case 'artwork':
-			newItem.title = data.get('图片标题');
-			newItem.abstractNote = data.get('图片描述');
-			newItem.creators = data.get('图片责任者').split(/\s/).map(element => matchCreator(element));
-			newItem.date = data.get('出版年份');
-			newItem.artworkMedium = data.get('图片类型');
-			newItem.artworkSize = data.get('图片尺寸');
-			newItem.archive = data.get('图片来源');
-			newItem.archiveLocation = `${data.get('收录卷期')} ${data.get('所属正文篇名')}`;
+			newItem.title = labels.getWith('图片标题');
+			newItem.abstractNote = labels.getWith('图片描述');
+			newItem.creators = labels.getWith('图片责任者').split(/\s/).map(element => matchCreator(element));
+			newItem.date = labels.getWith('出版年份');
+			newItem.artworkMedium = labels.getWith('图片类型');
+			newItem.artworkSize = labels.getWith('图片尺寸');
+			newItem.archive = labels.getWith('图片来源');
+			newItem.archiveLocation = `${labels.getWith('收录卷期')} ${labels.getWith('所属正文篇名')}`;
 			newItem.url = url;
 			newItem.attachments.push({
 				title: 'Snapshot',
@@ -177,6 +151,41 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.complete();
 }
 
+function tryMatch(string, pattern, index = 0) {
+	if (!string) return '';
+	let match = string.match(pattern);
+	return (match && match[index])
+		? match[index]
+		: '';
+}
+
+class Labels {
+	constructor(doc, selector) {
+		this.innerData = [];
+		Array.from(doc.querySelectorAll(selector)).forEach((element) => {
+			let elementCopy = element.cloneNode(true);
+			let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
+			this.innerData.push([key, elementCopy]);
+		});
+	}
+
+	getWith(label, element = false) {
+		if (Array.isArray(label)) {
+			let result = label
+				.map(element => this.getWith(element))
+				.filter(element => element);
+			return result.length
+				? result.find(element => element)
+				: '';
+		}
+		let pattern = new RegExp(label);
+		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
+		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
+		return keyValPair
+			? ZU.trimInternal(keyValPair[1].innerText)
+			: '';
+	}
+}
 
 /** BEGIN TEST CASES **/
 var testCases = [
