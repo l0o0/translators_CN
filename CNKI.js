@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-14 19:57:15"
+	"lastUpdated": "2023-12-15 19:22:24"
 }
 
 /*
@@ -178,7 +178,7 @@ class ID {
 // var debugMode = false;
 
 function detectWeb(doc, url) {
-	Z.debug("----------------CNKI 2023-12-14 15:54:32------------------");
+	Z.debug("---------------- CNKI 2023-12-16 03:19:09 ------------------");
 	let ids = url.includes('www.cnki.com.cn')
 		// CNKI space
 		? new ID(url)
@@ -653,6 +653,8 @@ async function parseRefer(referText, doc, ids, itemKey) {
 			case 'patent':
 				newItem.issueDate = newItem.date;
 				delete newItem.date;
+				newItem.extra += addExtra('Genre', newItem.type);
+				delete newItem.type;
 				break;
 			default:
 				break;
@@ -677,7 +679,7 @@ async function scrapeDoc(doc, ids, itemKey) {
 	/* title */
 	newItem.title = getPureText(doc.querySelector('div.doc h1, .h1-scholar, #chTitle'));
 	if (newItem.title.includes('\n')) {
-		newItem.extra += addExtra('titleTranslation', newItem.title.split('\n')[1]);
+		newItem.extra += addExtra('original-title', newItem.title.split('\n')[1]);
 		newItem.title = newItem.title.split('\n')[0];
 	}
 	newItem.title = newItem.title.replace(/MT翻译$/, '');
@@ -723,9 +725,10 @@ async function scrapeDoc(doc, ids, itemKey) {
 	newItem.ISBN = labels.getWith('ISBN');
 
 	/* else fields */
-	newItem.pages = tryMatch(text(doc, 'div.doc p.total-inform span:nth-child(2)'), /[\d-,+]*/)
+	newItem.pages = tryMatch(text(doc, 'div.doc p.total-inform span:nth-child(2)'), /[\d-,+~]*/)
 		|| labels.getWith(['Pages', '版号'])
 		|| '';
+	newItem.extra += addExtra('Genre', labels.getWith('专利类型'));
 	newItem = Object.assign(newItem, fixItem(newItem, doc, ids, itemKey));
 	newItem.complete();
 }
@@ -745,7 +748,8 @@ function fixItem(newItem, doc, ids, itemKey) {
 		case 'thesis':
 			break;
 		case 'patent':
-			newItem.place = labels.getWith('地址');
+			// newItem.place = labels.getWith('地址');
+			newItem.place = labels.getWith('国省代码');
 			newItem.country = labels.getWith('国省代码');
 			newItem.patentNumber = labels.getWith('申请(专利)号');
 			newItem.filingDate = labels.getWith('申请日');
@@ -811,7 +815,7 @@ function fixItem(newItem, doc, ids, itemKey) {
 	newItem.language = ids.toLanguage();
 
 	if (newItem.pages) {
-		newItem.pages = newItem.pages.replace(/0*([1-9]\d*)/g, '$1');
+		newItem.pages = newItem.pages.replace(/0*([1-9]\d*)/g, '$1').replace(/[+]/g, ', ').replace(/~/g, '-');
 	}
 
 
@@ -919,7 +923,7 @@ class Labels {
 					elementCopy.removeChild(elementCopy.firstChild);
 					// Z.debug(elementCopy.firstChild.textContent);
 				}
-				if (elementCopy.children.length > 1) {
+				if (elementCopy.childNodes.length > 1) {
 					let key = elementCopy.removeChild(elementCopy.firstChild).textContent.replace(/\s/g, '');
 					this.innerData.push([key, elementCopy]);
 				}
@@ -1193,7 +1197,6 @@ var testCases = [
 				"issue": "12",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
-				"pages": "1106-1111+1117",
 				"publicationTitle": "中国医科大学学报",
 				"url": "https://chn.oversea.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFD&dbname=CJFDLAST2020&filename=ZGYK202012011&v=%25mmd2BHGGqe3MG%25mmd2FiWsTP5sBgemYG4X5LOYXSuyd0Rs%25mmd2FAl1mzrLs%25mmd2F7KNcFfXQMiFAipAgN",
 				"volume": "49",
@@ -1296,6 +1299,7 @@ var testCases = [
 				"date": "2015",
 				"abstractNote": "8.1||简介\n淀粉是以谷类、薯类、豆类为原料,不经过任何化学方法处理,也不改变淀粉内在的物理和化学特性加工而成的。它是日常生活中必不可少的作料之一,如煎炸烹炒,做汤勾芡都少不了要用到淀粉。随着食用淀粉在现代食品加工业中的广泛应用,淀粉生产和加工贸易取得了较大的发展。常见的产品主要有玉米淀粉、马铃薯淀粉、红薯淀粉和绿豆淀粉等,不同种类的淀粉价格差别较大,有的相差高达10倍以上,但是不同种类淀粉颗粒的宏观外观和普通物化指标差别不明显,无法辨认。由于缺乏相应的食用淀粉鉴别检验技术标准,国内淀粉市场严格监管很难执...",
 				"language": "zh-CN",
+				"publisher": "机械工业出版社",
 				"attachments": [],
 				"tags": [],
 				"notes": [],
@@ -1550,7 +1554,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://t.cnki.net/kcms/article/abstract?v=GARc9QQj0GVqOwau9Ql25x4LPidEs5NttsNewjdI7nqLhFpsBL4beWl5I8_0qso6tHZ1npKJqtWKSPcwYYelO2_XbAb4L1p-FtvC2L2D3m42glYrGkEPFeanynAQl07sDmekI_bBQTg=&uniplatform=NZKPT",
+		"url": "https://t.cnki.net/kcms/article/abstract?v=hqt_j-uEELGSLvtgfx2DVRxu9hbobgYrzQM3qkFcwxOVpORfI69a9hTWtAs-pPLWmSBjAiedoGDickqGBeqDgHdui5mzNYguPjqqm7qe0730Wy6IeHRrQUWY1n75lu9wEYSllSA6s9s=&uniplatform=NZKPT",
 		"items": [
 			{
 				"itemType": "journalArticle",
@@ -1595,7 +1599,7 @@ var testCases = [
 				"libraryCatalog": "CNKI",
 				"pages": "9-16",
 				"publicationTitle": "钢结构(中英文)",
-				"url": "https://t.cnki.net/kcms/article/abstract?v=GARc9QQj0GVqOwau9Ql25x4LPidEs5NttsNewjdI7nqLhFpsBL4beWl5I8_0qso6tHZ1npKJqtWKSPcwYYelO2_XbAb4L1p-FtvC2L2D3m42glYrGkEPFeanynAQl07sDmekI_bBQTg=&uniplatform=NZKPT",
+				"url": "https://t.cnki.net/kcms/article/abstract?v=hqt_j-uEELGSLvtgfx2DVRxu9hbobgYrzQM3qkFcwxOVpORfI69a9hTWtAs-pPLWmSBjAiedoGDickqGBeqDgHdui5mzNYguPjqqm7qe0730Wy6IeHRrQUWY1n75lu9wEYSllSA6s9s=&uniplatform=NZKPT",
 				"volume": "37",
 				"attachments": [
 					{
@@ -1627,7 +1631,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=GARc9QQj0GXMgnSbLclQtnSZ16XhOFyqHHvuWffY6olk4I_MefQyvIvmzwnmVwg9vCkHb6yc__vzcxELVjh_zpiKGVp8zT8v8YPoaE_pFGC2LvGi3v9CYP0URYZ8DWCubwjncaO_Xn-oXARFdnKrEA==&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=hqt_j-uEELHgLjhVNERafpOMj4EDV7-j9ZKXv3QjqYLauJu1jZonbySDN7NdTxP89ZRbEb74WGJU6Ue5Ew7P8MPqFzTNTsD1AUMujHfQ9NrE3lh8jv2FHKJ9wCzq-0L2BzEAi_jJKFmSZp7Nce3arw==&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "standard",
@@ -1657,7 +1661,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=GARc9QQj0GWKSnDyjl19qeTAxYxzs-LHysT9hQGT--IJMgvFA6CtU84hLvwidq9mJRWZgZSdoDQirnjdPSRB8W8PK9-MmAnBRHZ-v7EpHs8FwEtNbzFfBlsGxYTekAwxTT3dyfuLd9o=&uniplatform=CHKD",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=hqt_j-uEELFh-0x72PDDFlk4L3Q06bx-Aw8_PZo38665XqHiWONkvmAl_MapyRqrU0K-wDy2cOi7kGHcQsG2NAhlAQ6f-u2vj1AVdjUPbZkpj95j-3pnqpgjHGPc6nOAc6WqvrEbl7o=&uniplatform=CHKD",
 		"items": [
 			{
 				"itemType": "journalArticle",
@@ -1711,7 +1715,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=GARc9QQj0GUZrQfLwlgil0QRM4AomttoxUiJOGcvIlCnbGrGLT67bHd-GtUwyXtpgthqcajdIM1rIuqL3agndUq0JRLiB00tvdDtYIuF_Tx4liNaNLx02ePWzc7iCDhpfX-4LA7u57NjqnWBksNTgRlWv2dZC7vhdJqKAzPktJh94mlseZ7PMQ==&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=hqt_j-uEELEIIUdFv9kRm1Mah8H4G3CAV0XKVQng-WEkrfZb07GimDqvWKEl2-u2V4q_XV_Xl3w3Uu6JvDSUCPq15jVihZO87YRdxnBPDjW-7gi8c-NJ8jBfjF-HyWBH2k5d_psm1M9CdEHFZ9yyosImddQGWLfbxlVssmcHR_dTVMa3QRn82Q==&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "book",
