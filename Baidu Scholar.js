@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-13 13:36:27"
+	"lastUpdated": "2023-12-15 12:26:41"
 }
 
 /*
@@ -201,7 +201,7 @@ function fixItem(item, doc, url) {
 			item.thesisType = (labels.getWith('学位级别') ? `${labels.getWith('学位级别')}学位论文` : '');
 			break;
 		case 'book':
-			item.ISBN = labels.getWith('IGBN');
+			item.ISBN = labels.getWith('ISBN');
 			item.publisher = labels.getWith('出版社');
 			break;
 		case 'patent':
