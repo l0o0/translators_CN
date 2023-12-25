@@ -162,21 +162,27 @@ function tryMatch(string, pattern, index = 0) {
 class Labels {
 	constructor(doc, selector) {
 		this.innerData = [];
-		Array.from(doc.querySelectorAll(selector)).forEach((element) => {
-			let elementCopy = element.cloneNode(true);
-			let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
-			this.innerData.push([key, elementCopy]);
-		});
+		Array.from(doc.querySelectorAll(selector))
+			.filter(element => element.firstElementChild)
+			.forEach((element) => {
+				let elementCopy = element.cloneNode(true);
+				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
+				this.innerData.push([key, elementCopy]);
+			});
 	}
 
 	getWith(label, element = false) {
 		if (Array.isArray(label)) {
 			let result = label
-				.map(element => this.getWith(element))
-				.filter(element => element);
-			return result.length
-				? result.find(element => element)
-				: '';
+				.map(aLabel => this.getWith(aLabel, element));
+			result = element
+				? result.find(element => element.childNodes.length)
+				: result.find(element => element);
+			return result
+				? result
+				: element
+					? document.createElement('div')
+					: '';
 		}
 		let pattern = new RegExp(label);
 		let keyValPair = this.innerData.find(element => pattern.test(element[0]));

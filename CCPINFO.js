@@ -83,7 +83,7 @@ async function scrape(doc, url = doc.location.href) {
 	var newItem = new Zotero.Item('book');
 	newItem.extra = '';
 	let labels = new Labels(doc, '.book_intro .fl.clearfix, .book_intro .fr.clearfix');
-	Z.debug(labels.stringfy());
+	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	newItem.title = text(doc, '.book_intro > h2 > span');
 	newItem.abstractNote = text(doc, 'div.field_1 > p');
 	newItem.publisher = labels.getWith('出版社');
@@ -131,21 +131,27 @@ async function scrape(doc, url = doc.location.href) {
 class Labels {
 	constructor(doc, selector) {
 		this.innerData = [];
-		Array.from(doc.querySelectorAll(selector)).forEach((element) => {
-			let elementCopy = element.cloneNode(true);
-			let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
-			this.innerData.push([key, elementCopy]);
-		});
+		Array.from(doc.querySelectorAll(selector))
+			.filter(element => element.firstElementChild)
+			.forEach((element) => {
+				let elementCopy = element.cloneNode(true);
+				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
+				this.innerData.push([key, elementCopy]);
+			});
 	}
 
 	getWith(label, element = false) {
 		if (Array.isArray(label)) {
 			let result = label
-				.map(element => this.getWith(element))
-				.filter(element => element);
-			return result.length
-				? result.find(element => element)
-				: '';
+				.map(aLabel => this.getWith(aLabel, element));
+			result = element
+				? result.find(element => element.childNodes.length)
+				: result.find(element => element);
+			return result
+				? result
+				: element
+					? document.createElement('div')
+					: '';
 		}
 		let pattern = new RegExp(label);
 		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
@@ -153,10 +159,6 @@ class Labels {
 		return keyValPair
 			? ZU.trimInternal(keyValPair[1].innerText)
 			: '';
-	}
-
-	stringfy() {
-		return this.innerData.map(element => [element[0], element[1].innerText]);
 	}
 }
 

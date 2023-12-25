@@ -939,11 +939,16 @@ class Labels {
 	getWith(label, element = false) {
 		if (Array.isArray(label)) {
 			let result = label
-				.map(element => this.getWith(element))
+				.map(aLabel => this.getWith(aLabel, element))
 				.filter(element => element);
-			return result.length
-				? result.find(element => element)
-				: '';
+			result = element
+				? result.find(element => element.childNodes.length)
+				: result.find(element => element);
+			return result
+				? result
+				: element
+					? document.createElement('div')
+					: '';
 		}
 		let pattern = new RegExp(label);
 		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
