@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-15 19:22:24"
+	"lastUpdated": "2023-12-25 07:49:03"
 }
 
 /*
@@ -82,7 +82,7 @@ class ID {
 				|| tryMatch(url, frame[key].pattern, 1);
 		}
 		// geology version
-		if (/^DKCT/.test(this.dbname)) {
+		if (url.includes('inds.cnki.net')) {
 			this.dbcode = this.dbname.slice(6, 10);
 			this.dbname = this.dbname.slice(6);
 		}
@@ -178,7 +178,7 @@ class ID {
 // var debugMode = false;
 
 function detectWeb(doc, url) {
-	Z.debug("---------------- CNKI 2023-12-16 03:19:09 ------------------");
+	Z.debug("---------------- CNKI 2023-12-25 2023-12-25 ------------------");
 	let ids = url.includes('www.cnki.com.cn')
 		// CNKI space
 		? new ID(url)
@@ -1309,85 +1309,6 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://inds.cnki.net/kcms/detail?dbcode=&dbname=DKCTLKCJFD2014&filename=PZKX201405001&pcode=DKCT&zylx=",
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "5G移动通信发展趋势与若干关键技术",
-				"creators": [
-					{
-						"firstName": "",
-						"lastName": "尤肖虎",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "潘志文",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "高西奇",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "曹淑敏",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "邬贺铨",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"date": "2014",
-				"abstractNote": "第5代移动通信系统(5G)是面向2020年之后的新一代移动通信系统,其技术发展尚处于探索阶段.结合国内外移动通信发展的最新趋势,本文对5G移动通信发展的基本需求、技术特点与可能发展途径进行了展望,并分无线传输和无线网络两个部分,重点论述了富有发展前景的7项5G移动通信关键技术,包括大规模天线阵列、基于滤波器组的多载波技术、全双工复用、超密集网络、自组织网络、软件定义网络及内容分发网络.本文还概括性地介绍了国内5G移动通信的相关研发活动及其近期发展目标.",
-				"issue": "5",
-				"language": "zh-CN",
-				"libraryCatalog": "CNKI",
-				"pages": "551-563",
-				"publicationTitle": "中国科学:信息科学",
-				"url": "https://inds.cnki.net/kcms/detail?dbcode=&dbname=DKCTLKCJFD2014&filename=PZKX201405001&pcode=DKCT&zylx=",
-				"volume": "44",
-				"attachments": [
-					{
-						"title": "Full Text PDF",
-						"mimeType": "application/pdf"
-					}
-				],
-				"tags": [
-					{
-						"tag": "5G"
-					},
-					{
-						"tag": "5G,key techniques,development trends,radio transmission technology,wireless network technology"
-					},
-					{
-						"tag": "关键技术"
-					},
-					{
-						"tag": "发展趋势"
-					},
-					{
-						"tag": "无线传输技术"
-					},
-					{
-						"tag": "无线网络技术"
-					}
-				],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
 		"url": "https://inds.cnki.net/kcms/detail?dbcode=&dbname=DKCTLKCMFDTEMP&filename=1023734733.nh&pcode=DKCT&zylx=",
 		"items": [
 			{
@@ -1733,6 +1654,106 @@ var testCases = [
 				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=WWBD&dbname=GARBLAST&filename=STBD3CF0CF2800E929699A2F05BC9DBD89F7&v=",
 				"attachments": [],
 				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://inds.cnki.net/kcms/detail?dbcode=&dbname=AKZTLKCAPJLAST&filename=XJKB20230821001&pcode=AKZT&zylx=&uid=WEEvREcwSlJHSldSdmVqelcxWUxlMTZJa2Z6N0Z0eUN4TXBCRUlLRTJwaz0=$9A4hF_YAuvQ5obgVAqNKPCYcEjKensW4IQMovwHtwkF4VYPoHbKxJw!!",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "陶瓷的激光连接技术研究进展",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "黄常聪",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "陈健",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "马宁宁",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "祝明",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "陈文辉",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "李凡凡",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "黄政仁",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"abstractNote": "随着材料加工快速化、智能化、数字化的发展要求，材料连接技术越来越受到广泛的重视，其中激光连接陶瓷技术是引人关注的重要技术之一，论述了近年来激光连接陶瓷技术的研究现状与进展。首先阐述了激光连接技术的原理和分类；其次对适合陶瓷激光连接的激光器类型和特点进行了介绍，并分析了影响激光连接陶瓷质量的关键因素；然后对基于激光连接技术的陶瓷与陶瓷之间的连接以及陶瓷与异质材料之间的连接进展进行了详细的介绍，阐述了各种激光连接陶瓷方法的特点、机理和连接强度；最后对激光连接陶瓷技术进行总结，并展望其发展趋势。",
+				"language": "zh-CN",
+				"libraryCatalog": "CNKI",
+				"pages": "1-9",
+				"publicationTitle": "中国材料进展",
+				"url": "https://inds.cnki.net/kcms/detail?dbcode=&dbname=AKZTLKCAPJLAST&filename=XJKB20230821001&pcode=AKZT&zylx=&uid=WEEvREcwSlJHSldSdmVqelcxWUxlMTZJa2Z6N0Z0eUN4TXBCRUlLRTJwaz0=$9A4hF_YAuvQ5obgVAqNKPCYcEjKensW4IQMovwHtwkF4VYPoHbKxJw!!",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					}
+				],
+				"tags": [
+					{
+						"tag": "ceramics"
+					},
+					{
+						"tag": "dissimilar materials"
+					},
+					{
+						"tag": "joint strength"
+					},
+					{
+						"tag": "laser joining"
+					},
+					{
+						"tag": "lasers"
+					},
+					{
+						"tag": "异质材料"
+					},
+					{
+						"tag": "激光器"
+					},
+					{
+						"tag": "激光连接"
+					},
+					{
+						"tag": "连接强度"
+					},
+					{
+						"tag": "陶瓷材料"
+					}
+				],
 				"notes": [],
 				"seeAlso": []
 			}
