@@ -2,14 +2,14 @@
 	"translatorID": "f9b132f7-8504-4a8f-b423-b61c8dae4783",
 	"label": "BiliBili",
 	"creator": "Felix Hui",
-	"target": "https?://(search|www).bilibili.com/(video|bangumi|cheese|all)",
+	"target": "https?://(search|www).bilibili.com",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2020-12-19 07:48:50"
+	"lastUpdated": "2023-12-14 05:54:08"
 }
 
 /*
@@ -37,653 +37,311 @@
 
 // API 參考: https://github.com/SocialSisterYi/bilibili-API-collect
 
-// eslint-disable-next-line
-function attr(docOrElem,selector,attr,index){var elem=index?docOrElem.querySelectorAll(selector).item(index):docOrElem.querySelector(selector);return elem?elem.getAttribute(attr):null;}function text(docOrElem,selector,index){var elem=index?docOrElem.querySelectorAll(selector).item(index):docOrElem.querySelector(selector);return elem?elem.textContent:null;}
-// eslint-disable-next-line
-function getContentsFromURL(url){var xmlhttp=new XMLHttpRequest();xmlhttp.open("GET",url,false);xmlhttp.overrideMimeType("application/json");xmlhttp.send(null);return xmlhttp.responseText;}
-
-/**
- * 根據 bvid 或 aid 獲取視頻信息
- * https://www.bilibili.com/video/BV1P7411R7bF
- * https://www.bilibili.com/video/av97308827
- */
-function getInfoForVideo(url) {
-	if (url.includes('/video/')) {
-		var pattern, id;
-		if ((pattern = /av\d+/).test(url)) {
-			id = pattern.exec(url)[0].replace('av', '');
-			return getVideoInfo(null, id);
-		}
-		else if ((pattern = /BV[0-9a-zA-z]*/).test(url)) {
-			id = pattern.exec(url)[0];
-			return getVideoInfo(id, null);
-		}
-	}
-	return null;
-}
-
-/**
- * 根據 epid 獲取視頻信息(list)
- * https://www.bilibili.com/bangumi/play/ep250585
- */
-function getInfoForEpisode(url) {
-	if (!url.includes('/play/')) {
-		return null;
-	}
-	var pattern, apiUrl, id;
-	if ((pattern = /ep\d+/).test(url)) {
-		id = pattern.exec(url)[0].replace('ep', '');
-		apiUrl = "?ep_id=" + id;
-	}
-	else if ((pattern = /ss\d+/).test(url)) {
-		id = pattern.exec(url)[0].replace('ss', '');
-		apiUrl = "?season_id=" + id;
-	}
-	
-	if (apiUrl) {
-		var json, obj;
-		if (url.includes('/bangumi/play/')) {
-			apiUrl = 'https://api.bilibili.com/pgc/view/web/season' + apiUrl;
-			json = getContentsFromURL(apiUrl);
-			obj = JSON.parse(json);
-			if (obj.code === 0) {
-				// Z.debug(obj);
-				return obj.result;
-			}
-		}
-		else if (url.includes('/cheese/play/')) {
-			apiUrl = 'https://api.bilibili.com/pugv/view/web/season' + apiUrl;
-			json = getContentsFromURL(apiUrl);
-			obj = JSON.parse(json);
-			if (obj.code === 0) {
-				// Z.debug(obj);
-				return obj.data;
-			}
-		}
-	}
-	return null;
-}
-
-/**
- * 根據 mediaId 獲取視頻信息(list)
- * https://www.bilibili.com/bangumi/play/ep250585
- * https://www.bilibili.com/cheese/play/ep1491
- */
-function getInfoForMedia(url) {
-	if (url.includes('bangumi/media/')) {
-		var pattern = /md\d+/;
-		if (pattern.test(url)) {
-			var id = pattern.exec(url)[0].replace('md', '');
-			var apiUrl = 'https://api.bilibili.com/pgc/review/user?media_id=' + id;
-			var json = getContentsFromURL(apiUrl);
-			var obj = JSON.parse(json);
-			if (obj.code === 0) {
-				// Z.debug(obj);
-				apiUrl = 'https://api.bilibili.com/pgc/view/web/season?season_id=' + obj.result.media.season_id;
-				json = getContentsFromURL(apiUrl);
-				obj = JSON.parse(json);
-				if (obj.code === 0) {
-					// Z.debug(obj);
-					return obj.result;
-				}
-			}
-		}
-	}
-	return null;
-}
-
-/**
- * 根據查詢條件獲取視頻信息(list)
- * https://search.bilibili.com/all?keyword=%E3%80%90%E4%B8%AD%E5%AD%97%E3%80%91%E7%B2%89%E9%9B%84%E6%95%91%E5%85%B5%EF%BC%9A%E6%88%91%E4%BB%AC%E5%9C%A8%E6%97%A5%E6%9C%AC
- */
-function getInfoForSearch(url) {
-	if (!url.includes('//search.')) {
-		return null;
-	}
-	var apiUrl = '';
-	var params = url.substring(url.indexOf('?') + 1);
-	for (var item of params.split('&')) {
-		switch (item.substring(0, item.indexOf('=')).toLowerCase()) {
-			case 'search_type':
-			case 'keyword':
-			case 'order':
-			case 'order_sort':
-			case 'user_type':
-			case 'duration':
-			case 'tids':
-			case 'category_id':
-			case 'page':
-				apiUrl += '&' + item;
-				break;
-			default:
-				break;
-		}
-	}
-	if (apiUrl.length >= 1) {
-		apiUrl = apiUrl.substring(1);
-	}
-	apiUrl = 'https://api.bilibili.com/x/web-interface/search/all/v2?' + apiUrl;
-	var json = getContentsFromURL(apiUrl);
-	var obj = JSON.parse(json);
-	if (obj.code === 0) {
-		// Z.debug(obj);
-		return obj.data;
-	}
-	return null;
-}
-
-/**
- * 獲取視頻分P列表信息
- * https://www.bilibili.com/bangumi/play/ep312267
- */
-function getPlayList(bvid, aid) {
-	var apiUrl = 'https://api.bilibili.com/x/player/pagelist';
-	if (bvid) {
-		apiUrl += "?bvid=" + bvid;
-	}
-	else if (aid) {
-		apiUrl += "?aid=" + aid;
-	}
-	else {
-		return [];
-	}
-	
-	var json = getContentsFromURL(apiUrl);
-	var obj = JSON.parse(json);
-	if (obj.code === 0) {
-		obj = obj.data;
-		var playList = {};
-		for (var item of obj) {
-			playList[item.cid] = item;
-		}
-		return playList;
-	}
-	return null;
-}
-
-/**
- * 根據 bvid 或 aid 獲取視頻 tag 信息
- */
-function getTags(bvid, aid) {
-	var apiUrl = 'https://api.bilibili.com/x/tag/archive/tags';
-	if (bvid) {
-		apiUrl += "?bvid=" + bvid;
-	}
-	else if (aid) {
-		apiUrl += "?aid=" + aid;
-	}
-	else {
-		return [];
-	}
-	var tags = [];
-	var json = getContentsFromURL(apiUrl);
-	var obj = JSON.parse(json);
-	if (obj.code === 0) {
-		obj = obj.data;
-		for (var item of obj) {
-			tags.push(item.tag_name);
-		}
-	}
-	return tags;
-}
-
-/**
- * 獲取視頻描述
- */
-function getVideoInfo(bvid, aid) {
-	var apiUrl = 'https://api.bilibili.com/x/web-interface/view';
-	if (bvid) {
-		apiUrl += "?bvid=" + bvid;
-	}
-	else if (aid) {
-		apiUrl += "?aid=" + aid;
-	}
-	else {
-		return null;
-	}
-	var json = getContentsFromURL(apiUrl);
-	var obj = JSON.parse(json);
-	if (obj.code === 0) {
-		// Z.debug(obj);
-		return obj.data;
-	}
-	return null;
-}
-
-function getSeasonInfo(url) {
-	if (!url.includes("https")) {
-		url = url.replace("http", "https");
-	}
-	var str = getContentsFromURL(url);
-	var pattern = /__INITIAL_STATE__=({.*});/;
-	if (pattern.test(str)) {
-		var json = pattern.exec(str)[1].trim();
-		// Z.debug(json);
-		var obj = JSON.parse(json);
-		return obj.mediaInfo;
-	}
-	return null;
-}
-
-function resolveForVideo(url) {
-	var obj = getInfoForVideo(url);
-	if (obj) {
-		// Z.debug(JSON.stringify(obj));
-		var tags = getTags(obj.bvid);
-		return {
-			url: "https://www.bilibili.com/video/" + obj.bvid,
-			title: obj.title,
-			genre: obj.tname,
-			runningTime: obj.duration,
-			date: obj.pubdate,
-			creators: [
-				obj.owner.name
-			],
-			description: obj.desc,
-			tags: tags,
-			extra: obj.stat.like + "/" + obj.stat.view
-		};
-	}
-	return {};
-}
-
-function resolveForVideoPages(obj) {
-	var items = {};
-	// Z.debug(JSON.stringify(obj));
-	var url;
-	var isFirst = true;
-	var tags = null;
-	var apiUrl = "https://www.bilibili.com/video/" + obj.bvid + '?p=';
-	for (var pageInfo of obj.pages) {
-		if (isFirst) {
-			tags = getTags(pageInfo.bvid);
-		}
-		url = apiUrl + pageInfo.page;
-		items[url] = {
-			url: url,
-			title: pageInfo.part,
-			genre: obj.tname,
-			runningTime: pageInfo.duration,
-			date: obj.pubdate,
-			creators: [
-				obj.owner.name
-			],
-			description: obj.desc,
-			episodeNumber: pageInfo.page,
-			programTitle: pageInfo.part,
-			tags: tags,
-			extra: obj.stat.like + "/" + obj.stat.view
-		};
-		isFirst = false;
-	}
-	return items;
-}
-
-function resolveForBangumi(obj) {
-	var items = {};
-	// Z.debug(JSON.stringify(obj));
-	var seasonInfo = getSeasonInfo(obj.link);
-	var tags = seasonInfo.styles.map(t => t.name);
-	var areas = seasonInfo.areas.map(a => a.name).join("·");
-	var archive = "";
-	if (seasonInfo.staff) {
-		archive += "STAFF:\n" + seasonInfo.staff;
-	}
-	if (seasonInfo.actors) {
-		if (archive.length >= 1) {
-			archive += "\n";
-		}
-		archive += "ACTORS:\n" + seasonInfo.actors;
-	}
-	var creator;
-	if (obj.up_info && obj.up_info.uname) {
-		creator = obj.up_info.uname;
-	}
-	else {
-		creator = seasonInfo.rights.copyright;
-	}
-	
-	var runningTime, needGetRunningTime = false;
-	var isFirst = true, playList = null;
-	for (var episodeInfo of obj.episodes) {
-		// get video duration
-		runningTime = 0;
-		if (isFirst) {
-			playList = getPlayList(episodeInfo.bvid);
-			needGetRunningTime = (!playList || playList.length !== obj.episodes.length);
-		}
-		if (playList && playList[episodeInfo.cid]) {
-			runningTime = playList[episodeInfo.cid].duration;
-		}
-		items[episodeInfo.link] = {
-			url: episodeInfo.link,
-			title: episodeInfo.share_copy,
-			shortTitle: seasonInfo.origin_name,
-			genre: seasonInfo.type_name || episodeInfo.from,
-			runningTime: runningTime,
-			date: seasonInfo.publish.pub_date,
-			creators: [creator],
-			description: seasonInfo.evaluate,
-			episodeNumber: episodeInfo.title,
-			programTitle: episodeInfo.long_title,
-			tags: tags,
-			place: areas,
-			archive: archive,
-			rights: seasonInfo.rights.copyright,
-			extra: seasonInfo.rating.score + "/" + seasonInfo.stat.views + "/" + seasonInfo.rating.count,
-			aid: episodeInfo.aid,
-			bvid: episodeInfo.bvid,
-			cid: episodeInfo.cid,
-			needGetRunningTime: needGetRunningTime
-		};
-		isFirst = false;
-	}
-	return items;
-}
-
-function resolveForCheese(obj) {
-	var items = {};
-	// Z.debug(JSON.stringify(obj));
-	var url;
-	var isFirst = true;
-	var tags = null;
-	var apiUrl = 'https://www.bilibili.com/cheese/play/ep';
-	for (var episodeInfo of obj.episodes) {
-		if (isFirst) {
-			tags = getTags(episodeInfo.bvid);
-		}
-		url = apiUrl + episodeInfo.id;
-		items[url] = {
-			url: url,
-			title: "[" + obj.title + "] " + episodeInfo.title,
-			shortTitle: episodeInfo.title,
-			genre: "cheese",
-			runningTime: episodeInfo.duration,
-			date: episodeInfo.release_date,
-			creators: [obj.up_info.uname],
-			description: obj.subtitle,
-			episodeNumber: episodeInfo.index,
-			programTitle: episodeInfo.title,
-			tags: tags,
-			extra: "0/" + obj.stat.play
-		};
-		isFirst = false;
-	}
-	return items;
-}
-
-function resolveForSearch(obj) {
-	var items = {};
-	var apiUrl;
-	// Z.debug(JSON.stringify(obj));
-	obj = obj.result;
-	var url;
-	for (var resultInfo of obj) {
-		switch (resultInfo.result_type) {
-			case 'media_bangumi':
-			case 'media_ft':
-				apiUrl = 'https://www.bilibili.com/bangumi/media/md';
-				for (var subItem1 of resultInfo.data) {
-					url = apiUrl + subItem1.media_id;
-					items[url] = {
-						url: url,
-						title: '[' + subItem1.media_score.score + '/' + subItem1.media_score.user_count + '] ' + ZU.cleanTags(subItem1.title)
-					};
-				}
-				break;
-			case 'video':
-				apiUrl = 'https://www.bilibili.com/video/';
-				for (var subItem2 of resultInfo.data) {
-					url = apiUrl + subItem2.bvid;
-					items[url] = {
-						url: url,
-						title: ZU.cleanTags(subItem2.title)
-					};
-				}
-				break;
-			default:
-				break;
-		}
-	}
-	return items;
-}
-
 function detectWeb(doc, url) {
-	if (url.includes('/play/') || url.includes('/video/')) {
-		if (getSearchResults(doc, url, true)) {
-			return "multiple";
-		}
-		else {
-			return "tvBroadcast";
-		}
+	Z.debug('---------- bilibili 2023-12-14 13:23:56 ----------');
+	if (getSearchResults(doc, true)) {
+		return 'multiple';
 	}
-	else if ((url.includes('//search.') || url.includes('/media/')) && getSearchResults(doc, url, true)) {
-		return "multiple";
+	else if (url.includes('/play/')) {
+		return 'tvBroadcast';
+	}
+	else if (url.includes('/video/')) {
+		return 'videoRecording';
 	}
 	return false;
 }
 
-/**
- * var resultItem = {
- *   "url": {
- * 	   "url": "",
- *     "title": "",
- *     "shortTitle": "",
- *     "genre": "",
- *     "runningTime": 0,
- *     "date": 0,
- *     "creators": [],
- *     "description": "",
- *     "episodeNumber": "",
- *     "programTitle": "",
- *     "tags": []
- *     "extra": "", // 評分/觀看次數/評分次數
- * 	 }
- * }
- */
-function getSearchResults(doc, url, checkOnly) {
-	var items = [];
+function getSearchResults(doc, checkOnly) {
+	var items = {};
 	var found = false;
-	var obj;
-	if (url.includes('/video/')) {
-		// https://www.bilibili.com/video/BV1P7411R7bF
-		// https://www.bilibili.com/video/av97308827
-		obj = getInfoForVideo(url);
-		if (!obj) {
-			return found;
-		}
-		if (obj.pages && obj.pages.length >= 2) {
-			found = true;
-			if (checkOnly) return found;
-			items = resolveForVideoPages(obj);
-		}
+	let url = doc.location.href;
+	let type = multiType.find(type => type.urlPattern.test(url) && doc.querySelector(type.selector)
+	);
+	Z.debug('get multiple type:');
+	Z.debug(type);
+	if (!type) return false;
+	var rows = doc.querySelectorAll(type.selector);
+	if (type.selector == '.search-content a') {
+		rows = Array.from(rows).filter(row => (row.title || row.querySelector('h3'))
+		);
 	}
-	else if (url.includes('/play/')) {
-		obj = getInfoForEpisode(url);
-		if (!obj) {
-			return found;
-		}
-		if (url.includes('/bangumi/play/')) {
-			// 紀錄片
-			// https://www.bilibili.com/bangumi/play/ep250585
-			if (obj.episodes && obj.episodes.length >= 2) {
-				found = true;
-				if (checkOnly) return found;
-				// Z.debug(JSON.stringify(obj));
-				items = resolveForBangumi(obj);
-			}
-		}
-		else if (url.includes('/cheese/play/')) {
-			// 課程
-			// https://www.bilibili.com/cheese/play/ep1491
-			if (obj.episodes && obj.episodes.length >= 2) {
-				found = true;
-				if (checkOnly) return found;
-				// Z.debug(JSON.stringify(obj));
-				items = resolveForCheese(obj);
-			}
-		}
-	}
-	else if (url.includes('/media/')) {
-		// 紀錄片
-		// https://www.bilibili.com/bangumi/media/md28227662/
-		obj = getInfoForMedia(url);
-		if (obj && obj.episodes && obj.episodes.length >= 1) {
-			found = true;
-			if (checkOnly) return found;
-			items = resolveForBangumi(obj);
-		}
-	}
-	else if (url.includes('//search.')) {
-		// 搜索
-		// https://search.bilibili.com/all?keyword=%E9%AC%BC%E7%81%AD%E4%B9%8B%E5%88%83&from_source=nav_search&spm_id_from=666.25.b_696e7465726e6174696f6e616c486561646572.11
-		obj = getInfoForSearch(url);
-		if (!obj || obj.numResults <= 0) {
-			return false;
-		}
+	for (let i = 0; i < rows.length; i++) {
+		let row = rows[i];
+		let href = [/\/ss\d+/, /\/md\d+/].find(pattern => pattern.test(url))
+			? `${i}`
+			: row.href;
+		let title = type.getTitle(row);
+		if (!href || !title) continue;
+		if (checkOnly) return true;
 		found = true;
-		if (checkOnly) return found;
-		items = resolveForSearch(obj);
+		items[href] = title;
 	}
 	return found ? items : false;
 }
 
-function doWeb(doc, url) {
-	if (detectWeb(doc, url) == "multiple") {
-		var objItems = getSearchResults(doc, url, false);
-		Zotero.selectItems(objItems, function (items) {
-			if (items) {
-				Object.keys(items).forEach((key) => {
-					scrape(objItems[key], url);
-				});
-			}
-		});
+const multiType = [
+	{
+		selector: '.search-content a',
+		urlPattern: /\/\/search\./,
+		getTitle: function (row) {
+			return ZU.trimInternal(row.textContent);
+		}
+	},
+	{
+		selector: '#multi_page a',
+		urlPattern: /\/video\//,
+		getTitle: function (row) {
+			return `${text(row, '.page-num')}    ${text(row, '.part')}`;
+		}
+	},
+	{
+		selector: 'div[class^="eplist"] a',
+		urlPattern: /bangumi\/play\/ss\d+/,
+		getTitle: function (row) {
+			return `第${ZU.trimInternal(row.textContent)}集`;
+		}
+	},
+	{
+		selector: '.section-item [class^="season-title"]',
+		urlPattern: /cheese\/play\/ss\d+/,
+		getTitle: function (row) {
+			return ZU.trimInternal(row.textContent);
+		}
+	},
+	{
+		selector: '.sl-ep-list li[title]',
+		urlPattern: /bangumi\/media\/md\d+/,
+		getTitle: function (row) {
+			return ZU.trimInternal(row.textContent);
+		}
 	}
-	else {
-		scrape(null, url);
-	}
-}
+];
 
-function scrape(obj, url) {
-	if (url) {
-		if (!obj) {
-			obj = resolveForVideo(url);
-			if (!obj) {
-				return;
+async function doWeb(doc, url) {
+	if (detectWeb(doc, url) == 'multiple') {
+		Z.debug('this is a multiple page');
+		let items = await Zotero.selectItems(getSearchResults(doc, false));
+		if (!items) return;
+		Z.debug(`select items:`);
+		Z.debug(items);
+		if (/\/ss\d+/.test(url)) {
+			let par = await getInfo(url);
+			for (let url of Object.keys(items)) {
+				par.url = url;
+				await scrape(par);
 			}
 		}
-		if (url.includes('//search.')) {
-			var objs = Object.values(getSearchResults(null, obj.url, false));
-			objs.forEach((objItem) => {
-				scrape(objItem, objItem.url);
-			});
-			return;
-		}
-		// get video duration
-		if (url.includes('/bangumi/') && obj.needGetRunningTime) {
-			var videoInfo = getVideoInfo(obj.bvid);
-			if (videoInfo) {
-				obj.runningTime = videoInfo.duration;
-				obj.creators = [videoInfo.owner.name];
-				if (videoInfo.desc.length >= 5) {
-					obj.description = videoInfo.desc;
+		else if (/\/md\d+/.test(url)) {
+			let json = await requestJSON(`https://api.bilibili.com/pgc/review/user?media_id=${url.match(/\/md(\d+)/)[1]}`);
+			// Z.debug(json);
+			if (json.code === 0) {
+				let par = await getInfo(`https://www.bilibili.com/bangumi/play/ss${json.result.media.season_id}`);
+				for (let url of Object.keys(items)) {
+					par.url = url;
+					await scrape(par);
 				}
 			}
 		}
-	}
-
-	var item = new Zotero.Item("tvBroadcast");
-
-	// URL
-	item.url = obj.url;
-
-	// 标题
-	item.title = obj.title;
-	// item.title = text(doc, '#viewbox_report h1.video-title');
-	// Z.debug('title: ' + item.title);
-
-	if (obj.place) {
-		item.place = obj.place;
-	}
-
-	// 类型
-	if (obj.genre) {
-		item.libraryCatalog = obj.genre;
-	}
-
-	// 时长
-	let hour = Math.floor(obj.runningTime / 3600 % 24);
-	let min = Math.floor(obj.runningTime / 60 % 60);
-	let sec = Math.floor(obj.runningTime % 60);
-	item.runningTime = `${hour}:${min}:${sec}`;
-	// item.runningTime = text(doc, 'span.bilibili-player-video-time-total');
-	// Z.debug('runningTime: ' + item.runningTime);
-
-	// 发布时间
-	if (isNaN(obj.date)) {
-		item.date = obj.date;
+		else {
+			for (let url of Object.keys(items)) {
+				await scrape(await getInfo(url));
+			}
+		}
 	}
 	else {
-		item.date = ZU.strToISO(new Date(obj.date * 1000));
+		await scrape(await getInfo(url));
 	}
-	// item.date = text(doc, '.video-data span:not([class])');
-	// Z.debug('date: ' + item.date);
+}
 
-	// 导演?
-	obj.creators.forEach((author) => {
-		if (author) {
-			item.creators.push({
-				lastName: author,
-				creatorType: "contributor",
-				fieldMode: 1
-			});
-		}
-	});
-	// var author = text(doc, '#v_upinfo a.username');
-	// Z.debug('director: ' + author);
+async function getInfo(url) {
+	let type = singleType.find(type => url.includes(type.url));
 
-	// 摘要
-	var description = obj.description;
-	// var description = text(doc, '#v_desc div.info');
-	// Z.debug('description: ' + description);
-	if (description) {
-		item.abstractNote = ZU.cleanTags(description);
-	}
-
-	// 视频选集
-	if (obj.episodeNumber) {
-		item.episodeNumber = obj.episodeNumber;
-	}
-	if (obj.programTitle) {
-		item.programTitle = obj.programTitle;
-	}
-	// var episodeInfo = doc.querySelector('#multi_page li[class*="on"] a');
-	// if (episodeInfo) {
-	// 	// Z.debug('episodeInfo: ' + episodeInfo);
-	// 	item.episodeNumber = text(episodeInfo, 'span.s1');
-	// 	item.programTitle = episodeInfo.title;
-	// 	// item.url = episodeInfo.href;
-	// }
-
-	if (obj.archive) {
-		item.archive = obj.archive;
-	}
-
-	if (obj.rights) {
-		item.rights = obj.rights;
-	}
-
-	// 其他
-	item.extra = obj.extra;
-
-	// 标签
-	if (obj.tags && obj.tags.length >= 1) {
-		for (var tag of obj.tags) {
-			item.tags.push(tag);
+	/* get basic info */
+	var requestBody = '';
+	for (const key in type.id) {
+		if (type.id[key].test(url)) {
+			// Z.debug(url.match(type.id[key]));
+			let idLabel = key;
+			let idSerial = url.match(type.id[key])[1];
+			requestBody = `${idLabel}=${idSerial}`;
 		}
 	}
+	let json = await requestJSON(`${type.api}?${requestBody}`);
+	Z.debug('getInfo reurn:');
+	Z.debug(json);
+	return { url: url, type: type, json: json };
+}
 
-	item.complete();
+const singleType = [
+	{
+		// https://www.bilibili.com/video/av97308827
+		// https://www.bilibili.com/video/BV1P7411R7bF
+		dbType: 'video',
+		itemType: 'videoRecording',
+		url: '/video/',
+		id: {
+			aid: /av(\d+)/,
+			bvid: /\/BV([\da-zA-z]*)/
+		},
+		api: 'https://api.bilibili.com/x/web-interface/view',
+		keyNode: 'data',
+		// api: 'https://api.bilibili.com/x/web-interface/view/detail',
+		toItem: function (url, json) {
+			let tempItem = {};
+			tempItem.title = json.title;
+			tempItem.abstractNote = json.desc;
+			tempItem.date = secondsToDate(json.pubdate);
+			tempItem.runningTime = secondsToTime(json.duration);
+			tempItem.url = url;
+			tempItem.libraryCatalog = json.tname;
+			tempItem.creators = [ZU.cleanAuthor(
+				json.owner.name,
+				json.copyright > 1
+					? 'contributor'
+					: 'director'
+			)];
+			if (/\?p=(\d+)/.test(url)) {
+				let index = parseInt(url.match(/\?p=(\d+)/)[1]) - 1;
+				tempItem.title = json.pages[index].part;
+				tempItem.seriesTitle = json.title;
+				tempItem.volume = index + 1;
+				tempItem.numberOfVolumes = json.pages.length;
+				tempItem.runningTime = json.pages[index].duration;
+			}
+			if (json.staff) {
+				json.staff.slice(1).forEach(element => tempItem.creators.push(ZU.cleanAuthor(element.name, 'castMember'))
+				);
+			}
+			tempItem.extra = `like: ${json.stat.like}\nview: ${json.stat.view}`;
+			return tempItem;
+		}
+	},
+	{
+		// 番剧
+		// https://www.bilibili.com/bangumi/play/ep250585
+		// https://www.bilibili.com/bangumi/play/ss42290
+		dbType: 'bangumi',
+		itemType: 'tvBroadcast',
+		url: '/bangumi/play/',
+		id: {
+			// follows  the json
+			// eslint-disable-next-line
+			season_id: /ss(\d+)/,
+			// follows  the json
+			// eslint-disable-next-line
+			ep_id: /ep(\d+)/
+		},
+		api: 'https://api.bilibili.com/pgc/view/web/season',
+		keyNode: 'result',
+		toItem: function (url, json) {
+			let tempItem = {};
+			let ep = /^\d+/.test(url)
+				// from multiple
+				? json.episodes[url]
+				// from single
+				: json.episodes.find(element => element.id == url.match(/\/ep(\d+)/)[1]);
+			tempItem.title = [ep.long_title, json.title, ep.share_copy].find(element => element);
+			tempItem.programTitle = json.title;
+			tempItem.abstractNote = ZU.trimInternal(json.evaluate);
+			tempItem.episodeNumber = json.episodes.indexOf(ep) + 1;
+			tempItem.place = json.areas.map(element => element.name).join('; ');
+			tempItem.date = secondsToDate(ep.pub_time);
+			tempItem.runningTime = secondsToTime(ep.duration / 1000);
+			tempItem.url = ep.link;
+			if (ep.link.includes('movie')) {
+				tempItem.itemType = 'film';
+			}
+			tempItem.rights = json.rights.copyright;
+			tempItem.creators = Array.from(new Set(
+				json.staff.split(/[\n,;，；、]/).map(element => element.replace(/^.*：/, '')
+				))).map(element => ZU.cleanAuthor(element, 'contributor'));
+			tempItem.extra = `like: ${json.stat.likes}\nview: ${json.stat.views}`;
+			return tempItem;
+		}
+	},
+	{
+		// 課程
+		// https://www.bilibili.com/cheese/play/ep1491
+		dbType: 'cheese',
+		itemType: 'tvBroadcast',
+		url: '/cheese/play/',
+		id: {
+			// follows  the json
+			// eslint-disable-next-line
+			season_id: /ss(\d+)/,
+			// follows  the json
+			// eslint-disable-next-line
+			ep_id: /ep(\d+)/
+		},
+		api: 'https://api.bilibili.com/pugv/view/web/season',
+		keyNode: 'data',
+		toItem: function (url, json) {
+			let tempItem = {};
+			let ep = /^\d+/.test(url)
+				? json.episodes[url.match(/^\d+/)[0]]
+				: json.episodes.find(element => element.id == url.match(/\/ep(\d+)/)[1]);
+			tempItem.title = ep.title;
+			tempItem.programTitle = json.title;
+			tempItem.abstractNote = json.subtitle;
+			tempItem.episodeNumber = ep.index;
+			tempItem.date = secondsToDate(ep.release_date);
+			tempItem.runningTime = secondsToTime(ep.duration);
+			tempItem.url = `https://www.bilibili.com/cheese/play/ep${ep.id}`;
+			tempItem.creators = [json.up_info.uname].map(element => ZU.cleanAuthor(element, 'director'));
+			return tempItem;
+		}
+	}
+];
+
+async function scrape({ url, type, json }) {
+	var newItem = new Z.Item(type.itemType);
+	// Z.debug(json);
+	if (json.code === 0) {
+		json = json[type.keyNode];
+		newItem = Object.assign(newItem, type.toItem(url, json));
+		newItem.creators.forEach((creator) => {
+			if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+				creator.fieldMode = 1;
+			}
+		});
+
+		/* get tags */
+		switch (type.dbType) {
+			case 'video': {
+				let tags = await requestJSON(`https://api.bilibili.com/x/tag/archive/tags?bvid=${url.bvid}`);
+				Z.debug(tags);
+				if (tags.code == 0) {
+					tags = tags.data;
+					for (const tag of tags) {
+						newItem.tags.push(tag.tag_name);
+					}
+				}
+				break;
+			}
+			case 'bangumi': {
+				json.styles.forEach(element => newItem.tags.push(element));
+				break;
+			}
+			default:
+				break;
+		}
+		newItem.complete();
+	}
+}
+
+function secondsToTime(seconds) {
+	let hours = Math.floor(seconds / 3600);
+	let minutes = Math.floor((seconds % 3600) / 60);
+	let remainingSeconds = seconds % 60;
+	return `${hours}:${minutes}:${remainingSeconds}`;
+}
+
+function secondsToDate(seconds) {
+	let date = new Date(seconds * 1000);
+	let year = date.getFullYear();
+	let month = date.getMonth() + 1;
+	let day = date.getDate();
+	return `${year}-${month}-${day}`;
 }
 
 /** BEGIN TEST CASES **/
@@ -695,13 +353,243 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://www.bilibili.com/cheese/play/ep1491",
+		"url": "https://www.bilibili.com/bangumi/media/md28227662/",
 		"items": "multiple"
 	},
 	{
 		"type": "web",
-		"url": "https://www.bilibili.com/video/BV1mE41187KT?p=1",
+		"url": "https://www.bilibili.com/video/BV19E41197Kc/",
 		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://www.bilibili.com/video/BV1PK411L7h5/",
+		"items": [
+			{
+				"itemType": "videoRecording",
+				"title": "鼓乐《兰陵王入阵曲》耳机开最大！来听千军万马！！！",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "共青团中央",
+						"creatorType": "director",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "柳青瑶本尊",
+						"creatorType": "castMember",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "中国鼓王佳男",
+						"creatorType": "castMember",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "青瑶原创作品空间",
+						"creatorType": "castMember",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "轩龙鸽鸽",
+						"creatorType": "castMember",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "金大王gold",
+						"creatorType": "castMember",
+						"fieldMode": 1
+					}
+				],
+				"date": "2020-4-2",
+				"abstractNote": "作曲：青瑶\n编曲：金大王gold\n\n\n录音：张洋\n混音：徐晓晖\n琵琶：青瑶\n中国鼓：王佳男（著名国乐大师，中国歌剧舞剧院首席打击乐演奏家）",
+				"extra": "like: 1314080\nview: 21917224",
+				"libraryCatalog": "演奏",
+				"runningTime": "0:4:59",
+				"url": "https://www.bilibili.com/video/BV1PK411L7h5/",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.bilibili.com/bangumi/play/ep30478",
+		"items": [
+			{
+				"itemType": "tvBroadcast",
+				"title": "种花家的崛起",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "逆光飞行",
+						"creatorType": "contributor",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "十一",
+						"creatorType": "contributor",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "梁园",
+						"creatorType": "contributor",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "追梦赤子心",
+						"creatorType": "contributor",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "张缘",
+						"creatorType": "contributor",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "翼下之风",
+						"creatorType": "contributor",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "厦门翼下之风动漫科技有限公司",
+						"creatorType": "contributor",
+						"fieldMode": 1
+					}
+				],
+				"date": "2015-3-5",
+				"abstractNote": "本片讲述了一群兔子是怎么从种花家一穷二白的时候，通过自身的努力与奋斗，蹬了鹰酱一脸血，并且养殖出了自己的大蘑菇，发展成为蓝星最强五流氓之一的故事。本片故事纯属虚构，如有雷同，纯属巧合。本片漫画更新频繁，对于喜欢作者拖更的观众可能会稍感不适。",
+				"episodeNumber": 1,
+				"extra": "like: 2135797\nview: 213711534",
+				"libraryCatalog": "BiliBili",
+				"place": "中国大陆",
+				"programTitle": "那年那兔那些事儿 第一季",
+				"rights": "bilibili",
+				"runningTime": "0:7:32",
+				"url": "https://www.bilibili.com/bangumi/play/ep30478",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "历史"
+					},
+					{
+						"tag": "漫画改"
+					},
+					{
+						"tag": "萌系"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.bilibili.com/bangumi/play/ss1689",
+		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://www.bilibili.com/cheese/play/ss104",
+		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://www.bilibili.com/cheese/play/ep1491",
+		"items": [
+			{
+				"itemType": "tvBroadcast",
+				"title": "28 财政政策：川普为什么加大开支？",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "陆铭教授",
+						"creatorType": "director",
+						"fieldMode": 1
+					}
+				],
+				"date": "2020-5-7",
+				"abstractNote": "把经济学300年的精华浓缩到30期课程",
+				"episodeNumber": 29,
+				"libraryCatalog": "BiliBili",
+				"programTitle": "上海交大陆铭教授的经济学思维课",
+				"runningTime": "0:23:3",
+				"url": "https://www.bilibili.com/cheese/play/ep1491",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.bilibili.com/bangumi/play/ep788606",
+		"detectedItemType": "tvBroadcast",
+		"items": [
+			{
+				"itemType": "film",
+				"title": "飞屋环游记",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "彼特·道格特",
+						"creatorType": "contributor",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "鲍勃·彼德森",
+						"creatorType": "contributor",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "汤姆·麦卡锡",
+						"creatorType": "contributor",
+						"fieldMode": 1
+					}
+				],
+				"date": "2023-11-26",
+				"abstractNote": "小男孩卡尔（Carl Fredricksen）怀揣着对于冒险的热爱偶遇假小子艾丽（Ellie），而艾丽把整个屋子当成一艘大飞船游戏居然使他对这个女孩子有些着迷，相同的爱好最终使两个人成为了一生的爱侣。 他们有一个梦想，那就是有朝一日要去南美洲的“仙境瀑布”探险，但直到艾丽去世，这个梦想也未能实现。终于有一天，曾经专卖气球的老人卡尔居然用五颜六色的气球拽着他的房子飞上了天空，他决定要去实现他们未曾实现的梦想。令卡尔始料不及的是，门廊居然搭上了一个自称是“荒野开拓者”的小男孩小罗（Russell），小罗的喋喋不休让卡尔对这个小胖墩格外讨厌。",
+				"extra": "like: 14826\nview: 2115391",
+				"libraryCatalog": "BiliBili",
+				"rights": "bilibili",
+				"runningTime": "1:32:50",
+				"url": "https://www.bilibili.com/bangumi/play/ep788606?theme=movie",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "冒险"
+					},
+					{
+						"tag": "剧情"
+					},
+					{
+						"tag": "动画"
+					},
+					{
+						"tag": "喜剧"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
 	},
 	{
 		"type": "web",
