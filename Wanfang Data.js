@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-26 07:22:54"
+	"lastUpdated": "2023-12-26 10:59:04"
 }
 
 /*
@@ -201,7 +201,7 @@ async function scrapePage(doc, url = doc.location.href) {
 			inventors.forEach((creator) => {
 				newItem.creators.push(ZU.cleanAuthor(creator.innerText, 'inventor'));
 			});
-			Array.from(doc.querySelectorAll('.agent span')).forEach((creator) => {
+			Array.from(doc.querySelectorAll('.agent .itemUrl > span')).forEach((creator) => {
 				newItem.creators.push(ZU.cleanAuthor(creator.innerText, 'attorneyAgent'));
 			});
 			addExtra('Genre', text(doc, '.patentType > .item+*'));
@@ -486,25 +486,7 @@ var testCases = [
 					},
 					{
 						"firstName": "",
-						"lastName": "代理人：",
-						"creatorType": "attorneyAgent",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
 						"lastName": "陈伟",
-						"creatorType": "attorneyAgent",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "陈伟",
-						"creatorType": "attorneyAgent",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "沈静",
 						"creatorType": "attorneyAgent",
 						"fieldMode": 1
 					},
