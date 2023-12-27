@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-27 15:17:54"
+	"lastUpdated": "2023-12-27 16:47:55"
 }
 
 /*
@@ -35,98 +35,6 @@
 	***** END LICENSE BLOCK *****
 */
 
-function processName(fullName, defaultType) {
-	var creatorType, country, original;
-	// 当多个人名折叠时，最后一个人名可能带有“更多”。
-	fullName = fullName.replace(/更多$/, '');
-	// https://book.douban.com/subject/35152294/
-	country = tryMatch(fullName, /^[[(（【](.+?)国?[】）)\]]/, 1);
-	fullName = fullName.replace(/^[[(（【].+?国?[】）)\]]/, '');
-
-	const role = {
-		著: 'author',
-		编: 'author',
-		主编: 'editor',
-		译: 'translator',
-		校: 'contributor',
-		审校: 'contributor',
-		审: 'contributor',
-		校注: 'contributor',
-		注: 'contributor'
-	};
-	let remark = tryMatch(fullName, /[(（)](.+)[）)]$/, 1);
-	fullName = fullName.replace(/[(（)](.+)[）)]$/, '');
-	if (remark in role) {
-		creatorType = role[remark];
-	}
-	else {
-		// https://book.douban.com/subject/26604008/
-		original = remark;
-		for (const key in role) {
-			let rolePattern = new RegExp(`(${key} )|( ${key})`);
-			if (rolePattern.test(fullName)) {
-				creatorType = role[key];
-				fullName = fullName.replace(key, '');
-				break;
-			}
-		}
-	}
-	creatorType = creatorType || defaultType;
-	let creator = ZU.cleanAuthor(fullName, creatorType);
-	// https://book.douban.com/subject/26604008/
-	if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
-		creator.lastName = creator.firstName + creator.lastName;
-		creator.lastName = creator.lastName.replace(/([\u4e00-\u9fa5])([a-z])/gi, '$1·$2');
-		creator.lastName = creator.lastName.replace(/\.(\S)/gi, '. $1');
-		// https://book.douban.com/subject/25807982/
-		creator.lastName = creator.lastName.replace(/•/gi, '·');
-		creator.firstName = '';
-		creator.fieldMode = 1;
-	}
-	creator.country = country;
-	creator.original = original;
-	return creator;
-}
-
-function toArabicNum(zhNum) {
-	if (!zhNum) return '';
-	let res = 0;
-	let lastDigit = 0;
-	const digitMap = {
-		一: 1,
-		二: 2,
-		三: 3,
-		四: 4,
-		五: 5,
-		六: 6,
-		七: 7,
-		八: 8,
-		九: 9,
-	};
-	const unitMap = {
-		十: 10,
-		百: 100,
-		千: 1000,
-		万: 10000,
-	};
-	for (let char of zhNum) {
-		if (char in digitMap) {
-			lastDigit = digitMap[char];
-		}
-		else if (char in unitMap) {
-			if (lastDigit > 0) {
-				res += lastDigit * unitMap[char];
-			}
-			else {
-				res += unitMap[char];
-			}
-			lastDigit = 0;
-		}
-	}
-	res += lastDigit;
-	return res;
-}
-
 const typeMap = {
 	'book.douban.com/subject': 'book',
 	'movie.douban.com/subject': 'film',
@@ -135,6 +43,7 @@ const typeMap = {
 };
 
 function detectWeb(doc, url) {
+	Z.debug('---------- Douban 2023-12-28 00:47:18 ----------');
 	let typeKey = Object.keys(typeMap).find(key => new RegExp(`${key}/\\d+/`).test(url));
 	if (typeKey) {
 		return typeMap[typeKey];
@@ -253,10 +162,6 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.date = tryMatch(labels.getWith('上映日期'), /[\d-]+/);
 			newItem.genre = 'Film';
 			newItem.runningTime = labels.getWith('片长').replace('分钟', ' min');
-			newItem.language = labels.getWith('语言').includes('普通话')
-				? 'zh-CN'
-				// 此字段不标准，但有助于保留非英语的原始语言信息
-				: labels.getWith('语言');
 			newItem.extra += addExtra('place', labels.getWith('制片国家'));
 			newItem.extra += addExtra('alias', labels.getWith('又名'));
 			newItem.extra += addExtra('IMDb', labels.getWith('IMDb'));
@@ -385,6 +290,98 @@ function tryMatch(string, pattern, index = 0) {
 		return match[index];
 	}
 	return '';
+}
+
+function processName(fullName, defaultType) {
+	var creatorType, country, original;
+	// 当多个人名折叠时，最后一个人名可能带有“更多”。
+	fullName = fullName.replace(/更多$/, '');
+	// https://book.douban.com/subject/35152294/
+	country = tryMatch(fullName, /^[[(（【](.+?)国?[】）)\]]/, 1);
+	fullName = fullName.replace(/^[[(（【].+?国?[】）)\]]/, '');
+
+	const role = {
+		著: 'author',
+		编: 'author',
+		主编: 'editor',
+		译: 'translator',
+		校: 'contributor',
+		审校: 'contributor',
+		审: 'contributor',
+		校注: 'contributor',
+		注: 'contributor'
+	};
+	let remark = tryMatch(fullName, /[(（)](.+)[）)]$/, 1);
+	fullName = fullName.replace(/[(（)](.+)[）)]$/, '');
+	if (remark in role) {
+		creatorType = role[remark];
+	}
+	else {
+		// https://book.douban.com/subject/26604008/
+		original = remark;
+		for (const key in role) {
+			let rolePattern = new RegExp(`(${key} )|( ${key})`);
+			if (rolePattern.test(fullName)) {
+				creatorType = role[key];
+				fullName = fullName.replace(key, '');
+				break;
+			}
+		}
+	}
+	creatorType = creatorType || defaultType;
+	let creator = ZU.cleanAuthor(fullName, creatorType);
+	// https://book.douban.com/subject/26604008/
+	if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+		creator.lastName = creator.firstName + creator.lastName;
+		creator.lastName = creator.lastName.replace(/([\u4e00-\u9fa5])([a-z])/gi, '$1·$2');
+		creator.lastName = creator.lastName.replace(/\.(\S)/gi, '. $1');
+		// https://book.douban.com/subject/25807982/
+		creator.lastName = creator.lastName.replace(/•/gi, '·');
+		creator.firstName = '';
+		creator.fieldMode = 1;
+	}
+	creator.country = country;
+	creator.original = original;
+	return creator;
+}
+
+function toArabicNum(zhNum) {
+	if (!zhNum) return '';
+	let res = 0;
+	let lastDigit = 0;
+	const digitMap = {
+		一: 1,
+		二: 2,
+		三: 3,
+		四: 4,
+		五: 5,
+		六: 6,
+		七: 7,
+		八: 8,
+		九: 9,
+	};
+	const unitMap = {
+		十: 10,
+		百: 100,
+		千: 1000,
+		万: 10000,
+	};
+	for (let char of zhNum) {
+		if (char in digitMap) {
+			lastDigit = digitMap[char];
+		}
+		else if (char in unitMap) {
+			if (lastDigit > 0) {
+				res += lastDigit * unitMap[char];
+			}
+			else {
+				res += unitMap[char];
+			}
+			lastDigit = 0;
+		}
+	}
+	res += lastDigit;
+	return res;
 }
 
 /** BEGIN TEST CASES **/
@@ -700,9 +697,8 @@ var testCases = [
 				],
 				"date": "1994-09-10",
 				"abstractNote": "一场谋杀案使银行家安迪（蒂姆•罗宾斯 Tim Robbins 饰）蒙冤入狱，谋杀妻子及其情人的指控将囚禁他终生。在肖申克监狱的首次现身就让监狱“大哥”瑞德（摩根•弗里曼 Morgan Freeman 饰）对他另眼相看。瑞德帮助他搞到一把石锤和一幅女明星海报，两人渐成患难 之交。很快，安迪在监狱里大显其才，担当监狱图书管理员，并利用自己的金融知识帮助监狱官避税，引起了典狱长的注意，被招致麾下帮助典狱长洗黑钱。偶然一次，他得知一名新入狱的小偷能够作证帮他洗脱谋杀罪。燃起一丝希望的安迪找到了典狱长，希望他能帮自己翻案。阴险伪善的狱长假装答应安迪，背后却派人杀死小偷，让他唯一能合法出狱的希望泯灭。沮丧的安迪并没有绝望，在一个电闪雷鸣的风雨夜，一场暗藏几十年的越狱计划让他自我救赎，重获自由！老朋友瑞德在他的鼓舞和帮助下，也勇敢地奔向自由。 本片获得1995年奥斯卡10项提名，以及金球奖、土星奖等多项提名。",
-				"extra": "original-title: The Shawshank Redemption\nplace: 美国\nalias: 月黑高飞(港) / 刺激1995(台) / 地狱诺言 / 铁窗岁月 / 消香克的救赎\nIMDb: tt0111161\nstyle: 剧情 / 犯罪\nrating: 9.7\nrating-people: 2962156人评价\ncomments: 579187\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"弗兰克·德拉邦特\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"弗兰克·德拉邦特\",\"creatorType\":\"scriptwriter\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"斯蒂芬·金\",\"creatorType\":\"scriptwriter\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"蒂姆·罗宾斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"摩根·弗里曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"鲍勃·冈顿\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"威廉姆·赛德勒\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"克兰西·布朗\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"吉尔·贝罗斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"马克·罗斯顿\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"詹姆斯·惠特摩\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"杰弗里·德曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"拉里·布兰登伯格\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"尼尔·吉恩托利\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"布赖恩·利比\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"大卫·普罗瓦尔\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"约瑟夫·劳格诺\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"祖德·塞克利拉\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"保罗·麦克兰尼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"芮妮·布莱恩\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"阿方索·弗里曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"V·J·福斯特\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"弗兰克·梅德拉诺\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"马克·迈尔斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"尼尔·萨默斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"耐德·巴拉米\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"布赖恩·戴拉特\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"唐·麦克马纳斯更多\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]",
+				"extra": "original-title: The Shawshank Redemption\nplace: 美国\nalias: 月黑高飞(港) / 刺激1995(台) / 地狱诺言 / 铁窗岁月 / 消香克的救赎\nIMDb: tt0111161\nstyle: 剧情 / 犯罪\nrating: 9.7\nrating-people: 2962197人评价\ncomments: 579195\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"弗兰克·德拉邦特\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"弗兰克·德拉邦特\",\"creatorType\":\"scriptwriter\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"斯蒂芬·金\",\"creatorType\":\"scriptwriter\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"蒂姆·罗宾斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"摩根·弗里曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"鲍勃·冈顿\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"威廉姆·赛德勒\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"克兰西·布朗\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"吉尔·贝罗斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"马克·罗斯顿\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"詹姆斯·惠特摩\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"杰弗里·德曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"拉里·布兰登伯格\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"尼尔·吉恩托利\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"布赖恩·利比\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"大卫·普罗瓦尔\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"约瑟夫·劳格诺\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"祖德·塞克利拉\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"保罗·麦克兰尼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"芮妮·布莱恩\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"阿方索·弗里曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"V·J·福斯特\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"弗兰克·梅德拉诺\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"马克·迈尔斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"尼尔·萨默斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"耐德·巴拉米\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"布赖恩·戴拉特\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"唐·麦克马纳斯更多\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]",
 				"genre": "Film",
-				"language": "英语",
 				"libraryCatalog": "Douban",
 				"runningTime": "142 min",
 				"url": "https://movie.douban.com/subject/1292052/",
