@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-27 12:26:13"
+	"lastUpdated": "2023-12-27 15:08:50"
 }
 
 /*
@@ -34,23 +34,6 @@
 
 	***** END LICENSE BLOCK *****
 */
-
-// #######################
-// ##### Sample URLs #####
-// #######################
-
-/*
- * The starting point for an search is the URL below.
- * In testing, I tried the following:
- *
- *   - A search listing of books
- *   - A book html
- *   - A doulist html
- *   - A do html
- *   - A wish html
- *   - A collect html
- */
-// http://book.douban.com/
 
 function processName(fullName, defaultType) {
 	var creatorType, country, original;
@@ -90,6 +73,16 @@ function processName(fullName, defaultType) {
 	}
 	creatorType = creatorType || defaultType;
 	let creator = ZU.cleanAuthor(fullName, creatorType);
+	// https://book.douban.com/subject/26604008/
+	if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+		creator.lastName = creator.firstName + creator.lastName;
+		creator.lastName = creator.lastName.replace(/([\u4e00-\u9fa5])([a-z])/gi, '$1·$2');
+		creator.lastName = creator.lastName.replace(/\.(\S)/gi, '. $1');
+		// https://book.douban.com/subject/25807982/
+		creator.lastName = creator.lastName.replace(/•/gi, '·');
+		creator.firstName = '';
+		creator.fieldMode = 1;
+	}
 	creator.country = country;
 	creator.original = original;
 	return creator;
@@ -258,7 +251,7 @@ async function scrape(doc, url = doc.location.href) {
 			}
 			newItem.abstractNote = text('.related-info .all');
 			newItem.date = tryMatch(labels.getWith('上映日期'), /[\d-]+/);
-			newItem.genre = labels.getWith('类型');
+			newItem.genre = 'Film';
 			newItem.runningTime = labels.getWith('片长').replace('分钟', ' min');
 			newItem.language = labels.getWith('语言').includes('普通话')
 				? 'zh-CN'
@@ -267,6 +260,7 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.extra += addExtra('place', labels.getWith('制片国家'));
 			newItem.extra += addExtra('alias', labels.getWith('又名'));
 			newItem.extra += addExtra('IMDb', labels.getWith('IMDb'));
+			newItem.extra += addExtra('style', labels.getWith('类型'));
 			let directors = labels.getWith('导演').split(' / ').map(director => processName(director, 'director'));
 			let scriptwriters = labels.getWith('编剧').split(' / ').map(scriptwriter => processName(scriptwriter, 'scriptwriter'));
 			let contributors = labels.getWith('主演').split(' / ').map(contributor => processName(contributor, 'contributor'));
@@ -280,7 +274,8 @@ async function scrape(doc, url = doc.location.href) {
 			// runningTime: 时长,
 			newItem.extra += addExtra('publisher', labels.getWith('出版者'));
 			newItem.extra += addExtra('medium', labels.getWith('介质'));
-			newItem.extra += addExtra('genre', labels.getWith('流派'));
+			newItem.extra += addExtra('genre', 'Album');
+			newItem.extra += addExtra('style', labels.getWith('流派'));
 			newItem.extra += addExtra('alias', labels.getWith('又名'));
 			newItem.extra += addExtra('ISRC', labels.getWith('ISRC'));
 			newItem.extra += addExtra('bar-code', labels.getWith('条形码'));
@@ -318,10 +313,11 @@ class TextLabels {
 			.replace(/^[\s\n]*/gm, '')
 			.replace(/:\n/g, ': ')
 			.replace(/\n\/\n/g, ' / ')
+			.replace(/\n([^】\]:：]+?\n)/g, ' $1')
 			.split('\n')
 			.map(keyVal => [
-				tryMatch(keyVal, /^[[【]?(.+?)[】\]:：].+$/, 1).replace(/\s/g, ''),
-				tryMatch(keyVal, /^[[【]?.+?[】\]:：](.+)$/, 1)
+				tryMatch(keyVal, /^[[【]?([\s\S]+?)[】\]:：]\s*[\s\S]+$/, 1).replace(/\s/g, ''),
+				tryMatch(keyVal, /^[[【]?[\s\S]+?[】\]:：]\s*([\s\S]+)$/, 1)
 			]);
 	}
 
@@ -390,7 +386,6 @@ function tryMatch(string, pattern, index = 0) {
 	return '';
 }
 
-
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -402,35 +397,40 @@ var testCases = [
 				"title": "计算机组成与设计：硬件/软件接口",
 				"creators": [
 					{
-						"firstName": "戴维",
-						"lastName": "A.帕特森",
-						"creatorType": "author"
+						"firstName": "",
+						"lastName": "戴维·A. 帕特森",
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
-						"firstName": "约翰",
-						"lastName": "L.亨尼斯",
-						"creatorType": "author"
+						"firstName": "",
+						"lastName": "约翰·L. 亨尼斯",
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "王党辉",
-						"creatorType": "translator"
+						"creatorType": "translator",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "康继昌",
-						"creatorType": "translator"
+						"creatorType": "translator",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "安建峰",
-						"creatorType": "translator"
+						"creatorType": "translator",
+						"fieldMode": 1
 					}
 				],
 				"date": "2015-7-1",
 				"ISBN": "9787111504825",
 				"abstractNote": "David A. Patterson 加州大学伯克利分校计算机科学系教授，美国国家工程研究院院士，IEEE和ACM会士，曾因成功的启发式教育方法被IEEE授予James H. Mulligan，Jr教育奖章。他因为对RISC技术的贡献而荣获1995年IEEE技术成就奖，而在RAID技术方面的成就为他赢得了1999年IEEE Reynold Johnson信息存储奖。2000年他和John L. Hennessy分享了John von Neumann奖。 John L. Hennessy 斯坦福大学校长，IEEE和ACM会士，美国国家工程研究院院士及美国科学艺术研究院院士。Hennessy教授因为在RISC技术方面做出了突出贡献而荣获2001年的Eckert-Mauchly奖章，他也是2001年Seymour Cray 计算机工程奖得主，并且和David A. Patterson分享了2000年John von Neumann奖。",
-				"extra": "original-title: Computer Organization and Design: The Hardware/Software Interface (5/e)\nprice: 99.00元\nrating: 9.2\nrating-people: 395人评价\ncomments: 110\ncreatorsExt: [{\"firstName\":\"戴维\",\"lastName\":\"A.帕特森\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"David A.Patterson\"},{\"firstName\":\"约翰\",\"lastName\":\"L.亨尼斯\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"John L.Hennessy\"},{\"firstName\":\"\",\"lastName\":\"王党辉\",\"creatorType\":\"translator\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"康继昌\",\"creatorType\":\"translator\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"安建峰\",\"creatorType\":\"translator\",\"country\":\"\",\"original\":\"\"}]\noriginal-author: David A.Patterson\noriginal-author: John L.Hennessy",
+				"extra": "original-title: Computer Organization and Design: The Hardware/Software Interface (5/e)\nprice: 99.00元\nrating: 9.2\nrating-people: 396人评价\ncomments: 110\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"戴维·A. 帕特森\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"\",\"original\":\"David A.Patterson\"},{\"firstName\":\"\",\"lastName\":\"约翰·L. 亨尼斯\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"\",\"original\":\"John L.Hennessy\"},{\"firstName\":\"\",\"lastName\":\"王党辉\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"康继昌\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"安建峰\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]\noriginal-author: David A.Patterson\noriginal-author: John L.Hennessy",
 				"libraryCatalog": "Douban",
 				"numPages": "536",
 				"publisher": "机械工业出版社",
@@ -456,23 +456,26 @@ var testCases = [
 					{
 						"firstName": "",
 						"lastName": "杰西卡·里斯金",
-						"creatorType": "author"
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "王丹",
-						"creatorType": "translator"
+						"creatorType": "translator",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "朱丛",
-						"creatorType": "translator"
+						"creatorType": "translator",
+						"fieldMode": 1
 					}
 				],
 				"date": "2020-07",
 				"ISBN": "9787508699806",
 				"abstractNote": "今日特价截止至：2023-12-28 02:00:00",
-				"extra": "creatorsExt: [{\"firstName\":\"\",\"lastName\":\"杰西卡·里斯金\",\"creatorType\":\"author\",\"country\":\"美\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"王丹\",\"creatorType\":\"translator\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"朱丛\",\"creatorType\":\"translator\",\"country\":\"\",\"original\":\"\"}]",
+				"extra": "creatorsExt: [{\"firstName\":\"\",\"lastName\":\"杰西卡·里斯金\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"王丹\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"朱丛\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]",
 				"libraryCatalog": "Douban",
 				"publisher": "中信出版社",
 				"url": "https://read.douban.com/ebook/314197637/?dcs=search",
@@ -528,148 +531,176 @@ var testCases = [
 					{
 						"firstName": "",
 						"lastName": "弗兰克·德拉邦特",
-						"creatorType": "director"
+						"creatorType": "director",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "弗兰克·德拉邦特",
-						"creatorType": "scriptwriter"
+						"creatorType": "scriptwriter",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "斯蒂芬·金",
-						"creatorType": "scriptwriter"
+						"creatorType": "scriptwriter",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "蒂姆·罗宾斯",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "摩根·弗里曼",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "鲍勃·冈顿",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "威廉姆·赛德勒",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "克兰西·布朗",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "吉尔·贝罗斯",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "马克·罗斯顿",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "詹姆斯·惠特摩",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "杰弗里·德曼",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "拉里·布兰登伯格",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "尼尔·吉恩托利",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "布赖恩·利比",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "大卫·普罗瓦尔",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "约瑟夫·劳格诺",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "祖德·塞克利拉",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "保罗·麦克兰尼",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "芮妮·布莱恩",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "阿方索·弗里曼",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "V·J·福斯特",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "弗兰克·梅德拉诺",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "马克·迈尔斯",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "尼尔·萨默斯",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "耐德·巴拉米",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "布赖恩·戴拉特",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "唐·麦克马纳斯更多",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					}
 				],
 				"date": "1994-09-10",
 				"abstractNote": "一场谋杀案使银行家安迪（蒂姆•罗宾斯 Tim Robbins 饰）蒙冤入狱，谋杀妻子及其情人的指控将囚禁他终生。在肖申克监狱的首次现身就让监狱“大哥”瑞德（摩根•弗里曼 Morgan Freeman 饰）对他另眼相看。瑞德帮助他搞到一把石锤和一幅女明星海报，两人渐成患难 之交。很快，安迪在监狱里大显其才，担当监狱图书管理员，并利用自己的金融知识帮助监狱官避税，引起了典狱长的注意，被招致麾下帮助典狱长洗黑钱。偶然一次，他得知一名新入狱的小偷能够作证帮他洗脱谋杀罪。燃起一丝希望的安迪找到了典狱长，希望他能帮自己翻案。阴险伪善的狱长假装答应安迪，背后却派人杀死小偷，让他唯一能合法出狱的希望泯灭。沮丧的安迪并没有绝望，在一个电闪雷鸣的风雨夜，一场暗藏几十年的越狱计划让他自我救赎，重获自由！老朋友瑞德在他的鼓舞和帮助下，也勇敢地奔向自由。 本片获得1995年奥斯卡10项提名，以及金球奖、土星奖等多项提名。",
-				"extra": "undefinedoriginal-title: The Shawshank Redemption\nplace: 美国\nalias: 月黑高飞(港) / 刺激1995(台) / 地狱诺言 / 铁窗岁月 / 消香克的救赎\nIMDb: tt0111161\nrating: 9.7\nrating-people: 2962077人评价\ncomments: 579174\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"弗兰克·德拉邦特\",\"creatorType\":\"director\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"弗兰克·德拉邦特\",\"creatorType\":\"scriptwriter\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"斯蒂芬·金\",\"creatorType\":\"scriptwriter\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"蒂姆·罗宾斯\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"摩根·弗里曼\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"鲍勃·冈顿\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"威廉姆·赛德勒\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"克兰西·布朗\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"吉尔·贝罗斯\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"马克·罗斯顿\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"詹姆斯·惠特摩\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"杰弗里·德曼\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"拉里·布兰登伯格\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"尼尔·吉恩托利\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"布赖恩·利比\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"大卫·普罗瓦尔\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"约瑟夫·劳格诺\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"祖德·塞克利拉\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"保罗·麦克兰尼\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"芮妮·布莱恩\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"阿方索·弗里曼\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"V·J·福斯特\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"弗兰克·梅德拉诺\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"马克·迈尔斯\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"尼尔·萨默斯\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"耐德·巴拉米\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"布赖恩·戴拉特\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"唐·麦克马纳斯更多\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"}]",
-				"genre": "剧情 / 犯罪",
+				"extra": "undefinedoriginal-title: The Shawshank Redemption\nplace: 美国\nalias: 月黑高飞(港) / 刺激1995(台) / 地狱诺言 / 铁窗岁月 / 消香克的救赎\nIMDb: tt0111161\nstyle: 剧情 / 犯罪\nrating: 9.7\nrating-people: 2962133人评价\ncomments: 579179\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"弗兰克·德拉邦特\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"弗兰克·德拉邦特\",\"creatorType\":\"scriptwriter\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"斯蒂芬·金\",\"creatorType\":\"scriptwriter\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"蒂姆·罗宾斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"摩根·弗里曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"鲍勃·冈顿\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"威廉姆·赛德勒\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"克兰西·布朗\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"吉尔·贝罗斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"马克·罗斯顿\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"詹姆斯·惠特摩\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"杰弗里·德曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"拉里·布兰登伯格\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"尼尔·吉恩托利\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"布赖恩·利比\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"大卫·普罗瓦尔\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"约瑟夫·劳格诺\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"祖德·塞克利拉\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"保罗·麦克兰尼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"芮妮·布莱恩\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"阿方索·弗里曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"V·J·福斯特\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"弗兰克·梅德拉诺\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"马克·迈尔斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"尼尔·萨默斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"耐德·巴拉米\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"布赖恩·戴拉特\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"唐·麦克马纳斯更多\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]",
+				"genre": "Film",
 				"language": "英语",
 				"libraryCatalog": "Douban",
 				"runningTime": "142 min",
@@ -697,11 +728,12 @@ var testCases = [
 					{
 						"firstName": "",
 						"lastName": "孙燕姿",
-						"creatorType": "performer"
+						"creatorType": "performer",
+						"fieldMode": 1
 					}
 				],
 				"date": "2014-02-27",
-				"extra": "undefinedpublisher: 环球唱片\nmedium: CD\ngenre: 流行\nalias: Kepler\nbar-code: 0602488970204\nrating: 8.7\nrating-people: 33555人评价\ncomments: 11317\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"孙燕姿\",\"creatorType\":\"performer\",\"country\":\"\",\"original\":\"\"}]",
+				"extra": "undefinedpublisher: 环球唱片\nmedium: CD\ngenre: Album\nstyle: 流行\nalias: Kepler\nbar-code: 0602488970204\nrating: 8.7\nrating-people: 33555人评价\ncomments: 11317\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"孙燕姿\",\"creatorType\":\"performer\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]",
 				"libraryCatalog": "Douban",
 				"url": "https://music.douban.com/subject/25811077/",
 				"attachments": [],
@@ -712,6 +744,11 @@ var testCases = [
 				"seeAlso": []
 			}
 		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.douban.com/doulist/176513/",
+		"items": "multiple"
 	}
 ]
 /** END TEST CASES **/
