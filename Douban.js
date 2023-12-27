@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-27 15:08:50"
+	"lastUpdated": "2023-12-27 15:17:54"
 }
 
 /*
@@ -178,6 +178,7 @@ async function doWeb(doc, url) {
 
 async function scrape(doc, url = doc.location.href) {
 	var newItem = new Z.Item(detectWeb(doc, url));
+	newItem.extra = '';
 	var creators;
 	const isRead = url.includes('read.douban.com/ebook');
 	// .article-meta for read
@@ -202,7 +203,6 @@ async function scrape(doc, url = doc.location.href) {
 				newItem.shortTitle = newItem.title;
 				newItem.title = `${newItem.title}${/[\u4E00-\u9FCC]/.test(newItem.title) ? '：' : ': '}${subtitle}`;
 			}
-			newItem.extra = '';
 			// https://book.douban.com/subject/21294724/
 			newItem.abstractNote = text(doc, '.hidden .intro') || text(doc, '.intro');
 			newItem.series = labels.getWith('丛书');
@@ -270,10 +270,10 @@ async function scrape(doc, url = doc.location.href) {
 		case 'audioRecording': {
 			newItem.title = title;
 			newItem.abstractNote = text('.related-info .all');
+			newItem.audioRecordingFormat = labels.getWith('介质');
+			newItem.label = labels.getWith('出版者');
 			newItem.date = labels.getWith('发行时间').replace(/\./, '-');
 			// runningTime: 时长,
-			newItem.extra += addExtra('publisher', labels.getWith('出版者'));
-			newItem.extra += addExtra('medium', labels.getWith('介质'));
 			newItem.extra += addExtra('genre', 'Album');
 			newItem.extra += addExtra('style', labels.getWith('流派'));
 			newItem.extra += addExtra('alias', labels.getWith('又名'));
@@ -313,6 +313,7 @@ class TextLabels {
 			.replace(/^[\s\n]*/gm, '')
 			.replace(/:\n/g, ': ')
 			.replace(/\n\/\n/g, ' / ')
+			// https://book.douban.com/subject/1291204/
 			.replace(/\n([^】\]:：]+?\n)/g, ' $1')
 			.split('\n')
 			.map(keyVal => [
@@ -699,7 +700,7 @@ var testCases = [
 				],
 				"date": "1994-09-10",
 				"abstractNote": "一场谋杀案使银行家安迪（蒂姆•罗宾斯 Tim Robbins 饰）蒙冤入狱，谋杀妻子及其情人的指控将囚禁他终生。在肖申克监狱的首次现身就让监狱“大哥”瑞德（摩根•弗里曼 Morgan Freeman 饰）对他另眼相看。瑞德帮助他搞到一把石锤和一幅女明星海报，两人渐成患难 之交。很快，安迪在监狱里大显其才，担当监狱图书管理员，并利用自己的金融知识帮助监狱官避税，引起了典狱长的注意，被招致麾下帮助典狱长洗黑钱。偶然一次，他得知一名新入狱的小偷能够作证帮他洗脱谋杀罪。燃起一丝希望的安迪找到了典狱长，希望他能帮自己翻案。阴险伪善的狱长假装答应安迪，背后却派人杀死小偷，让他唯一能合法出狱的希望泯灭。沮丧的安迪并没有绝望，在一个电闪雷鸣的风雨夜，一场暗藏几十年的越狱计划让他自我救赎，重获自由！老朋友瑞德在他的鼓舞和帮助下，也勇敢地奔向自由。 本片获得1995年奥斯卡10项提名，以及金球奖、土星奖等多项提名。",
-				"extra": "undefinedoriginal-title: The Shawshank Redemption\nplace: 美国\nalias: 月黑高飞(港) / 刺激1995(台) / 地狱诺言 / 铁窗岁月 / 消香克的救赎\nIMDb: tt0111161\nstyle: 剧情 / 犯罪\nrating: 9.7\nrating-people: 2962133人评价\ncomments: 579179\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"弗兰克·德拉邦特\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"弗兰克·德拉邦特\",\"creatorType\":\"scriptwriter\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"斯蒂芬·金\",\"creatorType\":\"scriptwriter\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"蒂姆·罗宾斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"摩根·弗里曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"鲍勃·冈顿\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"威廉姆·赛德勒\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"克兰西·布朗\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"吉尔·贝罗斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"马克·罗斯顿\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"詹姆斯·惠特摩\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"杰弗里·德曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"拉里·布兰登伯格\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"尼尔·吉恩托利\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"布赖恩·利比\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"大卫·普罗瓦尔\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"约瑟夫·劳格诺\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"祖德·塞克利拉\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"保罗·麦克兰尼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"芮妮·布莱恩\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"阿方索·弗里曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"V·J·福斯特\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"弗兰克·梅德拉诺\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"马克·迈尔斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"尼尔·萨默斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"耐德·巴拉米\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"布赖恩·戴拉特\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"唐·麦克马纳斯更多\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]",
+				"extra": "original-title: The Shawshank Redemption\nplace: 美国\nalias: 月黑高飞(港) / 刺激1995(台) / 地狱诺言 / 铁窗岁月 / 消香克的救赎\nIMDb: tt0111161\nstyle: 剧情 / 犯罪\nrating: 9.7\nrating-people: 2962156人评价\ncomments: 579187\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"弗兰克·德拉邦特\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"弗兰克·德拉邦特\",\"creatorType\":\"scriptwriter\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"斯蒂芬·金\",\"creatorType\":\"scriptwriter\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"蒂姆·罗宾斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"摩根·弗里曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"鲍勃·冈顿\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"威廉姆·赛德勒\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"克兰西·布朗\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"吉尔·贝罗斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"马克·罗斯顿\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"詹姆斯·惠特摩\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"杰弗里·德曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"拉里·布兰登伯格\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"尼尔·吉恩托利\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"布赖恩·利比\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"大卫·普罗瓦尔\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"约瑟夫·劳格诺\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"祖德·塞克利拉\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"保罗·麦克兰尼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"芮妮·布莱恩\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"阿方索·弗里曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"V·J·福斯特\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"弗兰克·梅德拉诺\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"马克·迈尔斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"尼尔·萨默斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"耐德·巴拉米\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"布赖恩·戴拉特\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"唐·麦克马纳斯更多\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]",
 				"genre": "Film",
 				"language": "英语",
 				"libraryCatalog": "Douban",
@@ -733,7 +734,9 @@ var testCases = [
 					}
 				],
 				"date": "2014-02-27",
-				"extra": "undefinedpublisher: 环球唱片\nmedium: CD\ngenre: Album\nstyle: 流行\nalias: Kepler\nbar-code: 0602488970204\nrating: 8.7\nrating-people: 33555人评价\ncomments: 11317\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"孙燕姿\",\"creatorType\":\"performer\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]",
+				"audioRecordingFormat": "CD",
+				"extra": "genre: Album\nstyle: 流行\nalias: Kepler\nbar-code: 0602488970204\nrating: 8.7\nrating-people: 33555人评价\ncomments: 11317\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"孙燕姿\",\"creatorType\":\"performer\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]",
+				"label": "环球唱片",
 				"libraryCatalog": "Douban",
 				"url": "https://music.douban.com/subject/25811077/",
 				"attachments": [],
