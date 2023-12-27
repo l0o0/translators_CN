@@ -68,10 +68,8 @@
 + 豆瓣 -> [DouBan.js](./Douban.js)
   - 保留豆瓣评价人数+豆瓣评分+原作名+定价
   - 作者优化：欧美作者区分开了名与姓（在这里吐槽下豆瓣编辑对作者的命名规范，尤其是外籍作者的命名规范真是各路牛鬼蛇神）
-  - 摘要信息：作者简介 + 内容简介
   - 目录信息：目录存放至note附件里
   - 支持识别豆瓣阅读的[出版图书](https://read.douban.com/ebooks/)（因为不像豆瓣读书那么规则，部分字段可能需要手动修改）
-  - [详细截图](https://github.com/Captain2021/myTranslator/tree/main)
 + [国家出版发行信息公共服务平台](https://book.cppinfo.cn/home/index) -> [CCPINFO](/translators/CCPINFO.js)
   - [x] 抓取引文信息
   - [ ] 匹配出版地址
