@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-25 07:49:03"
+	"lastUpdated": "2023-12-27 16:38:27"
 }
 
 /*
@@ -81,7 +81,7 @@ class ID {
 			this[key] = attr(doc, frame[key].selector, 'value')
 				|| tryMatch(url, frame[key].pattern, 1);
 		}
-		// geology version
+		// geology version, space version
 		if (url.includes('inds.cnki.net')) {
 			this.dbcode = this.dbname.slice(6, 10);
 			this.dbname = this.dbname.slice(6);
@@ -175,10 +175,8 @@ class ID {
 	}
 }
 
-// var debugMode = false;
-
 function detectWeb(doc, url) {
-	Z.debug("---------------- CNKI 2023-12-25 2023-12-25 ------------------");
+	Z.debug("---------------- CNKI 2023-12-28 00:38:24 ------------------");
 	let ids = url.includes('www.cnki.com.cn')
 		// CNKI space
 		? new ID(url)
@@ -306,8 +304,10 @@ function getSearchResults(doc, url, checkOnly) {
 	if (!rows.length) return false;
 	for (let i = 0; i < rows.length; i++) {
 		let row = rows[i];
-		let href = attr(row, type.aSlector, 'href');
-		let title = attr(row, type.aSlector, 'title') || text(row, type.aSlector);
+		let header = row.querySelector(type.aSlector);
+		if (!header) continue;
+		let href = header.href;
+		let title = header.getAttribute('title') || ZU.trimInternal(header.textContent);
 		// Z.debug(`${href}\n${title}`);
 		if (!href || !title) continue;
 		if (checkOnly) return true;
@@ -389,7 +389,7 @@ async function doWeb(doc, url) {
 	else if (url.includes('thinker.cnki')) {
 		await scrapeZhBook(doc, url);
 	}
-	// geology, scholar
+	// scholar
 	else if (ids.dbcode == 'WWBD') {
 		await scrapeDoc(
 			doc,
@@ -410,15 +410,11 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url = doc.location.href, itemKey, inMainland) {
-	var isSpace = /cnki\.com\.cn/.test(url);
+	const isSpace = /cnki\.com\.cn/.test(url);
 	let ids = isSpace ? new ID(url) : new ID(doc, url);
 	Z.debug('scrape single item with ids:');
+	Z.debug(ids);
 
-	/*
-	In some rare cases, an exception occurred while scrape item,
-	but the program was not correctly guided to the next scrape scheme,
-	and in this case, debugMode needs to be applied to save any potentially useful debugging information.
-	 */
 	try {
 		await scrapeWithGetExport(doc, ids, itemKey, inMainland);
 	}
@@ -464,7 +460,6 @@ async function scrapeWithGetExport(doc, ids, itemKey, inMainland) {
 	// During debugging, may manually throw errors to guide the program to run inward
 	// throw ReferenceError;
 
-	// TODO: use (https?.*)(?:https?) check whether in a webVPN environment
 	// e.g. https://ras.cdutcm.lib4s.com:7080/s/net/cnki/kns/G.https/dm/API/GetExport?uniplatform=NZKPT
 	let postUrl = inMainland
 		? `${/https?.*https?/.test(ids.url) ? tryMatch(ids.url, /https?.*https?/) : 'https://kns.cnki.net'}/dm/API/GetExport?uniplatform=NZKPT`
@@ -479,7 +474,7 @@ async function scrapeWithGetExport(doc, ids, itemKey, inMainland) {
 		+ '&displaymode=GBTREFER%2Celearning%2CEndNote';
 	Z.debug(postUrl);
 	Z.debug(postData);
-	if (!postUrl || !postData) throw new ReferenceError('没有适合的接口可用');
+	if (!postUrl || !postData) throw new ReferenceError('未找到可用接口');
 	let referText = await requestJSON(
 		postUrl,
 		{
@@ -494,7 +489,7 @@ async function scrapeWithGetExport(doc, ids, itemKey, inMainland) {
 	Z.debug('get respond from API GetExport:');
 	Z.debug(referText);
 
-	if (!referText.data) {
+	if (!referText.data || !referText.data.length) {
 		throw new ReferenceError('Failed to retrieve data from API: GetExport');
 	}
 	referText = referText.data[2].value[0];
@@ -557,7 +552,7 @@ async function scrapeWithShowExport(itemKeys, inMainland) {
 	);
 	Z.debug('get batch response from API ShowExport:');
 	Z.debug(`${JSON.stringify(referText)}`);
-	if (!referText.body) {
+	if (!referText.body || !referText.body.length) {
 		throw new ReferenceError('Failed to retrieve data from API: ShowExport');
 	}
 	referText = referText.body
@@ -674,7 +669,7 @@ async function scrapeDoc(doc, ids, itemKey) {
 	newItem.extra = newItem.extra ? newItem.extra : '';
 	// "#content p, .summary li.pdfN" only found on geology version
 	// in standard page, ".row", ".row_1"
-	let labels = new Labels(doc, 'div.doc div[class^="row"], li.top-space, #content summary > p, .summary li.pdfN');
+	let labels = new Labels(doc, 'div.doc div[class^="row"], li.top-space, #content .summary > p, .summary li.pdfN, [class^="content"] p');
 
 	/* title */
 	newItem.title = getPureText(doc.querySelector('div.doc h1, .h1-scholar, #chTitle'));
@@ -725,7 +720,7 @@ async function scrapeDoc(doc, ids, itemKey) {
 	newItem.ISBN = labels.getWith('ISBN');
 
 	/* else fields */
-	newItem.pages = tryMatch(text(doc, 'div.doc p.total-inform span:nth-child(2)'), /[\d-,+~]*/)
+	newItem.pages = tryMatch(text(doc, 'div.doc p.total-inform span:nth-child(2)'), /[\d+,~-]+/).replace('+', ',').replace('~', '-')
 		|| labels.getWith(['Pages', '版号'])
 		|| '';
 	newItem.extra += addExtra('Genre', labels.getWith('专利类型'));
@@ -736,9 +731,10 @@ async function scrapeDoc(doc, ids, itemKey) {
 /* TODO: Compatible with English labels in English version of CNKI. */
 function fixItem(newItem, doc, ids, itemKey) {
 	Z.debug('fixing item...');
-	// "#content p, .summary li.pdfN" only found on geology version
-	// in standard page, ".row", ".row_1"
-	let labels = new Labels(doc, 'div.doc div[class^="row"], li.top-space, #content summary > p, .summary li.pdfN');
+	// ".row", ".row_1" for normal version
+	// "#content p, .summary li.pdfN" for geology version
+	// "[class^="content"] p" for space version
+	let labels = new Labels(doc, 'div.doc div[class^="row"], li.top-space, #content .summary > p, .summary li.pdfN, [class^="content"] p');
 	Z.debug('get labels:');
 	Z.debug(labels.innerData.map(element => [element[0], ZU.trimInternal(element[1].textContent)]));
 	newItem.extra = newItem.extra ? newItem.extra : '';
@@ -789,7 +785,7 @@ function fixItem(newItem, doc, ids, itemKey) {
 		.replace(/\s*[\r\n]\s*/g, '\n')
 		.replace(/&lt;.*?&gt;/g, '')
 		.replace(/^＜正＞/, '');
-	newItem.extra += addExtra('cite', itemKey.cite);
+	newItem.extra += addExtra('CNKICite', itemKey.cite);
 	// Build a shorter url
 	let url = itemKey.url || ids.url || '';
 	newItem.url = /kcms2/i.test(url)
@@ -873,7 +869,7 @@ async function scrapeZhBook(doc, url) {
 	bookItem.language = 'zh-CN';
 	bookItem.ISBN = labels.getWith('国际标准书号ISBN');
 	bookItem.libraryCatalog = labels.getWith('所属分类');
-	bookItem.extra = addExtra('cite', text(doc, '.book_zb_yy span:last-child'));
+	bookItem.extra = addExtra('CNKICite', text(doc, '.book_zb_yy span:last-child'));
 	bookItem.complete();
 }
 
@@ -929,7 +925,7 @@ class Labels {
 				}
 				else {
 					let text = ZU.trimInternal(elementCopy.textContent);
-					let key = tryMatch(text, /^[[【]?.*?[】\]:：]/);
+					let key = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]/).replace(/\s/g, '');
 					elementCopy.textContent = text.replace(new RegExp(`^${key}`), '');
 					this.innerData.push([key, elementCopy]);
 				}
@@ -1166,6 +1162,47 @@ var testCases = [
 	},
 	{
 		"type": "web",
+		"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CCND&dbname=CCNDLAST2023&filename=KJRB202309210044&v=",
+		"items": [
+			{
+				"itemType": "newspaperArticle",
+				"title": "灭绝物种RNA首次分离测序",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "刘霞",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2023-09-21",
+				"abstractNote": "科技日报北京9月20日电 （记者刘霞）瑞典国家分子生物科学中心科学家首次分离和测序了一个已灭绝物种的RNA分子，从而重建了该灭绝物种（塔斯马尼亚虎）的皮肤和骨骼肌转录组。该项成果对复活塔斯马尼亚虎和毛猛犸象等灭绝物种，以及研究如新冠病毒等RNA病毒具有重要意义。相?",
+				"language": "zh-CN",
+				"libraryCatalog": "CNKI",
+				"pages": "4",
+				"publicationTitle": "科技日报",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CCND&dbname=CCNDLAST2023&filename=KJRB202309210044&v=",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					}
+				],
+				"tags": [
+					{
+						"tag": "RNA"
+					},
+					{
+						"tag": "转录组"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
 		"url": "https://chn.oversea.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFD&dbname=CJFDLAST2020&filename=ZGYK202012011&v=%25mmd2BHGGqe3MG%25mmd2FiWsTP5sBgemYG4X5LOYXSuyd0Rs%25mmd2FAl1mzrLs%25mmd2F7KNcFfXQMiFAipAgN",
 		"items": [
 			{
@@ -1264,7 +1301,7 @@ var testCases = [
 				"ISBN": "9787111520269",
 				"abstractNote": "本书从社会实际需求出发，根据多年的科研经验和成果，与多年从事测控信息处理、食品等相关专业的研究人员合作，融入许多解决实际问题的研究和实践成果，系统介绍了本课题组基于近红外光谱分析技术在果蔬类农药残留量的检测、食用植物油品质、小麦粉、淀粉的品质检测中的应用研究成",
 				"edition": "1",
-				"extra": "cite: 34",
+				"extra": "CNKICite: 34",
 				"language": "zh-CN",
 				"publisher": "机械工业出版社",
 				"attachments": [],
@@ -1391,281 +1428,6 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://www.cnki.com.cn/Article/CJFDTOTAL-ZNJJ202310008.htm",
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "“两山”理念的有效载体与实践：林下经济的经济效应、环境效应及其协同逻辑",
-				"creators": [
-					{
-						"firstName": "",
-						"lastName": "吴伟光",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "许恒",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "王凤婷",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "熊立春",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"date": "2023",
-				"abstractNote": "林下经济是生态文明建设背景下推进山区绿色高质量发展、实现“两山”理念的重要载体。本文基于里昂惕夫生产函数和最优生产决策理论刻画林下经济的经济效应、环境效应及其协同的理论模型，并通过对典型案例县的研究，对林下经济的经济效应与环境效应协同发展的理论机制加以印证。研究发现：第一，林下经济经营中，给定其他条件不变，当劳动力投入效率增加时，劳动力投入先增加后降低、林地投入单调递增，林下经济的经济价值也是单调递增，而林下经济的生态价值先增加后降低，林下经济的经济价值和生态价值总和递增；第二，进一步基于扩展模型的分析发现，在适度经营规模下，林下经济产生生态反馈效应，经营主体不再单纯追求经济利润最大化，而是通过降低林地要素的投入来提高林地资源的生态反馈效应，从而提升环境效应，最终实现经济效应和环境效应协同发展；第三，浙江省松阳县的案例剖析表明，在政府的合理扶持下，依靠适度规模经营、生态化种植和三产融合能够实现林下经济的经济效应与环境效应协同发展。因此，林下经济作为“两山”理念的有效载体，应积极推广，通过科学有效经营，能够实现经济效应和环境效应的协同增长。",
-				"issue": "10",
-				"language": "zh-CN",
-				"libraryCatalog": "CNKI",
-				"pages": "158-174",
-				"publicationTitle": "中国农村经济",
-				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFD&dbname=CJFDAUTO2023&filename=ZNJJ202310008&v=",
-				"attachments": [],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CCND&dbname=CCNDLAST2023&filename=KJRB202309210044&v=",
-		"items": [
-			{
-				"itemType": "newspaperArticle",
-				"title": "灭绝物种RNA首次分离测序",
-				"creators": [
-					{
-						"firstName": "",
-						"lastName": "刘霞",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"date": "2023-09-21",
-				"abstractNote": "科技日报北京9月20日电 （记者刘霞）瑞典国家分子生物科学中心科学家首次分离和测序了一个已灭绝物种的RNA分子，从而重建了该灭绝物种（塔斯马尼亚虎）的皮肤和骨骼肌转录组。该项成果对复活塔斯马尼亚虎和毛猛犸象等灭绝物种，以及研究如新冠病毒等RNA病毒具有重要意义。相?",
-				"language": "zh-CN",
-				"libraryCatalog": "CNKI",
-				"pages": "4",
-				"publicationTitle": "科技日报",
-				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CCND&dbname=CCNDLAST2023&filename=KJRB202309210044&v=",
-				"attachments": [
-					{
-						"title": "Full Text PDF",
-						"mimeType": "application/pdf"
-					}
-				],
-				"tags": [
-					{
-						"tag": "RNA"
-					},
-					{
-						"tag": "转录组"
-					}
-				],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://t.cnki.net/kcms/article/abstract?v=hqt_j-uEELGSLvtgfx2DVRxu9hbobgYrzQM3qkFcwxOVpORfI69a9hTWtAs-pPLWmSBjAiedoGDickqGBeqDgHdui5mzNYguPjqqm7qe0730Wy6IeHRrQUWY1n75lu9wEYSllSA6s9s=&uniplatform=NZKPT",
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "压型钢板-聚氨酯夹芯楼板受弯性能研究",
-				"creators": [
-					{
-						"firstName": "",
-						"lastName": "王腾",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "冯会康",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "乔文涛",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "苏佶智",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "王丽欢",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"date": "2022",
-				"DOI": "10.13206/j.gjgS22031502",
-				"abstractNote": "金属面夹芯板以其保温绝热、降噪、自重轻和装配效率高等优点在围护结构中得到了很好的应用，基于金属面夹芯板的构造，提出一种新型的压型钢板与聚氨酯组合的夹芯楼板结构。为了研究压型钢板-聚氨酯夹芯楼板的受弯性能，对夹芯楼板试件进行了两点对称静载试验。在试验的基础上，提出并验证了夹芯楼板有限元模型，并对槽钢楼板厚度、压型钢板厚度和聚氨酯密度等进行了参数分析。研究结果表明：夹芯楼板的破坏形式主要表现为挠度过大，最大挠度达到了板跨度的1/42,并且跨中截面处的槽钢出现畸变屈曲；夹芯楼板受弯变形后，槽钢首先达到屈服状态，而受压钢板的材料性能未能得到充分发挥；新型压型钢板聚氨酯夹芯楼板相比传统金属面夹芯板的承载能力和刚度有明显提升，承载力和刚度均提高203%;楼板厚度和压型钢板厚度对夹芯楼板的承载能力和刚度均具有显著影响，而楼板厚度相比压型钢板厚度对刚度的影响效果更明显，当楼板厚度从120 mm增大到160 mm时，夹芯楼板的承载力在正常使用状态下提高87%,在承载能力极限状态下提高63%,刚度提高88%,钢板厚度由1 mm增至3 mm时，夹芯楼板的承载力在正常使用状态下提高59%,在承载能力极限状态下提高84%,刚度提高61%;聚氨酯泡沫密度的变化对夹芯楼板的承载能力和刚度影响较小，当密度从45 kg/m<sup>3</sup>变化到90 kg/m<sup>3</sup>时，正常使用状态下夹芯楼板的承载力增幅为12%,承载能力极限状态下的承载力增幅仅为2%,刚度增幅为12%。",
-				"issue": "8",
-				"language": "zh-CN",
-				"libraryCatalog": "CNKI",
-				"pages": "9-16",
-				"publicationTitle": "钢结构(中英文)",
-				"url": "https://t.cnki.net/kcms/article/abstract?v=hqt_j-uEELGSLvtgfx2DVRxu9hbobgYrzQM3qkFcwxOVpORfI69a9hTWtAs-pPLWmSBjAiedoGDickqGBeqDgHdui5mzNYguPjqqm7qe0730Wy6IeHRrQUWY1n75lu9wEYSllSA6s9s=&uniplatform=NZKPT",
-				"volume": "37",
-				"attachments": [
-					{
-						"title": "Full Text PDF",
-						"mimeType": "application/pdf"
-					}
-				],
-				"tags": [
-					{
-						"tag": "压型钢板"
-					},
-					{
-						"tag": "受弯性能"
-					},
-					{
-						"tag": "夹芯楼板"
-					},
-					{
-						"tag": "有限元分析"
-					},
-					{
-						"tag": "静载试验"
-					}
-				],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=hqt_j-uEELHgLjhVNERafpOMj4EDV7-j9ZKXv3QjqYLauJu1jZonbySDN7NdTxP89ZRbEb74WGJU6Ue5Ew7P8MPqFzTNTsD1AUMujHfQ9NrE3lh8jv2FHKJ9wCzq-0L2BzEAi_jJKFmSZp7Nce3arw==&uniplatform=NZKPT&language=CHS",
-		"items": [
-			{
-				"itemType": "standard",
-				"title": "粮油检验　小麦粉膨胀势的测定",
-				"creators": [
-					{
-						"firstName": "",
-						"lastName": "全国粮油标准化技术委员会(SAC/TC 270)",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"date": "2019-05-10",
-				"extra": "applyDate: 2019-12-01",
-				"language": "zh-CN",
-				"libraryCatalog": "CNKI",
-				"number": "GB/T 37510—2019",
-				"status": "现行",
-				"type": "国家标准",
-				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=SCSF&dbname=SCSF&filename=SCSF00058274&v=",
-				"attachments": [],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=hqt_j-uEELFh-0x72PDDFlk4L3Q06bx-Aw8_PZo38665XqHiWONkvmAl_MapyRqrU0K-wDy2cOi7kGHcQsG2NAhlAQ6f-u2vj1AVdjUPbZkpj95j-3pnqpgjHGPc6nOAc6WqvrEbl7o=&uniplatform=CHKD",
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "略谈肿瘤病的辨治要领",
-				"creators": [
-					{
-						"firstName": "",
-						"lastName": "熊继柏",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"date": "2023-11-23",
-				"abstractNote": "笔者根据多年临床实践经验,总结中医诊治肿瘤病的四辨:辨部位、辨痰瘀、辨寒热、辨虚实,阐述肿瘤治疗四法:攻法、消法、散法、补法,并通过临床验案分享诊疗经验,以供同仁参考。",
-				"extra": "status: advance online publication",
-				"language": "zh-CN",
-				"libraryCatalog": "CNKI",
-				"pages": "1-5",
-				"publicationTitle": "湖南中医药大学学报",
-				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CHKJ&dbname=CHKJCAPJ&filename=HNZX20231121001&v=",
-				"attachments": [
-					{
-						"title": "Full Text PDF",
-						"mimeType": "application/pdf"
-					}
-				],
-				"tags": [
-					{
-						"tag": "中医治法"
-					},
-					{
-						"tag": "临床辨证"
-					},
-					{
-						"tag": "临床验案"
-					},
-					{
-						"tag": "国医大师"
-					},
-					{
-						"tag": "熊继柏"
-					},
-					{
-						"tag": "肿瘤"
-					}
-				],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=hqt_j-uEELEIIUdFv9kRm1Mah8H4G3CAV0XKVQng-WEkrfZb07GimDqvWKEl2-u2V4q_XV_Xl3w3Uu6JvDSUCPq15jVihZO87YRdxnBPDjW-7gi8c-NJ8jBfjF-HyWBH2k5d_psm1M9CdEHFZ9yyosImddQGWLfbxlVssmcHR_dTVMa3QRn82Q==&uniplatform=NZKPT&language=CHS",
-		"items": [
-			{
-				"itemType": "book",
-				"title": "Economy, Society & Culture in Contemporary Yemen",
-				"creators": [
-					{
-						"firstName": "B. R.",
-						"lastName": "Pridham",
-						"creatorType": "author"
-					}
-				],
-				"ISBN": "9781003165156",
-				"language": "en-US",
-				"libraryCatalog": "CNKI",
-				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=WWBD&dbname=GARBLAST&filename=STBD3CF0CF2800E929699A2F05BC9DBD89F7&v=",
-				"attachments": [],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
 		"url": "https://inds.cnki.net/kcms/detail?dbcode=&dbname=AKZTLKCAPJLAST&filename=XJKB20230821001&pcode=AKZT&zylx=&uid=WEEvREcwSlJHSldSdmVqelcxWUxlMTZJa2Z6N0Z0eUN4TXBCRUlLRTJwaz0=$9A4hF_YAuvQ5obgVAqNKPCYcEjKensW4IQMovwHtwkF4VYPoHbKxJw!!",
 		"items": [
 			{
@@ -1759,6 +1521,240 @@ var testCases = [
 						"tag": "陶瓷材料"
 					}
 				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.cnki.com.cn/Article/CJFDTOTAL-ZNJJ202310008.htm",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "“两山”理念的有效载体与实践：林下经济的经济效应、环境效应及其协同逻辑",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "吴伟光",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "许恒",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "王凤婷",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "熊立春",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2023",
+				"abstractNote": "林下经济是生态文明建设背景下推进山区绿色高质量发展、实现“两山”理念的重要载体。本文基于里昂惕夫生产函数和最优生产决策理论刻画林下经济的经济效应、环境效应及其协同的理论模型，并通过对典型案例县的研究，对林下经济的经济效应与环境效应协同发展的理论机制加以印证。研究发现：第一，林下经济经营中，给定其他条件不变，当劳动力投入效率增加时，劳动力投入先增加后降低、林地投入单调递增，林下经济的经济价值也是单调递增，而林下经济的生态价值先增加后降低，林下经济的经济价值和生态价值总和递增；第二，进一步基于扩展模型的分析发现，在适度经营规模下，林下经济产生生态反馈效应，经营主体不再单纯追求经济利润最大化，而是通过降低林地要素的投入来提高林地资源的生态反馈效应，从而提升环境效应，最终实现经济效应和环境效应协同发展；第三，浙江省松阳县的案例剖析表明，在政府的合理扶持下，依靠适度规模经营、生态化种植和三产融合能够实现林下经济的经济效应与环境效应协同发展。因此，林下经济作为“两山”理念的有效载体，应积极推广，通过科学有效经营，能够实现经济效应和环境效应的协同增长。",
+				"issue": "10",
+				"language": "zh-CN",
+				"libraryCatalog": "CNKI",
+				"pages": "158-174",
+				"publicationTitle": "中国农村经济",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFD&dbname=CJFDAUTO2023&filename=ZNJJ202310008&v=",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://t.cnki.net/kcms/article/abstract?v=_AqZbjAWWJQgA3EkLUxX7MnCK-Vs9bXIszipcfV1qiCJ2pVsIH3Kn-g8gSyeH55ceCouOYV8RI9HDC8xSOf4tgMfqMNXz6hFA_Ebj3MnmQqKtvmSl_41FECUugjK944daQUs2okdEkk=&uniplatform=NZKPT",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "压型钢板-聚氨酯夹芯楼板受弯性能研究",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "王腾",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "冯会康",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "乔文涛",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "苏佶智",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "王丽欢",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2022",
+				"DOI": "10.13206/j.gjgS22031502",
+				"abstractNote": "金属面夹芯板以其保温绝热、降噪、自重轻和装配效率高等优点在围护结构中得到了很好的应用，基于金属面夹芯板的构造，提出一种新型的压型钢板与聚氨酯组合的夹芯楼板结构。为了研究压型钢板-聚氨酯夹芯楼板的受弯性能，对夹芯楼板试件进行了两点对称静载试验。在试验的基础上，提出并验证了夹芯楼板有限元模型，并对槽钢楼板厚度、压型钢板厚度和聚氨酯密度等进行了参数分析。研究结果表明：夹芯楼板的破坏形式主要表现为挠度过大，最大挠度达到了板跨度的1/42,并且跨中截面处的槽钢出现畸变屈曲；夹芯楼板受弯变形后，槽钢首先达到屈服状态，而受压钢板的材料性能未能得到充分发挥；新型压型钢板聚氨酯夹芯楼板相比传统金属面夹芯板的承载能力和刚度有明显提升，承载力和刚度均提高203%;楼板厚度和压型钢板厚度对夹芯楼板的承载能力和刚度均具有显著影响，而楼板厚度相比压型钢板厚度对刚度的影响效果更明显，当楼板厚度从120 mm增大到160 mm时，夹芯楼板的承载力在正常使用状态下提高87%,在承载能力极限状态下提高63%,刚度提高88%,钢板厚度由1 mm增至3 mm时，夹芯楼板的承载力在正常使用状态下提高59%,在承载能力极限状态下提高84%,刚度提高61%;聚氨酯泡沫密度的变化对夹芯楼板的承载能力和刚度影响较小，当密度从45 kg/m<sup>3</sup>变化到90 kg/m<sup>3</sup>时，正常使用状态下夹芯楼板的承载力增幅为12%,承载能力极限状态下的承载力增幅仅为2%,刚度增幅为12%。",
+				"issue": "8",
+				"language": "zh-CN",
+				"libraryCatalog": "CNKI",
+				"pages": "9-16",
+				"publicationTitle": "钢结构(中英文)",
+				"url": "https://t.cnki.net/kcms/article/abstract?v=_AqZbjAWWJQgA3EkLUxX7MnCK-Vs9bXIszipcfV1qiCJ2pVsIH3Kn-g8gSyeH55ceCouOYV8RI9HDC8xSOf4tgMfqMNXz6hFA_Ebj3MnmQqKtvmSl_41FECUugjK944daQUs2okdEkk=&uniplatform=NZKPT",
+				"volume": "37",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					}
+				],
+				"tags": [
+					{
+						"tag": "压型钢板"
+					},
+					{
+						"tag": "受弯性能"
+					},
+					{
+						"tag": "夹芯楼板"
+					},
+					{
+						"tag": "有限元分析"
+					},
+					{
+						"tag": "静载试验"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=_AqZbjAWWJSt3JipjPNN3jUaseN36M3k2q4Rvid8Bqj1rSWh2tCbZ7yTHiVm9wh1imQITCFA0U7ijXtSbWWXnYc0Wjs-TOaMsL61g0ytljHHe2mC0Dt2oTUxaA_D1haeqLLRccRh3Ukql3t75CHMFw==&uniplatform=NZKPT&language=CHS",
+		"items": [
+			{
+				"itemType": "standard",
+				"title": "粮油检验　小麦粉膨胀势的测定",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "全国粮油标准化技术委员会(SAC/TC 270)",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2019-05-10",
+				"extra": "applyDate: 2019-12-01",
+				"language": "zh-CN",
+				"libraryCatalog": "CNKI",
+				"number": "GB/T 37510—2019",
+				"status": "现行",
+				"type": "国家标准",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=SCSF&dbname=SCSF&filename=SCSF00058274&v=",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=_AqZbjAWWJSsy8m2aO_GvN0zvH1asMtnGHNcuSE1bHKoirGGqBvcSMufl5njcPKGEHAxmC9JWAHyDXIeb5RjkM0CMYGENoSB6z9QkzXD2ryioYQRQVh_Zr9DYWbfAw24EAMUJ-E9Z2A=&uniplatform=CHKD",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "略谈肿瘤病的辨治要领",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "熊继柏",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2023-11-23",
+				"abstractNote": "笔者根据多年临床实践经验,总结中医诊治肿瘤病的四辨:辨部位、辨痰瘀、辨寒热、辨虚实,阐述肿瘤治疗四法:攻法、消法、散法、补法,并通过临床验案分享诊疗经验,以供同仁参考。",
+				"extra": "status: advance online publication",
+				"language": "zh-CN",
+				"libraryCatalog": "CNKI",
+				"pages": "1-5",
+				"publicationTitle": "湖南中医药大学学报",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CHKJ&dbname=CHKJCAPJ&filename=HNZX20231121001&v=",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					}
+				],
+				"tags": [
+					{
+						"tag": "中医治法"
+					},
+					{
+						"tag": "临床辨证"
+					},
+					{
+						"tag": "临床验案"
+					},
+					{
+						"tag": "国医大师"
+					},
+					{
+						"tag": "熊继柏"
+					},
+					{
+						"tag": "肿瘤"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=_AqZbjAWWJTerfRtUet7hnTOR2AYheQolwl6K5Rt0NVw0JZ8v_iqvLwnCKpssDglff501pcCOJjptDsghhHV8if3LvhNSb3TaS7r9kosAcAcXmIcvTuDUi3egdrppAuNKYNRYcAOgNeCIOBuuw58aYpWcA5cQ-1b7zbx6t0YSE6wFlrGEBMQIA==&uniplatform=NZKPT&language=CHS",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "Economy, Society & Culture in Contemporary Yemen",
+				"creators": [
+					{
+						"firstName": "B. R.",
+						"lastName": "Pridham",
+						"creatorType": "author"
+					}
+				],
+				"ISBN": "9781003165156",
+				"language": "en-US",
+				"libraryCatalog": "CNKI",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=WWBD&dbname=GARBLAST&filename=STBD3CF0CF2800E929699A2F05BC9DBD89F7&v=",
+				"attachments": [],
+				"tags": [],
 				"notes": [],
 				"seeAlso": []
 			}
