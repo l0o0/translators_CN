@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-01 08:08:32"
+	"lastUpdated": "2023-12-27 17:51:55"
 }
 
 /*
@@ -34,22 +34,26 @@
 
 	***** END LICENSE BLOCK *****
 */
-const WEBTYPE = [
+const webType = [
+	// http://cea.ceaj.org/CN/10.3778/j.issn.1002-8331.2302-0361
 	{
 		name: 'flat',
 		issingle: true,
 		pagekey: 'body[id="goTop"]',
 	},
+	// http://www.zgxdyyzz.com.cn/CN/10.3969/j.issn.1672-9463.2022.03.019
 	{
 		name: 'flat_float',
 		issingle: true,
 		pagekey: 'body[id="metaVue"]',
 	},
+	// http://www.zgyj.ac.cn/CN/abstract/abstract9973.shtml
 	{
 		name: 'notebook_classic',
 		issingle: true,
 		pagekey: 'div[id="tabsDiv"]',
 	},
+	// http://jst.tsinghuajournals.com/CN/Y2015/V55/I1/50
 	{
 		name: 'notebook_morden',
 		issingle: true,
@@ -73,6 +77,7 @@ const WEBTYPE = [
 		issingle: false,
 		pagekey: 'div[class="wenzhang"] dd:first-of-type a:first-of-type'
 	},
+	// http://www.sykjlt.com/CN/1002-302X/home.shtml
 	{
 		name: 'txt_biaoti',
 		issingle: false,
@@ -102,12 +107,12 @@ const WEBTYPE = [
 		issingle: false,
 		pagekey: 'ul[class="article-list"]  div[class="j-title-1"] > a:first-child'
 	},
+	// http://www.dwjs.com.cn
 	{
 		name: "manytable",
 		issingle: false,
 		pagekey: 'form[name="AbstractList"] > table td > table td > table td > a:nth-child(1) > u'
 	}
-	// http://www.dwjs.com.cn
 ];
 
 /* 外来的Metadata.js水土不服，决定自己造轮子 */
@@ -143,7 +148,7 @@ class Metas {
 	}
 }
 
-const METAMAP = {
+const metaMap = {
 	title: [
 		{ name: "citation_title", },
 		{ name: "DC.Title", },
@@ -180,16 +185,13 @@ const METAMAP = {
 		{ name: "citation_date" },
 		{ name: "dc.date" }
 	],
-	// series: "系列",
-	// seriesTitle: "系列标题",
-	// seriesText: "系列描述",
 	journalAbbreviation: [
 		{ name: "citation_journal_abbrev" },
 	],
 	DOI: [
-		{ name: "prism.doi" },
 		{ name: "citation_doi" },
-		{ name: "DOI" }
+		{ name: "DOI" },
+		{ name: "prism.doi" }
 	],
 	ISSN: [
 		{ name: "prism.issn" },
@@ -242,7 +244,7 @@ const METAMAP = {
 	],
 };
 
-const TAGMAP = {
+const tagMap = {
 	title: "T",
 	date: "D",
 	DOI: "R",
@@ -255,8 +257,8 @@ const TAGMAP = {
 };
 
 function isItem(doc) {
-	let insite = doc.querySelector('a[href^="http://www.magtech.com"]');
-	let havetitle = (new Metas(doc)).getMeta(METAMAP.title);
+	let insite = doc.querySelector('a[href*="www.magtech.com"]');
+	let havetitle = (new Metas(doc)).getMeta(metaMap.title);
 	let like = doc.querySelector('[class*="magtech"]');
 	if (havetitle && (insite || like)) {
 		return {
@@ -268,7 +270,7 @@ function isItem(doc) {
 }
 
 function detectWeb(doc, _url) {
-	var type = WEBTYPE.find(element => (doc.querySelector(element.pagekey)));
+	var type = webType.find(element => (doc.querySelector(element.pagekey)));
 	if (!type) type = isItem(doc);
 	if (!type) return false;
 	Z.debug(type);
@@ -317,7 +319,7 @@ function getSearchResults(doc, type, checkOnly) {
 }
 
 async function doWeb(doc, url) {
-	var type = WEBTYPE.find(element => (doc.querySelector(element.pagekey)));
+	var type = webType.find(element => (doc.querySelector(element.pagekey)));
 	if (!type) type = isItem(doc);
 	if (detectWeb(doc, url) == 'multiple') {
 		let items = await Zotero.selectItems(getSearchResults(doc, type, false));
@@ -383,10 +385,10 @@ async function scrape(doc, type, url = doc.location.href) {
 	];
 	language = metas.getMeta(language).toLowerCase();
 	// Z.debug(`document language is ${language}`);
-	var fields = Object.keys(METAMAP);
+	var fields = Object.keys(metaMap);
 	for (let i = 0; i < fields.length; i++) {
 		let key = fields[i];
-		newItem[key] = metas.getMeta(METAMAP[key], language);
+		newItem[key] = metas.getMeta(metaMap[key], language);
 	}
 	newItem.pages = (function () {
 		let firstpage = newItem.firstpage;
@@ -414,8 +416,8 @@ async function scrape(doc, type, url = doc.location.href) {
 		let risText = await requestText(risURL);
 		risText = risText.split('\r\n');
 		// Z.debug(risText);
-		for (const field in TAGMAP) {
-			const tag = TAGMAP[field];
+		for (const field in tagMap) {
+			const tag = tagMap[field];
 			var value;
 			try {
 				value = (risText.find(line => (line.charAt(1) == tag))).substring(3);
@@ -431,7 +433,6 @@ async function scrape(doc, type, url = doc.location.href) {
 	// Z.debug(newItem);
 	newItem.complete();
 }
-
 
 /** BEGIN TEST CASES **/
 var testCases = [
@@ -577,7 +578,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "http://www.dwjs.com.cn/%2BUUKgrDk4TYftCzvQD8SfCs_Q474HONlEEX2sxoqsvyyMokDnXYY8PE68c5erlek?encrypt=1",
+		"url": "http://www.dwjs.com.cn/T2JUSGUU2P9AedAuY61LaRnnjULDzh%2Bv_w8bZtqBahG9wUCJsceKzRtv6B_%2B%2B9%2BO?encrypt=1",
 		"items": [
 			{
 				"itemType": "journalArticle",
@@ -620,7 +621,7 @@ var testCases = [
 					}
 				],
 				"date": "2022-03-05",
-				"DOI": "doi:10.13335/j.1000-3673.pst.2021.2550",
+				"DOI": "10.13335/j.1000-3673.pst.2021.2550",
 				"ISSN": "1000-3673",
 				"abstractNote": "电力在我国能源消费与碳排放中占据重要地位。电力系统低碳转型,构建以新能源为主体的新型电力系统将对我国碳达峰、碳中和战略目标的实现起到关键作用。该文首先分析了从“电视角”到“碳视角”下电力学科研究体系的转变趋势,并对当前“碳视角”下的电力系统研究概况进行了综述。基于“碳视角”下的电力系统研究路径,从电力系统全环节碳排放计量和“战略-技术-市场”协同低碳化解决方案2个方面,分析了电力低碳转型过程中的关键科学问题。在此基础上,从碳计量与碳追踪、碳规划与碳轨迹、碳减排与碳优化、碳市场与碳交易4个方面提出了新型电力系统“碳视角”的研究框架,并对关键研究内容进行了分析和阐述。",
 				"issue": "3",
@@ -628,7 +629,7 @@ var testCases = [
 				"libraryCatalog": "MagTech",
 				"pages": "821-833",
 				"publicationTitle": "电网技术",
-				"url": "http://www.dwjs.com.cn/%2BUUKgrDk4TYftCzvQD8SfCs_Q474HONlEEX2sxoqsvyyMokDnXYY8PE68c5erlek?encrypt=1",
+				"url": "http://www.dwjs.com.cn/T2JUSGUU2P9AedAuY61LaRnnjULDzh%2Bv_w8bZtqBahG9wUCJsceKzRtv6B_%2B%2B9%2BO?encrypt=1",
 				"volume": "46",
 				"attachments": [
 					{
