@@ -140,9 +140,9 @@ function fixItem(item, doc, url) {
 	item.extra += addExtra('publicationTitle', labels.getWith('期刊') || '中国科学院科技论文预发布平台');
 	item.extra += addExtra('original-title', text(doc, 'div.hd > p'));
 	item.extra += addExtra('original-abstract', labels.getWith('Abstract'));
-	let pdfLink = attr(doc, '.side > .bd a[href*="filetype=pdf"]', 'href');
+	let pdfLink = doc.querySelector('.side > .bd a[href*="filetype=pdf"]');
 	item.attachments.push({
-		url: pdfLink,
+		url: pdfLink.href,
 		title: 'Full Text PDF',
 		mimeType: 'application/pdf'
 	});

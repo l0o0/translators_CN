@@ -134,10 +134,10 @@ async function scrape(doc, url = doc.location.href) {
 			item.tags = item.tags[0].split(/[;；]\s*/).map(tag => ({ tag: tag }));
 		}
 		item.extra += addExtra('creatorsExt', JSON.stringify(creatorsExt));
-		let pdfLink = attr(doc, 'a[href*="create_pdf"]', 'href');
+		let pdfLink = doc.querySelector('a[href*="create_pdf"]');
 		if (pdfLink && !item.attachments.some(attachment => attachment.mimeType == 'application/pdf')) {
 			item.attachments.push({
-				url: pdfLink,
+				url: pdfLink.href,
 				title: 'Full Text PDF',
 				mimeType: 'application/pdf'
 			});

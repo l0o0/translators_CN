@@ -105,7 +105,7 @@ async function scrape(doc, url = doc.location.href) {
 	});
 	newItem.extra = addExtra('titleTranslation', text(doc, '.title_translate'));
 	try {
-		let journalDoc = await requestDocument(attr(doc, 'div[class^="sTopImg"] > p:first-of-type > a', 'href'));
+		let journalDoc = await requestDocument(doc.querySelector('div[class^="sTopImg"] > p:first-of-type > a').href);
 		let labels = new Labels(journalDoc, '.FbPcon > p, .FbPcon > div > div');
 		newItem.language = {
 			中文: 'zh-CN',
@@ -116,11 +116,11 @@ async function scrape(doc, url = doc.location.href) {
 	catch (error) {
 		Z.debug('some error occured while geting journalDoc');
 	}
-	let pdfLink = attr(doc, 'a[class*="pdf-down"]', 'href');
+	let pdfLink = doc.querySelector('a[class*="pdf-down"]');
 	Z.debug(pdfLink);
 	if (pdfLink) {
 		newItem.attachments.push({
-			url: pdfLink,
+			url: pdfLink.href,
 			title: 'Full Text PDF',
 			mimeType: 'application/pdf'
 		});
