@@ -2,14 +2,14 @@
 	"translatorID": "cd01cf63-90ba-42b4-a505-74d8d14f79d6",
 	"label": "National Public Service Platform for Standards Information - China",
 	"creator": "Zeping Lee, rnicrosoft",
-	"target": "https?://std\\.samr\\.gov\\.cn/",
+	"target": "https?://(std\\.samr\\.gov\\.cn/)|(.bba\\.sacinfo\\.org\\.cn)",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-12 08:42:32"
+	"lastUpdated": "2023-12-28 10:13:09"
 }
 
 /*
@@ -35,158 +35,135 @@
 	***** END LICENSE BLOCK *****
 */
 
-function addExtra(newItem, extra) {
-	newItem.extra = (newItem.extra ? newItem.extra + "\n" : "") + extra[0].trim().replace(/[：:]$/, '') + ": " + extra.slice(1).join('; ');
+function detectWeb(doc, url) {
+	if (url.includes('Detail')) {
+		return 'standard';
+	}
+	else if (getSearchResults(doc, true)) {
+		return 'multiple';
+	}
+	return false;
 }
 
-function detectWeb(_doc, _url) {
-	return 'standard';
+function getSearchResults(doc, checkOnly) {
+	var items = {};
+	var found = false;
+	// 依赖浏览器环境
+	var rows = doc.querySelectorAll('.s-title td > a');
+	for (let row of rows) {
+		let href = row.href;
+		let title = ZU.trimInternal(row.textContent);
+		if (!href || !title) continue;
+		if (checkOnly) return true;
+		found = true;
+		items[href] = title;
+	}
+	return found ? items : false;
 }
 
-function doWeb(doc, url) {
-	var item = new Zotero.Item('standard');
-
-	item.language = 'zh-CN';
-	item.url = url;
-	item.libraryCatalog = '全国标准信息公共服务平台';
-
-	if (doc.querySelector('.label-info').textContent === '国际标准') {
-		item.title = doc.querySelector('.page-header + p').textContent;
+async function doWeb(doc, url) {
+	if (detectWeb(doc, url) == 'multiple') {
+		let items = await Zotero.selectItems(getSearchResults(doc, false));
+		if (!items) return;
+		for (let url of Object.keys(items)) {
+			await scrape(await requestDocument(url));
+		}
 	}
 	else {
-		item.title = doc.querySelector('.page-header h4').textContent;
+		await scrape(doc, url);
 	}
+}
 
-	for (let status of doc.querySelectorAll('.page-header .s-status')) {
-		let label = status.textContent;
-		switch (label) { // 英文标准
-			case '现行':
-			case '被代替':
-			case '修订':
-			case '废止':
-				item.status = label;
-			default:
-				// Z.debug(label);
-		}
+async function scrape(doc, url = doc.location.href) {
+	var newItem = new Z.Item('standard');
+	let labels = new CellLabels(doc.querySelector('.basic-info'), 'dl > .basicInfo-item');
+	Z.debug(labels.innerData.map(arr => [arr[0], arr[1].innerText]));
+	newItem.title = url.includes('/gj/')
+		? text(doc, '.page-header+p')
+		// 有时会在标题处塞进来一些额外的元素（如附件）
+		: text(doc, '.page-header > h4').split('\n')[0];
+	newItem.extra = '';
+	let number = labels.getWith('标准号');
+	newItem.number = url.includes('/gj/')
+		// 国标编号使用一字线
+		? number.replace('-', '—')
+		: number;
+	newItem.type = text(doc, '.label-info');
+	newItem.status = text(doc, '.label-primary');
+	newItem.date = labels.getWith(['发布日期', '实施日期']);
+	newItem.url = url;
+	newItem.language = /en/i.test(labels.getWith('标准语言'))
+		? 'en-US'
+		: 'zh-CN';
+	newItem.libraryCatalog = '全国标准信息公共服务平台';
+	newItem.extra += addExtra('applyDate', labels.getWith('实施日期'));
+	newItem.extra += addExtra('substitute', labels.getWith('代替标准'));
+	newItem.extra += addExtra('CCS', labels.getWith('中国标准分类号'));
+	newItem.extra += addExtra('ICS', labels.getWith('国际标准分类号'));
+	newItem.extra += addExtra('industry', labels.getWith('行业分类'));
+	labels.getWith(['归口单位', '归口部门', '技术归口', '标准发布组织']).split('、').forEach((creator) => {
+		newItem.creators.push({
+			lastName: creator,
+			creatorType: 'author',
+			fieldMode: 1
+		});
+	});
+	let pdfLink = doc.querySelector('.page-header a[href*="/attachment/"]');
+	if (pdfLink) {
+		newItem.attachments.push({
+			url: pdfLink.href,
+			title: 'Full Text PDF',
+			mimeType: 'application/pdf'
+		});
 	}
-
-	for (let panel of doc.querySelectorAll('.panel')) {
-		let heading = panel.querySelector('.panel-heading').textContent.trim();
-		switch (heading) {
-			case '当前标准':
-			case '当前标准计划':
-				let status = panel.querySelector('.panel-body .s-status').textContent;
-				item.status = status;
-				break;
-		}
-	}
-
-	var dtList = doc.querySelectorAll('dt.basicInfo-item.name');
-	var ddList = doc.querySelectorAll('dd.basicInfo-item.value');
-
-	for (var i = 0; i < dtList.length; ++i) {
-		var name = dtList[i].textContent;
-		var span = ddList[i].querySelector('span');
-		let value = ddList[i].textContent;
-		if (span) {
-			value = span.textContent;
-		}
-		else {
-		}
-		value = value.trim();
-
-		if (value.length === 0) {
-			continue;
-		}
-
-		switch (name) {
-			case '标准号':
-				var standardType = doc.querySelector('.label-info');
-				if (!(standardType && standardType.textContent.startsWith('国际标准'))) {
-					// 国标编号使用一字线
-					value = value.replace('-', '—');
-				}
-				item.number = value;
-				break;
-			case '发布日期':
-				item.date = value;
-				break;
-			case '实施日期':
-				if (!item.date || item.date.length === 0) {
-					item.date = value;
-				} else {
-					addExtra(item, [name, value]);
-				}
-				break;
-			case '全部代替标准':
-				addExtra(item, [name, value]);
-				break;
-			case '归口部门':
-			case '归口单位':
-			case '标准发布组织':
-				for (var institute of value.split('、')) {
-					item.creators.push({
-						lastName: institute,
-						creatorType: 'author',
-						fieldMode: 1
-					});
-				}
-				break;
-			case '标准语言':
-				let language = value.toLowerCase();
-				if (language === 'en') {
-					language = 'en-US';
-				}
-				item.language = language;
-				break;
-			default:
-				break;
-		}
-	}
-
-	item.attachments.push({
+	newItem.attachments.push({
 		title: 'Snapshot',
 		document: doc
 	});
-	item.complete();
+	newItem.complete();
 }
 
+class CellLabels {
+	constructor(doc, selector) {
+		this.innerData = [];
+		let cells = Array.from(doc.querySelectorAll(selector));
+		let i = 0;
+		while (cells[i + 1]) {
+			this.innerData.push([cells[i].textContent.replace(/\s*/g, ''), cells[i + 1]]);
+			i += 2;
+		}
+	}
+
+	getWith(label, element = false) {
+		if (Array.isArray(label)) {
+			let result = label
+				.map(aLabel => this.getWith(aLabel, element));
+			result = element
+				? result.find(element => element.childNodes.length)
+				: result.find(element => element);
+			return result
+				? result
+				: element
+					? document.createElement('div')
+					: '';
+		}
+		let pattern = new RegExp(label);
+		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
+		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
+		return keyValPair
+			? ZU.trimInternal(keyValPair[1].innerText)
+			: '';
+	}
+}
+
+function addExtra(key, value) {
+	return value
+		? `${key}: ${value}\n`
+		: '';
+}
 
 /** BEGIN TEST CASES **/
 var testCases = [
-	{
-		"type": "web",
-		"url": "https://std.samr.gov.cn/gb/search/gbDetailed?id=71F772D7AA78D3A7E05397BE0A0AB82A",
-		"items": [
-			{
-				"itemType": "standard",
-				"title": "国际单位制及其应用",
-				"creators": [
-					{
-						"lastName": "国家市场监督管理总局",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"date": "1993-07-01",
-				"extra": "实施日期: 1994-07-01\n全部代替标准: GB 3100-1986",
-				"language": "zh-CN",
-				"libraryCatalog": "全国标准信息公共服务平台",
-				"number": "GB 3100—1993",
-				"status": "现行",
-				"url": "https://std.samr.gov.cn/gb/search/gbDetailed?id=71F772D7AA78D3A7E05397BE0A0AB82A",
-				"attachments": [
-					{
-						"title": "Snapshot",
-						"mimeType": "text/html"
-					}
-				],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
 	{
 		"type": "web",
 		"url": "https://std.samr.gov.cn/gb/search/gbDetailed?id=71F772D8055ED3A7E05397BE0A0AB82A",
@@ -202,11 +179,12 @@ var testCases = [
 					}
 				],
 				"date": "2015-05-15",
-				"extra": "实施日期: 2015-12-01\n全部代替标准: GB/T 7714-2005",
+				"extra": "applyDate: 2015-12-01\nsubstitute: GB/T 7714-2005\nCCS: A14\nICS: 01.140.20",
 				"language": "zh-CN",
 				"libraryCatalog": "全国标准信息公共服务平台",
-				"number": "GB/T 7714—2015",
+				"number": "GB/T 7714-2015",
 				"status": "现行",
+				"type": "国家标准",
 				"url": "https://std.samr.gov.cn/gb/search/gbDetailed?id=71F772D8055ED3A7E05397BE0A0AB82A",
 				"attachments": [
 					{
@@ -235,11 +213,12 @@ var testCases = [
 					}
 				],
 				"date": "2017-04-17",
-				"extra": "实施日期: 2017-04-17",
+				"extra": "applyDate: 2017-04-17\nCCS: A19\nICS: 01.140.40\nindustry: 文化、体育和娱乐业",
 				"language": "zh-CN",
 				"libraryCatalog": "全国标准信息公共服务平台",
-				"number": "CY/T 154—2017",
+				"number": "CY/T 154-2017",
 				"status": "现行",
+				"type": "行业标准-CY 新闻出版",
 				"url": "https://std.samr.gov.cn/hb/search/stdHBDetailed?id=8B1827F23645BB19E05397BE0A0AB44A",
 				"attachments": [
 					{
@@ -272,6 +251,7 @@ var testCases = [
 				"libraryCatalog": "全国标准信息公共服务平台",
 				"number": "ISO 690:2021",
 				"status": "现行",
+				"type": "国际标准",
 				"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=3E25D6F98CDEEE0578BCF0333B17EECF",
 				"attachments": [
 					{
@@ -287,24 +267,26 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=373C3505A9085559695051CCF9F59895",
+		"url": "https://hbba.sacinfo.org.cn/stdDetail/a3762eff26b8f60e95d5e8b48684b8ef7c07e693e998d3f871f4fd1b63e71e65",
 		"items": [
 			{
 				"itemType": "standard",
-				"title": "Information technology — Universal coded character set (UCS)",
+				"title": "事故汽车修复技术规范",
 				"creators": [
 					{
-						"lastName": "ISO/IEC",
+						"lastName": "全国汽车维修标准化技术委员会",
 						"creatorType": "author",
 						"fieldMode": 1
 					}
 				],
-				"date": "2020-12-21",
-				"language": "en-US",
+				"date": "2023-11-24",
+				"extra": "applyDate: 2024-03-01\nsubstitute: JT/T 795-2011\nCCS: R16\nICS: 43.18\nindustry: 交通运输、仓储和邮政业",
+				"language": "zh-CN",
 				"libraryCatalog": "全国标准信息公共服务平台",
-				"number": "ISO/IEC 10646:2020",
+				"number": "JT/T 795-2023",
 				"status": "现行",
-				"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=373C3505A9085559695051CCF9F59895",
+				"type": "交通",
+				"url": "https://hbba.sacinfo.org.cn/stdDetail/a3762eff26b8f60e95d5e8b48684b8ef7c07e693e998d3f871f4fd1b63e71e65",
 				"attachments": [
 					{
 						"title": "Snapshot",
@@ -319,26 +301,25 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=90EA7F0D4DF6771A08464E35E322E8BE",
+		"url": "https://dbba.sacinfo.org.cn/stdDetail/55959ea756314d917a5749c3abdd01bf7dc2a23593f3d83e1da0c582c894fb2a",
 		"items": [
 			{
 				"itemType": "standard",
-				"title": "Quantities and units — Part 2: Mathematics",
-				"creators": [
-					{
-						"lastName": "ISO",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"date": "2019-08-26",
-				"language": "en-US",
+				"title": "地理标志产品  黄陵翡翠梨",
+				"creators": [],
+				"date": "2023-08-07",
+				"extra": "applyDate: 2023-09-06\nCCS: B31\nICS: 67.080.10\nindustry: 农、林、牧、渔业",
+				"language": "zh-CN",
 				"libraryCatalog": "全国标准信息公共服务平台",
-				"number": "ISO 80000-2:2019",
-				"shortTitle": "Quantities and units — Part 2",
+				"number": "DB6106/T 209-2023",
 				"status": "现行",
-				"url": "https://std.samr.gov.cn/gj/search/gjDetailed?id=90EA7F0D4DF6771A08464E35E322E8BE",
+				"type": "延安市",
+				"url": "https://dbba.sacinfo.org.cn/stdDetail/55959ea756314d917a5749c3abdd01bf7dc2a23593f3d83e1da0c582c894fb2a",
 				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					},
 					{
 						"title": "Snapshot",
 						"mimeType": "text/html"
