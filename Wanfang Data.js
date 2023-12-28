@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-26 10:59:04"
+	"lastUpdated": "2023-12-28 10:48:11"
 }
 
 /*
@@ -159,10 +159,10 @@ async function scrapePage(doc, url = doc.location.href) {
 	Array.from(doc.querySelectorAll('.keyword > .item+* > a')).forEach((tag) => {
 		newItem.tags.push(tag.innerText);
 	});
-	let pdfLink = attr(doc, 'a.download', 'href');
+	let pdfLink = doc.querySelector('a.download');
 	if (pdfLink) {
 		newItem.attachments.push({
-			url: pdfLink,
+			url: pdfLink.href,
 			title: 'Full Text PDF',
 			mimeType: 'application/pdf'
 		});
@@ -545,7 +545,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://s.wanfangdata.com.cn/periodical?q=%E6%B0%B4%E7%A8%BB&o=%7B%22field%22%3A%22%E8%A2%AB%E5%BC%95%E9%A2%91%E6%AC%A1%22,%22order%22%3A1%7D",
+		"url": "https://s.wanfangdata.com.cn/paper?q=%E9%A3%8E%E6%B9%BF",
 		"items": "multiple"
 	}
 ]

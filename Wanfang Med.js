@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-26 06:49:30"
+	"lastUpdated": "2023-12-28 10:49:09"
 }
 
 /*
@@ -119,10 +119,10 @@ async function scrape(doc, url = doc.location.href) {
 	labels.getWith('关键词', true).querySelectorAll('a').forEach((tag) => {
 		newItem.tags.push(tag.innerText);
 	});
-	let pdfLink = attr(doc, 'a.lnk-download', 'href');
+	let pdfLink = doc.querySelector('a.lnk-download');
 	if (pdfLink) {
 		newItem.attachments.push({
-			url: pdfLink,
+			url: pdfLink.href,
 			title: 'Full Text PDF',
 			mimeType: 'application/pdf'
 		});
