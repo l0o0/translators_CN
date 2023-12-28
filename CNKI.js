@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-27 16:38:27"
+	"lastUpdated": "2023-12-28 09:58:23"
 }
 
 /*
@@ -176,7 +176,7 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug("---------------- CNKI 2023-12-28 00:38:24 ------------------");
+	Z.debug("---------------- CNKI 2023-12-28 17:58:21 ------------------");
 	let ids = url.includes('www.cnki.com.cn')
 		// CNKI space
 		? new ID(url)
@@ -875,25 +875,28 @@ async function scrapeZhBook(doc, url) {
 
 // add pdf or caj to attachments, default is pdf
 function getAttachments(doc, keepPDF, itemKey) {
+	// attr无法获取到完整的链接
 	var attachments = [];
-	let pdfLink = attr(doc, 'a[id^="pdfDown"]', 'href')
-		|| attr(doc, 'a[href*="/down/"]', 'href', 1)
-		|| attr(doc, '.operate-btn a[href*="Download"]');
-	Z.debug(`get PDF Link:\n${pdfLink}`);
-	let cajLink = attr(doc, 'a#cajDown', 'href') || attr(doc, 'a[href*="/down/"]', 'href', 0) || itemKey.downloadlink;
-	Z.debug(`get CAJ link:\n${cajLink}`);
+	let alterLink = Array.from(doc.querySelectorAll('a[href*="/down/"]'));
+	let pdfLink = doc.querySelector('a[id^="pdfDown"]')
+		|| alterLink[1]
+		|| doc.querySelector('.operate-btn a[href*="Download"]');
+	Z.debug(`get PDF Link:\n${pdfLink.href}`);
+	let cajLink = doc.querySelector('a#cajDown')
+		|| alterLink[0];
+	Z.debug(`get CAJ link:\n${cajLink.href}`);
 	if (keepPDF && pdfLink) {
 		attachments.push({
 			title: 'Full Text PDF',
 			mimeType: 'application/pdf',
-			url: pdfLink
+			url: pdfLink.href
 		});
 	}
 	else if (cajLink) {
 		attachments.push({
 			title: 'Full Text CAJ',
 			mimeType: 'application/caj',
-			url: cajLink
+			url: cajLink.href || itemKey.downloadlink
 		});
 	}
 	else {
