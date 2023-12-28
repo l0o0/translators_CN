@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-28 10:13:09"
+	"lastUpdated": "2023-12-28 15:45:42"
 }
 
 /*
@@ -83,11 +83,7 @@ async function scrape(doc, url = doc.location.href) {
 		// 有时会在标题处塞进来一些额外的元素（如附件）
 		: text(doc, '.page-header > h4').split('\n')[0];
 	newItem.extra = '';
-	let number = labels.getWith('标准号');
-	newItem.number = url.includes('/gj/')
-		// 国标编号使用一字线
-		? number.replace('-', '—')
-		: number;
+	newItem.number = labels.getWith('标准号').replace('-', '—');
 	newItem.type = text(doc, '.label-info');
 	newItem.status = text(doc, '.label-primary');
 	newItem.date = labels.getWith(['发布日期', '实施日期']);
@@ -97,7 +93,7 @@ async function scrape(doc, url = doc.location.href) {
 		: 'zh-CN';
 	newItem.libraryCatalog = '全国标准信息公共服务平台';
 	newItem.extra += addExtra('applyDate', labels.getWith('实施日期'));
-	newItem.extra += addExtra('substitute', labels.getWith('代替标准'));
+	newItem.extra += addExtra('substitute', labels.getWith('代替标准').replace(/-/g, '—'));
 	newItem.extra += addExtra('CCS', labels.getWith('中国标准分类号'));
 	newItem.extra += addExtra('ICS', labels.getWith('国际标准分类号'));
 	newItem.extra += addExtra('industry', labels.getWith('行业分类'));
@@ -179,10 +175,10 @@ var testCases = [
 					}
 				],
 				"date": "2015-05-15",
-				"extra": "applyDate: 2015-12-01\nsubstitute: GB/T 7714-2005\nCCS: A14\nICS: 01.140.20",
+				"extra": "applyDate: 2015-12-01\nsubstitute: GB/T 7714—2005\nCCS: A14\nICS: 01.140.20",
 				"language": "zh-CN",
 				"libraryCatalog": "全国标准信息公共服务平台",
-				"number": "GB/T 7714-2015",
+				"number": "GB/T 7714—2015",
 				"status": "现行",
 				"type": "国家标准",
 				"url": "https://std.samr.gov.cn/gb/search/gbDetailed?id=71F772D8055ED3A7E05397BE0A0AB82A",
@@ -216,7 +212,7 @@ var testCases = [
 				"extra": "applyDate: 2017-04-17\nCCS: A19\nICS: 01.140.40\nindustry: 文化、体育和娱乐业",
 				"language": "zh-CN",
 				"libraryCatalog": "全国标准信息公共服务平台",
-				"number": "CY/T 154-2017",
+				"number": "CY/T 154—2017",
 				"status": "现行",
 				"type": "行业标准-CY 新闻出版",
 				"url": "https://std.samr.gov.cn/hb/search/stdHBDetailed?id=8B1827F23645BB19E05397BE0A0AB44A",
@@ -280,10 +276,10 @@ var testCases = [
 					}
 				],
 				"date": "2023-11-24",
-				"extra": "applyDate: 2024-03-01\nsubstitute: JT/T 795-2011\nCCS: R16\nICS: 43.18\nindustry: 交通运输、仓储和邮政业",
+				"extra": "applyDate: 2024-03-01\nsubstitute: JT/T 795—2011\nCCS: R16\nICS: 43.18\nindustry: 交通运输、仓储和邮政业",
 				"language": "zh-CN",
 				"libraryCatalog": "全国标准信息公共服务平台",
-				"number": "JT/T 795-2023",
+				"number": "JT/T 795—2023",
 				"status": "现行",
 				"type": "交通",
 				"url": "https://hbba.sacinfo.org.cn/stdDetail/a3762eff26b8f60e95d5e8b48684b8ef7c07e693e998d3f871f4fd1b63e71e65",
@@ -311,7 +307,7 @@ var testCases = [
 				"extra": "applyDate: 2023-09-06\nCCS: B31\nICS: 67.080.10\nindustry: 农、林、牧、渔业",
 				"language": "zh-CN",
 				"libraryCatalog": "全国标准信息公共服务平台",
-				"number": "DB6106/T 209-2023",
+				"number": "DB6106/T 209—2023",
 				"status": "现行",
 				"type": "延安市",
 				"url": "https://dbba.sacinfo.org.cn/stdDetail/55959ea756314d917a5749c3abdd01bf7dc2a23593f3d83e1da0c582c894fb2a",
