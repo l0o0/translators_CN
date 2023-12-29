@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-15 12:26:41"
+	"lastUpdated": "2023-12-29 12:08:56"
 }
 
 /*
@@ -60,7 +60,7 @@ function detectWeb(doc, _url) {
 	if (/\.issn\./i.test(text(doc, '.c_content > [class="doi_wr"]'))) {
 		return 'journalArticle';
 	}
-	else if (doc.querySelectorAll('.bookAuthor')) {
+	else if (doc.querySelector('.bookAuthor')) {
 		return 'book';
 	}
 	else if (getSearchResults(doc, true)) {
@@ -129,6 +129,9 @@ async function scrape(doc, url = doc.location.href) {
 					delete item.publisher;
 					delete item.type;
 					break;
+				case 'standard':
+					item.number = item.number.replace('-', '—');
+					break;
 				default:
 					break;
 			}
@@ -161,7 +164,7 @@ async function scrape(doc, url = doc.location.href) {
 				newItem.institution = text(doc, '.publisher_wr [class^="kw_main"]');
 				break;
 			case 'standard':
-				newItem.number = labels.getWith('标准号').replace(/(\d)\s*-\s*(\d)/, '$1—$2');
+				newItem.number = labels.getWith('标准号').replace('-', '—');
 				newItem.date = labels.getWith('发布日期');
 				newItem.extra += addExtra('CCS number', labels.getWith('CCS'));
 				newItem.extra += addExtra('ICS number', labels.getWith('ICS'));
@@ -178,7 +181,7 @@ function fixItem(item, doc, url) {
 	let labels = new Labels(doc, '.c_content > [class$="_wr"]');
 	Z.debug('fixing item...');
 	Z.debug('labels:');
-	Z.debug(labels.innerData.map(element => [element[0], element[1].innerText]));
+	Z.debug(labels.innerData.map(element => [element[0], ZU.trimInternal(element[1].innerText)]));
 	item.abstractNote = text(doc, 'p.abstract');
 	item.DOI = labels.getWith('DOI');
 	item.url = attr(doc, '.paper_src_content .allversion_content a', 'href') || url;
@@ -225,6 +228,8 @@ class Labels {
 		this.innerData = [];
 		Array.from(doc.querySelectorAll(selector))
 			.filter(element => element.firstElementChild)
+			.filter(element => !element.querySelector(selector))
+			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
 				let elementCopy = element.cloneNode(true);
 				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
@@ -260,6 +265,7 @@ function addExtra(key, value) {
 		: '';
 }
 
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -276,6 +282,7 @@ var testCases = [
 						"creatorType": "author"
 					}
 				],
+				"date": "2011",
 				"DOI": "info:doi/10.1108/07419051111154758",
 				"abstractNote": "Purpose – The purpose of this paper is to highlight how the open-source bibliographic management program Zotero harnesses Web 2.0 features to make library resources more accessible to casual users without sacrificing advanced features. This reduces the barriers understanding library resources and provides additional functionality when organizing information resources. Design/methodology/approach – The paper reviews select aspects of the program to illustrate how it can be used by patrons and information professionals, and why information professionals should be aware of it. Findings – Zotero has some limitations, but succeeds in meeting the information management needs of a wide variety of users, particularly users who use online resources. Originality/value – This paper is of interest to information professionals seeking free software that can make managing bibliographic information easier for themselves and their patrons.",
 				"libraryCatalog": "Baidu Scholar",
@@ -309,7 +316,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "http://xueshu.baidu.com/s?wd=zotero&rsv_bp=0&tn=SE_baiduxueshu_c1gjeupa&rsv_spt=3&ie=utf-8&f=8&rsv_sug2=0&sc_f_para=sc_tasktype%3D%7BfirstSimpleSearch%7D",
+		"url": "https://xueshu.baidu.com/s?wd=zotero&rsv_bp=0&tn=SE_baiduxueshu_c1gjeupa&rsv_spt=3&ie=utf-8&f=8&rsv_sug2=0&sc_f_para=sc_tasktype%3D%7BfirstSimpleSearch%7D",
 		"items": "multiple"
 	},
 	{
@@ -487,7 +494,7 @@ var testCases = [
 		"url": "https://xueshu.baidu.com/usercenter/paper/show?paperid=d2047af90e6290d3c8bc3dd213bde044&site=xueshu_se",
 		"items": [
 			{
-				"itemType": "book",
+				"itemType": "journalArticle",
 				"title": "国务院关于鼓励支持和引导个体私营等非公有制经济发展的若干意见",
 				"creators": [
 					{
@@ -497,6 +504,7 @@ var testCases = [
 						"fieldMode": 1
 					}
 				],
+				"date": "2005",
 				"abstractNote": "公有制为主体,多种所有制经济共同发展是我国社会主义初级阶段的基本经济制度.毫不动摇地巩固和发展公有制经济,毫不动摇地鼓励,支持和引导非公有制经济发展.使两者在社会主义现代化进程中相互促进.共同发展,是必须长期坚持的基本方针,是完善社会主义市场经济体制,建设中国特色社会主义的必然要求.改革开放以来.我国个体,私营等非公有制经济不断发展壮大,已经成为社会主义市场经济的重要组成部分和促进社会生产力发展的重要力量.",
 				"libraryCatalog": "Baidu Scholar",
 				"url": "https://d.wanfangdata.com.cn/periodical/zgzxqy200503002",
