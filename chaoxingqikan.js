@@ -138,6 +138,8 @@ class Labels {
 		this.innerData = [];
 		Array.from(doc.querySelectorAll(selector))
 			.filter(element => element.firstElementChild)
+			.filter(element => !element.querySelector(selector))
+			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
 				let elementCopy = element.cloneNode(true);
 				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');

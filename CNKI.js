@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-28 09:58:23"
+	"lastUpdated": "2023-12-29 12:27:25"
 }
 
 /*
@@ -176,7 +176,7 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug("---------------- CNKI 2023-12-28 17:58:21 ------------------");
+	Z.debug("---------------- CNKI 2023-12-29 20:17:44 ------------------");
 	let ids = url.includes('www.cnki.com.cn')
 		// CNKI space
 		? new ID(url)
@@ -668,7 +668,7 @@ async function scrapeDoc(doc, ids, itemKey) {
 	var newItem = new Zotero.Item(ids.toItemtype());
 	newItem.extra = newItem.extra ? newItem.extra : '';
 	// "#content p, .summary li.pdfN" only found on geology version
-	// in standard page, ".row", ".row_1"
+	// in normal page, ".row", ".row_1"
 	let labels = new Labels(doc, 'div.doc div[class^="row"], li.top-space, #content .summary > p, .summary li.pdfN, [class^="content"] p');
 
 	/* title */
@@ -690,7 +690,6 @@ async function scrapeDoc(doc, ids, itemKey) {
 		// For oversea CNKI.
 		text(doc, '.brief h3').split(/[,.，；\d]\s*/).filter(element => element),
 		labels.getWith(['主编单位', '作者']).split(/[,;，；]\s*/),
-		// standard
 	].find(element => element.length);
 	newItem.creators = creators.map(element => ZU.cleanAuthor(element, 'author'));
 	let mentor = labels.getWith('导师').split(/[,;，；\d]\s*/);
@@ -760,7 +759,7 @@ function fixItem(newItem, doc, ids, itemKey) {
 			newItem.place = labels.getWith('会议地点');
 			break;
 		case 'standard':
-			newItem.number = labels.getWith('标准号').replace(/(\d)\s*-\s*(\d)/, '$1—$2');
+			newItem.number = labels.getWith('标准号').replace('-', '—');
 			newItem.creators = [ZU.cleanAuthor(labels.getWith('标准技术委员会'), 'author')];
 			newItem.extra += addExtra('applyDate', labels.getWith('实施日期'));
 			newItem.status = text(doc, '.type');
@@ -861,7 +860,8 @@ async function scrapeZhBook(doc, url) {
 	Z.debug('get labels:');
 	Z.debug(labels.innerData.map(element => [element[0], ZU.trimInternal(element[1].textContent)]));
 	bookItem.edition = labels.getWith('版次');
-	bookItem.pages = labels.getWith('页数');
+	bookItem.numpages = labels.getWith('页数');
+	bookItem.pages = labels.getWith('页码');
 	bookItem.publisher = text(doc, '.xqy_g') || labels.getWith('出版社');
 	bookItem.date = labels.getWith('出版时间')
 		.replace(/(\d{4})(0?\d{1,2})(\d{1,2})/, '$1-$2-$3')
@@ -875,7 +875,7 @@ async function scrapeZhBook(doc, url) {
 
 // add pdf or caj to attachments, default is pdf
 function getAttachments(doc, keepPDF, itemKey) {
-	// attr无法获取到完整的链接
+	// attr() can't get full link
 	var attachments = [];
 	let alterLink = Array.from(doc.querySelectorAll('a[href*="/down/"]'));
 	let pdfLink = doc.querySelector('a[id^="pdfDown"]')
@@ -913,7 +913,7 @@ class Labels {
 			// avoid nesting
 			.filter(element => !element.querySelector(selector))
 			// avoid empty
-			.filter(element => element.textContent.replace(/\s/g, ''))
+			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
 				let elementCopy = element.cloneNode(true);
 				// avoid empty text
@@ -929,7 +929,7 @@ class Labels {
 				else {
 					let text = ZU.trimInternal(elementCopy.textContent);
 					let key = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]/).replace(/\s/g, '');
-					elementCopy.textContent = text.replace(new RegExp(`^${key}`), '');
+					elementCopy.textContent = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]\s*(.+)/, 1);
 					this.innerData.push([key, elementCopy]);
 				}
 			});

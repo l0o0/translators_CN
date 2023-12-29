@@ -164,7 +164,7 @@ async function scrape(doc, url = doc.location.href) {
 			break;
 		}
 		case 'standard':
-			newItem.number = labels.getWith('标准号');
+			newItem.number = labels.getWith('标准号').replace('-', '—');
 			newItem.extra += addExtra('IPC number', labels.getWith('IPC分类号'));
 			newItem.extra += addExtra('ICS number', labels.getWith('ICS分类号'));
 			newItem.extra += addExtra('reference', labels.getWith('引用标准'));
@@ -184,6 +184,8 @@ class Labels {
 		this.innerData = [];
 		Array.from(doc.querySelectorAll(selector))
 			.filter(element => element.firstElementChild)
+			.filter(element => !element.querySelector(selector))
+			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
 				let elementCopy = element.cloneNode(true);
 				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
