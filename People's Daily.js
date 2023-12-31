@@ -1,6 +1,6 @@
 {
 	"translatorID": "dbc3b499-88b6-4661-88c0-c27ac57ccd59",
-	"label": "People's Daily",
+	"label": "People's Daily.js",
 	"creator": "pixiandouban",
 	"target": "^https?://data.people.com.cn/rmrb",
 	"minVersion": "5.0",
@@ -9,109 +9,142 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-04-07 07:40:18"
+	"lastUpdated": "2023-12-31 11:19:42"
 }
 
+/*
+	***** BEGIN LICENSE BLOCK *****
+
+	Copyright © 2023 pixiandouban
+
+	This file is part of Zotero.
+
+	Zotero is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Affero General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	Zotero is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+	GNU Affero General Public License for more details.
+
+	You should have received a copy of the GNU Affero General Public License
+	along with Zotero. If not, see <http://www.gnu.org/licenses/>.
+
+	***** END LICENSE BLOCK *****
+*/
+
 function detectWeb(doc, url) {
-	var lists = doc.querySelector(".title_list, .daodu_warp");
-	if (url.includes('qs') || lists) { //搜索界面
-		return "multiple";
+	let box = doc.querySelector('#colorbox');
+	if (box) {
+		Z.monitorDOMChanges(box, { childList: true, subtree: true });
 	}
-	else {
-		return "newspaperArticle";
+	let lists = doc.querySelector('.title_list, .daodu_warp');
+	if(doc.querySelector('.rmrb_detail_pop')){
+		return 'newspaperArticle';
 	}
-	//to do 匹配新闻版面，不止单篇文章
+	else if (url.includes('qs') || lists) {
+		return 'multiple';
+	}
+	return false;
 }
 
 function getSearchResults(doc, checkOnly) {
-	var articleList = doc.querySelectorAll(".title_list a, .daodu_warp a, .sreach_li a.open_detail_link");
 	var items = {};
-	for (let article of articleList) {
-		Z.debug(article.textContent);
-		Z.debug(article.href);
-		items[article.href] = article.textContent;
+	var found = false;
+	var rows = doc.querySelectorAll('.title_list a, .daodu_warp a, .sreach_li a.open_detail_link');
+	for (let row of rows) {
+		let href = row.href;
+		let title = ZU.trimInternal(row.textContent);
+		if (!href || !title) continue;
+		if (checkOnly) return true;
+		found = true;
+		items[href] = title;
 	}
-	return items;
+	return found ? items : false;
 }
 
-function doWeb(doc, url) {
-	if (detectWeb(doc, url) == "multiple") {
-		Zotero.selectItems(getSearchResults(doc, false), function (items) {
-			if (!items) {
-				return;
-			}
-			var articles = [];
-			for (var i in items) {
-				articles.push(i);
-			}
-			ZU.processDocuments(articles, scrape);
-		});
-	}
-	else if (detectWeb(doc, url) == "newspaperArticle") {//newspaperArticle 
-		scrape(doc, url);
+async function doWeb(doc, url) {
+	if (detectWeb(doc, url) == 'multiple') {
+		let items = await Zotero.selectItems(getSearchResults(doc, false));
+		if (!items) return;
+		for (let url of Object.keys(items)) {
+			await scrape(await requestDocument(url));
+		}
 	}
 	else {
-		return false;
+		await scrape(doc, url);
 	}
 }
 
-function scrape(doc, url) {
-	var type = detectWeb(doc, url);
-	var item = new Zotero.Item(type);
-	var user = null;
-
-	item.title = ZU.xpathText(doc, '//div[@class="title"]');
-	var authors = ZU.xpathText(doc, '//div[@class="author"]');
-	if (authors) {
-		authors = authors.replace("【作者：", "").replace("】", "").split(/[，、\s;]+/);
-		//Z.debug(authors);
-		if (authors.length > 1) {
-			for (i = 0; i < authors.length; i = i + 1) {
-				item.creators.push(ZU.cleanAuthor((authors[i]), "author"));
-			}
-		}
-		else if (authors.length === 1) {
-			item.creators.push(ZU.cleanAuthor((authors[0]), "author"));
-		}
+async function scrape(doc, url = doc.location.href) {
+	var newItem = new Zotero.Item('newspaperArticle');
+	newItem.title = text(doc, 'div.title');
+	newItem.publicationTitle = '人民日报';
+	let subTitle = text(doc, 'div.subtitle');
+	if (subTitle) {
+		newItem.shortTitle = newItem.title;
+		newItem.title = newItem.title + subTitle;
 	}
-	item.language = 'zh-CN';
-	item.url = url;
-
-	item.abstractNote = [];
-	//Z.debug(item.abstractNote);
-
-	item.publicationTitle = "人民日报";
-	item.ISSN = "1672-8386";
-	//item.CN = "11-0065"; //统一刊号
-
-	var d = doc.querySelectorAll('div.sha_left span');
-	item.date = d[0].innerText;
-	Z.debug(item.date);
-
-	item.attachments.push({
-		title: "Snapshot",
+	newItem.date = text(doc, 'div.sha_left span:nth-child(1)');
+	newItem.pages = text(doc, 'div.sha_left span:nth-child(2)'); 
+	newItem.language = 'zh-CN';
+	newItem.ISSN = '1672-8386';
+	newItem.url = url;
+	text(doc, 'div.author').slice(4, -1).split(/[，、\s;]+/).forEach((creator) => {
+		creator = ZU.cleanAuthor(creator, 'author');
+		creator.fieldMode = 1;
+		newItem.creators.push(creator);
+		});
+	newItem.attachments.push({
+		title: 'Snapshot',
 		document: doc
 	});
+	newItem.complete();
+}
 
-	item.complete();
-
-}/** BEGIN TEST CASES **/
+/** BEGIN TEST CASES **/
 var testCases = [
 	{
 		"type": "web",
-		"url": "http://data.people.com.cn/rmrb/20221111/2/9c32c291fb004412bad9eaa6ce828f46",
-		"items": [
-			{
-				"itemType": "newspaperArticle",
-				"language": "zh-CN",
-				"title": "李克强参观中柬文化遗产交流合作30年成果展并出席文物修复移交仪式"
-			}
-		]
+		"url": "http://data.people.com.cn/rmrb/20231231/1?code=2",
+		"items": "multiple"
 	},
 	{
 		"type": "web",
-		"url": "http://data.people.com.cn/rmrb/20221111/1/4778f051fb5f49ab9709e7f4d6ed25fe",
-		"title": "听取新冠肺炎疫情防控工作汇报 研究部署进一步优化防控工作的二十条措施"
+		"url": "http://data.people.com.cn/rmrb/20231231/1/32924b7882d94d80ad59562d52280fbb",
+		"items": [
+			{
+				"itemType": "newspaperArticle",
+				"title": "高高举起构建人类命运共同体光辉旗帜——二论贯彻落实中央外事工作会议精神",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "本报评论员",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2023-12-31",
+				"ISSN": "1672-8386",
+				"language": "zh-CN",
+				"libraryCatalog": "People's Daily",
+				"pages": "1",
+				"publicationTitle": "人民日报",
+				"shortTitle": "高高举起构建人类命运共同体光辉旗帜",
+				"url": "http://data.people.com.cn/rmrb/20231231/1/32924b7882d94d80ad59562d52280fbb",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
 	}
 ]
 /** END TEST CASES **/
