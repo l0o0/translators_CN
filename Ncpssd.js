@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-31 08:33:12"
+	"lastUpdated": "2023-12-31 09:11:34"
 }
 
 /*
@@ -78,7 +78,7 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug('---------- 2023-12-31 15:55:06 ----------');
+	Z.debug('---------- NCPSSD 2023-12-31 2023-12-31 ----------');
 	let ids = new ID(url);
 	Z.debug(ids);
 	if (ids.toBoolean()) {
@@ -290,6 +290,7 @@ async function scrape(url) {
 			newItem.extra += addExtra('classify', data.getWith('classname'));
 			newItem.extra += addExtra('remark', data.getWith('remarkc'));
 			newItem.extra += addExtra('barcode', data.getWith('barcodenum'));
+			newItem.extra += addExtra('Type', 'classic');
 			break;
 		default:
 			break;
@@ -500,7 +501,7 @@ var testCases = [
 					}
 				],
 				"edition": "繪本",
-				"extra": "classify: 子\nremark: 版心：樂闲馆本；浙江民俗畫 \nbarcode: 70050810",
+				"extra": "classify: 子\nremark: 版心：樂闲馆本；浙江民俗畫 \nbarcode: 70050810\nType: classic",
 				"libraryCatalog": "国家哲学社会科学文献中心",
 				"publisher": "樂闲馆",
 				"url": "https://www.ncpssd.org/Literature/articleinfo?id=GJ10017&type=Ancient&typename=%E5%8F%A4%E7%B1%8D&nav=0+&barcodenum=70050810",
