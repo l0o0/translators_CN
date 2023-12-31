@@ -2,14 +2,14 @@
 	"translatorID": "5b731187-04a7-4256-83b4-3f042fa3eaa4",
 	"label": "Ncpssd",
 	"creator": "018<lyb018@gmail.com>,l0o0<linxzh1989@gmail.com>",
-	"target": "^https?://([^/]+\\.)?ncpssd\\.org/Literature/",
+	"target": "^https?://([^/]+\\.)?ncpssd\\.org",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-03-31 08:57:36"
+	"lastUpdated": "2023-12-31 08:33:12"
 }
 
 /*
@@ -34,106 +34,84 @@
 
 	***** END LICENSE BLOCK *****
 */
-var typeMap = {
-	journalArticle: "中文期刊文章",
-	eJournalArticle: "外文期刊文章",
-	Ancient: "古籍"
-};
 
-var itemTypeMatch = {
-	journalArticle: "journalArticle",
-	eJournalArticle: "journalArticle",
-	Ancient: "book"
-};
-
-var fieldMap = {
-	mediac: "publicationTitle",
-	vol: "volume",
-	publishdate: 'date',
-	num: "issue",
-	issn: 'ISSN',
-	showorgan: "AuthorAddress",
-	titlec: "title",
-	remarkc: "abstractNote",
-	language: "language",
-	section: "edition",
-	isbn: "callNumber"
-}
-
-function getIDFromURL(url) {
-	if (!url) return false;
-	let useB64 = false;
-	var type = url.match(/[?&]type=([^&#]*)/i);
-	var id = url.match(/[?&]id=([^&#]*)/i);
-	var typename = url.match(/[?&]typename=([^&#]*)/i);
-	var barcodenum = url.match(/[?&]barcodenum=([^&#]*)/i);
-	if (!type || !type[1] || !id || !id[1] || !typename || !typename[1]) return false;
-	useB64 = !(type[1] in typeMap);
-	if (!useB64) {
-		return {
-			type: type[1],
-			id: id[1],
-			typename: decodeURI(typename[1]),
-			barcodenum: (barcodenum && barcodenum[1] ? barcodenum[1] : '')
-		};
-	} else {
-		return {
-			type: atob(type[1]),
-			id: atob(id[1]),
-			typename: atob(typename[1]),
-			barcodenum: (barcodenum && barcodenum[1] ? atob(barcodenum[1]) : '')
-		};
+class ID {
+	constructor(url) {
+		this.id = tryMatch(url, /[?&]id=([^&#]*)/i, 1);
+		this.datatype = tryMatch(url, /[?&]type=([^&#]*)/i, 1);
+		this.typename = decodeURI(tryMatch(url, /[?&]typename=([^&#]*)/i, 1));
+		this.barcodenum = tryMatch(url, /[?&]barcodenum=([^&#]*)/i, 1);
 	}
-}
 
-function addCreators(names) {
-	return names.replace(/\[\d+\]/g, "").split(";").reduce((a, b) => {
-		if (b.includes(",")) {
-			a.push({ firstName: b.split(",")[0].trim(), lastName: b.split(",")[1].trim(), creatorType: "author" });
-		} else {
-			a.push({ lastName: b, creatorType: "author", fieldMode: 1 });
-		}
-		return a;
-	}, [])
-}
-
-function addTags(tags) {
-	return tags.split(";").reduce((a, b) => { a.push({ tag: b }); return a }, []);
-}
-
-function addPages(data) {
-	if ('beginpage' in data) {
-		return data.endpage ? `${data.beginpage}-${data.endpage}` : data.beginpage;
+	toItemType() {
+		return {
+			journalArticle: 'journalArticle',
+			eJournalArticle: 'journalArticle',
+			Ancient: 'book',
+			collectionsArticle: 'journalArticle'
+		}[this.datatype];
 	}
-	return "";
+
+	static toTypeName(datatype) {
+		return {
+			journalArticle: '中文期刊文章',
+			eJournalArticle: '外文期刊文章',
+			Ancient: '古籍',
+			collectionsArticle: '集刊'
+		}[datatype];
+	}
+
+	static toUrl(ids) {
+		return encodeURI(
+			'https://www.ncpssd.org/Literature/articleinfo'
+			+ `?id=${ids.id}`
+			+ `&type=${ids.datatype}`
+			+ `&typename=${ids.typename}`
+			+ `&nav=0`
+			+ `+&barcodenum=${ids.barcodenum}`
+		);
+	}
+
+	toBoolean() {
+		return (this.id && this.datatype);
+	}
 }
 
 function detectWeb(doc, url) {
-	let id = getIDFromURL(url);
-	// Z.debug(id);
-	if (id.type) {
-		return itemTypeMatch[id.type];
-	} else if (getSearchResults(doc, true)) {
-		return "multiple";
+	Z.debug('---------- 2023-12-31 15:55:06 ----------');
+	let ids = new ID(url);
+	Z.debug(ids);
+	if (ids.toBoolean()) {
+		return ids.toItemType();
+	}
+	else if (getSearchResults(doc, true)) {
+		return 'multiple';
 	}
 	return false;
 }
 
-function getSearchResults(doc, url, checkOnly) {
+function getSearchResults(doc, checkOnly) {
 	var items = {};
 	var found = false;
-	var rows = doc.querySelectorAll('#ul_articlelist li');
+	var rows = doc.querySelectorAll('#ul_articlelist li .julei-list a:first-of-type, a[onclick*="/Literature/"]');
 	for (let row of rows) {
-		let a = row.querySelector('.julei-list a');
-		if (!a) {
-			continue;
-		}
-
+		let title = ZU.trimInternal(row.textContent);
+		let datatype = {
+			中文期刊文章: 'journalArticle',
+			外文期刊文章: 'eJournalArticle',
+			古籍: 'Ancient',
+			外文图书: 'Book'
+		}[row.getAttribute('data-type')];
+		let url = datatype
+			? ID.toUrl({
+				id: row.getAttribute('data-id'),
+				// 这里没有填反
+				datatype: datatype,
+				typename: row.getAttribute('data-type'),
+				barcodenum: row.getAttribute('data-barcodenum')
+			})
+			: `https://www.ncpssd.org${tryMatch(row.getAttribute('onclick'), /\('(.+)'\)/, 1)}`;
 		if (checkOnly) return true;
-		let url = getUrl(a);
-
-		// Z.debug(url);
-		let title = row.querySelector('div.julei-list').innerText.split("\n")[0];
 		found = true;
 		items[url] = title;
 	}
@@ -141,300 +119,391 @@ function getSearchResults(doc, url, checkOnly) {
 }
 
 async function doWeb(doc, url) {
-	if (detectWeb(doc, url) == "multiple") {
-		let selectItems = await Zotero.selectItems(getSearchResults(doc, false));
-		for (var url in selectItems) {
-			await scrape(url, getIDFromURL(url));
+	if (detectWeb(doc, url) == 'multiple') {
+		let items = await Zotero.selectItems(getSearchResults(doc, false));
+		if (!items) return;
+		for (let url of Object.keys(items)) {
+			await scrape(url);
 		}
 	}
 	else {
-		await scrape(url, getIDFromURL(url));
+		await scrape(url);
 	}
 }
 
-async function scrape(url, id) {
-	// Note this code contains Chinese character and symbol, （）；：
-	let postData = { type: typeMap[id.type] };
-	let postUrl = 'getjournalarticletable';
-	if (id.type == 'Ancient') {
-		postData.barcodenum = id.barcodenum;
-		postUrl = 'getancientbooktable';
-	} else {
-		postData.lngid = id.id;
+async function scrape(url) {
+	const ids = new ID(url);
+	Z.debug(ids);
+	var newItem = new Z.Item(ids.toItemType());
+	newItem.extra = '';
+	let postData = { type: ID.toTypeName(ids.datatype) };
+	if (ids.datatype == 'Ancient') {
+		postData.barcodenum = ids.barcodenum;
+	}
+	else {
+		postData.lngid = ids.id;
 	}
 	postData = JSON.stringify(postData);
-	let headers = {
-		'Content-Type': 'application/json',
-		Referer: url
+	Z.debug(postData);
+	var json = {};
+	const debug = false;
+	if (debug) {
+		json = {
+			result: true,
+			code: 200,
+			data: {
+				lngid: "7101551591",
+				mediac: "心理学报",
+				mediae: null,
+				years: 2020,
+				vol: "52",
+				num: "5",
+				volumn: "2020",
+				specialnum: "B",
+				subjectnum: "5",
+				gch: "90117X",
+				titlec: "长时联结表征对工作记忆的抑制效应",
+				titlee: "The inhibitory effect of long-term associative representation on working memory",
+				keywordc: "长时记忆;工作记忆;联结记忆;alpha震荡",
+				keyworde: "long-term memory;working memory;associative memory;alpha power",
+				remarkc: "本研究通过两个实验探讨了长时记忆联结表征如何影响当下工作记忆任务的加工。长时记忆联结表征采用无语义联系、无视觉相似性的Emoji图片对,提前一天让被试完成联结表征的建立,正式工作记忆任务采用独立探测的变化觉察范式。实验1控制呈现时间(500 ms/1000 ms)与呈现方式(联结/独立),发现两种呈现时间均显示出联结条件的正确率与记忆容量显著低于独立条件,说明长时记忆联结表征抑制了当前工作记忆的加工。实验2设置了记忆项目数(2/4/6项)与呈现方式(联结/独立),采用alpha震荡作为脑电指标,考察长时联结表征在工作记忆维持阶段的作用。结果发现在维持阶段,独立条件的alpha震荡随着记忆项目数量的增加而增大(2项<4项<6项),而联结条件在4项已经到达顶点(2项<4项=6项)。实验2进一步说明长时联结表征在维持阶段降低了当前工作记忆容量。本研究的两个实验结果表明,长时记忆联结表征对当前的工作记忆任务有一定的抑制作用,这种抑制作用产生的机制可能来自于联结表征干扰了维持阶段的注意分配。",
+				remarke: "Studies on how long-term memory affects working memory(WM) have found that long-term memory can enhance WM processing. However, these studies only use item memory as the representation of long-term memory. In addition to item memory, associative memory is also an essential part of long-term memory. The associative memory and item memory involve different cognitive mechanisms and brain areas. The purpose of the present study was to investigate how associative memory affects WM processing. Before the WM task, participants were asked to store 16 pairs of dissimilar pictures into long-term memory. The participants would obtain the associative memory of these pairs of pictures in the long-term memory. The WM task was a change detection paradigm. Memory pictures in the memory array appeared in pairs(associative condition) or out of pairs(independent condition). In Experiment 1, the memory array with 6 items(3 pairs) was presented for 500 ms or 1000 ms. After a 1000 ms interval, participants needed to determine whether the probe item was the same as the memory array. The design and procedure of Experiment 2 were similar to those of Experiment 1, except that memory array was presented for only 500 ms, and 2 items(1 pairs) and 4 terms(2 pairs) were added in set size condition. Alpha power of electroencephalogram(EEG) was also collected and analyzed in Experiment 2. The results in Experiment 1 showed that WM capacity and accuracy were significantly lower in the associative condition than in the independent condition(for both presentation-time conditions: 500 ms and 1000 ms). The results in Experiment 2 showed that the alpha power in the independent condition increased as the memory set size increased(2 items < 4 items < 6 items), while the alpha power in the associative condition reached the asymptote when the set size was 4(2 items < 4 items = 6 items). Both of these two experiments’ results showed that WM capacity in the associative condition was lower than that in the independent condition. In conclusion, long-term associative representations inhibit the current WM processing and decrease WM capacity. This inhibitory effect is not affected by the length of encoding time. It implies that the reason for the increase of WM load by associative memory may come from the disorder of attention distribution.",
+				clazz: "B842",
+				beginpage: "562",
+				endpage: "571",
+				pagecount: 10,
+				showwriter: "张引[1,2];梁腾飞[1,2];叶超雄[1,3];刘强[1,2]",
+				showorgan: "[1]四川师范大学脑与心理科学研究院,成都610000;[2]辽宁师范大学脑与认知神经科学研究中心,大连116029;[3]于韦斯屈莱大学心理学系,芬兰于韦斯屈莱,40014",
+				imburse: null,
+				mediasQk: "2020年第5期,共10页",
+				processdate: "2020-07-13",
+				refercount: 0,
+				referidsReal: null,
+				range: "核心刊;BDHX2011;BDHX2004;BDHX2000;JST;CSSCI2010_2011;CSSCI2004_2005;CSSCI1999;BDHX1996;CSSCI2012_2013;CSC",
+				fstorgan: 0,
+				fstwriter: 0,
+				firstwriter: "张引",
+				firstorgan: "四川师范大学脑与心理科学研究院,成都610000",
+				language: 1,
+				type: 1,
+				issn: "0439-755X",
+				firstclass: "B842",
+				publishdate: "2020-05-01",
+				source: "nssd",
+				pdfsize: 3097857,
+				pdfurl: "http://www.nssd.org/articles/article_down.aspx?id=7101551591",
+				isshield: false,
+				isdelete: false,
+				authore: "ZHANG Yin;LIANG Tengfei;YE Chaoxiong;LIU Qiang(Institute of Brain and Psychological Sciences,Sichuan Normal University,Chengdu 610000,China;Research Center of Brain and Cognitive Neuroscience,Liaoning Normal University,Dalian 116029,China;Department of Psychology,University of Jyvaskyla,Jyvaskyla,40014,Finland)",
+				lagtype: null,
+				coverPic: null,
+				lngCollectIDs: null,
+				lngids: null,
+				lngidList: null,
+				synUpdateType: null,
+				id: null,
+				title: null,
+				author: null,
+				pagenum: null,
+				fileaddress: null,
+				journalShieldRemark: null,
+				periodShieldRemark: null,
+				addtime: null,
+				gchId: null,
+				batchDate: null,
+				sortId: null,
+				month: null,
+				isRecom: null,
+				replaceId: null,
+				top: null,
+				publishDateTime: null,
+				titleAcronym: null,
+				iscollect: null,
+				linkUrl: null,
+				collections: null,
+			},
+			succee: true,
+		};
+	}
+	else {
+		let postUrl = `https://www.ncpssd.org/articleinfoHandler/${ids.datatype == 'Ancient' ? 'getancientbooktable' : 'getjournalarticletable'}`;
+		Z.debug(postUrl);
+		json = await requestJSON(
+			postUrl,
+			{
+				method: 'POST',
+				body: postData,
+				headers: {
+					// 以下是必需的
+					'Content-Type': 'application/json',
+					Referer: encodeURI(url)
+				}
+			}
+		);
+	}
+	let data = {
+		innerData: json.data,
+		getWith: function (label) {
+			let result = this.innerData[label];
+			return result
+				? result
+				: '';
+		}
 	};
-	// Z.debug(postData);
-	let json = await requestJSON("https://www.ncpssd.org/articleinfoHandler/" + postUrl, { method: "POST", body: postData, headers: headers });
-	let data = json.data;
-	// Clean data
-	data.vol = data.vol ? data.vol.match(/(\d+)/)[0] : null;
-	if (data.vol == '000') data.vol = null;
-	data.language = data.language == 2 ? "en" : "zh-CN";
-	data.mediac = data.mediac || data.mediae;
-	data.showwriter = data.showwriter || data.authorc;
-	// Z.debug(json);
-	var item = new Zotero.Item(itemTypeMatch[id.type] || id.type);
-	item.url = url;
-	if (item.itemType == 'book') {
-		item.extra = "Type: classic";
-		item.extra = item.extra + (data.pubdatenote ? '\nOriginal Date:' + data.pubdatenote : '');
-		item.extra = item.extra + (data.classname ? '\n分类:' + data.classname : '');
-		let juan = data.titlec.match(/([一二三四五六七八九十]+卷)$/g);
-		data.vol = (juan ? juan[0] : "") + data.num;
-		data.num = null;
-		data.showwriter = data.showwriter.replace(/（.*?）/, '').replace(/撰$/, '');
-		data.section = data.section.replace(/^.*?）/, '');
+	Z.debug(json);
+	newItem.title = data.getWith('titlec');
+	newItem.abstractNote = data.getWith('remarkc');
+	newItem.publicationTitle = data.getWith('mediac');
+	switch (newItem.itemType) {
+		case 'journalArticle':
+			newItem.volume = tryMatch(data.getWith('vol'), /0*([1-9]\d*)/, 1);
+			newItem.issue = tryMatch(data.getWith('num'), /0*([1-9]\d*)/, 1);
+			newItem.pages = Array.from(
+				new Set([data.getWith('beginpage'), data.getWith('endpage')].filter(page => page))
+			).join('-');
+			newItem.date = data.getWith('publishdate');
+			newItem.ISSN = data.getWith('issn');
+			data.getWith('showwriter').split(';').forEach((string) => {
+				let creator = ZU.cleanAuthor(string.replace(/\[.*\]$/, ''), 'author');
+				if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+					creator.lastName = creator.firstName + creator.lastName;
+					creator.firstName = '';
+					creator.fieldMode = 1;
+				}
+				newItem.creators.push(creator);
+			});
+			break;
+		case 'book':
+			newItem.abstractNote = '';
+			newItem.publisher = data.getWith('press');
+			newItem.date = data.getWith('pubdate');
+			newItem.edition = data.getWith('section');
+			data.getWith('authorc').split(';').forEach((string) => {
+				let creator = ZU.cleanAuthor(string.slice(3, -1), 'author');
+				if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+					creator.lastName = creator.firstName + creator.lastName;
+					creator.firstName = '';
+					creator.fieldMode = 1;
+				}
+				newItem.creators.push(creator);
+			});
+			newItem.extra += addExtra('classify', data.getWith('classname'));
+			newItem.extra += addExtra('remark', data.getWith('remarkc'));
+			newItem.extra += addExtra('barcode', data.getWith('barcodenum'));
+			break;
+		default:
+			break;
 	}
-	for (let k in data) {
-		if (k in fieldMap && data[k]) item[fieldMap[k]] = data[k];
+	newItem.language = ['zh-CN', 'en-US'][data.getWith('language') - 1];
+	newItem.url = ID.toUrl(ids);
+	newItem.libraryCatalog = '国家哲学社会科学文献中心';
+	newItem.extra += addExtra('original-title', data.getWith('titlee'));
+	data.getWith('keywordc').split(';').forEach(tag => newItem.tags.push(tag));
+	let pdfLink = data.getWith('pdfurl');
+	if (pdfLink) {
+		newItem.attachments.push({
+			url: pdfLink,
+			mimeType: 'application/pdf',
+			title: 'Full Text PDF',
+		});
 	}
-	if ("showwriter" in data && data.showwriter) item.creators = addCreators(data.showwriter);
-	if ("keywordc" in data && data.keywordc) item.tags = item.tags.concat(addTags(data.keywordc));
-	if ("keyworde" in data && data.keyworde) item.tags = item.tags.concat(addTags(data.keyworde));
-	item.pages = addPages(data);
-	let pdfurl = await getPDFUrl(id);
-	if (pdfurl) item.attachments.push({
-		url: pdfurl,
-		mimeType: "application/pdf",
-		title: "Full Text PDF",
-		referer: "https://www.ncpssd.org/"
-	})
-	item.complete();
+	newItem.complete();
 }
 
-async function getPDFUrl(id) {
-	let pdfurl;
-	if (id.type == 'Ancient') {
-		pdfurl = 'https://ft.ncpssd.org/pdf/getn/' + `ancient/pdf/${id.barcodenum}.pdf`;
-	} else {
-		let geturl = `https://www.ncpssd.org/Literature/readurl?id=${id.type == 'eJournalArticle' ? id.id.match(/(\d+)$/g)[0] : id.id}&type=${id.type == 'eJournalArticle' ? 2 : 1}`;
-		// Z.debug(geturl);
-		let resp = await requestJSON(geturl, { method: "GET", "Content-Type": "application/json" });
-		// Z.debug(resp);
-		if (resp) pdfurl = resp.url;
-	}
-	return pdfurl;
+function addExtra(key, value) {
+	return value
+		? `${key}: ${value}\n`
+		: '';
 }
 
-function getUrl(node, searchUrl) {
-	var id = node.getAttribute("data-id");
-	var type = node.getAttribute("data-name");
-	var datatype = node.getAttribute("data-type");
-	var typename = node.getAttribute("data-type");
-	var barcodenum = "";
-	if (datatype == "中文期刊文章") {
-		datatype = "journalArticle";
-	}
-	if (datatype == "外文期刊文章") {
-		datatype = "eJournalArticle";
-	}
-	if (datatype == "古籍") {
-		barcodenum = node.getAttribute("data-barcodenum");
-		datatype = "Ancient";
-	}
-	if (datatype == "外文图书") {
-		barcodenum = node.getAttribute("data-id");
-		datatype = "Book";
-	}
-	if (datatype == "方志") {
-		datatype = "LocalRecords";
-	}
-	if (datatype == "会议论文") {
-		datatype = "Conference";
-	}
-	if (datatype == "学位论文") {
-		datatype = "Degree";
-	}
-	return encodeURI("https://www.ncpssd.org/Literature/articleinfo?id=" + id + "&type=" + datatype + "&datatype=" + type + "&typename=" + typename + "&nav=0" + "&barcodenum=" + barcodenum);
-}/** BEGIN TEST CASES **/
+function tryMatch(string, pattern, index = 0) {
+	if (!string) return '';
+	let match = string.match(pattern);
+	return (match && match[index])
+		? match[index]
+		: '';
+}
+
+/** BEGIN TEST CASES **/
 var testCases = [
 	{
 		"type": "web",
-		"url": "http://www.ncpssd.org/Literature/articlelist.aspx?search=KElLVEU9IumVv+aXtuiusOW/hiIgT1IgSUtTVD0i6ZW/5pe26K6w5b+GIiBPUiBJS0VUPSLplb/ml7borrDlv4YiIE9SIElLU0U9IumVv+aXtuiusOW/hiIp&searchname=6aKY5ZCNL+WFs+mUruivjT0i6ZW/5pe26K6w5b+GIg==&nav=0",
+		"url": "https://www.ncpssd.org/Literature/articlelist?sType=0&search=KElLVEU9IuaWh+WMluiHquS/oSIgT1IgSUtQWVRFPSLmlofljJboh6rkv6EiICBPUiBJS1NUPSLmlofljJboh6rkv6EiIE9SIElLRVQ9IuaWh+WMluiHquS/oSIgT1IgSUtTRT0i5paH5YyW6Ieq5L+hIik=&searchname=6aKY5ZCNL+WFs+mUruivjT0i5paH5YyW6Ieq5L+hIg==&nav=0&ajaxKeys=5paH5YyW6Ieq5L+h",
 		"items": "multiple"
 	},
 	{
 		"type": "web",
-		"url": "https://www.ncpssd.org/Literature/articleinfo?id=GJ10001&type=Ancient&barcodenum=70041420&nav=5&typename=%E5%8F%A4%E7%B1%8D",
+		"url": "https://www.ncpssd.org/index",
+		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://www.ncpssd.org/Literature/articleinfo?id=SDJY2023035035&type=journalArticle&datatype=null&typename=%E4%B8%AD%E6%96%87%E6%9C%9F%E5%88%8A%E6%96%87%E7%AB%A0&synUpdateType=undefined&nav=0&barcodenum=&pageUrl=https%253A%252F%252Fwww.ncpssd.org%252FLiterature%252Farticlelist%253Fsearch%253DKElLVEU9IuaWh%252BWMluiHquS%252FoSIgT1IgSUtQWVRFPSLmlofljJboh6rkv6EiICBPUiBJS1NUPSLmlofljJboh6rkv6EiIE9SIElLRVQ9IuaWh%252BWMluiHquS%252FoSIgT1IgSUtTRT0i5paH5YyW6Ieq5L%252BhIikgQU5EIChUWVBFPSLkuK3mlofmnJ%252FliIrmlofnq6AiKQ%253D%253D%2526searchname%253D6aKY5ZCNL%252BWFs%252BmUruivjT0i5paH5YyW6Ieq5L%252BhIiDkuI4gKOexu%252BWeiz3kuK3mlofmnJ%252FliIrmlofnq6Ap%2526nav%253D0",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "文化自信视角下陶行知外语论著的海外传播",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "郭晓菊",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2023-12-10",
+				"abstractNote": "陶行知外语论著在世界范围内的传播可被视为中国教育史上的一次现象级传播，同时也是中国教育领域思想与文化的成功输出。作为中国优质教育文化的陶行知外语论著不仅彰显出陶行知教育理念的魅力，也凸显出了中华文化的当代价值及文化自信。基于此，本文在总结陶行知外语论著的传播现状的基础上，阐述了文化自信视角下陶行知外语论著的海外传播。",
+				"issue": "35",
+				"language": "zh-CN",
+				"libraryCatalog": "国家哲学社会科学文献中心",
+				"pages": "103-105",
+				"publicationTitle": "时代教育",
+				"url": "https://www.ncpssd.org/Literature/articleinfo?id=SDJY2023035035&type=journalArticle&typename=%E4%B8%AD%E6%96%87%E6%9C%9F%E5%88%8A%E6%96%87%E7%AB%A0&nav=0+&barcodenum=",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "外语论著"
+					},
+					{
+						"tag": "文化自信"
+					},
+					{
+						"tag": "陶行知"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.ncpssd.org/Literature/articleinfo?id=CASS1039961165&type=eJournalArticle&datatype=journalArticle&typename=%E5%A4%96%E6%96%87%E6%9C%9F%E5%88%8A%E6%96%87%E7%AB%A0&synUpdateType=undefined&nav=0&barcodenum=&pageUrl=https%253A%252F%252Fwww.ncpssd.org%252FLiterature%252Farticlelist%253Fsearch%253DKElLVEU9IuaWh%252BWMluiHquS%252FoSIgT1IgSUtQWVRFPSLmlofljJboh6rkv6EiICBPUiBJS1NUPSLmlofljJboh6rkv6EiIE9SIElLRVQ9IuaWh%252BWMluiHquS%252FoSIgT1IgSUtTRT0i5paH5YyW6Ieq5L%252BhIikgQU5EIChUWVBFPSLlpJbmlofmnJ%252FliIrmlofnq6AiKQ%253D%253D%2526searchname%253D6aKY5ZCNL%252BWFs%252BmUruivjT0i5paH5YyW6Ieq5L%252BhIiDkuI4gKOexu%252BWeiz3lpJbmlofmnJ%252FliIrmlofnq6Ap%2526nav%253D0",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "文化自信视域下古体诗词在专业教学中的应用研究",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "王艺霖",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "李秀领",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "王军",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "张玉明",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"ISSN": "2160-729X",
+				"abstractNote": "为提升理工科专业知识教育与思政教育的实效，本文以土木工程专业为例，基于“文化自信”理念探讨了将古体诗词与专业课程进行有机融合的新思路：首先创作了一系列表达专业知识的古体诗词，体现了文学性、艺术性与专业性的统一，进而提出了在教学中的具体应用方式(融入课件、用于课内；结合新媒体平台、用于课外)。研究表明，本方式可发掘传统文化的现代价值、提升学生的学习兴趣、感受文化自信、促进人文素养的提升，达到专业教育与传统文化教育的双赢。",
+				"issue": "11",
+				"language": "en-US",
+				"libraryCatalog": "国家哲学社会科学文献中心",
+				"pages": "4294-4299",
+				"url": "https://www.ncpssd.org/Literature/articleinfo?id=CASS1039961165&type=eJournalArticle&typename=%E5%A4%96%E6%96%87%E6%9C%9F%E5%88%8A%E6%96%87%E7%AB%A0&nav=0+&barcodenum=",
+				"volume": "12",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "古体诗词"
+					},
+					{
+						"tag": "土木工程"
+					},
+					{
+						"tag": "思政"
+					},
+					{
+						"tag": "文化自信"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.ncpssd.org/Literature/articleinfo?id=FXJYYJ2023001009&type=collectionsArticle&datatype=journalArticle&typename=%E9%9B%86%E5%88%8A%E6%96%87%E7%AB%A0&synUpdateType=undefined&nav=0&barcodenum=&pageUrl=https%253A%252F%252Fwww.ncpssd.org%252FLiterature%252Farticlelist%253Fsearch%253DKElLVEU9IuaWh%252BWMluiHquS%252FoSIgT1IgSUtQWVRFPSLmlofljJboh6rkv6EiICBPUiBJS1NUPSLmlofljJboh6rkv6EiIE9SIElLRVQ9IuaWh%252BWMluiHquS%252FoSIgT1IgSUtTRT0i5paH5YyW6Ieq5L%252BhIikgQU5EIChUWVBFPSLpm4bliIrmlofnq6AiKQ%253D%253D%2526searchname%253D6aKY5ZCNL%252BWFs%252BmUruivjT0i5paH5YyW6Ieq5L%252BhIiDkuI4gKOexu%252BWeiz3pm4bliIrmlofnq6Ap%2526nav%253D0",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "文化安全视阈下高校法治人才培养策略研究",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "雷艳妮",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2023-01-01",
+				"abstractNote": "文化安全事关国家安全和人民幸福，高校法治人才培养与文化安全紧密关联。当前，高校法治人才培养面临诸多文化安全困境，如西方价值观的文化渗透、社会不良文化思潮的冲击、网络新媒体应用过程中的负面影响、高校文化安全教育的不足等。对此，高校法治人才培养应当在保障文化安全的前提下开展。其具体策略有五项：一是将习近平法治思想融入高校法治人才培养，牢固树立思想政治意识；二是将中华优秀传统文化融入高校法治人才培养，着力提升思想道德水平；三是将红色文化融入高校法治人才培养，全面提高思想道德修养；四是加强法律职业道德教育，持续提升职业道德水准；五是加强文化安全教育，坚定文化自觉与文化自信。唯有如此，方能为将我国建成社会主义现代化文化强国提供强大的法治人才保障与智力支持。",
+				"issue": "1",
+				"language": "zh-CN",
+				"libraryCatalog": "国家哲学社会科学文献中心",
+				"pages": "144-157",
+				"publicationTitle": "法学教育研究",
+				"url": "https://www.ncpssd.org/Literature/articleinfo?id=FXJYYJ2023001009&type=collectionsArticle&typename=%E9%9B%86%E5%88%8A%E6%96%87%E7%AB%A0&nav=0+&barcodenum=",
+				"volume": "40",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "培养策略"
+					},
+					{
+						"tag": "文化安全"
+					},
+					{
+						"tag": "文化自信"
+					},
+					{
+						"tag": "文化自觉"
+					},
+					{
+						"tag": "法治人才"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.ncpssd.org/Literature/articleinfo?id=GJ10017&type=Ancient&typename=%E5%8F%A4%E7%B1%8D&nav=5&barcodenum=70050810",
 		"items": [
 			{
 				"itemType": "book",
-				"title": "古今韻攷四卷",
+				"title": "太平樂圖",
 				"creators": [
 					{
-						"lastName": "李因篤",
+						"firstName": "",
+						"lastName": "吳之龍",
 						"creatorType": "author",
 						"fieldMode": 1
 					}
 				],
-				"abstractNote": "音韻",
-				"callNumber": "經930/4060",
-				"edition": "天壤閣合刻本",
-				"extra": "Type: classic",
-				"language": "zh-CN",
-				"libraryCatalog": "Ncpssd",
-				"volume": "四卷第一册",
-				"attachments": [],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://www.ncpssd.org/Literature/articleinfo?id=CASS265584219&type=eJournalArticle&typename=%E5%A4%96%E6%96%87%E6%9C%9F%E5%88%8A%E6%96%87%E7%AB%A0&nav=1&langType=2&pageUrl=https%253A%252F%252Fwww.ncpssd.org%252Fjournal%252Fdetails%253Fgch%253D185079%2526nav%253D1%2526langType%253D2",
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "Developing a Prediction Model for Author Collaboration in Bioinformatics Research Using Graph Mining Techniques and Big Data Applications",
-				"creators": [
-					{
-						"lastName": "Fezzeh Ebrahimi",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"lastName": "Asefeh Asemi",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"lastName": "Ahmad Shabani",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"lastName": "Amin Nezarat",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"ISSN": "2008-8302",
-				"abstractNote": "Nowadays, scientific collaboration has dramatically increased due to web-based technologies, advanced communication systems, and information and scientific databases. The present study aims to provide a predictive model for author collaborations in bioinformatics research output using graph mining techniques and big data applications. The study is applied-developmental research adopting a mixed-method approach, i.e., a mix of quantitative and qualitative measures. The research population consisted of all bioinformatics research documents indexed in PubMed (n=699160). The correlations of bioinformatics articles were examined in terms of weight and strength based on article sections including title, abstract, keywords, journal title, and author affiliation using graph mining techniques and big data applications. Eventually, the prediction model of author collaboration in bioinformatics research was developed using the abovementioned tools and expert-assigned weights. The calculations and data analysis were carried out using Expert Choice, Excel, Spark, and Scala, and Python programming languages in a big data server. Accordingly, the research was conducted in three phases: 1) identifying and weighting the factors contributing to authors’ similarity measurement; 2) implementing co-authorship prediction model; and 3) integrating the first and second phases (i.e., integrating the weights obtained in the previous phases). The results showed that journal title, citation, article title, author affiliation, keywords, and abstract scored 0.374, 0.374, 0.091, 0.075, 0.055, and 0.031. Moreover, the journal title achieved the highest score in the model for the co-author recommender system. As the data in bibliometric information networks is static, it was proved remarkably effective to use content-based features for similarity measures. So that the recommender system can offer the most suitable collaboration suggestions. It is expected that the model works efficiently in other databases and provides suitable recommendations for author collaborations in other subject areas. By integrating expert opinion and systemic weights, the model can help alleviate the current information overload and facilitate collaborator lookup by authors.",
-				"issue": "2",
-				"language": "en",
-				"libraryCatalog": "Ncpssd",
-				"pages": "1-18",
-				"publicationTitle": "International Journal of Information Science and Management (IJISM)",
-				"url": "https://www.ncpssd.org/Literature/articleinfo?id=CASS265584219&type=eJournalArticle&typename=%E5%A4%96%E6%96%87%E6%9C%9F%E5%88%8A%E6%96%87%E7%AB%A0&nav=1&langType=2&pageUrl=https%253A%252F%252Fwww.ncpssd.org%252Fjournal%252Fdetails%253Fgch%253D185079%2526nav%253D1%2526langType%253D2",
-				"volume": "19",
-				"attachments": [],
-				"tags": [
-					{
-						"tag": "Bibliographic Networks"
-					},
-					{
-						"tag": "Co-author"
-					},
-					{
-						"tag": "Graph Theory"
-					},
-					{
-						"tag": "Network Analysis"
-					},
-					{
-						"tag": "Recommender System"
-					},
-					{
-						"tag": "Research collaboration"
-					}
-				],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://www.ncpssd.org/Literature/articleinfo.aspx?id=NzAwMTg3ODc4Mw==&type=am91cm5hbEFydGljbGU=&datatype=am91cm5hbEFydGljbGU=&typename=5Lit5paH5pyf5YiK5paH56ug&nav=0&barcodenum=",
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "关键词法在大学英语词汇学习中应用效果的实证研究——以接受性和产出性测试为例",
-				"creators": [
-					{
-						"lastName": "朱珺",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"lastName": "杨继林",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"lastName": "徐方雯",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"date": "2019-04-01",
-				"ISSN": "1004-2237",
-				"abstractNote": "需要学习者在母语与目的语之间找到发音相同或相近的词汇,在两个词汇之间构建语音连接,并以心理意象的形式记忆,利用言语和表象的双重编码过程促进记忆。这种词汇信息处理方式与常见的语义语境法不同,两种词汇学习方法值得进一步比较,为大学英语词汇教学提供启示。采用关键词法和语义语境法进行组间对比研究,可以发现在接受性和产出性两项测验中,前者的成绩皆明显优于后者,说明采取关键词法更能促进英语词汇的短时记忆、长时记忆和理解。",
-				"issue": "2",
-				"language": "zh-CN",
-				"libraryCatalog": "Ncpssd",
-				"pages": "112-118",
-				"publicationTitle": "上饶师范学院学报",
-				"url": "https://www.ncpssd.org/Literature/articleinfo.aspx?id=NzAwMTg3ODc4Mw==&type=am91cm5hbEFydGljbGU=&datatype=am91cm5hbEFydGljbGU=&typename=5Lit5paH5pyf5YiK5paH56ug&nav=0&barcodenum=",
-				"volume": "39",
-				"attachments": [],
-				"tags": [
-					{
-						"tag": "Keyword Method"
-					},
-					{
-						"tag": "Semantic Context Method"
-					},
-					{
-						"tag": "long-term retention"
-					},
-					{
-						"tag": "short-termretention"
-					},
-					{
-						"tag": "关键词法"
-					},
-					{
-						"tag": "短时记忆"
-					},
-					{
-						"tag": "语义语境法"
-					},
-					{
-						"tag": "长时记忆"
-					}
-				],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://www.ncpssd.org/Literature/articleinfo.aspx?id=Q0FTUzQyODE2Mjc2&type=ZUpvdXJuYWxBcnRpY2xl&typename=5aSW5paH5pyf5YiK5paH56ug&nav=1&langType=2",
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "Patriot",
-				"creators": [
-					{
-						"firstName": "Ross",
-						"lastName": "Rick",
-						"creatorType": "author"
-					}
-				],
-				"ISSN": "0274-7405",
-				"language": "en",
-				"libraryCatalog": "Ncpssd",
-				"publicationTitle": "Wings of Gold",
-				"url": "https://www.ncpssd.org/Literature/articleinfo.aspx?id=Q0FTUzQyODE2Mjc2&type=ZUpvdXJuYWxBcnRpY2xl&typename=5aSW5paH5pyf5YiK5paH56ug&nav=1&langType=2",
-				"volume": "2005",
+				"edition": "繪本",
+				"extra": "classify: 子\nremark: 版心：樂闲馆本；浙江民俗畫 \nbarcode: 70050810",
+				"libraryCatalog": "国家哲学社会科学文献中心",
+				"publisher": "樂闲馆",
+				"url": "https://www.ncpssd.org/Literature/articleinfo?id=GJ10017&type=Ancient&typename=%E5%8F%A4%E7%B1%8D&nav=0+&barcodenum=70050810",
 				"attachments": [],
 				"tags": [],
 				"notes": [],
