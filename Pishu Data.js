@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-11-29 03:42:08"
+	"lastUpdated": "2023-12-31 14:05:51"
 }
 
 /*
@@ -64,128 +64,150 @@ function getSearchResults(doc, checkOnly) {
 }
 
 async function doWeb(doc, url) {
-	var type = detectWeb(doc, url);
-	if (type == 'multiple') {
+	if (detectWeb(doc, url) == 'multiple') {
 		let items = await Zotero.selectItems(getSearchResults(doc, false));
 		if (!items) return;
 		for (let url of Object.keys(items)) {
-			// let newDoc = await requestText(url);
-			let newDoc = await requestDocument(url);
-			// var parser = new DOMParser();
-			// newDoc = parser.parseFromString(newDoc, 'text/html');
-			scrape(newDoc, url, detectWeb(newDoc, url));
+			scrape(await requestDocument(url), url);
 		}
 	}
 	else {
-		await scrape(doc, url, type);
+		await scrape(doc, url);
 	}
 }
 
-function matchCreator(creator) {
-	creator = {
-		lastName: creator,
-		creatorType: 'author',
-		fieldMode: 1
-	};
-	return creator;
-}
-
-async function scrape(doc, url = doc.location.href, type) {
-	var data = {
-		innerData: {},
-		setFromJS: function () {
-			this.innerData = {};
-			let info = Array.from(doc.querySelectorAll('script[type]')).map(element => element.innerText);
-			info = info.find(element => element.includes('#makeCitation')).match(/var .* = ".*"/g);
-			info.forEach((element) => {
-				let item = element.match(/var (.+) = "(.*)"/);
-				this.innerData[item[1]] = item[2];
-			});
-		},
-		setFromTable: function (node = doc) {
-			this.innerData = {};
-			let info = text(node, 'div.books.margintop10 > table');
-			info = info
-				? info.replace(/^(\s\n?)*/mg, '').replace('订阅\n', '').match(/(^.+：)\n(.*)/mg)
-				: [];
-			// Z.debug(info);
-			info.forEach((element) => {
-				let item = element.split('\n');
-				this.innerData[item[0].replace(/[\s：]/g, '')] = item[1];
-			});
-		},
-		get: function (key) {
-			return this.innerData.hasOwnProperty(key) ? this.innerData[key] : '';
-		}
-		
-	};
-	var newItem = new Z.Item(type);
+async function scrape(doc, url = doc.location.href) {
+	var newItem = new Z.Item(detectWeb(doc, url));
 	newItem.extra = '';
-	data.setFromJS();
-	// Z.debug(data.innerData);
-	newItem.title = data.get('title');
-	newItem.date = data.get('publishdate');
-	newItem.place = data.get('province');
-	newItem.publisher = data.get('publishname');
+	// .books tr见于书籍
+	let labels = new Labels(doc, '[class^="baogao-list"] > li, .books tr');
+	let info = Array.from(doc.querySelectorAll('script[type]')).map(element => element.innerText);
+	info = info.find(element => element.includes('#makeCitation')).match(/var .*? = ".*"/g);
+	info.forEach((string) => {
+		let key = tryMatch(string, /var (.+) = ".*"/, 1);
+		let element = document.createElement('div');
+		element.innerHTML = tryMatch(string, /var .+ = "(.*)"/, 1);
+		labels.innerData.push([key, element]);
+	});
+	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	newItem.abstractNote = ZU.trimInternal(text(doc, 'div.summaryCon')).replace(/<*$/, '');
-	newItem.extra += `\nabstractTranslation: ${ZU.trimInternal(text(doc, 'en_summaryCon')).replace(/<*$/, '')}`;
-	let author = data.get('author');
-	newItem.creators = author.replace(/(<a.*?>)(.+?)(<\/a>)/g, '$2 ').split(/[, ]/).map(element => matchCreator(element));
-	if (type == 'book') {
-		data.setFromTable();
-		// Z.debug(data.innerData);
-		newItem.extra += `\ntitleTranslation: ${data.get('英文名')}`;
-		newItem.series = data.get('从书名');
-		newItem.ISBN = data.get('ISBN');
-		newItem.tags = data.get('关键词').trim().split(/\s/)
-			.map(element => ({ tag: element }));
+	labels.getWith('author').split(',').forEach(creator => newItem.creators.push(processName(creator, 'author'))
+	);
+	switch (newItem.itemType) {
+		case 'book':
+			newItem.title = labels.getWith('书名');
+			newItem.ISBN = labels.getWith('ISBN');
+			labels.getWith('关键词', true).querySelectorAll('a').forEach(element => newItem.tags.push(element.innerText));
+			newItem.extra += addExtra('original-title', labels.getWith('英文名'));
+			break;
+		case 'bookSection':
+			newItem.title = text(doc, '.title');
+			newItem.bookTitle = labels.getWith('pertainbook');
+			newItem.series = labels.getWith('所属丛书').replace(/\s*订阅$/, '');
+			newItem.pages = labels.getWith('ebookNumber');
+			newItem.extra += addExtra('words', labels.getWith('报告字数'));
+			newItem.extra += addExtra('numpages', labels.getWith('报告页数'));
+			newItem.extra += addExtra('views', labels.getWith('浏览人数'));
+			newItem.extra += addExtra('downloads', labels.getWith('下载次数'));
+			doc.querySelectorAll('.d-keyword a').forEach(element => newItem.tags.push(element.innerText));
+			labels.getWith('bookauthor').split(',').forEach(creator => newItem.creators.push(processName(creator, 'bookAuthor'))
+			);
+			break;
+		default:
+			break;
 	}
-	else {
-		newItem.bookTitle = data.get('pertainbook');
-		newItem.pages = data.get('ebookNumber');
-		newItem.ISBN = await (async function () {
-			try {
-				let boookDoc = await requestDocument(attr('ul.baogao-list1 a[href*="book"]', 'href'));
-				data.setFromTable(boookDoc);
-				return data.get('ISBN');
-			}
-			// 以防所属书籍的链接不可用
-			catch (error) {
-				return '';
-			}
-		})();
-		newItem.series = (function () {
-			try {
-				let seriesName = text(doc, '.baogao-list1 a[href*="book"]', 1);
-				return seriesName
-					? seriesName
-					: Array.from(doc.querySelectorAll('.baogao-list1 li'))
-						.find(element => element.innerText.includes('所属丛书：'))
-						.textContent
-						.match(/所属丛书：(.*)/)[1];
-			}
-			// 以防无此字段
-			catch (error) {
-				return '';
-			}
-		})();
-		newItem.tags = Array.from(doc.querySelectorAll('.d-keyword a')).map(element => ({ tag: element.innerText }));
-		newItem.seeAlso.push(attr(doc, 'a[href*="bookdetail"]', 'href'));
-		// Z.debug(newItem.seeAlso);
-	}
+	newItem.place = labels.getWith('province');
+	newItem.publisher = labels.getWith('publishname');
+	newItem.date = labels.getWith('publishdate');
 	newItem.attachments.push({
 		tittle: 'Snapshot',
 		document: doc,
 	});
-	newItem.url = /^https?:\/\/.+(www|gf)\.pishu\.com\.cn/.test(url)
-		? `https://${url.match(/(www|gf)\.pishu\.com\.cn.*/)[0]}`
-		: url;
+	newItem.url = url;
 	newItem.complete();
 }
 
+class Labels {
+	constructor(doc, selector) {
+		this.innerData = [];
+		Array.from(doc.querySelectorAll(selector))
+			// avoid nesting
+			.filter(element => !element.querySelector(selector))
+			// avoid empty
+			.filter(element => !/^\s*$/.test(element.textContent))
+			.forEach((element) => {
+				let elementCopy = element.cloneNode(true);
+				// avoid empty text
+				while (!elementCopy.firstChild.textContent.replace(/\s/g, '')) {
+					// Z.debug(elementCopy.firstChild.textContent);
+					elementCopy.removeChild(elementCopy.firstChild);
+					// Z.debug(elementCopy.firstChild.textContent);
+				}
+				if (elementCopy.childNodes.length > 1) {
+					let key = elementCopy.removeChild(elementCopy.firstChild).textContent.replace(/\s/g, '');
+					this.innerData.push([key, elementCopy]);
+				}
+				else {
+					let text = ZU.trimInternal(elementCopy.textContent);
+					let key = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]/).replace(/\s/g, '');
+					elementCopy.textContent = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]\s*(.+)/, 1);
+					this.innerData.push([key, elementCopy]);
+				}
+			});
+	}
 
-/** BEGIN TEST CASES **/
+	getWith(label, element = false) {
+		if (Array.isArray(label)) {
+			let result = label
+				.map(aLabel => this.getWith(aLabel, element))
+				.filter(element => element);
+			result = element
+				? result.find(element => element.childNodes.length)
+				: result.find(element => element);
+			return result
+				? result
+				: element
+					? document.createElement('div')
+					: '';
+		}
+		let pattern = new RegExp(label);
+		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
+		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
+		return keyValPair
+			? ZU.trimInternal(keyValPair[1].textContent)
+			: '';
+	}
+}
+
+function tryMatch(string, pattern, index = 0) {
+	let match = string.match(pattern);
+	if (match && match[index]) {
+		return match[index];
+	}
+	return '';
+}
+
+function addExtra(key, value) {
+	return value
+		? `${key}: ${value}\n`
+		: '';
+}
+
+function processName(creator, creatorType = 'author') {
+	creator = ZU.cleanAuthor(creator, creatorType);
+	if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+		creator.lastName = creator.firstName + creator.lastName;
+		creator.firstName = '';
+		creator.fieldMode = 1;
+	}
+	return creator;
+}/** BEGIN TEST CASES **/
 var testCases = [
+	{
+		"type": "web",
+		"url": "https://gf.pishu.com.cn/skwx_ps/search?query=%25E6%2595%2599%25E8%2582%25B2&resourceType=all&field=All&search=1&SiteID=14&firstSublibID=",
+		"items": "multiple"
+	},
 	{
 		"type": "web",
 		"url": "https://www.pishu.com.cn/skwx_ps/literature/6334/14724751.html",
@@ -195,16 +217,34 @@ var testCases = [
 				"title": "以平台经济增加中低收入群体要素收入",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "端利涛",
 						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "李雪松",
+						"creatorType": "bookAuthor",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "李海舰",
+						"creatorType": "bookAuthor",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "张友国",
+						"creatorType": "bookAuthor",
 						"fieldMode": 1
 					}
 				],
 				"date": "2023-08",
-				"ISBN": "9787522821092",
 				"abstractNote": "按要素分配是中国特色社会主义市场经济分配制度的重要内容，探索多种渠道增加中低收入群体要素收入是当下推进共同富裕的重要任务。本文梳理了平台经济中的劳动要素收入分配情况，认为平台经济可以作为增加中低收入群体要素收入的重要途径。增加劳动就业、优化收入分配和改善公共服务是平台经济增加要素收入的三个着力点。在此基础上，本文提出平台经济增加中低收入群体要素收入的实现路径：第一，规范和保障零工经济发展；第二，加快推进平台经济均衡发展；第三，大力推广基于平台模式的共享经济。",
 				"bookTitle": "中国五年规划发展报告（2022～2023）",
-				"extra": "abstractTranslation:",
+				"extra": "words: 17563 字\nnumpages: 17 页\nviews: 187\ndownloads: 134",
 				"libraryCatalog": "Pishu Data",
 				"pages": "597-613",
 				"place": "北京",
@@ -229,9 +269,7 @@ var testCases = [
 					}
 				],
 				"notes": [],
-				"seeAlso": [
-					"https://www.pishu.com.cn/skwx_ps/bookdetail?SiteID=14&ID=14722402"
-				]
+				"seeAlso": []
 			}
 		]
 	},
@@ -244,16 +282,22 @@ var testCases = [
 				"title": "从“无理论”的教育到“无教育”的理论",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "吴永胜",
 						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "吴永胜",
+						"creatorType": "bookAuthor",
 						"fieldMode": 1
 					}
 				],
 				"date": "2021-07",
-				"ISBN": "9787520184342",
 				"abstractNote": "正如杰克·古迪所说：“人类思维的细分能力，是与社会生活不断分化的进程相随发展的。”伴随着实践领域的日益细分，理论领域也日益走向专业化，各个实践领域都有相对应的理论类型。在教育领域中，“无理论”的教育现象与“无教育”的理论现象的普遍存在，造成了教育理论与实践之间的长期疏离。通过对教育理论的实践性问题的探讨，对这个老问题做出尝试性的新回答，既是学术之需，亦为个人之趣。文献和现实的双重阅读，要求在探讨教育理论的实践性问题时，改变从理论建设的立场去谈教育理论之实践性的原有研究套路。实践之于理论的框架或基底作用决定了有必要尝试彻底地转换思路，即教育实践到底需要什么样的教育理论，已有理论能否满足教育实践的需要，什么样的理论路径才能使之满足教育实践的需要。如此，不再是为理论而理论，而是为实践而理论。",
 				"bookTitle": "从批判到重构",
-				"extra": "abstractTranslation:",
+				"extra": "words: 26208 字\nnumpages: 29 页\nviews: 65\ndownloads: 26",
 				"libraryCatalog": "Pishu Data",
 				"pages": "1-29",
 				"place": "北京",
@@ -277,16 +321,9 @@ var testCases = [
 					}
 				],
 				"notes": [],
-				"seeAlso": [
-					"https://www.pishu.com.cn/skwx_ps/bookdetail?SiteID=14&ID=13484778"
-				]
+				"seeAlso": []
 			}
 		]
-	},
-	{
-		"type": "web",
-		"url": "https://gf.pishu.com.cn/skwx_ps/search?query=%25E6%2595%2599%25E8%2582%25B2&resourceType=all&field=All&search=1&SiteID=14&firstSublibID=",
-		"items": "multiple"
 	},
 	{
 		"type": "web",
@@ -297,6 +334,7 @@ var testCases = [
 				"title": "上海合作组织20年",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "李进峰",
 						"creatorType": "author",
 						"fieldMode": 1
@@ -305,8 +343,10 @@ var testCases = [
 				"date": "2021-07",
 				"ISBN": "9787520178181",
 				"abstractNote": "2021年是上海合作组织成立20周年。20年来，上合组织经受了来自本地区和外部世界的种种考验，不断发展、壮大，自2017年扩员后，上合组织已成为全球人口最多、幅员最辽阔的地区组织，也成为维护世界和平与稳定的重要力量之一。本书对上合组织20年来的发展历程进行了全面回顾和梳理，总结了20年来上合组织在政治、安全、经济、人文和对外关系五大领域的合作成就，深入分析了上合组织在发展过程中存在的问题和面临的内、外部挑战，以及上合组织未来发展的机遇与前景，提出上合组织的理论基础有三个来源、上合组织发展经历了五次理论创新、上合组织未来发展壮大将取决于三个因素，并对上合组织未来发展预测了三种可能的模式，这些研究结论具有创新性。本书对上合组织20年发展状况的论述，既有实践分析，又有理论探讨；既有量化研究，也有定性研判；既有问题意识，也有政策建议。本书是上合组织研究领域非常重要也相当权威的一部参考书和工具书。",
-				"extra": "abstractTranslation: \ntitleTranslation: 20 YEARS OF SHANGHAI COOPERATION ORGANIZATION",
+				"extra": "original-title: 20 YEARS OF SHANGHAI COOPERATION ORGANIZATION",
 				"libraryCatalog": "Pishu Data",
+				"place": "北京",
+				"publisher": "社会科学文献出版社",
 				"url": "https://www.pishu.com.cn/skwx_ps/bookDetail?SiteID=14&ID=13395521",
 				"attachments": [
 					{
