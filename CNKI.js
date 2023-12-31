@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-29 12:27:25"
+	"lastUpdated": "2023-12-31 05:04:07"
 }
 
 /*
@@ -176,7 +176,7 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug("---------------- CNKI 2023-12-29 20:17:44 ------------------");
+	Z.debug("---------------- CNKI 2023-12-31 13:04:05 ------------------");
 	let ids = url.includes('www.cnki.com.cn')
 		// CNKI space
 		? new ID(url)
@@ -879,11 +879,11 @@ function getAttachments(doc, keepPDF, itemKey) {
 	var attachments = [];
 	let alterLink = Array.from(doc.querySelectorAll('a[href*="/down/"]'));
 	let pdfLink = doc.querySelector('a[id^="pdfDown"]')
-		|| alterLink[1]
+		|| alterLink.find(element => /PDF/i.test(element.textContent))
 		|| doc.querySelector('.operate-btn a[href*="Download"]');
 	Z.debug(`get PDF Link:\n${pdfLink.href}`);
 	let cajLink = doc.querySelector('a#cajDown')
-		|| alterLink[0];
+		|| alterLink.find(element => /CAJ/i.test(element.textContent));
 	Z.debug(`get CAJ link:\n${cajLink.href}`);
 	if (keepPDF && pdfLink) {
 		attachments.push({
