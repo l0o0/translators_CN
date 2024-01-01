@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-09-05 05:05:44"
+	"lastUpdated": "2024-01-01 13:15:35"
 }
 
 /*
@@ -35,616 +35,259 @@
 	***** END LICENSE BLOCK *****
 */
 
-function detectWeb(doc, _url) {
-	let curMenu = doc.querySelector('#curMenu').value;
-	let dbId;
-	let element = doc.querySelector('#DbId');
-	if (element) {
-		dbId = element.value;
-	}
-	switch (curMenu) {
-		case 'law':
-			if (dbId === 'protocol') {
-				let title = doc.querySelector('h2.title');
-				if (title && title.textContent.includes('说明')) {
-					return 'report';
-				}
-				else {
-					return 'bill';
-				}
+function detectWeb(doc, url) {
+	if (/\/\w+\/\w+/.test(url)) {
+		let curMenu = attr(doc, '#curMenu', 'value');
+		let dbId = attr(doc, '#DbId', 'value');
+		if (curMenu == 'law') {
+			if (dbId == 'protocol') {
+				return 'report';
 			}
-			else {
-				return 'statute';
-			}
-
-		case 'english':
-			if (dbId === 'en_law') {
-				return 'statute';
-			}
-			break;
-
-		case 'case':
+			return 'statute';
+		}
+		else if (curMenu == 'english' && dbId == 'en_law') {
+			return 'statute';
+		}
+		else if (curMenu == 'case') {
 			return 'case';
-
-		case 'journal':
-			return 'journalArticle';
+		}
+		else if (curMenu == 'journal') return 'journalArticle';
+	}
+	else if (getSearchResults(doc, true)) {
+		return 'multiple';
 	}
 	return false;
 }
 
-function doWeb(doc, url) {
-	scrape(doc, url);
+function getSearchResults(doc, checkOnly) {
+	var items = {};
+	var found = false;
+	var rows = doc.querySelectorAll('.item h4 > a');
+	for (let row of rows) {
+		let href = row.href;
+		let title = ZU.trimInternal(row.textContent);
+		if (!href || !title) continue;
+		if (checkOnly) return true;
+		found = true;
+		items[href] = title;
+	}
+	return found ? items : false;
 }
 
-function scrape(doc, url) {
-	url = url.replace(/[?#].*/, '');
-
-	let itemType = detectWeb(doc, url);
-	if (!itemType) {
-		return;
+async function doWeb(doc, url) {
+	if (detectWeb(doc, url) == 'multiple') {
+		let items = await Zotero.selectItems(getSearchResults(doc, false));
+		if (!items) return;
+		for (let url of Object.keys(items)) {
+			await scrape(await requestDocument(url));
+		}
 	}
-
-	switch (itemType) {
-		case 'statute':
-			scrapeStatute(doc, url);
-			break;
-		case 'report':
-			scrapeReport(doc, url);
-			break;
-		case 'case':
-			scrapeCase(doc, url);
-			break;
-		case 'journalArticle':
-			scrapeJournalArticle(doc, url);
-			break;
+	else {
+		await scrape(doc, url);
 	}
 }
 
-function scrapeStatute(doc, url) {
-	let item = new Zotero.Item('statute');
-	item.url = url;
-
+async function scrape(doc, url = doc.location.href) {
+	var newItem = new Z.Item(detectWeb(doc, url));
+	newItem.extra = '';
+	const labels = new Labels(doc, '.fields li > .box');
+	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	// Zotero 要求用于 CSL 的额外字段信息填在 `Extra` 的最前面，所以分开存储
 	let extraFields = {};
 	let extraContents = {};
-
-	let cliNumber = doc.querySelector('.info').textContent;
-	let matches = cliNumber.match(/【法宝引证码】\s*([0-9A-Z.()]+)/);
-	if (matches) {
-		extraContents['法宝引证码'] = matches[1];
+	let matches = text(doc, '.info').match(/[[【](.+)[】\]]\s*([0-9A-Z.()]+)/);
+	extraContents[matches[1]] = matches[2];
+	const dbId = attr(doc, '#DbId', 'value');
+	Z.debug(dbId);
+	extraFields.Type = {
+		lar: 'regulation',
+		eagn: 'treaty'
+	}[dbId];
+	let title = pureText(doc.querySelector('h2.title'));
+	if (attr(doc, '#curMenu', 'value') == 'english') {
+		newItem.language = 'en-US';
+		extraFields['original-title'] = text(doc, 'a > h2.title').replace(/\(/g, '（').replace(/\)/g, '）');
 	}
 	else {
-		matches = cliNumber.match(/\[CLI Code\]\s*([0-9A-Z.()]+)/);
-		if (matches) {
-			extraContents['CLI Code'] = matches[1];
-		}
-	}
-
-	let dbId;
-	if (doc.querySelector('#DbId')) {
-		dbId = doc.querySelector('#DbId').value;
-	}
-	switch (dbId) {
-		case 'lar':  // 地方法规
-			extraFields.Type = 'regulation';
-			break
-		case 'eagn':  // 地方法规
-			extraFields.Type = 'treaty';
-			break
-	}
-
-	item.language = 'zh-CN';
-	if (doc.querySelector('#curMenu').value === 'english') {
-		item.language = 'en-US';
-	}
-
-	// let title = doc.querySelector('#ArticleTitle').textContent;
-	// https://www.pkulaw.com/en_law/1fc5de53e239e30bbdfb.html 会报错
-
-	let title;
-	let titles = doc.querySelectorAll('h2.title');
-	if (titles[0].childNodes.length > 1) {
-		title = titles[0].childNodes[0].textContent;
-	}
-	else {
-		title = titles[0].textContent;
-	}
-	title = title.trim();
-	if (item.language === 'zh-CN') {
+		newItem.language = 'zh-CN';
 		let matched = title.match(/(.*)\((.*)\)$/);
 		if (matched) {
-			title = matched[1];
 			let edition = matched[2];
 			if (edition.match(/^\d+/)) {
+				title = matched[1];
 				// 中华人民共和国公司法(2005修订)
-				let parts = edition.match(/^(\d+\s*)(.*)/);
-				if (parts[1].startsWith('年')) {
-					extraFields.Edition = parts[1] + parts[2];
-				}
-				else {
-					extraFields.Edition = parts[1] + '年' + parts[2];
-				}
-			}
-			else {
-				// 中华人民共和国民事诉讼法(试行)
-				title += '（' + edition + '）';
+				extraFields.Edition = edition.replace(/^(\d+)年?\s*(.*)/, '$1年$2');
 			}
 		}
-		if (title.startsWith('中华人民共和国') && extraFields.Type !== 'treaty') {
-			item.shortTitle = title.replace('中华人民共和国', '');
+		if (extraFields.Type != 'treaty') {
+			newItem.shortTitle = title.replace(/^中华人民共和国/, '').replace(/\(/g, '（').replace(/\)/g, '）');
 		}
 		title = title.replace(/\(/g, '（').replace(/\)/g, '）');
 	}
-	item.title = title;
-
-	if (item.language === 'en-US') {
-		if (titles.length === 2) {
-			let zhTitle = titles[1].textContent;
-			zhTitle = zhTitle.trim().replace(/\(/g, '（').replace(/\)/g, '）');
-			extraFields['Original Title'] = zhTitle;
-		}
-	}
-
-	for (let li of doc.querySelectorAll('.fields li')) {
-		let parts = li.textContent.split('：', 2);
-		if (parts.length !== 2) {
-			continue;
-		}
-		let field = parts[0].trim();
-		if (item.language === 'zh-CN') {
-			field = field.replace(/\s+/g, '');
-		}
-		let value = parts[1].trim().replace(/\s+/g, ' ');
-		let dateParts;
-		switch (field) {
-			case '制定机关':
-			case '发布部门':
-				for (let span of li.querySelectorAll('span')) {
-					let name = span.title;
-					if (name && name.length !== 0) {
-						item.creators.push({
-							lastName: name,
-							creatorType: 'author',
-							fieldMode: 1
-						});
-					}
-				}
-				break;
-			case '发文字号':
-				if (value.startsWith('中华人民共和国主席令')) {
-					// 《法学引注手册》法律文件不著录发文字号
-					// extraContents[field] = value;
-				}
-				else {
-					item.number = value;
-				}
-				break;
-			case '公布日期':
-			case '发布日期':
-			case '签订日期':
-			case '颁布日期':
-				item.date = value.replace(/\./g, '-');
-				break;
-			// case '实施日期':
-			// case '生效日期':
-			// 	extraContents[field] = value.replace(/\./g, '-');
-			// 	break;
-			case '时效性':
-				if (value !== '现行有效') {
-					if (value === '失效') {
-						extraFields.Status = '已废止';
-					}
-					// else {
-					// 	extraContents[field] = value;
-					// }
-				}
-				break;
-			case '效力位阶':
-				if (value !== '法律' && value !== '有关法律问题和重大问题的决定') {
-					extraFields.Type = 'regulation';
-				}
-				switch (value) {
-					case '有关法律问题和重大问题的决定':
-					case '党内法规制度':
-						var fullText = doc.querySelector('#divFullText').textContent;
-						// Z.debug(fullText);
-						var session = fullText.match(/((中国共产党)?第.*?届.*?第.*?次.*?会议)/);
-						if (session) {
-							item.session = session[1];
-						}
-						break;
-				}
-				break;
-			case 'Document Number':
-				item.number = value;
-				break;
-			case 'Date Issued':
-				dateParts = value.split('-');
-				item.date = dateParts[2] + '-' + dateParts[0] + '-' + dateParts[1];
-				break;
-			// case 'Effective Date':
-			// 	dateParts = value.split('-');
-			// 	extraContents[field] = dateParts[2] + '-' + dateParts[0] + '-' + dateParts[1];
-			// 	break;
-			case 'Issuing Authority':
-				for (let span of li.querySelectorAll('span')) {
-					let name = span.title;
-					if (name && name.length !== 0) {
-						item.creators.push({
-							lastName: name,
-							creatorType: 'author',
-							fieldMode: 1
-						});
-					}
-				}
-				break;
-		}
-	}
-
-	extraFields = Object.assign(extraFields, extraContents);
-	item.extra = Object.entries(extraFields).map(entry => entry[0] + ': ' + entry[1]).join('\n');
-
-	item.attachments.push({
-		title: 'Snapshot',
-		document: doc
-	});
-
-	item.complete();
-}
-
-function scrapeReport(doc, url) {
-	let item = new Zotero.Item('report');
-	item.url = url;
-
-	// Zotero 要求用于 CSL 的额外字段信息填在 `Extra` 的最前面，所以分开存储
-	let extraFields = {};
-	let extraContents = {};
-
-	let cliNumber = doc.querySelector('.info').textContent;
-	let matches = cliNumber.match(/【法宝引证码】\s*([0-9A-Z.()]+)/);
-	if (matches) {
-		extraContents['法宝引证码'] = matches[1];
-	}
-	else {
-		matches = cliNumber.match(/\[CLI Code\]\s*([0-9A-Z.()]+)/);
-		if (matches) {
-			extraContents['CLI Code'] = matches[1];
-		}
-	}
-
-	if (doc.querySelector('#DbId').value === 'eagn') {
-		extraFields.Type = 'treaty';
-	}
-
-	item.language = 'zh-CN';
-	if (doc.querySelector('#curMenu').value === 'english') {
-		item.language = 'en-US';
-	}
-
-	// let title = doc.querySelector('#ArticleTitle').textContent;
-	// https://www.pkulaw.com/en_law/1fc5de53e239e30bbdfb.html 会报错
-
-	let title;
-	let titles = doc.querySelectorAll('h2.title');
-	if (titles[0].childNodes.length > 1) {
-		title = titles[0].childNodes[0].textContent;
-	}
-	else {
-		title = titles[0].textContent;
-	}
-	title = title.trim();
-	if (item.language === 'zh-CN') {
-		let matched = title.match(/(.*)\((.*)\)$/);
-		if (matched) {
-			title = matched[1];
-			let edition = matched[2];
-			if (!edition.match(/^\d+/)) {
-				// 中华人民共和国民事诉讼法(试行)
-				title += '（' + edition + '）';
+	newItem.libraryCatalog = '北大法宝';
+	newItem.url = url.replace(/[?#].*/, '');
+	switch (newItem.itemType) {
+		case 'statute': {
+			newItem.nameOfAct = title;
+			// newItem.code = 法典;
+			// newItem.codeNumber = 法典编号;
+			newItem.publicLawNumber = labels.getWith(['发文字号', 'DocumentNumber']);
+			// “签订日期”见于外交领域
+			newItem.dateEnacted = labels.getWith(['颁布日期', '公布日期', '发布日期', '签订日期']).replace(/\./g, '-')
+				|| ZU.strToISO(labels.getWith('Date Issued'));
+			// newItem.pages = 页码;
+			// newItem.section = 条文序号;
+			newItem.session = tryMatch(text(doc, '#divFullText'), /(中国共产党)?第.*?届.*?第.*?次.*?会议/);
+			// newItem.history = 历史;
+			if (labels.getWith('时效性') == '失效') {
+				extraFields.Status = '已废止';
 			}
+			if (!labels.getWith('效力位阶').includes('法律')) {
+				extraFields.Type = extraFields.Type || 'regulation';
+			}
+			labels.getWith(['制定机关', '发布部门', 'IssuingAuthority'], true).querySelectorAll('a:first-child').forEach(element => newItem.creators.push(processName(element.textContent))
+			);
+			break;
 		}
-		if (title.startsWith('中华人民共和国') && extraFields.Type !== 'treaty') {
-			item.shortTitle = title.replace('中华人民共和国', '');
+		case 'report':
+			newItem.title = title;
+			newItem.date = labels.getWith('公布日期').replace(/\./g, '-');
+			labels.getWith(['制定机关', '发布部门', 'IssuingAuthority'], true).querySelectorAll('a:first-child').forEach(element => newItem.creators.push(processName(element.textContent))
+			);
+			extraFields['event-title'] = tryMatch(text(doc, '#divFullText'), /第.*?届.*?第.*?次.*?会议/);
+			break;
+		case 'case': {
+			if (title.startsWith('指导案例')) {
+				title = title.replace(/.*?：/, '');
+				extraFields.Series = '最高人民法院指导案例';
+				extraFields['Series Number'] = tryMatch(labels.getWith('案例编号'), /(\d+)/, 1);
+			}
+			newItem.caseName = title;
+			newItem.court = labels.getWith(['裁决机构', '审理法院']);
+			newItem.dateDecided = labels.getWith(['裁决日期', '审结日期']).replace(/\./g, '-');
+			newItem.docketNumber = labels.getWith('案号').replace(/\(/g, '（').replace(/\)/g, '）');
+			let source = labels.getWith('来源');
+			newItem.reporter = tryMatch(source, /《(.+)》/, 1);
+			// "reporterVolume": "报告系统卷次";
+			// "firstPage": "起始页";
+			// "history": "历史";
+			extraFields['available-date'] = labels.getWith('发布日期').replace(/\./g, '-') || tryMatch(source, /(\d+)\s*年/, 1);
+			extraFields.Issue = tryMatch(source, /年第\s*(\d+)\s*期/, 1);
+			extraFields.Genre = labels.getWith('文书类型');
+			let caseType = ['民事', '刑事', '行政'].find(type => labels.getWith('案由').startsWith(type));
+			if (caseType) {
+				extraFields.Genre = caseType + extraFields.Genre;
+			}
+			else if (!title.endsWith('裁决书')) {
+				extraFields.Genre = '民事判决书';
+			}
+			labels.getWith('发布部门', true).querySelectorAll('span').forEach(element => newItem.creators.push(processName(element.textContent))
+			);
+			labels.getWith('权责关键词', true).querySelectorAll('a').forEach(element => newItem.tags.push(element.textContent));
+			break;
 		}
-		title = title.replace(/\(/g, '（').replace(/\)/g, '）');
+		case 'journalArticle':
+			newItem.title = title;
+			newItem.abstractNote = [labels.getWith('摘要'), labels.getWith('英文摘要')].join('\n');
+			newItem.publicationTitle = tryMatch(labels.getWith('期刊名称'), /《(.+)》/, 1);
+			newItem.issue = labels.getWith('期号');
+			newItem.pages = labels.getWith('页码');
+			newItem.date = labels.getWith('期刊年份');
+			labels.getWith('作者', true).querySelectorAll('a').forEach(element => newItem.creators.push(processName(element.textContent))
+			);
+			labels.getWith('关键词', true).querySelectorAll('a').forEach(element => newItem.tags.push(element.textContent)
+			);
+			break;
+		default:
+			break;
 	}
-	item.title = title;
-
-	if (item.language === 'en-US') {
-		if (titles.length === 2) {
-			let zhTitle = titles[1].textContent;
-			zhTitle = zhTitle.trim().replace(/\(/g, '（').replace(/\)/g, '）');
-			extraFields['Original Title'] = zhTitle;
-		}
-	}
-
-	for (let li of doc.querySelectorAll('.fields li')) {
-		let parts = li.textContent.split('：', 2);
-		if (parts.length !== 2) {
-			continue;
-		}
-		let field = parts[0].trim();
-		if (item.language === 'zh-CN') {
-			field = field.replace(/\s+/g, '');
-		}
-		let value = parts[1].trim().replace(/\s+/g, ' ');
-		switch (field) {
-			case '公布日期':
-				item.date = value.replace(/\./g, '-');
-				break;
-		}
-	}
-
-	// 引用全国人大及其常委会通过的法律性质的决定，应当标明决定机关、 决定名称、决定时间和会议届次。
-	let fullText = doc.querySelector('#divFullText').textContent;
-	// Z.debug(fullText);
-	let session = fullText.match(/第.*?届.*?第.*?次.*?会议/);
-	if (session) {
-		extraFields['event-title'] = session[0];
-	}
-
 	extraFields = Object.assign(extraFields, extraContents);
-	item.extra = Object.entries(extraFields).map(entry => entry[0] + ': ' + entry[1]).join('\n');
-
-	item.attachments.push({
+	newItem.extra = Object.entries(extraFields)
+		.filter(entry => entry[1])
+		.map(entry => `${entry[0]}: ${entry[1]}`)
+		.join('\n');
+	newItem.attachments.push({
 		title: 'Snapshot',
 		document: doc
 	});
-
-	item.complete();
+	newItem.complete();
 }
 
-function scrapeCase(doc, url) {
-	let item = new Zotero.Item('case');
-
-	item.language = 'zh-CN';
-	item.url = url;
-
-	let title = doc.querySelector('#ArticleTitle').value;
-	title = title.trim().replace(/\(/g, '（').replace(/\)/g, '）');
-
-	let extraFields = {};
-	let extraContents = {};
-
-	let cliNumber = doc.querySelector('.info').textContent;
-	let matches = cliNumber.match(/【法宝引证码】\s*([0-9A-Z.()]+)/);
-	if (matches) {
-		extraContents['法宝引证码'] = matches[1];
+class Labels {
+	constructor(doc, selector) {
+		this.innerData = [];
+		Array.from(doc.querySelectorAll(selector))
+			.filter(element => element.firstElementChild)
+			.filter(element => !element.querySelector(selector))
+			.filter(element => !/^\s*$/.test(element.textContent))
+			.forEach((element) => {
+				let elementCopy = element.cloneNode(true);
+				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
+				this.innerData.push([key, elementCopy]);
+			});
 	}
-	else {
-		matches = cliNumber.match(/\[CLI Code\]\s*([0-9A-Z.()]+)/);
-		if (matches) {
-			extraContents['CLI Code'] = matches[1];
+
+	getWith(label, element = false) {
+		if (Array.isArray(label)) {
+			let result = label
+				.map(aLabel => this.getWith(aLabel, element));
+			result = element
+				? result.find(element => element.childNodes.length)
+				: result.find(element => element);
+			return result
+				? result
+				: element
+					? document.createElement('div')
+					: '';
 		}
+		let pattern = new RegExp(label);
+		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
+		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
+		return keyValPair
+			? ZU.trimInternal(keyValPair[1].innerText)
+			: '';
 	}
-
-	let isGuidingCase = false; // 指导性案例
-	if (title.startsWith('指导案例')) {
-		isGuidingCase = true;
-		title = title.replace(/[^：]*：/, '');
-		extraFields.Series = '最高人民法院指导案例';
-	}
-
-	var caseType;
-	item.caseName = title;
-	if (!title.endsWith('裁决书')) {
-		extraFields.Genre = '民事判决书';
-	}
-
-	for (let li of doc.querySelectorAll('.fields li')) {
-		let parts = li.textContent.split('：', 2);
-		if (parts.length !== 2) {
-			continue;
-		}
-		let field = parts[0].replace(/\s+/g, '');
-		let value = parts[1].trim().replace(/\s+/g, ' ');
-		switch (field) {
-			case '发布部门':
-				for (let span of li.querySelectorAll('span')) {
-					let name = span.title;
-					if (name && name.length !== 0) {
-						item.creators.push({
-							lastName: name,
-							creatorType: 'author',
-							fieldMode: 1
-						});
-					}
-				}
-				break;
-
-			case '案号':
-				value = value.replace(/\(/g, '（').replace(/\)/g, '）');
-				item.docketNumber = value;
-				break;
-
-			case '文书类型':
-				extraFields.Genre = value;
-				break;
-
-			case '审结日期':
-			case '裁决日期':
-				value = value.replace(/\./g, '-');
-				item.dateDecided = value;
-				break;
-
-			case '审理法院':
-			case '裁决机构':
-				item.court = value;
-				break;
-
-			case '案例编号':
-				if (isGuidingCase) {
-					extraFields['Series Number'] = value.match(/(\d+)/)[1];
-				}
-				break;
-
-			case '来源':
-				{
-					let reporter = value.match(/《(.*)》/);
-					if (reporter) {
-						item.reporter = reporter[1];
-					}
-					let year = value.match(/(\d+)\s*年/);
-					if (year && !extraFields['available-date']) {
-						extraFields['available-date'] = year[1];
-					}
-					let issue = value.match(/年第\s*(\d+)\s*期/);
-					if (issue) {
-						extraFields.Issue = issue[1];
-					}
-				}
-				break;
-
-			case '发布日期':
-				value = value.replace(/\./g, '-');
-				extraFields['available-date'] = value;
-				break;
-
-			case '权责关键词':
-				for (let a of li.querySelectorAll('a')) {
-					let tag = a.textContent;
-					if (tag && tag.length !== 0) {
-						item.tags.push(tag);
-					}
-				}
-				break;
-
-			case '案件类型':
-			case '案由':
-				if (!caseType) {
-					for (let caseTypeChoice of ['民事', '刑事', '行政']) {
-						if (value.startsWith(caseTypeChoice)) {
-							caseType = caseTypeChoice;
-							break;
-						}
-					}
-				}
-				break;
-		}
-	}
-
-	if (caseType) {
-		extraFields.Genre = caseType + extraFields.Genre;
-	}
-
-	extraFields = Object.assign(extraFields, extraContents);
-	item.extra = Object.entries(extraFields).map(entry => entry[0] + ': ' + entry[1]).join('\n');
-
-	item.attachments.push({
-		title: 'Snapshot',
-		document: doc
-	});
-
-	item.complete();
 }
 
-function scrapeJournalArticle(doc, url) {
-	let item = new Zotero.Item('journalArticle');
-
-	item.language = 'zh-CN';
-	item.libraryCatalog = '北大法宝';
-	item.url = url;
-
-	let title = doc.querySelector('#ArticleTitle').value.trim();
-	item.title = title;
-
-	let extraFields = {};
-	let extraContents = {};
-
-	let cliNumber = doc.querySelector('.info').textContent;
-	let matches = cliNumber.match(/【法宝引证码】\s*([0-9A-Z.()]+)/);
-	if (matches) {
-		extraContents['法宝引证码'] = matches[1];
+function pureText(element) {
+	if (!element) return '';
+	// Deep copy to avoid affecting the original page.
+	let elementCopy = element.cloneNode(true);
+	while (elementCopy.lastElementChild) {
+		elementCopy.removeChild(elementCopy.lastElementChild);
 	}
-	else {
-		matches = cliNumber.match(/\[CLI Code\]\s*([0-9A-Z.()]+)/);
-		if (matches) {
-			extraContents['CLI Code'] = matches[1];
-		}
-	}
-
-	for (let li of doc.querySelectorAll('.fields li')) {
-		let parts = li.textContent.split('：', 2);
-		if (parts.length !== 2) {
-			continue;
-		}
-		let field = parts[0].replace(/\s+/g, '');
-		let value = parts[1].trim().replace(/\s+/g, ' ');
-		switch (field) {
-			case '期刊名称':
-				if (value.includes('《')) {
-					value = value.match(/《(.*)》/)[1];
-				}
-				item.publicationTitle = value;
-				break;
-			case '期刊年份':
-				item.date = value;
-				break;
-			case '期号':
-				item.issue = value;
-				break;
-			case '页码':
-				item.pages = value;
-				break;
-			case '作者':
-				for (let a of li.querySelectorAll('a')) {
-					let name = a.textContent;
-					if (name && name.length !== 0) {
-						item.creators.push({
-							lastName: name,
-							creatorType: 'author',
-							fieldMode: 1
-						});
-					}
-				}
-				break;
-			case '摘要':
-				item.abstractNote = value;
-				break;
-			case '英文摘要':
-				if (item.abstractNote && item.abstractNote.length > 0) {
-					item.abstractNote += '\n' + value;
-				}
-				else {
-					item.abstractNote = value;
-				}
-				break;
-			case '关键词':
-			case '英文关键词':
-				for (let a of li.querySelectorAll('a')) {
-					let tag = a.textContent;
-					if (tag && tag.length !== 0) {
-						item.tags.push(tag);
-					}
-				}
-				break;
-		}
-	}
-
-	extraFields = Object.assign(extraFields, extraContents);
-	item.extra = Object.entries(extraFields).map(entry => entry[0] + ': ' + entry[1]).join('\n');
-
-	item.attachments.push({
-		title: 'Snapshot',
-		document: doc
-	});
-
-	item.complete();
+	return ZU.trimInternal(elementCopy.innerText);
 }
 
+function processName(creator, creatorType = 'author') {
+	return {
+		firstName: '',
+		lastName: creator,
+		creatorType: creatorType,
+		fieldMode: 1
+	};
+}
+
+function tryMatch(string, pattern, index = 0) {
+	let match = string.match(pattern);
+	if (match && match[index]) {
+		return match[index];
+	}
+	return '';
+}
 
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.pkulaw.com/chl/3ae7651e2659029abdfb.html",
-		"detectedItemType": "statute",
 		"items": [
 			{
 				"itemType": "statute",
 				"nameOfAct": "中华人民共和国刑法修正案（十）",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "全国人大常委会",
 						"creatorType": "author",
 						"fieldMode": 1
@@ -653,6 +296,8 @@ var testCases = [
 				"dateEnacted": "2017-11-04",
 				"extra": "法宝引证码: CLI.1.304263",
 				"language": "zh-CN",
+				"publicLawNumber": "中华人民共和国主席令第80号",
+				"session": "第十二届全国人民代表大会常务委员会第三十次会议",
 				"shortTitle": "刑法修正案（十）",
 				"url": "https://www.pkulaw.com/chl/3ae7651e2659029abdfb.html",
 				"attachments": [
@@ -670,13 +315,13 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.pkulaw.com/chl/e54c465cca59c137bdfb.html",
-		"detectedItemType": "statute",
 		"items": [
 			{
 				"itemType": "statute",
 				"nameOfAct": "中华人民共和国公司法",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "全国人大常委会",
 						"creatorType": "author",
 						"fieldMode": 1
@@ -685,6 +330,8 @@ var testCases = [
 				"dateEnacted": "2005-10-27",
 				"extra": "Edition: 2005年修订\n法宝引证码: CLI.1.60597",
 				"language": "zh-CN",
+				"publicLawNumber": "中华人民共和国主席令第42号",
+				"session": "第十届全国人民代表大会常务委员会第十八次会议",
 				"shortTitle": "公司法",
 				"url": "https://www.pkulaw.com/chl/e54c465cca59c137bdfb.html",
 				"attachments": [
@@ -702,25 +349,26 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.pkulaw.com/chl/98ef6bfbd5f5ecdebdfb.html",
-		"detectedItemType": "statute",
 		"items": [
 			{
 				"itemType": "statute",
 				"nameOfAct": "最高人民法院、最高人民检察院关于依法严惩破坏计划生育犯罪活动的通知",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "最高人民法院",
 						"creatorType": "author",
 						"fieldMode": 1
 					},
 					{
+						"firstName": "",
 						"lastName": "最高人民检察院",
 						"creatorType": "author",
 						"fieldMode": 1
 					}
 				],
 				"dateEnacted": "1993-11-12",
-				"extra": "Status: 已废止\nType: regulation\n法宝引证码: CLI.3.8815",
+				"extra": "Type: regulation\nStatus: 已废止\n法宝引证码: CLI.3.8815",
 				"language": "zh-CN",
 				"publicLawNumber": "法发〔1993〕36号",
 				"url": "https://www.pkulaw.com/chl/98ef6bfbd5f5ecdebdfb.html",
@@ -739,13 +387,13 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.pkulaw.com/chl/7d823d434f747555bdfb.html",
-		"detectedItemType": "statute",
 		"items": [
 			{
 				"itemType": "statute",
 				"nameOfAct": "全国人民代表大会常务委员会关于严禁卖淫嫖娼的决定",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "全国人大常委会",
 						"creatorType": "author",
 						"fieldMode": 1
@@ -754,6 +402,7 @@ var testCases = [
 				"dateEnacted": "1991-09-04",
 				"extra": "法宝引证码: CLI.1.5373",
 				"language": "zh-CN",
+				"publicLawNumber": "中华人民共和国主席令第51号",
 				"session": "第七届全国人民代表大会常务委员会第二十一次会议",
 				"url": "https://www.pkulaw.com/chl/7d823d434f747555bdfb.html",
 				"attachments": [
@@ -771,13 +420,13 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.pkulaw.com/chl/dc46bb66e13150b8bdfb.html",
-		"detectedItemType": "statute",
 		"items": [
 			{
 				"itemType": "statute",
 				"nameOfAct": "国务院关于在全国建立农村最低生活保障制度的通知",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "国务院",
 						"creatorType": "author",
 						"fieldMode": 1
@@ -803,13 +452,13 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.pkulaw.com/chl/0a15442a31eb74f6bdfb.html",
-		"detectedItemType": "statute",
 		"items": [
 			{
 				"itemType": "statute",
 				"nameOfAct": "最高人民法院关于适用《中华人民共和国行政诉讼法》的解释",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "最高人民法院",
 						"creatorType": "author",
 						"fieldMode": 1
@@ -835,13 +484,13 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.pkulaw.com/chl/4a14adc2c14e5e68bdfb.html",
-		"detectedItemType": "statute",
 		"items": [
 			{
 				"itemType": "statute",
 				"nameOfAct": "国务院关于印发打赢蓝天保卫战三年行动计划的通知",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "国务院",
 						"creatorType": "author",
 						"fieldMode": 1
@@ -867,12 +516,18 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.pkulaw.com/lar/c74c0e82aa441b08e9ca1ea4cf401f45bdfb.html",
-		"detectedItemType": "statute",
 		"items": [
 			{
 				"itemType": "statute",
 				"nameOfAct": "山东省高温天气劳动保护办法",
-				"creators": [],
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "山东省人民政府",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
 				"dateEnacted": "2011-07-28",
 				"extra": "Type: regulation\n法宝引证码: CLI.11.518085",
 				"language": "zh-CN",
@@ -893,12 +548,18 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.pkulaw.com/lar/03e98798ef205f4a1faf9c788c472e25bdfb.html",
-		"detectedItemType": "statute",
 		"items": [
 			{
 				"itemType": "statute",
 				"nameOfAct": "德阳市人民政府办公室关于印发《德阳市数据要素市场管理暂行办法》的通知",
-				"creators": [],
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "德阳市人民政府",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
 				"dateEnacted": "2022-09-01",
 				"extra": "Type: regulation\n法宝引证码: CLI.12.5537956",
 				"language": "zh-CN",
@@ -919,13 +580,13 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.pkulaw.com/chl/8e624467ca77636dbdfb.html",
-		"detectedItemType": "statute",
 		"items": [
 			{
 				"itemType": "statute",
 				"nameOfAct": "中共中央关于全面推进依法治国若干重大问题的决定",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "中国共产党中央委员会",
 						"creatorType": "author",
 						"fieldMode": 1
@@ -951,7 +612,6 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.pkulaw.com/eagn/8e43a3c4e94eed58d5f18c2194e7b611bdfb.html",
-		"detectedItemType": "statute",
 		"items": [
 			{
 				"itemType": "statute",
@@ -976,16 +636,22 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.pkulaw.com/protocol/e0c81a0878b582cddca4c85351d16972bdfb.html",
-		"detectedItemType": "report",
 		"items": [
 			{
 				"itemType": "report",
 				"title": "关于《中华人民共和国行政诉讼法修正案（草案）》的说明",
-				"creators": [],
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "全国人大常委会法制工作委员会",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
 				"date": "2013-12-23",
-				"extra": "event-title: 第十二届全国人民代表大会常务委员会第六次会议\n法宝引证码: CLI.DL.6311",
+				"extra": "Edition: 2013年\nevent-title: 第十二届全国人民代表大会常务委员会第六次会议\n法宝引证码: CLI.DL.6311",
 				"language": "zh-CN",
-				"libraryCatalog": "PKULaw",
+				"libraryCatalog": "北大法宝",
 				"url": "https://www.pkulaw.com/protocol/e0c81a0878b582cddca4c85351d16972bdfb.html",
 				"attachments": [
 					{
@@ -1002,16 +668,22 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.pkulaw.com/en_law/1fc5de53e239e30bbdfb.html",
-		"detectedItemType": "statute",
 		"items": [
 			{
 				"itemType": "statute",
 				"nameOfAct": "Individual Income Tax Law of the People's Republic of China (2011 Amendment)",
-				"creators": [],
-				"dateEnacted": "2011-06-30",
-				"extra": "Original Title: 中华人民共和国个人所得税法（2011修正）\nCLI Code: CLI.1.153700(EN)",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "Standing Committee of the National People's Congress",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"extra": "Type: regulation\noriginal-title: 中华人民共和国个人所得税法（2011修正）\nCLI Code: CLI.1.153700(EN)",
 				"language": "en-US",
 				"publicLawNumber": "Order No.48 of the President of the People's Republic of China",
+				"session": "第五届全国人民代表大会第三次会议",
 				"url": "https://www.pkulaw.com/en_law/1fc5de53e239e30bbdfb.html",
 				"attachments": [
 					{
@@ -1028,7 +700,6 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.pkulaw.com/gac/eee05e2473339b35799c78d539298795d5aa7be54a957fa0bdfb.html",
-		"detectedItemType": "case",
 		"items": [
 			{
 				"itemType": "case",
@@ -1037,9 +708,10 @@ var testCases = [
 				"dateDecided": "2013-06-21",
 				"court": "江苏省无锡市中级人民法院",
 				"docketNumber": "（2013）锡民终字第497号",
-				"extra": "Series: 最高人民法院指导案例\nGenre: 民事判决书\nSeries Number: 24\navailable-date: 2014-01-26\nIssue: 8\n法宝引证码: CLI.C.2125100",
+				"extra": "Series: 最高人民法院指导案例\nSeries Number: 24\navailable-date: 2014-01-26\nIssue: 8\nGenre: 民事判决书\n法宝引证码: CLI.C.2125100",
 				"language": "zh-CN",
 				"reporter": "最高人民法院公报",
+				"shortTitle": "指导案例24号：荣宝英诉王阳、永诚财产保险股份有限公司江阴支公司机动车交通事故责任纠纷案",
 				"url": "https://www.pkulaw.com/gac/eee05e2473339b35799c78d539298795d5aa7be54a957fa0bdfb.html",
 				"attachments": [
 					{
@@ -1075,7 +747,6 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.pkulaw.com/pfnl/a25051f3312b07f383ab74a250eadc412f753fb855fabeadbdfb.html",
-		"detectedItemType": "case",
 		"items": [
 			{
 				"itemType": "case",
@@ -1083,7 +754,7 @@ var testCases = [
 				"creators": [],
 				"dateDecided": "2015-07-06",
 				"court": "江苏省南通市中级人民法院",
-				"extra": "Genre: 行政裁定书\navailable-date: 2015\nIssue: 11\n法宝引证码: CLI.C.7997435",
+				"extra": "available-date: 2015\nIssue: 11\nGenre: 行政裁定书\n法宝引证码: CLI.C.7997435",
 				"language": "zh-CN",
 				"reporter": "最高人民法院公报",
 				"url": "https://www.pkulaw.com/pfnl/a25051f3312b07f383ab74a250eadc412f753fb855fabeadbdfb.html",
@@ -1133,7 +804,6 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.pkulaw.com/pfnl/a25051f3312b07f33e89d5b6de18bc0a79dc89fed63cf848bdfb.html",
-		"detectedItemType": "case",
 		"items": [
 			{
 				"itemType": "case",
@@ -1224,23 +894,25 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.pkulaw.com/qikan/ac09f20d2f2de1f270f4052ec6ab6831bdfb.html",
-		"detectedItemType": "journalArticle",
 		"items": [
 			{
 				"itemType": "journalArticle",
 				"title": "重罪案件适用认罪认罚从宽制度研析",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "董兆玲",
 						"creatorType": "author",
 						"fieldMode": 1
 					},
 					{
+						"firstName": "",
 						"lastName": "余斌娜",
 						"creatorType": "author",
 						"fieldMode": 1
 					},
 					{
+						"firstName": "",
 						"lastName": "姜玄芳",
 						"creatorType": "author",
 						"fieldMode": 1
@@ -1286,18 +958,19 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.pkulaw.com/qikan/aebfbcc845e9ece9fc3803f41eb10e2fbdfb.html",
-		"detectedItemType": "journalArticle",
 		"items": [
 			{
 				"itemType": "journalArticle",
 				"title": "法治视野下的自由贸易港立法权研究——基于央地立法权限互动的视角",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "苏海平",
 						"creatorType": "author",
 						"fieldMode": 1
 					},
 					{
+						"firstName": "",
 						"lastName": "陈秋云",
 						"creatorType": "author",
 						"fieldMode": 1
@@ -1320,21 +993,6 @@ var testCases = [
 				],
 				"tags": [
 					{
-						"tag": "Hainan Free Trade Port Law"
-					},
-					{
-						"tag": "authorized legislation"
-					},
-					{
-						"tag": "free trade port regulations"
-					},
-					{
-						"tag": "local legislative power"
-					},
-					{
-						"tag": "the central-local relation"
-					},
-					{
 						"tag": "地方立法权"
 					},
 					{
@@ -1354,6 +1012,11 @@ var testCases = [
 				"seeAlso": []
 			}
 		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.pkulaw.com/",
+		"items": "multiple"
 	}
 ]
 /** END TEST CASES **/
