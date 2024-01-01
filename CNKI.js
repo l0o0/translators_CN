@@ -669,10 +669,10 @@ async function scrapeDoc(doc, ids, itemKey) {
 	newItem.extra = newItem.extra ? newItem.extra : '';
 	// "#content p, .summary li.pdfN" only found on geology version
 	// in normal page, ".row", ".row_1"
-	let labels = new Labels(doc, 'div.doc div[class^="row"], li.top-space, #content .summary > p, .summary li.pdfN, [class^="content"] p');
+	let labels = new LabelsX(doc, 'div.doc div[class^="row"], li.top-space, #content .summary > p, .summary li.pdfN, [class^="content"] p');
 
 	/* title */
-	newItem.title = getPureText(doc.querySelector('div.doc h1, .h1-scholar, #chTitle'));
+	newItem.title = pureText(doc.querySelector('div.doc h1, .h1-scholar, #chTitle'));
 	if (newItem.title.includes('\n')) {
 		newItem.extra += addExtra('original-title', newItem.title.split('\n')[1]);
 		newItem.title = newItem.title.split('\n')[0];
@@ -699,7 +699,7 @@ async function scrapeDoc(doc, ids, itemKey) {
 
 	/* publication information */
 	let pubInfo = innerText(doc, 'div.top-tip')
-		+ getPureText(doc.querySelector('.summary .detailLink'))
+		+ pureText(doc.querySelector('.summary .detailLink'))
 		+ labels.getWith(['作者基本信息', '出版信息']);
 	Z.debug(`puinfo:${pubInfo}`);
 	newItem.publicationTitle = tryMatch(pubInfo, /(.*?)[.,]/, 1)
@@ -733,7 +733,7 @@ function fixItem(newItem, doc, ids, itemKey) {
 	// ".row", ".row_1" for normal version
 	// "#content p, .summary li.pdfN" for geology version
 	// "[class^="content"] p" for space version
-	let labels = new Labels(doc, 'div.doc div[class^="row"], li.top-space, #content .summary > p, .summary li.pdfN, [class^="content"] p');
+	let labels = new LabelsX(doc, 'div.doc div[class^="row"], li.top-space, #content .summary > p, .summary li.pdfN, [class^="content"] p');
 	Z.debug('get labels:');
 	Z.debug(labels.innerData.map(element => [element[0], ZU.trimInternal(element[1].textContent)]));
 	newItem.extra = newItem.extra ? newItem.extra : '';
@@ -856,7 +856,7 @@ async function scrapeZhBook(doc, url) {
 		.map(element => ZU.cleanAuthor(element, 'author'));
 	bookItem.creators.forEach(element => element.fieldMode = 1);
 	// ".bc_a > li" for book, and ".desc-info > p" for chapter
-	let labels = new Labels(doc, '.bc_a > li, .desc-info > p');
+	let labels = new LabelsX(doc, '.bc_a > li, .desc-info > p');
 	Z.debug('get labels:');
 	Z.debug(labels.innerData.map(element => [element[0], ZU.trimInternal(element[1].textContent)]));
 	bookItem.edition = labels.getWith('版次');
@@ -906,7 +906,7 @@ function getAttachments(doc, keepPDF, itemKey) {
 }
 
 /* Util */
-class Labels {
+class LabelsX {
 	constructor(doc, selector) {
 		this.innerData = [];
 		Array.from(doc.querySelectorAll(selector))
@@ -966,14 +966,14 @@ function tryMatch(string, pattern, index = 0) {
 		: '';
 }
 
-function getPureText(element) {
+function pureText(element) {
 	if (!element) return '';
 	// Deep copy to avoid affecting the original page.
 	let elementCopy = element.cloneNode(true);
 	while (elementCopy.lastElementChild) {
 		elementCopy.removeChild(elementCopy.lastElementChild);
 	}
-	return elementCopy.innerText;
+	return ZU.trimInternal(elementCopy.innerText);
 }
 
 function addExtra(key, value) {
