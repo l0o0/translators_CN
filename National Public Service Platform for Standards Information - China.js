@@ -122,7 +122,7 @@ async function scrape(doc, url = doc.location.href) {
 class CellLabels {
 	constructor(doc, selector) {
 		this.innerData = [];
-		Array.from(doc.querySelectorAll(selector)).filter(element => !element.querySelector(selector));
+		let cells = Array.from(doc.querySelectorAll(selector)).filter(element => !element.querySelector(selector));
 		let i = 0;
 		while (cells[i + 1]) {
 			this.innerData.push([cells[i].textContent.replace(/\s*/g, ''), cells[i + 1]]);
