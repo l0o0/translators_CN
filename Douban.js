@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-02 07:53:16"
+	"lastUpdated": "2024-01-02 08:48:32"
 }
 
 /*
@@ -188,7 +188,7 @@ async function scrape(doc, url = doc.location.href) {
 			creators = performers;
 			let contents = doc.querySelector('.track-list');
 			if (contents) {
-				newItem.notes.push(`《${newItem.title}》\n` + contents.innerText.replace(/ · · · [\s\S]*$/, '').replace(/展开全部$/, ''));
+				newItem.notes.push(`<h1>《${newItem.title}》 - 目录</h1>` + contents.innerHTML.replace(/ · · · [\s\S]*$/, '').replace(/展开全部$/, ''));
 			}
 			break;
 		}
