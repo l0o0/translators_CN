@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-01 13:15:35"
+	"lastUpdated": "2024-01-02 14:15:56"
 }
 
 /*
@@ -142,11 +142,17 @@ async function scrape(doc, url = doc.location.href) {
 			if (labels.getWith('时效性') == '失效') {
 				extraFields.Status = '已废止';
 			}
-			if (!labels.getWith('效力位阶').includes('法律')) {
+			let rank = labels.getWith(['效力位阶', 'LevelofAuthority']);
+			if (!/(法律)|(Law)/i.test(rank)) {
 				extraFields.Type = extraFields.Type || 'regulation';
 			}
-			labels.getWith(['制定机关', '发布部门', 'IssuingAuthority'], true).querySelectorAll('a:first-child').forEach(element => newItem.creators.push(processName(element.textContent))
-			);
+			else if (['有关法律问题和重大问题的决定', '党内法规制度'].includes(rank)) {
+				newItem.session = tryMatch(text(doc, '#divFullText'), /(中国共产党)?第.*?届.*?第.*?次.*?会议/);
+			}
+			labels.getWith(['制定机关', '发布部门', 'IssuingAuthority'], true)
+				.querySelectorAll('a:first-child')
+				.forEach(element => newItem.creators.push(processName(element.textContent))
+				);
 			break;
 		}
 		case 'report':
@@ -680,7 +686,7 @@ var testCases = [
 						"fieldMode": 1
 					}
 				],
-				"extra": "Type: regulation\noriginal-title: 中华人民共和国个人所得税法（2011修正）\nCLI Code: CLI.1.153700(EN)",
+				"extra": "original-title: 中华人民共和国个人所得税法（2011修正）\nCLI Code: CLI.1.153700(EN)",
 				"language": "en-US",
 				"publicLawNumber": "Order No.48 of the President of the People's Republic of China",
 				"session": "第五届全国人民代表大会第三次会议",
