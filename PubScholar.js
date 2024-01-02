@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-11-04 12:16:01"
+	"lastUpdated": "2024-01-02 15:42:30"
 }
 
 /*
@@ -35,21 +35,21 @@
 	***** END LICENSE BLOCK *****
 */
 
-const URLTypes = {
+const urlMap = {
 	'/patents/': 'patent',
 	'/articles/': 'journalArticle',
-	'/literatures/': 'journalArticle',
+	// '/literatures/': 'journalArticle',
 	'/books/': 'book'
 };
 
 function getTypeFromUrl(url) {
-	for (const key in URLTypes) {
-		if (url.includes(key)) return URLTypes[key];
+	for (const key in urlMap) {
+		if (url.includes(key)) return urlMap[key];
 	}
 	return false;
 }
 
-const TagTypes = {
+const tagMap = {
 	论文: 'journalArticle',
 	专利: 'patent',
 	图书: 'book'
@@ -57,40 +57,7 @@ const TagTypes = {
 
 function getTypeFromTab(doc) {
 	let key = text(doc, '.AppSearchTab.is-active');
-	return Object.keys(TagTypes).includes(key) ? TagTypes[key] : false;
-}
-
-const FieldMap = {
-	title: 'span[class$="__titleText"]',
-	author: 'div.AuthorInfo__content',
-	abstractNote: 'div[class$="__abstracts"], div.FullAbstracts',
-	tags: 'div[class$="__keywords"] span.Keyword',
-};
-
-function parseAuthors(s) {
-	let type = 'author';
-	let sclean = s.replace(/等?\s?主?编?著?$|等?主译$|^发明人: /g, "");
-	sclean = sclean.replace(/\(.*\)/);
-	if (s.match(/等主译$/)) type = 'translator';
-	if (s.match(/主编$/)) type = 'editor';
-	if (s.match(/^发明人: /)) type = 'inventor';
-	return sclean.split(/[,，]/).map(c => ({ lastName: c.trim().replace(/\s?\d+\s?$/, ''), creatorType: type }));
-}
-
-function parseAuthorStr(s) {
-	let creators = [];
-	const parts = s.split(/[；;]/);
-	parts.forEach((p) => {
-		let pc = parseAuthors(p.trim());
-		creators = creators.concat(pc);
-	});
-	return creators;
-}
-
-function parseTags(nodeList) {
-	return nodeList.map((n) => {
-		return { tag: n.textContent.trim() };
-	});
+	return Object.keys(tagMap).includes(key) ? tagMap[key] : false;
 }
 
 function detectWeb(doc, url) {
@@ -135,73 +102,96 @@ async function doWeb(doc, url) {
 	}
 }
 
-function tryMAtch(string, regx, index) {
+function next(node, selector, string, element = false) {
 	try {
-		return string.match(regx)[index];
+		let nextElement = Array.from(node.querySelectorAll(selector)).find(
+			element => new RegExp(string).test(element.innerText)
+		).nextElementSibling;
+		return element
+			? nextElement
+			: ZU.trimInternal(nextElement.innerText);
 	}
 	catch (error) {
-		return '';
-	}
-}
-
-function trySelectNext(node, selector, string) {
-	try {
-		return Array.from(node.querySelectorAll(selector)).find(
-			element => element.innerText == string
-		).nextElementSibling.textContent;
-	}
-	catch (error) {
-		return '';
+		return element
+			? document.createElement('div')
+			: '';
 	}
 }
 
 async function scrape(doc, type, url = '') {
-	var citationText = text(doc, '.QuoteList > .QuoteListItem:nth-child(1) > .QuoteListItem__content').split('.').reverse()[1];
-	// Z.debug(citationText);
+	const citationText = text(doc, '.QuoteList > .QuoteListItem:nth-child(1) > .QuoteListItem__content, ContentItem__source').split('.').reverse()[1];
+	Z.debug(citationText);
 	var newItem = new Zotero.Item(type);
+	newItem.extra = '';
+	newItem.title = text(doc, 'span[class$="__titleText"]');
 	// 展开摘要
-	var button = {};
+	var button;
 	button = doc.querySelector('div.RichContent__inner > button');
 	if (button && button.innerText.includes('阅读全部')) await button.click();
+	newItem.abstractNote = text(doc, 'div[class$="__abstracts"], div.FullAbstracts').replace(/收起\s*$/, '');
 	// 展开作者
 	button = doc.querySelector('AuthorInfo__extra');
 	if (button && button.innerText.includes("···")) await button.click();
-	for (let field in FieldMap) {
-		if (field == 'author') {
-			newItem.creators = parseAuthorStr(text(doc, FieldMap[field]));
-		}
-		else if (field == 'tags') {
-			let tmp = doc.querySelectorAll(FieldMap[field]);
-			newItem.tags = parseTags(Array.from(tmp));
-		}
-		else {
-			newItem[field] = text(doc, FieldMap[field]);
-		}
+	switch (newItem.itemType) {
+		case 'journalArticle':
+			newItem.date = tryMatch(citationText, /\d{4}/, 0);
+			newItem.pages = tryMatch(citationText, /:?([\d -]*)$/, 1).replace(/\s/g, '');
+			newItem.publicationTitle = tryMatch(citationText, /^(.*?),/, 1);
+			newItem.volume = tryMatch(citationText, /\d{4},\s?(\d*)\(?/, 1);
+			newItem.issue = tryMatch(citationText, /\((\d*)\)/, 1);
+			doc.querySelectorAll('div.AuthorInfo__content span.AuthorInfo__nameText').forEach((element) => {
+				let creator = ZU.cleanAuthor(element.innerText.replace(/[[\],\s\d]*$/, ''), 'author');
+				if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+					creator.fieldMode = 1;
+				}
+				newItem.creators.push(creator);
+			});
+			break;
+		case 'patent':
+			newItem.filingDate = next(doc, 'span[class$="__label"]', '申请日');
+			newItem.applicationNumber = next(doc, 'span[class$="__label"]', '申请号');
+			newItem.issueDate = next(doc, 'span[class$="__label"]', '公开日');
+			newItem.rights = text(doc, '.FullTextContent', 1);
+			doc.querySelector('div[class$="__author"]').querySelectorAll('span.AuthorInfo__nameText').forEach((element) => {
+				let creator = ZU.cleanAuthor(element.textContent, 'inventor');
+				if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+					creator.fieldMode = 1;
+				}
+				newItem.creators.push(creator);
+			});
+			break;
+		case 'book':
+			newItem.title = text(doc, 'h1[class$="__title"]');
+			newItem.date = citationText;
+			newItem.publisher = '科学出版社';
+			newItem.ISBN = next(doc, 'span[class$="__label"]', 'ISBN');
+			newItem.subject = next(doc, 'span[class$="__label"]', '学科分类');
+			doc.querySelectorAll('div.AuthorInfo__content span.AuthorInfo__nameText').forEach((element) => {
+				element.textContent.split(/[;；]/).forEach((creator) => {
+					let creatorType = /译$/.test(creator)
+						? 'translator'
+						: 'author';
+					creator = ZU.cleanAuthor(creator.replace(/[等主编译\s]*$/g, ''), creatorType);
+					if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+						creator.fieldMode = 1;
+					}
+					newItem.creators.push(creator);
+				});
+			});
+			break;
 	}
-	if (newItem.itemType == 'journalArticle') {
-		newItem.date = tryMAtch(citationText, /\d{4}/, 0);
-		newItem.pages = tryMAtch(citationText, /:?([\d- ]*)$/, 1).replace(/\s/g, '');
-		newItem.publicationTitle = tryMAtch(citationText, /^(.*?),/, 1);
-		newItem.volume = tryMAtch(citationText, /\d{4},(\d*)\(/, 1);
-		newItem.issue = tryMAtch(citationText, /\((\d*)\)/, 1);
-	}
-	else if (newItem.itemType == 'patent') {
-		newItem.filingDate = trySelectNext(doc, 'span[class$="__label"]', '申请日:');
-		newItem.applicationNumber = trySelectNext(doc, 'span[class$="__label"]', '申请号:');
-		newItem.issueDate = trySelectNext(doc, 'span[class$="__label"]', '公开日:');
-		newItem.rights = text(doc, '.FullTextContent', 1);
-	}
-	else if (newItem.itemType == 'book') {
-		newItem.title = text(doc, 'h1[class$="__title"]');
-		newItem.date = citationText;
-		newItem.publisher = '科学出版社';
-		newItem.ISBN = trySelectNext(doc, 'span[class$="__label"]', 'ISBN:');
-		newItem.subject = trySelectNext(doc, 'span[class$="__label"]', '学科分类:');
-	}
-	// fix item
-	if (newItem.abstractNote) newItem.abstractNote = newItem.abstractNote.replace(/收起\s?$/, '').trim();
+	doc.querySelectorAll('div[class$="__keywords"] > span').forEach(element => newItem.tags.push(ZU.trimInternal(element.textContent))
+	);
 	if (url) newItem.url = url;
 	newItem.complete();
+}
+
+function tryMatch(string, pattern, index = 0) {
+	if (!string) return '';
+	let match = string.match(pattern);
+	return (match && match[index])
+		? match[index]
+		: '';
 }
 
 /** BEGIN TEST CASES **/
@@ -215,12 +205,16 @@ var testCases = [
 				"title": "人类基因组编辑：科学、伦理和监管（中文翻译版）",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "美国国家科学院",
-						"creatorType": "editor"
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
+						"firstName": "",
 						"lastName": "马慧",
-						"creatorType": "translator"
+						"creatorType": "translator",
+						"fieldMode": 1
 					}
 				],
 				"date": "2019-01",
@@ -245,28 +239,38 @@ var testCases = [
 				"title": "基因编辑技术在油菜中的应用",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "杨文文",
-						"creatorType": "author"
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
+						"firstName": "",
 						"lastName": "聂甲玥",
-						"creatorType": "author"
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
+						"firstName": "",
 						"lastName": "樊红霞",
-						"creatorType": "author"
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
+						"firstName": "",
 						"lastName": "吴德伟",
-						"creatorType": "author"
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
+						"firstName": "",
 						"lastName": "王幼平",
-						"creatorType": "author"
+						"creatorType": "author",
+						"fieldMode": 1
 					}
 				],
 				"date": "2023",
-				"abstractNote": "油菜作为世界主要油料作物之一，在农业生产中占有重要地位。长期以来，油菜育种家致力于利用杂交、人工诱变、细胞工程等多种技术，培育优良油菜品种，提质增效。近年来，以CRISPR为代表的基因编辑技术突飞猛进，为油菜育种提供了新的方法和思路，并已被成功用于改变油菜的菜籽产量、油脂品质、抗病性、开花时间、花色、除草剂抗性等性状，展现了巨大的应用潜力。本研究对基因编辑技术在油菜中的应用实例进行了全面总结，并对尚待解决的一些技术问题和未来可能的发展方向进行了探讨，为相关学者提供参考。",
+				"abstractNote": "油菜作为世界主要油料作物之一，在农业生产中占有重要地位。长期以来，油菜育种家致力于利用杂交、人工诱变、细胞工程等多种技术，培育优良油菜品种，提质增效。近年来，以CRISPR为代表的基因编辑技术突飞猛进，为油菜育种提供了新的方法和思路，并已被成功用于改变油菜的菜籽产量、油脂品质、抗病性、开花时间、花色、除草剂抗性等性状，展现了巨大的应用潜力。本研究对基因编辑技术在油菜中的应用实例进行了全面总结，并对尚待解决的一些技术问题和未来可能的发展方向进行了探讨，为相关学者提...   展开",
 				"issue": "7",
 				"libraryCatalog": "PubScholar",
 				"pages": "2253-2261",
@@ -274,7 +278,20 @@ var testCases = [
 				"url": "https://pubscholar.cn/articles/3c9b1ffd2848ebedb60f220461178c361bbe3e43934eaea9546e3fbac10ced2f0ad59b1f00a83155bd2a31da806d3178",
 				"volume": "21",
 				"attachments": [],
-				"tags": [],
+				"tags": [
+					{
+						"tag": "CRISPR"
+					},
+					{
+						"tag": "关键词："
+					},
+					{
+						"tag": "基因编辑"
+					},
+					{
+						"tag": "甘蓝型油菜"
+					}
+				],
 				"notes": [],
 				"seeAlso": []
 			}
@@ -289,20 +306,28 @@ var testCases = [
 				"title": "基因编辑构建体及其应用",
 				"creators": [
 					{
-						"lastName": "梁德生 ",
-						"creatorType": "inventor"
+						"firstName": "",
+						"lastName": "梁德生",
+						"creatorType": "inventor",
+						"fieldMode": 1
 					},
 					{
-						"lastName": "胡志青 ",
-						"creatorType": "inventor"
+						"firstName": "",
+						"lastName": "胡志青",
+						"creatorType": "inventor",
+						"fieldMode": 1
 					},
 					{
-						"lastName": "唐齐玉 ",
-						"creatorType": "inventor"
+						"firstName": "",
+						"lastName": "唐齐玉",
+						"creatorType": "inventor",
+						"fieldMode": 1
 					},
 					{
+						"firstName": "",
 						"lastName": "邬玲仟",
-						"creatorType": "inventor"
+						"creatorType": "inventor",
+						"fieldMode": 1
 					}
 				],
 				"issueDate": "2023-08-22",
@@ -322,55 +347,6 @@ var testCases = [
 		"type": "web",
 		"url": "https://pubscholar.cn/explore",
 		"items": "multiple"
-	},
-	{
-		"type": "web",
-		"url": "https://pubscholar.cn/literatures/8bd0891c723144d4a2a2171aff6da1346ccc6261415f13a2834b4779486970385e61e49e5da6bae88d139b636cab7e48",
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "Polarized thermal emission from dust in a galaxy at redshift 2.6",
-				"creators": [
-					{
-						"lastName": "J. E. Geach undefined",
-						"creatorType": "author"
-					},
-					{
-						"lastName": " E. Lopez-Rodriguez",
-						"creatorType": "author"
-					},
-					{
-						"lastName": " M. J. Doherty",
-						"creatorType": "author"
-					},
-					{
-						"lastName": " Jianhang Chen",
-						"creatorType": "author"
-					},
-					{
-						"lastName": " R. J. Ivison",
-						"creatorType": "author"
-					},
-					{
-						"lastName": " G. J. Bendo",
-						"creatorType": "author"
-					},
-					{
-						"lastName": " S. Dye & K. E. K. Coppin .",
-						"creatorType": "author"
-					}
-				],
-				"abstractNote": "Magnetic fields are fundamental to the evolution of galaxies, playing a key role in the astrophysics of the interstellar medium and star formation. Large-scale ordered magnetic fields have been mapped in the Milky Way and nearby galaxies, but it is not known how early in the Universe such structures formed. Here we report the detection of linearly polarized thermal emission from dust grains in a strongly lensed, intrinsically luminous galaxy that is forming stars at a rate more than 1,000 times that of the Milky Way at redshift 2.6, within 2.5 Gyr of the Big Bang. The polarized emission arises from the alignment of dust grains with the local magnetic field. The median polarization fraction is of the order of 1%, similar to nearby spiral galaxies8. Our observations support the presence of a 5-kiloparsec-scale ordered magnetic field with a strength of around 500 μG or lower, oriented parallel to the molecular gas disk. This confirms that such structures can be rapidly formed in galaxies, early in cosmic history. Fig. 1: The magnetic field orientation of the gravitationally lensed galaxy 9io9 at z = 2.553. a–d, ALMA 242 GHz polarimetric observations of the Stokes I, Q and U parameters, and the polarized intensity (PI). The synthetic beam of the observations (1.2″ × 0.9″, θ = 68°) is shown as the red ellipse, lower left. The B field orientation is indicated by white lines shown at the Nyquist sampling, with line lengths proportional to the polarization fraction. e–h, Synthetic polarimetric observations using a constant B field configuration in the source plane. Contours indicate signal to noise: for Stokes I, the contours increase as σI × 23,4,5,…. For Stokes Q and U and for PI, the contours start at 3σ and increase in steps of 1σ. Dec., declination; RA, right ascension.  Fig. 2: Source plane configuration of the magnetic field and lensing model.a, Source plane intensity and field orientation. b, Lensed source plane image. c, Synthetic observations with the synthetic beam size (1.2″ × 0.9″, θ = 68°) indicated by the red ellipse. The B field orientation is indicated by white lines with lengths proportional to the polarization fraction. The median and root mean squared values of the polarization fraction and B field orientation are indicated in the images. The caustics in the source plane and image plane are shown as green and yellow lines, respectively.",
-				"libraryCatalog": "PubScholar",
-				"pages": "483-486",
-				"publicationTitle": "Nature",
-				"url": "https://pubscholar.cn/literatures/8bd0891c723144d4a2a2171aff6da1346ccc6261415f13a2834b4779486970385e61e49e5da6bae88d139b636cab7e48",
-				"attachments": [],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
 	}
 ]
 /** END TEST CASES **/
