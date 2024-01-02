@@ -9,13 +9,13 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-11-24 20:41:06"
+	"lastUpdated": "2024-01-02 05:18:16"
 }
 
 /*
 	***** BEGIN LICENSE BLOCK *****
 	Publications Data Center - China Translator
-	Copyright © 2023 jiaojiaodubai23 <jiaojiaodubai23@163.com>
+	Copyright © 2023 jiaojiaodubai23 <jiaojiaodubai23@gmail.com>
 
 	This file is part of Zotero.
 
@@ -34,7 +34,7 @@
 	***** END LICENSE BLOCK *****
 */
 
-function detectWeb(doc, url) {
+function detectWeb(_doc, url) {
 	let multiFlag = url.split(/[/,?]/)[4];
 	if (multiFlag == 'quick') {
 		return 'multiple';
@@ -51,7 +51,9 @@ function getSearchResults(doc, checkOnly) {
 	var rows = doc.querySelectorAll('.book_item');
 	for (let i = 0; i < rows.length; i++) {
 		let row = rows[i];
-		let title = `【${i + 1}】${ZU.trimInternal(row.querySelector('.book_title').innerText)}`;
+		let title = `【${i + 1}】${ZU.trimInternal(text(row, '.book_title'))}`;
+
+		/* 页面由JS动态加载，所以需要获取id构造请求参数直接访问 */
 		let id = row.querySelector('.ant-checkbox-input').value;
 		let type = (function () {
 			let mediumType = ZU.xpath(doc, '//div[@class="data_classify"]//div[@class="checkbox"]/span[1]').map(
@@ -95,63 +97,31 @@ async function doWeb(doc, url) {
 	}
 }
 
-function matchArchiveLocation(type) {
-	var cell = {};
-	// Z.debug(type);
-	/* 音像电子 */
-	if (type.includes('ele')) {
-		cell.medium = 'CD';
-		if (type.includes('marc')) {
-			// 馆藏条目无“著作权人”字段
-			// https://pdc.capub.cn/search.html#/detail?id=qketqfp26hwqthuwmwi6dzr4hu27o2efur5pu6ms5szvi6oasvqa&from=1&type=marc_ele
-			cell.archiveLocation = '馆藏';
-		}
-		else if (type.includes('isbn')) {
-			// https://pdc.capub.cn/search.html#/detail?id=vhtadivummqsacsc5ygdxljzrsmvrevrgwvg47sjxodgfzgcx5qa&from=1&type=isbn_ele
-			cell.archiveLocation = 'ISBN';
-		}
+function processName(fullName, creatorType = 'author') {
+	var country, original;
+	country = tryMatch(fullName, /^[[(（【](.+?)国?[】）)\]]/, 1);
+	fullName = fullName.replace(/^[[(（【].+?国?[】）)\]]/, '');
+	if (/[翻译]*$/.test(fullName)) {
+		fullName = fullName.replace(/[翻译]*/, '');
+		creatorType = 'translator';
 	}
-	else {
-		cell.medium = '';
-		if (type.includes('cip')) {
-			cell.archiveLocation = 'CIP';
-		}
-		else if (type.includes('marc')) {
-			cell.archiveLocation = '馆藏';
-		}
-		else if (type.includes('isbn')) {
-			cell.archiveLocation = 'ISBN';
-		}
+	original = tryMatch(fullName, /[(（)](.+)[）)]/, 1);
+	fullName = fullName.replace(/[(（)](.+)[）)]/, '');
+	let creator = ZU.cleanAuthor(fullName, creatorType);
+	if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+		creator.lastName = creator.firstName + creator.lastName;
+		creator.lastName = creator.lastName.replace(/([\u4e00-\u9fa5])([a-z])/gi, '$1·$2');
+		creator.lastName = creator.lastName.replace(/\.(\S)/gi, '. $1');
+		creator.lastName = creator.lastName.replace(/•/gi, '·');
+		creator.firstName = '';
+		creator.fieldMode = 1;
 	}
-	return cell;
-}
-
-function matchCreator(creator, raw = false) {
-	creator = ZU.trimInternal(creator.toString());
-	if (/[A-Za-z]/.test(creator) || creator.includes('·')) {
-		// 英文名去除国籍标识
-		creator = creator.replace(/\([\u4e00-\u9fa5]+\)/, '');
-		// 保留中英对照形式供用户参考
-		if (raw) return creator;
-		// 英文名去除英文原名
-		creator = creator.replace(/ ?\(.+\)/, '');
-		creator = {
-			lastName: creator,
-			creatorType: 'autor',
-		};
-		// Z.debug(creator);
-	}
-	else {
-		creator = {
-			lastName: creator,
-			creatorType: 'autor',
-			fieldMode: 1
-		};
-	}
+	creator.country = country;
+	creator.original = original;
 	return creator;
 }
 
-const FIELDMAP = {
+const fieldMap = {
 	title: {
 		labels: ['正书名', '音像电子制品名', '选题名称'],
 		keys: ['firstbookname', 'originalbookname']
@@ -160,9 +130,15 @@ const FIELDMAP = {
 		labels: ['内容摘要'],
 		keys: ['contentsummary', 'ontentabstract']
 	},
+	// series: {
+	// 	labels: ['分册名'],
+	// 	keys: ['volumename']
+	// },
+	// 丛书名示例
+	// https://pdc.capub.cn/search.html#/detail?id=6fvn57xzq2kxf7qldopfgfhcr3svtkp6n7a23d7djxgkt6gmpsbxsgvyspiasyexnlbqn6ffm62mw&from=1&type=cip
 	series: {
-		labels: ['分册名'],
-		keys: ['volumename']
+		labels: ['丛书名'],
+		keys: ['secondbookname']
 	},
 	seriesNumber: {
 		labels: ['分册号'],
@@ -173,29 +149,32 @@ const FIELDMAP = {
 		keys: ['edition']
 	},
 	place: {
-		labels: ['出版地', '原出版地'],
-		keys: ['publisheradd', 'publishplacetranslate']
+		labels: ['出版地'],
+		keys: ['publisheradd']
 	},
 	publisher: {
-		labels: ['出版单位', '原出版商'],
-		keys: ['publisher', 'publishunittranslate']
+		labels: ['出版单位'],
+		keys: ['publisher']
 	},
 	date: {
 		labels: ['出版时间'],
-		keys: ['publishingdate', 'publishyear', 'publishingyear', 'createdate']
+		keys: ['publishingdate', 'publishyear', 'publishingyear', 'createdate'],
+		callback: function (date) {
+			return date.replace(/\./g, '-');
+		}
 	},
 	language: {
 		labels: ['正文语种', '语种', '文种'],
 		keys: ['textlangue', 'worklanguage'],
 		callback: function (text) {
-			return ((text == '') || (text == 'chi')) ? 'zh-CN' : 'en-US';
+			return (text.includes('en') || text.includes('英')) ? 'en-US' : 'zh-CN';
 		}
 	},
 	ISBN: {
 		labels: ['ISBN'],
 		keys: ['isbn']
 	},
-	callNumber: {
+	CCS: {
 		labels: ['中图法分类'],
 		keys: ['sort']
 	},
@@ -203,21 +182,13 @@ const FIELDMAP = {
 		labels: ['著作权人', '制作单位'],
 		keys: ['copyrightor', 'made']
 	},
-	creators: {
-		labels: ['作者', '著作权人', '其他著作者'],
-		keys: ['firstauthor', 'copyrightor', 'authorother'],
-		callback: function (creators) {
-			// 作者带有“等”
-			// https://pdc.capub.cn/search.html#/detail?id=lvwm4hubadqj7appufemd6rx24zjequztct3eok3imqvsongueeq&from=1&type=isbn
-			const surffixPatten = ['编?著', '原?著', '编?绘', '主?编', '等'];
-			creators = creators.replace(/[[\]]/g, '');
-			for (const surffix of surffixPatten) {
-				if (creators.match(new RegExp(`.+(?=(${surffix}))`))) {
-					creators = creators.match(new RegExp(`.+(?=${surffix})`))[0];
-				}
-			}
-			return creators.split(/,\s/g).map(creator => (matchCreator(creator)));
-		}
+	'original-publisher': {
+		labels: ['原出版商'],
+		keys: ['publishunittranslate']
+	},
+	'original-publisher-place': {
+		labels: ['原出版地'],
+		keys: ['publishplacetranslate']
 	},
 	tags: {
 		labels: ['主题词'],
@@ -226,47 +197,43 @@ const FIELDMAP = {
 			text = text.split(/\s?[;,，；－]\s?/g);
 			return text.map(element => ({ tag: element }));
 		}
-	},
-	// 丛书名示例
-	// https://pdc.capub.cn/search.html#/detail?id=6fvn57xzq2kxf7qldopfgfhcr3svtkp6n7a23d7djxgkt6gmpsbxsgvyspiasyexnlbqn6ffm62mw&from=1&type=cip
-	suite: {
-		labels: ['丛书名'],
-		keys: ['secondbookname']
 	}
 };
 
-class Data extends Map {
-	get(keys) {
-		var value;
-		for (const key of keys) {
-			value = super.get(key);
-			if (value) break;
-		}
-		return value ? value : '';
-	}
-}
-
 async function scrapeSingle(doc, url = doc.location.href) {
 	// Z.debug(url);
-	var tableCell = ZU.xpath(doc, '//div[@class="table_wrap"]/table/tr/td');
-	var tableData = new Data();
-	for (let i = 0; i < tableCell.length; i += 2) {
-		tableData.set(tableCell[i].innerText, tableCell[i + 1].innerText);
-	}
-	// Z.debug(tableData);
+	const labels = new CellLabels(doc, 'tr > td');
 	var newItem = new Z.Item('book');
-	var result = '';
-	for (const field in FIELDMAP) {
-		const recipe = FIELDMAP[field];
-		result = tableData.get(recipe.labels);
-		Z.debug(`for field ${field}, I get \n${result}`);
+	newItem.extra = '';
+	for (let field in fieldMap) {
+		let recipe = fieldMap[field];
+		let result = labels.getWith(recipe.labels);
 		if (recipe.callback) {
 			result = recipe.callback(result);
 		}
+		Z.debug(`for field ${field}, I get \n${result}`);
 		newItem[field] = result;
 	}
-	let type = new URL(url.replace('#', '')).searchParams.get('type');
-	newItem = Object.assign(newItem, matchArchiveLocation(type));
+	if (new URL(url.replace('#', '')).searchParams.get('type').includes('ele')) {
+		newItem.medium = 'CD';
+	}
+	let creators = labels.getWith(['作者', '著作权人', '其他著作者']);
+	let creatorType = /等[翻译]*$/.test(creators)
+		? 'translator'
+		: 'author';
+	// https://pdc.capub.cn/search.html#/detail?id=lvwm4hubadqj7appufemd6rx24zjequztct3eok3imqvsongueeq&from=1&type=isbn
+	creators = creators
+		.replace(/[[\]等编原著绘主]*$/g, '')
+		// 下面这个空格是必要的
+		.split(/,\s/g)
+		.map(creator => processName(creator, creatorType));
+	newItem.extra += `creatorsExt: ${JSON.stringify(creators)}`;
+	Z.debug(creators);
+	creators.forEach((creator) => {
+		delete creator.country;
+		delete creator.original;
+		newItem.creators.push(creator);
+	});
 	newItem.url = url;
 	newItem.attachments.push({
 		url: url,
@@ -278,14 +245,7 @@ async function scrapeSingle(doc, url = doc.location.href) {
 
 async function scrapeMulti(postData) {
 	postData = JSON.parse(postData);
-	// Z.debug(postData);
-	// Z.debug(`id=${postData.id}&searchType=${postData.type}`);
-	// 在Scaffold中无法调用下面这个对象，但大部分浏览器是支持的，
-	// 详见 https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage#browser_compatibility
 	let usersessionid = localStorage.getItem('user-token');
-	// 在Scaffold调试时请用浏览器devtools从请求头找到Usersessionid手动复制粘贴到下方
-	// let usersessionid = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
-	// Z.debug(usersessionid);
 	let postResult = await requestJSON(
 		'https://pdc.capub.cn/api/index/bookDetail',
 		{
@@ -300,34 +260,104 @@ async function scrapeMulti(postData) {
 	let key = aescbc.utf8.toBytes('zg35ws76swnxz679');
 	let iv = aescbc.utf8.toBytes('z66qa18l0w9o521k');
 	let cbc = new aescbc.CBC(key, iv);
-	var plainText = aescbc.utf8.fromBytes(aescbc.pkcs7.strip(cbc.decrypt(ciphertext)));
-	var jsonData = new Data(
-		Object.entries(JSON.parse(plainText)).filter(([_key, value]) => (value != '**'))
-	);
-	// Z.debug(jsonData);
+	let plainText = aescbc.utf8.fromBytes(aescbc.pkcs7.strip(cbc.decrypt(ciphertext)));
+	const jsonData = {
+		innerData: JSON.parse(plainText),
+		getWith: function (keys) {
+			for (let key of keys) {
+				let result = this.innerData[key];
+				if (result && (result != '**')) {
+					return result;
+				}
+			}
+			return '';
+		}
+	};
+	Z.debug(jsonData.innerData);
 	var newItem = new Z.Item('book');
-	var result;
-	for (const field in FIELDMAP) {
-		const recipe = FIELDMAP[field];
-		result = jsonData.get(recipe.keys);
+	newItem.extra = '';
+	for (let field in fieldMap) {
+		let recipe = fieldMap[field];
+		let result = jsonData.getWith(recipe.keys);
 		if (recipe.callback) {
 			result = recipe.callback(result);
 		}
+		Z.debug(`for field ${field}, I get \n${result}`);
 		newItem[field] = result;
 	}
-	let subBookName = jsonData.get('subbookname');
+	let subBookName = jsonData.getWith(['subbookname']);
 	if (subBookName) {
 		newItem.title = `${newItem.title}（${subBookName}）`;
 	}
-	newItem = Object.assign(newItem, matchArchiveLocation(postData.type));
+	let creators = jsonData.getWith(['firstauthor', 'copyrightor', 'authorother']);
+	let creatorType = /等[翻译]*$/.test(creators)
+		? 'translator'
+		: 'author';
+	// https://pdc.capub.cn/search.html#/detail?id=lvwm4hubadqj7appufemd6rx24zjequztct3eok3imqvsongueeq&from=1&type=isbn
+	creators = creators
+		.replace(/[[\]等总编原著绘主]*$/g, '')
+		// 下面这个空格是必要的
+		.split(/,\s/g)
+		.map(creator => processName(creator, creatorType));
+	newItem.extra += `creatorsExt: ${JSON.stringify(creators)}`;
+	Z.debug(creators);
+	creators.forEach((creator) => {
+		delete creator.country;
+		delete creator.original;
+		newItem.creators.push(creator);
+	});
 	let url = `https://pdc.capub.cn/search.html#/detail?id=${postData.id}&from=1&type=${postData.type}`;
 	newItem.url = url;
+	if (new URL(url.replace('#', '')).searchParams.get('type').includes('ele')) {
+		newItem.medium = 'CD';
+	}
 	newItem.attachments.push({
 		url: url,
 		title: 'Snapshot',
 		mimeType: 'text/html'
 	});
 	newItem.complete();
+}
+
+class CellLabels {
+	constructor(doc, selector) {
+		this.innerData = [];
+		let cells = Array.from(doc.querySelectorAll(selector)).filter(element => !element.querySelector(selector));
+		let i = 0;
+		while (cells[i + 1]) {
+			this.innerData.push([cells[i].textContent.replace(/\s*/g, ''), cells[i + 1]]);
+			i += 2;
+		}
+	}
+
+	getWith(label, element = false) {
+		if (Array.isArray(label)) {
+			let result = label
+				.map(aLabel => this.getWith(aLabel, element));
+			result = element
+				? result.find(element => element.childNodes.length)
+				: result.find(element => element);
+			return result
+				? result
+				: element
+					? document.createElement('div')
+					: '';
+		}
+		let pattern = new RegExp(label);
+		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
+		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
+		return keyValPair
+			? ZU.trimInternal(keyValPair[1].innerText)
+			: '';
+	}
+}
+
+function tryMatch(string, pattern, index = 0) {
+	let match = string.match(pattern);
+	if (match && match[index]) {
+		return match[index];
+	}
+	return '';
 }
 
 // below codes are modified from https://github.com/ricmoo/aes-js, Thank macoo for his efforts.
@@ -517,7 +547,7 @@ function encArrToBase64(aBytes) {
 	}
 	return (
 		sB64Enc.substring(0, sB64Enc.length - 2 + nMod3)
-		+ (nMod3 === 2 ? "" : nMod3 === 1 ? "=" : "==")
+			+ (nMod3 === 2 ? "" : nMod3 === 1 ? "=" : "==")
 	);
 }
 return {
@@ -646,10 +676,10 @@ AES.prototype._prepare = function () {
 	while (t < roundKeyCount) {
 		tt = tk[KC - 1];
 		tk[0] ^= ((S[(tt >> 16) & 0xFF] << 24)
-		^ (S[(tt >> 8) & 0xFF] << 16)
-		^ (S[tt & 0xFF] << 8)
-		^ S[(tt >> 24) & 0xFF]
-		^ (rcon[rconpointer] << 24));
+			^ (S[(tt >> 8) & 0xFF] << 16)
+			^ (S[tt & 0xFF] << 8)
+			^ S[(tt >> 24) & 0xFF]
+			^ (rcon[rconpointer] << 24));
 		rconpointer += 1;
 
 		// key expansion (for non-256 bit)
@@ -692,9 +722,9 @@ AES.prototype._prepare = function () {
 		for (let c = 0; c < 4; c++) {
 			tt = this._Kd[r][c];
 			this._Kd[r][c] = (U1[(tt >> 24) & 0xFF]
-			^ U2[(tt >> 16) & 0xFF]
-			^ U3[(tt >> 8) & 0xFF]
-			^ U4[tt & 0xFF]);
+				^ U2[(tt >> 16) & 0xFF]
+				^ U3[(tt >> 8) & 0xFF]
+				^ U4[tt & 0xFF]);
 		}
 	}
 };
@@ -717,10 +747,10 @@ AES.prototype.encrypt = function (plaintext) {
 	for (let r = 1; r < rounds; r++) {
 		for (let i = 0; i < 4; i++) {
 			a[i] = (T1[(t[i] >> 24) & 0xff]
-			^ T2[(t[(i + 1) % 4] >> 16) & 0xff]
-			^ T3[(t[(i + 2) % 4] >> 8) & 0xff]
-			^ T4[t[(i + 3) % 4] & 0xff]
-			^ this._Ke[r][i]);
+				^ T2[(t[(i + 1) % 4] >> 16) & 0xff]
+				^ T3[(t[(i + 2) % 4] >> 8) & 0xff]
+				^ T4[t[(i + 3) % 4] & 0xff]
+				^ this._Ke[r][i]);
 		}
 		t = a.slice();
 	}
@@ -756,10 +786,10 @@ AES.prototype.decrypt = function (ciphertext) {
 	for (let r = 1; r < rounds; r++) {
 		for (let i = 0; i < 4; i++) {
 			a[i] = (T5[(t[i] >> 24) & 0xff]
-			^ T6[(t[(i + 3) % 4] >> 16) & 0xff]
-			^ T7[(t[(i + 2) % 4] >> 8) & 0xff]
-			^ T8[t[(i + 1) % 4] & 0xff]
-			^ this._Kd[r][i]);
+				^ T6[(t[(i + 3) % 4] >> 16) & 0xff]
+				^ T7[(t[(i + 2) % 4] >> 8) & 0xff]
+				^ T8[t[(i + 1) % 4] & 0xff]
+				^ this._Kd[r][i]);
 		}
 		t = a.slice();
 	}
@@ -884,46 +914,6 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://pdc.capub.cn/search.html#/detail?id=o2py6lzfry3cnhuwmwi6dzr4hvthnu2xcvee2h7gzqylkgq3xvra&from=1&type=marc",
-		"items": [
-			{
-				"itemType": "book",
-				"title": "结构化学",
-				"creators": [
-					{
-						"lastName": "李新义",
-						"creatorType": "autor",
-						"fieldMode": 1
-					}
-				],
-				"date": "2018.04",
-				"ISBN": "9787312044403",
-				"abstractNote": "本书分为原子结构与性质、分子结构与性质和晶体结构与性质三个部分，其主要特色是从微观上探析物质结构，通过模型认知化学原理，利用新媒体技术阐述物质的微观结构与宏观性质的相互关系。",
-				"archiveLocation": "馆藏",
-				"callNumber": "G634.83",
-				"language": "zh-CN",
-				"libraryCatalog": "Publications Data Center - China",
-				"place": "合肥",
-				"publisher": "中国科学技术大学出版社",
-				"url": "https://pdc.capub.cn/search.html#/detail?id=o2py6lzfry3cnhuwmwi6dzr4hvthnu2xcvee2h7gzqylkgq3xvra&from=1&type=marc",
-				"attachments": [
-					{
-						"title": "Snapshot",
-						"mimeType": "text/html"
-					}
-				],
-				"tags": [
-					{
-						"tag": "结构化学"
-					}
-				],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
 		"url": "https://pdc.capub.cn/search.html#/detail?id=lqnkn7225pikfse54xek4qe6bp3bjgrzlt5dmswezuiv5nahbq7q&from=1&type=marc",
 		"items": [
 			{
@@ -931,15 +921,16 @@ var testCases = [
 				"title": "俄维大词典",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "孜亚依丁·艾则孜",
-						"creatorType": "autor"
+						"creatorType": "translator",
+						"fieldMode": 1
 					}
 				],
-				"date": "2012.09",
+				"date": "2012-09",
 				"ISBN": "9787228157433",
 				"abstractNote": "本书是俄维两种文字混合的工具书之一。本词典共收单字4万余条左右，短语，派生词，复合词4000余条，包括今年以来已进入人们日常生活的大量新词或新义。每个单字和词条释义都用最常用的意义来解释。",
-				"archiveLocation": "馆藏",
-				"callNumber": "H356",
+				"extra": "creatorsExt: [{\"firstName\":\"\",\"lastName\":\"孜亚依丁·艾则孜\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]",
 				"language": "en-US",
 				"libraryCatalog": "Publications Data Center - China",
 				"place": "乌鲁木齐",
@@ -973,19 +964,22 @@ var testCases = [
 				"title": "朗文少儿语音",
 				"creators": [
 					{
-						"lastName": " 戈登",
-						"creatorType": "autor"
+						"firstName": "",
+						"lastName": "戈登",
+						"creatorType": "translator",
+						"fieldMode": 1
 					},
 					{
-						"lastName": " 孙",
-						"creatorType": "autor"
+						"firstName": "",
+						"lastName": "孙",
+						"creatorType": "translator",
+						"fieldMode": 1
 					}
 				],
-				"date": "2005.10",
+				"date": "2005-10",
 				"ISBN": "9787506279437",
 				"abstractNote": "本书是《朗文少儿语音》3B。",
-				"archiveLocation": "CIP",
-				"callNumber": "H311",
+				"extra": "creatorsExt: [{\"firstName\":\"\",\"lastName\":\"戈登\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"Gordon,T.\"},{\"firstName\":\"\",\"lastName\":\"孙\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"Shun,N.\"},{\"firstName\":\"\",\"lastName\":\"\",\"creatorType\":\"translator\",\"country\":\"\",\"original\":\"\"}]",
 				"language": "zh-CN",
 				"libraryCatalog": "Publications Data Center - China",
 				"place": "北京",
@@ -1029,7 +1023,7 @@ var testCases = [
 				"title": "长征",
 				"creators": [],
 				"ISBN": "9787883310471",
-				"archiveLocation": "馆藏",
+				"extra": "creatorsExt: [{\"firstName\":\"\",\"lastName\":\"\",\"creatorType\":\"translator\",\"country\":\"\",\"original\":\"\"}]",
 				"language": "zh-CN",
 				"libraryCatalog": "Publications Data Center - China",
 				"publisher": "北京国家大剧院古典音乐有限责任公司出版",
@@ -1055,13 +1049,14 @@ var testCases = [
 				"title": "长征组歌——京剧音乐史诗",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "谢振强",
-						"creatorType": "autor",
+						"creatorType": "translator",
 						"fieldMode": 1
 					}
 				],
 				"ISBN": "9787887333315",
-				"archiveLocation": "ISBN",
+				"extra": "creatorsExt: [{\"firstName\":\"\",\"lastName\":\"谢振强\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]",
 				"language": "zh-CN",
 				"libraryCatalog": "Publications Data Center - China",
 				"publisher": "中国文联音像出版公司（中国文联出版社有限公司）",
@@ -1087,6 +1082,7 @@ var testCases = [
 				"itemType": "book",
 				"title": "列宁在一九一八",
 				"creators": [],
+				"extra": "creatorsExt: [{\"firstName\":\"\",\"lastName\":\"\",\"creatorType\":\"translator\",\"country\":\"\",\"original\":\"\"}]",
 				"language": "zh-CN",
 				"libraryCatalog": "Publications Data Center - China",
 				"publisher": "上海人民美术出版社",
