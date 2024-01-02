@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-10-21 10:06:47"
+	"lastUpdated": "2024-01-02 15:55:53"
 }
 
 /*
@@ -96,7 +96,7 @@ async function scrape(doc, url = doc.location.href) {
 	let translator = Zotero.loadTranslator('web');
 	var pdfURL = '';
 	let pdfButton = doc.querySelector('div.pdfView');
-	let socallURL = doc.querySelector('head > meta[name="citation_pdf_url"]').content;
+	let socallURL = attr(doc, 'head > meta[name="citation_pdf_url"]', 'content');
 	if (socallURL.endsWith('.pdf')) {
 		pdfURL = socallURL;
 	}
@@ -104,7 +104,7 @@ async function scrape(doc, url = doc.location.href) {
 		pdfURL = pdfButton.parentElement.href;
 	}
 	else {
-		let id = doc.querySelector('head > meta[name="citation_id"]').content;
+		let id = attr(doc, 'head > meta[name="citation_id"]', 'content');
 		let host = (new URL(url)).host;
 		pdfURL = `${url.split('//')[0]}//${host}/article/exportPdf?id=${id}`;
 	}
@@ -139,50 +139,61 @@ async function scrape(doc, url = doc.location.href) {
 var testCases = [
 	{
 		"type": "web",
-		"url": "http://www.hjbhkx.cn/article/doi/10.16803/j.cnki.issn.1004-6216.202307018",
+		"url": "https://www.hplpb.com.cn/cn/article/doi/10.11884/HPLPB202335.230046",
 		"items": [
 			{
 				"itemType": "journalArticle",
-				"title": "面向生态环境科技成果转化的产业基金研究及实践案例分析",
+				"title": "抗弯曲大模场面积少模光子晶体光纤",
 				"creators": [
 					{
-						"lastName": "曹茜",
+						"lastName": "解国兴",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
-						"lastName": "周雯",
+						"lastName": "谭芳",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
-						"lastName": "魏东洋",
+						"lastName": "张云龙",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
-						"lastName": "段丽杰",
+						"lastName": "高斌豪",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
-						"lastName": "洪曼",
+						"lastName": "崔顺发",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
+					},
+					{
+						"lastName": "穆伟",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "朱先和",
+						"creatorType": "author",
+						"fieldMode": 1
 					}
 				],
-				"date": "2023-08-20",
-				"DOI": "10.16803/j.cnki.issn.1004-6216.202307018",
-				"ISSN": "1004-6216",
-				"abstractNote": "生态环境科技专项产生了一大批高水准的生态环境科研成果以及专业技术，但这些成果都停留在科学阶段，尚未形成产品，发挥社会价值。目前，国内外已经有很多成功的生态环境产业基金，如美国的清洁水州周转基金和国内的深圳清华大学研究院的力合科创投资孵化基金以及南京扬子江生态文明创新中心的源创基金，可以作为研究案例。文章选取国际国内代表性的运营多年和新兴的产业基金案例，分析生态环境产业基金在产业化过程中发挥的作用，结合调研内容总结产业基金运行模式的特点，根据先进经验提出针对我国生态环境产业基金运行主要存在问题的相关建议。",
-				"issue": "4",
+				"date": "2023-12-15",
+				"DOI": "10.11884/HPLPB202335.230046",
+				"ISSN": "1001-4322",
+				"abstractNote": "为更好地解决少模光纤在传输中由于模式耦合过强而导致的信号串扰问题，对弱耦合光子晶体光纤中的线偏振（LP）模式以及矢量模的传输特性进行了研究，设计了一种可传输20种矢量模的双包层光子晶体光纤。通过有限元法模拟光纤参数对相邻LP模式间最小有效折射率差的影响，优化结构参数，使光纤支持稳定传输6种LP模式并满足弱耦合要求。最后分析了不同模式的有效模场面积、弯曲损耗。结果表明：各模式之间的最小有效折射率差达到1.12×10<sup>−4</sup>，表明模式间的串扰可忽略。基模有效模场面积达到了1040 μm<sup>2</sup>，且其相应的非线性系数低至1.07×10<sup>−10</sup>。此外，在弯曲半径为38 mm时，各模式弯曲损耗最大仅为5.65×10<sup>−8</sup> dB/km。与主流的单模光纤及少模单包层相比，该结构具有大模场面积，低模间串扰及更强的抗弯曲能力，丰富了空分复用技术的开发思路。在大数据、虚拟现实、网络传输容量等新兴业务以及光纤传感方面提供了有益的参考方案。",
+				"issue": "12",
+				"journalAbbreviation": "qjgylzs",
 				"language": "zh-CN",
-				"libraryCatalog": "www.hjbhkx.cn",
-				"pages": "1-8",
-				"publicationTitle": "环境保护科学",
+				"libraryCatalog": "www.hplpb.com.cn",
+				"pages": "121002-7",
+				"publicationTitle": "强激光与粒子束",
 				"rights": "http://creativecommons.org/licenses/by/3.0/",
-				"url": "http://hjbh.cbpt.cnki.net//article/doi/10.16803/j.cnki.issn.1004-6216.202307018",
-				"volume": "49",
+				"url": "https://www.hplpb.com.cn/cn/article/doi/10.11884/HPLPB202335.230046",
+				"volume": "35",
 				"attachments": [
 					{
 						"title": "Full Text PDF",
@@ -195,19 +206,19 @@ var testCases = [
 				],
 				"tags": [
 					{
-						"tag": "产业基金"
+						"tag": "光子晶体光纤"
 					},
 					{
-						"tag": "成果转化"
+						"tag": "大模场面积"
 					},
 					{
-						"tag": "案例研究"
+						"tag": "弱耦合少模"
 					},
 					{
-						"tag": "生态环境"
+						"tag": "抗弯曲"
 					},
 					{
-						"tag": "科技金融"
+						"tag": "空分复用技术"
 					}
 				],
 				"notes": [],
@@ -226,12 +237,12 @@ var testCases = [
 					{
 						"lastName": "王治啸",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					},
 					{
 						"lastName": "高红军",
 						"creatorType": "author",
-						"fieldMode": true
+						"fieldMode": 1
 					}
 				],
 				"date": "2023-03-30",
