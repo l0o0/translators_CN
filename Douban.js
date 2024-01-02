@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-28 10:24:51"
+	"lastUpdated": "2024-01-02 07:53:16"
 }
 
 /*
@@ -142,7 +142,7 @@ async function scrape(doc, url = doc.location.href) {
 			});
 			let contents = doc.querySelector('[id*="dir_"][id*="_full"], .table-of-contents');
 			if (contents) {
-				newItem.notes.push(`《${newItem.title}》\n` + contents.innerText.replace(/ · · · [\s\S]*$/, '').replace(/展开全部$/, ''));
+				newItem.notes.push(`<h1>《${newItem.title}》 - 目录</h1>` + contents.innerHTML.replace(/ · · · [\s\S]*$/, '').replace(/展开全部$/, ''));
 			}
 			// https://book.douban.com/subject/26604008/
 			newItem.extra += addExtra('original-title', labels.getWith('原作名'));
