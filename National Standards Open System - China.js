@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-12 08:43:39"
+	"lastUpdated": "2023-12-29 11:33:52"
 }
 
 /*
@@ -35,86 +35,152 @@
 	***** END LICENSE BLOCK *****
 */
 
-function addExtra(newItem, extra) {
-	newItem.extra = (newItem.extra ? newItem.extra + "\n" : "") + extra[0].trim().replace(/[：:]$/, '') + ": " + extra.slice(1).join('; ');
+function detectWeb(doc, url) {
+	if (url.includes('hcno=')) {
+		return 'standard';
+	}
+	else if (getSearchResults(doc, true)) {
+		return 'multiple';
+	}
+	return false;
 }
 
-function detectWeb(_doc, _url) {
-	return 'standard';
+function getSearchResults(doc, checkOnly) {
+	var items = {};
+	var found = false;
+	var rows = doc.querySelectorAll('.mytxt > a');
+	for (let row of rows) {
+		let hcno = tryMatch(row.getAttribute('onclick'), /'(\w+)'/, 1);
+		let title = ZU.trimInternal(row.textContent);
+		if (!hcno || !title) continue;
+		if (checkOnly) return true;
+		found = true;
+		items[`https://openstd.samr.gov.cn/bzgk/gb/newGbInfo?hcno=${hcno}`] = title;
+	}
+	return found ? items : false;
 }
 
-function doWeb(doc, url) {
-	var item = new Zotero.Item('standard');
-
-	item.language = 'zh-CN';
-	item.url = url;
-	item.libraryCatalog = '国家标准全文公开系统';
-
-	item.number = doc.querySelector('title').textContent.split('|')[1].replace('-', '—');
-
-	for (let td of doc.querySelectorAll('.tdlist td')) {
-		let parts = td.textContent.split('：', 2);
-		if (parts.length === 2) {
-			let field = parts[0];
-			let value = parts[1].trim();
-			switch (field) {
-				case '中文标准名称':
-					item.title = value;
-					break;
-				case '标准状态':
-					item.status = value;
-					break;
-			}
+async function doWeb(doc, url) {
+	if (detectWeb(doc, url) == 'multiple') {
+		let items = await Zotero.selectItems(getSearchResults(doc, false));
+		if (!items) return;
+		for (let url of Object.keys(items)) {
+			await scrape(await requestDocument(url));
 		}
 	}
-
-	let fields = doc.querySelectorAll('.row .title');
-	let values = doc.querySelectorAll('.row .content');
-
-	for (var i = 0; i < fields.length; ++i) {
-		let field = fields[i].textContent.trim();
-		let value = values[i].textContent.trim();
-
-		if (value.length === 0) {
-			continue;
-		}
-
-		switch (field) {
-			case '发布日期':
-				item.date = value;
-				break;
-			case '实施日期':
-				if (!item.date || item.date.length === 0) {
-					item.date = value;
-				} else {
-					addExtra(item, [field, value]);
-				}
-				break;
-			case '归口部门':
-				for (var institute of value.split('、')) {
-					item.creators.push({
-						lastName: institute,
-						creatorType: 'author',
-						fieldMode: 1
-					});
-				}
-				break;
-			// case '发布单位':
-			// 	item.publisher = value;
-			// 	break;
-			default:
-				break;
-		}
+	else {
+		await scrape(doc, url);
 	}
+}
 
-	item.attachments.push({
+async function scrape(doc, url = doc.location.href) {
+	var newItem = new Zotero.Item('standard');
+	newItem.extra = '';
+	let labels = new CellLabels(doc, '.row div.col-xs-12');
+	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
+	let textLabels = new TextLabels(doc, '.container table:nth-child(2)');
+	Z.debug(textLabels.innerData);
+	newItem.title = textLabels.getWith('中文标准名称');
+	newItem.number = tryMatch(text(doc, 'td > h1'), /：([\w /-]+)/, 1).replace('-', '—');
+	newItem.status = textLabels.getWith('标准状态').split(' ')[0];
+	newItem.date = labels.getWith(['发布日期', '实施日期']);
+	newItem.url = url;
+	newItem.language = 'zh-CN';
+	newItem.libraryCatalog = '国家标准全文公开系统';
+	newItem.extra += addExtra('original-title', textLabels.getWith('英文标准名称'));
+	newItem.extra += addExtra('CCS', labels.getWith('CCS'));
+	newItem.extra += addExtra('ICS', labels.getWith('ICS'));
+	newItem.extra += addExtra('applyDate', labels.getWith('实施日期'));
+	newItem.creators.push({
+		firstName: '',
+		lastName: labels.getWith(['归口部门', '主管部门']),
+		creatorType: 'author',
+		fieldMode: 1
+	});
+	newItem.attachments.push({
 		title: 'Snapshot',
 		document: doc
 	});
-
-	item.complete();
+	newItem.complete();
 }
 
+class CellLabels {
+	constructor(doc, selector) {
+		this.innerData = [];
+		let cells = Array.from(doc.querySelectorAll(selector)).filter(element => !element.querySelector(selector));
+		let i = 0;
+		while (cells[i + 1]) {
+			this.innerData.push([cells[i].textContent.replace(/\s*/g, ''), cells[i + 1]]);
+			i += 2;
+		}
+	}
+
+	getWith(label, element = false) {
+		if (Array.isArray(label)) {
+			let result = label
+				.map(aLabel => this.getWith(aLabel, element));
+			result = element
+				? result.find(element => element.childNodes.length)
+				: result.find(element => element);
+			return result
+				? result
+				: element
+					? document.createElement('div')
+					: '';
+		}
+		let pattern = new RegExp(label);
+		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
+		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
+		return keyValPair
+			? ZU.trimInternal(keyValPair[1].innerText)
+			: '';
+	}
+}
+
+class TextLabels {
+	constructor(doc, selector) {
+		// innerText在详情页表现良好，但在多条目表现欠佳，故统一使用经过处理的text
+		this.innerData = text(doc, selector)
+			.replace(/^[\s\n]*/gm, '')
+			.replace(/:\n/g, ': ')
+			.replace(/\n([^】\]:：]+?\n)/g, ' $1')
+			.split('\n')
+			.map(keyVal => [
+				tryMatch(keyVal, /^[[【]?([\s\S]+?)[】\]:：]\s*[\s\S]+$/, 1).replace(/\s/g, ''),
+				tryMatch(keyVal, /^[[【]?[\s\S]+?[】\]:：]\s*([\s\S]+)$/, 1)
+			]);
+	}
+
+	getWith(label) {
+		if (Array.isArray(label)) {
+			let result = label
+				.map(aLabel => this.getWith(aLabel))
+				.find(value => value);
+			return result
+				? result
+				: '';
+		}
+		let pattern = new RegExp(label);
+		let keyVal = this.innerData.find(element => pattern.test(element[0]));
+		return keyVal
+			? ZU.trimInternal(keyVal[1])
+			: '';
+	}
+}
+
+function addExtra(key, value) {
+	return value
+		? `${key}: ${value}\n`
+		: '';
+}
+
+function tryMatch(string, pattern, index = 0) {
+	let match = string.match(pattern);
+	if (match && match[index]) {
+		return match[index];
+	}
+	return '';
+}
 
 /** BEGIN TEST CASES **/
 var testCases = [
@@ -127,13 +193,14 @@ var testCases = [
 				"title": "国际单位制及其应用",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "国家市场监督管理总局",
 						"creatorType": "author",
 						"fieldMode": 1
 					}
 				],
 				"date": "1993-07-01",
-				"extra": "实施日期: 1994-07-01",
+				"extra": "original-title: SI units and recommendations for the use of theirmultiples and of certain other units\nCCS: A51\napplyDate: 1994-07-01",
 				"language": "zh-CN",
 				"libraryCatalog": "国家标准全文公开系统",
 				"number": "GB 3100—1993",
@@ -157,16 +224,17 @@ var testCases = [
 		"items": [
 			{
 				"itemType": "standard",
-				"title": "信息与文献  参考文献著录规则",
+				"title": "信息与文献 参考文献著录规则",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "国家标准化管理委员会",
 						"creatorType": "author",
 						"fieldMode": 1
 					}
 				],
 				"date": "2015-05-15",
-				"extra": "实施日期: 2015-12-01",
+				"extra": "original-title: Information and documentation—Rules for bibliographic references and citations to information resources\nCCS: A14\nICS: 01.140.20\napplyDate: 2015-12-01",
 				"language": "zh-CN",
 				"libraryCatalog": "国家标准全文公开系统",
 				"number": "GB/T 7714—2015",
@@ -183,6 +251,45 @@ var testCases = [
 				"seeAlso": []
 			}
 		]
+	},
+	{
+		"type": "web",
+		"url": "https://openstd.samr.gov.cn/bzgk/gb/newGbInfo?hcno=38E0F18A7D25ECAA7257073408F63277",
+		"items": [
+			{
+				"itemType": "standard",
+				"title": "月球与行星原位探测相机通用规范",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "中国科学院",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2023-11-27",
+				"extra": "original-title: General specification of lunar and planetary in-situ exploration camera\nCCS: N38\nICS: 17.180.01\napplyDate: 2023-11-27",
+				"language": "zh-CN",
+				"libraryCatalog": "国家标准全文公开系统",
+				"number": "GB/Z 43082—2023",
+				"status": "现行",
+				"url": "https://openstd.samr.gov.cn/bzgk/gb/newGbInfo?hcno=38E0F18A7D25ECAA7257073408F63277",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://openstd.samr.gov.cn/bzgk/gb/std_list_type?p.p1=1&p.p90=circulation_date&p.p91=desc",
+		"items": "multiple"
 	}
 ]
 /** END TEST CASES **/
