@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-04 10:33:26"
+	"lastUpdated": "2024-01-03 16:27:48"
 }
 
 /*
@@ -35,25 +35,20 @@
 	***** END LICENSE BLOCK *****
 */
 
+const urlMap = {
+	'/bookDetail': 'book',
+	'/JourDetail': 'journalArticle',
+	'/NPDetail': 'newspaperArticle',
+	'/thesisDetail': 'thesis',
+	'/CPDetail': 'conferencePaper',
+	'/patentDetail': 'patent',
+	'/StdDetail': 'standard'
+};
 
 function detectWeb(doc, url) {
-	if (url.includes('/JourDetail')) {
-		return "journalArticle";
-	}
-	else if (url.includes('/bookDetail')) {
-		return "book";
-	}
-	else if (url.includes('/NPDetail')) {
-		return "newspaperArticle";
-	}
-	else if (url.includes('/thesisDetail')) {
-		return "thesis";
-	}
-	else if (url.includes('/CPDetail')) {
-		return "conferencePaper";
-	}
-	else if (url.includes('/patentDetail')) {
-		return "patent";
+	let type = Object.keys(urlMap).find(key => url.includes(key));
+	if (type) {
+		return urlMap[type];
 	}
 	else if (getSearchResults(doc, true)) {
 		return "multiple";
@@ -64,10 +59,11 @@ function detectWeb(doc, url) {
 function getSearchResults(doc, checkOnly) {
 	var items = {};
 	var found = false;
-	var rows = doc.querySelectorAll('[name=formid] table table a');
+	var rows = doc.querySelectorAll('[name=formid] > table > tbody > tr > td:last-child, [name=formid] > [class^="book"]');
 	for (let row of rows) {
-		let href = row.href;
-		let title = ZU.trimInternal(row.textContent);
+		let header = row.querySelector('table a,a');
+		let href = header.href;
+		let title = `${ZU.trimInternal(header.textContent)}_${ZU.trimInternal(text(row, 'td > span, #m_fl'))}`;
 		if (!href || !title) continue;
 		if (checkOnly) return true;
 		found = true;
@@ -81,6 +77,7 @@ async function doWeb(doc, url) {
 		let items = await Zotero.selectItems(getSearchResults(doc, false));
 		if (!items) return;
 		for (let url of Object.keys(items)) {
+			// 依赖浏览器环境
 			await scrape(await requestDocument(url));
 		}
 	}
@@ -89,97 +86,205 @@ async function doWeb(doc, url) {
 	}
 }
 
-async function scrape(doc, url) {
-	var itemType = detectWeb(doc, url);
-	var hashField = {
-		作者: 'author',
-		刊名: 'publicationTitle',
-		出版日期: 'date',
-		日期: 'date',
-		期号: 'volume',
-		关键词: 'tags',
-		摘要: 'abstractNote',
-		丛书名: 'series',
-		形态项: 'numPages',
-		出版项: 'publisher',
-		主题词: 'tags',
-		学位授予单位: 'university',
-		学位名称: 'thesisType',
-		导师姓名: 'contributor',
-		学位年度: 'date',
-		会议名称: 'conferenceName',
-		申请号: 'patentNumber',
-		申请日期: 'date',
-		发明人: 'inventor',
-		地址: 'place',
-		申请人: 'attorneyAgent',
-		ISBN号: 'ISBN'
-	};
-	var item = new Zotero.Item(itemType);
-	item.title = doc.title.replace(/_.*?搜索$/, "");
-	item.url = url;
-	item.language = 'zh-CN';
-	var clickMore = ZU.xpath(doc, "//a[text()='更多...']");
-	if (clickMore.length > 0) {
-		clickMore[0].click();
-	}
-	var contents = Array.from(doc.querySelectorAll('dl > dd, #m_top li')).map((element) => {
-		let match = element.innerText.match(/^【(.+?)】(.+)/);
-		// Z.debug(match);
-		return match.length > 2
-			? { field: match[1].replace(/\s/g, ''), value: ZU.trimInternal(match[2]) }
-			: '';
-	}).filter(element => hashField[element.field]);
-	for (let { field, value } of contents) {
-		if (ZU.getCreatorsForType(itemType).includes(hashField[field])) {
-			value = value.split(/[;；]/).forEach(element => {
-				element = element.split(/[,，]/);
-				if (/等翻?译$/.test(element[element.length - 1])) {
-					element = element.map(subElement => ({ name: subElement, creatorType: 'translator' }));
-				}
-				else {
-					element = element.map(subElement => {
-						return /译$/.test(subElement)
-							? { name: subElement, creatorType: 'transltor' }
-							: { name: subElement, creatorType: hashField[field] }
-					});
-				}
-				element.forEach(subElement => item.creators.push(formatName(subElement.name, subElement.creatorType)));
+async function scrape(doc, url = doc.location.href) {
+	Z.debug(doc.body.innerText);
+	const labels = new LabelsX(doc, '.content > ul:first-child > li, .tubox dd');
+	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
+	var newItem = new Zotero.Item(detectWeb(doc, url));
+	newItem.extra = '';
+	newItem.title = text(doc, 'h1, .tutilte');
+	// #zymore见于期刊
+	// .tu_content 见于图书
+	// #more 见于学位论文
+	// div[id^="content"]见于专利
+	newItem.abstractNote = innerText(doc, '#zymore, .tu_content, #more, div[id^="content"]').replace(/^【摘 要】/, '');
+	switch (newItem.itemType) {
+		case 'book': {
+			let pubInfo = labels.getWith('出版项');
+			newItem.series = labels.getWith('丛书名');
+			// newItem.seriesNumber = 系列编号;
+			// newItem.volume = 卷次;
+			// newItem.numberOfVolumes = 总卷数;
+			// newItem.edition = 版本;
+			newItem.place = tryMatch(pubInfo, /(.+)：/, 1);
+			newItem.publisher = tryMatch(pubInfo, /：\s*(.+)，\s*/);
+			newItem.date = ZU.strToISO(tryMatch(pubInfo, /[\d.]*$/));
+			newItem.numPages = labels.getWith('形态项');
+			newItem.ISBN = labels.getWith('ISBN号');
+			newItem.extra += addExtra('CLC', labels.getWith('中图分类法'));
+			newItem.extra += addExtra('price', labels.getWith('定价'));
+			let creators = [];
+			labels.getWith('作者').replace(/(\w)，(\w)/g, '$1, $2').split('；')
+.forEach((group) => {
+	let creatorType = /译/.test(group)
+		? 'translator'
+		: 'author';
+	group.split('，').forEach((creator) => {
+		Z.debug(creator);
+		creator = creator.replace(/[等翻译主副参编著作]*$/, '');
+		let country = tryMatch(creator, /^（(.+?)）/, 1);
+		Z.debug(country);
+		creator = creator.replace(/^（.*?）/, '');
+		let original = tryMatch(creator, /（(.+?)）$/, 1);
+		creator = creator.replace(/（.*?）$/, '');
+		Z.debug(original);
+		Z.debug(creator);
+		creator = ZU.cleanAuthor(creator, creatorType);
+		creator.country = country;
+		creator.original = original;
+		if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+			creator.lastName = creator.firstName + creator.lastName;
+			creator.firstName = '';
+			creator.fieldMode = 1;
+		}
+		creators.push(creator);
+	});
+});
+			newItem.extra += addExtra('creatorsExt', JSON.stringify(creators));
+			creators.forEach((creator) => {
+				delete creator.country;
+				delete creator.original;
+				newItem.creators.push(creator);
 			});
-
+			break;
 		}
-		else if (field == "出版项" && value.match(/[\d.]+$/)) {
-			let date = value.match(/[\d.]+$/)[0]
-			if (date) {
-				date = date.replace('.', '-');
-				item.date = date;
+		case 'journalArticle':
+			newItem.publicationTitle = labels.getWith('刊名');
+			// newItem.volume = 卷次;
+			newItem.issue = tryMatch(labels.getWith('期号'), /0*([1-9]\d*)/, 1);
+			// newItem.pages = 页码;
+			newItem.date = labels.getWith('出版日期');
+			newItem.extra += addExtra('original-title', labels.getWith('外文题名'));
+			newItem.extra += addExtra('fund', labels.getWith('基金项目'));
+			newItem.extra += addExtra('if', labels.getWith('影响因子'));
+			labels.getWith('作者', true).querySelectorAll('a').forEach(element => newItem.creators.push(ZU.cleanAuthor(element.textContent, 'author')));
+			labels.getWith('关键词', true).querySelectorAll('a').forEach(element => newItem.tags.push(element.textContent));
+			break;
+		case 'newspaperArticle':
+			newItem.publicationTitle = labels.getWith('来源');
+			newItem.date = ZU.strToISO(labels.getWith('日期'));
+			newItem.paegs = tryMatch(labels.getWith('版次'), /0*([1-9]\d*)/, 1);
+			labels.getWith('作者', true).querySelectorAll('a').forEach(element => newItem.creators.push(ZU.cleanAuthor(element.textContent, 'author')));
+			// 报纸语言皆为中文，使用空格分割不会造成意外
+			labels.getWith('关键词').split(' ').forEach(tag => newItem.tags.push(tag));
+			break;
+		case 'thesis':
+			newItem.thesisType = `${labels.getWith('学位名称')}学位论文`;
+			newItem.university = labels.getWith('学位授予单位');
+			newItem.date = labels.getWith('学位年度');
+			newItem.creators.push(ZU.cleanAuthor(labels.getWith('作者'), 'author'));
+			labels.getWith('导师').split('，').forEach(creator => newItem.creators.push(ZU.cleanAuthor(creator, 'contributor')));
+			break;
+		case 'conferencePaper':
+			newItem.date = labels.getWith('日期');
+			newItem.proceedingsTitle = labels.getWith('会议录名称');
+			newItem.conferenceName = labels.getWith('会议名称');
+			labels.getWith('作者', true).querySelectorAll('a').forEach(element => newItem.creators.push(ZU.cleanAuthor(element.textContent, 'author')));
+			labels.getWith('关键词', true).querySelectorAll('a').forEach(element => newItem.tags.push(element.textContent));
+			break;
+		case 'patent': {
+			newItem.filingDate = ZU.strToISO(labels.getWith('申请日期'));
+			newItem.applicationNumber = labels.getWith('申请号');
+			let patentDetail = attr(doc, 'li > a[href*="pat.hnipo"]', 'href');
+			if (newItem.itemType == 'patent' && patentDetail) {
+				let detailDoc = await requestDocument(patentDetail);
+				var tabel = {
+					cells: Array.from(detailDoc.querySelectorAll('td.table_15')),
+					getNext: function (label) {
+						let result = this.cells.find(element => element.innerText == `${label}:`);
+						return result && result.nextElementSibling
+							? result.nextElementSibling.innerText
+							: '';
+					}
+				};
+				newItem.issueDate = tabel.getNext('法律状态公告日');
+				newItem.legalStatus = tabel.getNext('法律状态');
 			}
-			item.place = value.match(/^(.*)：/)[1];
-			value = value.replace(`${item.place}：`, '').match(/^(.*?) , /)[1];
+			newItem.extra += addExtra('Genre', labels.getWith('专利类型'));
+			labels.getWith('发明人').split('，').forEach(creator => newItem.creators.push(ZU.cleanAuthor(creator, 'inventor')));
+			break;
 		}
-		else if (field == '期号' && value.match(/\d+/)) {
-			value = value.match(/\d+/)[0];
-		}
-		else if (hashField[field] == 'tags') {
-			value = value.split(/[；;-]/g);
-			value.forEach(tag => item.tags.push(tag));
-		}
-		else {
-			item[hashField[field]] = value;
-		}
+		case 'standard':
+			newItem.number = labels.getWith('标准号').replace('-', '—');
+			newItem.extra += addExtra('original-title', labels.getWith('标准英文名'));
+			newItem.extra += addExtra('IPC', labels.getWith('IPC分类号'));
+			newItem.extra += addExtra('ICS', labels.getWith('ICS分类号'));
+			newItem.extra += addExtra('reference', labels.getWith('引用标准'));
+			newItem.extra += addExtra('drafting-committee', labels.getWith('起草单位'));
+			newItem.extra += addExtra('replacement', labels.getWith('替代情况'));
+			newItem.extra += addExtra('CCS', labels.getWith('中标分类号'));
+			break;
+		default:
+			break;
 	}
-	item.abstractNote = text(doc, '.tu_content').replace(/^内容提要:\n|\s+隐藏更多$/, '');
-	item.complete();
+	newItem.url = url;
+	newItem.complete();
 }
 
-function formatName(name, creatorType) {
-	name = name.replace(/^（.*）|等?(参?副?主?编$|著$|翻?译$)/g, "");
-	var creator = {};
-	creator = ZU.cleanAuthor(name, creatorType);
-	if (/[\u4e00-\u9fa5]/.test(name)) {
-		creator.fieldMode = 1;
+class LabelsX {
+	constructor(doc, selector) {
+		this.innerData = [];
+		Array.from(doc.querySelectorAll(selector))
+			// avoid nesting
+			.filter(element => !element.querySelector(selector))
+			// avoid empty
+			.filter(element => !/^\s*$/.test(element.textContent))
+			.forEach((element) => {
+				let elementCopy = element.cloneNode(true);
+				// avoid empty text
+				while (!elementCopy.firstChild.textContent.replace(/\s/g, '')) {
+					// Z.debug(elementCopy.firstChild.textContent);
+					elementCopy.removeChild(elementCopy.firstChild);
+					// Z.debug(elementCopy.firstChild.textContent);
+				}
+				if (elementCopy.childNodes.length > 1) {
+					let key = elementCopy.removeChild(elementCopy.firstChild).textContent.replace(/\s/g, '');
+					this.innerData.push([key, elementCopy]);
+				}
+				else {
+					let text = ZU.trimInternal(elementCopy.textContent);
+					let key = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]/).replace(/\s/g, '');
+					elementCopy.textContent = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]\s*(.+)/, 1);
+					this.innerData.push([key, elementCopy]);
+				}
+			});
 	}
-	return creator;
+
+	getWith(label, element = false) {
+		if (Array.isArray(label)) {
+			let result = label
+				.map(aLabel => this.getWith(aLabel, element))
+				.filter(element => element);
+			result = element
+				? result.find(element => element.childNodes.length)
+				: result.find(element => element);
+			return result
+				? result
+				: element
+					? document.createElement('div')
+					: '';
+		}
+		let pattern = new RegExp(label);
+		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
+		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
+		return keyValPair
+			? ZU.trimInternal(keyValPair[1].textContent)
+			: '';
+	}
+}
+
+function tryMatch(string, pattern, index = 0) {
+	if (!string) return '';
+	let match = string.match(pattern);
+	return (match && match[index])
+		? match[index]
+		: '';
+}
+
+function addExtra(key, value) {
+	return value
+		? `${key}: ${value}\n`
+		: '';
 }
 
 /** BEGIN TEST CASES **/
@@ -195,18 +300,18 @@ var testCases = [
 					{
 						"firstName": "",
 						"lastName": "顾云婧",
-						"creatorType": "author",
-						"fieldMode": 1
+						"creatorType": "author"
 					},
 					{
 						"firstName": "",
 						"lastName": "朱平",
-						"creatorType": "author",
-						"fieldMode": 1
+						"creatorType": "author"
 					}
 				],
 				"date": "2020",
-				"language": "zh-CN",
+				"abstractNote": "卵巢癌是一种早期诊断率低而致死率较高的恶性肿瘤,对其预后标志物的鉴定和生存率的预测仍是生存分析的重要任务。利用卵巢癌预后相关基因构建基因共表达网络,鉴定预后生物标志物并进行生存率的预测。首先,对TCGA(The cancer genome atlas)数据库下载的卵巢癌基因表达数据实施单因素回归分析,利用得到的747个预后相关基因构建卵巢癌预后加权基因共表达网络。其次,考虑网络的生物学意义,利用蛋白质相互作用(Protein-protein interaction, PPI)数据对共表达网络中的模块重新加权,并根据网络中基因的拓扑重要性对基因进行排序。最后,运用Cox比例风险回归对网络中的重要基因构建卵巢癌预后模型,鉴定了3个预后生物标志物。生存分析结果显示,这3个标志物能够显著区分不同预后的患者,较好地预测卵巢癌患者的预后情况。  隐藏更多",
+				"extra": "original-title: Research on gene co-expression network and prognostic biomarkers of ovarian cancer\nfund: 国家自然科学基金项目(No.11271163)\nif: 1.6145(2022)",
+				"issue": "5",
 				"libraryCatalog": "SuperLib",
 				"publicationTitle": "生物学杂志",
 				"url": "http://jour.ucdrs.superlib.net/views/specific/2929/JourDetail.jsp?dxNumber=100287199277&d=EDA67F761EA0741D8CCBA19AAE292498&s=%E5%9F%BA%E5%9B%A0%E5%85%B1%E8%A1%A8%E8%BE%BE&ecode=utf-8",
@@ -223,46 +328,6 @@ var testCases = [
 					},
 					{
 						"tag": "预后模型"
-					}
-				],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "http://book.ucdrs.superlib.net/views/specific/2929/bookDetail.jsp?dxNumber=000017983961&d=215FFAF9EDCF907AB55873FB908C43B2&fenlei=18191301070301",
-		"items": [
-			{
-				"itemType": "book",
-				"title": "现代服装测试技术",
-				"creators": [
-					{
-						"firstName": "",
-						"lastName": "陈东生",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "吕佳",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"date": "2019-01",
-				"ISBN": "9787566914798",
-				"abstractNote": "本书以服装以及着装的主体-人作为研究对象，围绕人和服装之间的关系，从服装诱发的心理认知、生理卫生指标、动作行为三方面，将现代服装的一些测量方法进行了系统的介绍。满足市场导向生产模式的需求。本书提供了一些科学性的、有实际使用价值的现代服装测试方法和技术，帮助服装从业人员充分利用人体工效学方法进行科学的服装测量和研究。",
-				"language": "zh-CN",
-				"libraryCatalog": "SuperLib",
-				"numPages": "140",
-				"place": "上海",
-				"url": "http://book.ucdrs.superlib.net/views/specific/2929/bookDetail.jsp?dxNumber=000017983961&d=215FFAF9EDCF907AB55873FB908C43B2&fenlei=18191301070301",
-				"attachments": [],
-				"tags": [
-					{
-						"tag": "服装量裁"
 					}
 				],
 				"notes": [],
@@ -359,25 +424,250 @@ var testCases = [
 				],
 				"date": "2015-03",
 				"ISBN": "9787560997186",
-				"abstractNote": "本书以基因工程的研究步骤及实际操作中的需要为主线，共分12章，包括基因工程的基本概念、基因工程基本技术原理、基因工程的工具酶和克隆载体、目的基因的克隆、外源基因的原核表达系统等。",
-				"language": "zh-CN",
+				"abstractNote": "内容提要:\n本书以基因工程的研究步骤及实际操作中的需要为主线，共分12章，包括基因工程的基本概念、基因工程基本技术原理、基因工程的工具酶和克隆载体、目的基因的克隆、外源基因的原核表达系统等。",
+				"extra": "price: 52.00\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"郑振宇\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"王秀利\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"刘丹梅\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"宋运贤\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"陈国梁\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"邵燕\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"胡沂淮\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"阚劲松\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"韩凤桐\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"孙新城\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"李宏\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"张锐\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"王彦芹\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1}]",
 				"libraryCatalog": "SuperLib",
 				"numPages": "375",
 				"place": "武汉",
 				"series": "全国普通高等院校生物科学类“十二五”规划教材",
 				"url": "http://book.ucdrs.superlib.net/views/specific/2929/bookDetail.jsp?dxNumber=000015416568&d=7C4B0704D86B606CB102A5B3A3EC74CE&fenlei=151206",
 				"attachments": [],
-				"tags": [
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "http://book.ucdrs.superlib.net/views/specific/2929/bookDetail.jsp?dxNumber=000000369267&d=2C67EBC1D046CAEAB6C7168473C0C540&fenlei=080401070331",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "朗文英语正误词典",
+				"creators": [
 					{
-						"tag": "基因工程"
+						"firstName": "",
+						"lastName": "希顿",
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
-						"tag": "教材"
+						"firstName": "",
+						"lastName": "特顿",
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
-						"tag": "高等学校"
+						"firstName": "",
+						"lastName": "吴骅",
+						"creatorType": "translator",
+						"fieldMode": 1
 					}
 				],
+				"date": "1992-02",
+				"ISBN": "9787533707538",
+				"abstractNote": "内容提要:\n著者原题无汉译名:按字母顺序罗列1700多个常见错误、正误例句、英语与美语的差异、语法术语要领等,大多错误取自剑桥第一证书考试答卷。",
+				"extra": "price: 7.35 8.90\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"希顿\",\"creatorType\":\"author\",\"country\":\"英\",\"original\":\"Heaton, J.B.\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"特顿\",\"creatorType\":\"author\",\"country\":\"英\",\"original\":\"Turton, N.D.\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"吴骅\",\"creatorType\":\"translator\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1}]",
+				"libraryCatalog": "SuperLib",
+				"numPages": "476",
+				"place": "合肥",
+				"url": "http://book.ucdrs.superlib.net/views/specific/2929/bookDetail.jsp?dxNumber=000000369267&d=2C67EBC1D046CAEAB6C7168473C0C540&fenlei=080401070331",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "http://newspaper.ucdrs.superlib.net/views/specific/2929/NPDetail.jsp?dxNumber=406010835180&d=2D1753A572EC38E418149C5B105B093F&sw=+%E7%BA%B3%E7%B1%B3&ecode=utf-8",
+		"items": [
+			{
+				"itemType": "newspaperArticle",
+				"title": "纳米纤维工业滤纸下线",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "冯倩",
+						"creatorType": "author"
+					},
+					{
+						"firstName": "",
+						"lastName": "秦燕香",
+						"creatorType": "author"
+					},
+					{
+						"firstName": "",
+						"lastName": "张晓茹",
+						"creatorType": "author"
+					}
+				],
+				"date": "2022-06-13",
+				"libraryCatalog": "SuperLib",
+				"publicationTitle": "阳泉日报",
+				"url": "http://newspaper.ucdrs.superlib.net/views/specific/2929/NPDetail.jsp?dxNumber=406010835180&d=2D1753A572EC38E418149C5B105B093F&sw=+%E7%BA%B3%E7%B1%B3&ecode=utf-8",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "工业滤纸"
+					},
+					{
+						"tag": "纳米纤维"
+					},
+					{
+						"tag": "过滤效率"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "http://jour.ucdrs.superlib.net/views/specific/2929/thesisDetail.jsp?dxNumber=390104353359&d=9358F557560F983157C9B1F338A23F94&sw=%E7%89%B9%E5%BC%82%E6%80%A7%E5%90%B8%E9%99%84%E5%A4%9A%E7%A7%8D%E6%B1%A1%E6%9F%93%E7%89%A9%E7%9A%84%E5%88%86%E5%AD%90%E5%8D%B0%E8%BF%B9%E7%BA%B3%E7%B1%B3%E8%86%9C%E7%9A%84%E5%88%B6%E5%A4%87%E5%92%8C%E6%80%A7%E8%83%BD%E8%AF%84%E4%BB%B7",
+		"items": [
+			{
+				"itemType": "thesis",
+				"title": "特异性吸附多种污染物的分子印迹纳米膜的制备和性能评价",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "鲁志强",
+						"creatorType": "author"
+					},
+					{
+						"firstName": "",
+						"lastName": "石云",
+						"creatorType": "contributor"
+					},
+					{
+						"firstName": "",
+						"lastName": "吕斌",
+						"creatorType": "contributor"
+					}
+				],
+				"date": "2013",
+				"abstractNote": "目的：食品、水、土壤中均含有低剂量的双酚A（bisphenolA，BPA）和戊唑醇（Tebuconazole，TBZ），这两种环境污染物均为环境雌激素，并可通过食物链富集，因此需要灵敏准确地分析环境中这两种污染物的浓度。分子印迹技术是制备对某一特定靶分子具有选择性识别能力的聚合物的技术，广泛用于特异性分离富集痕量污染物上。但是分子印迹一般是针对单一模板分子的，如何制备可同时特异性分离富集多种污染物的分子印迹材料，一直是近期的研究热点。本研究将BPA分子印迹纳米微球（B-MIP）和TBZ分子印迹纳米微球（T-MIP）封装入聚乙烯醇（PVA）纳米纤维中得到分子印迹纳米纤维膜并以该膜作为吸附材料，以实现同时特异性吸附不同性质污染物之目的。方法：本研究分别以化学结构不同的BPA和TBZ作为模板分子，按不同的组合（BPA、TBZ、BPA+TBZ），合成系列MIPs纳米微球。然后通过静电纺丝技术将不同的MIPs微球包裹进聚乙烯醇（polyvinyl，PVA）纳米纤维膜中，制备出系列分子印迹膜，并对各种膜的吸附性能进行评价。结果：静态吸附实验结果显示，同时含有0.2g BPA-MIPs和0.2g TBZ-MIPs的膜（B&T-MIM），对BPA和TBZ的吸附容量和吸附特异性均明显高于含有0.4g同时以BPA和TBZ为模板印迹的膜（D-MIM）。结果显示纳米纤维膜中的两种MIPs可高效特异性吸附各自的靶污染物，并未互相干扰。结论：B&T-MIM可同时高效特异性吸附痕量酸性污染物BPA和碱性污染物TBZ。  隐藏更多",
+				"libraryCatalog": "SuperLib",
+				"thesisType": "硕士学位论文",
+				"university": "华中科技大学",
+				"url": "http://jour.ucdrs.superlib.net/views/specific/2929/thesisDetail.jsp?dxNumber=390104353359&d=9358F557560F983157C9B1F338A23F94&sw=%E7%89%B9%E5%BC%82%E6%80%A7%E5%90%B8%E9%99%84%E5%A4%9A%E7%A7%8D%E6%B1%A1%E6%9F%93%E7%89%A9%E7%9A%84%E5%88%86%E5%AD%90%E5%8D%B0%E8%BF%B9%E7%BA%B3%E7%B1%B3%E8%86%9C%E7%9A%84%E5%88%B6%E5%A4%87%E5%92%8C%E6%80%A7%E8%83%BD%E8%AF%84%E4%BB%B7",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "http://jour.ucdrs.superlib.net/views/specific/2929/CPDetail.jsp?dxNumber=330108499702&d=B5E6BEF31839C4BD39ED8471E85C4950&sw=%E7%BA%B3%E7%B1%B3",
+		"items": [
+			{
+				"itemType": "conferencePaper",
+				"title": "纳米MMT/SBR复合改性沥青性能研究",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "吴池",
+						"creatorType": "author"
+					},
+					{
+						"firstName": "",
+						"lastName": "弓鑫",
+						"creatorType": "author"
+					},
+					{
+						"firstName": "",
+						"lastName": "张新宇",
+						"creatorType": "author"
+					},
+					{
+						"firstName": "",
+						"lastName": "张建朝",
+						"creatorType": "author"
+					},
+					{
+						"firstName": "",
+						"lastName": "常晓娟",
+						"creatorType": "author"
+					}
+				],
+				"date": "2022",
+				"abstractNote": "为改善SBR改性沥青的抗老化性能,在SBR改性沥青中加入掺量为1%、2%、3%、4%、5%的纳米MMT对其进行改性,制备纳米MMT/SBR复合改性沥青。通过三大指标试验、旋转薄膜烘箱加热、布氏旋转黏度试验、动态剪切流变试验等试验对基质沥青、SBR改性沥青及复合改性沥青的高低温性能、抗老化性能、抗疲劳性能、热储存稳定性能进行对比分析。结果表明:加入纳米MMT后,相较于SBR改性沥青,纳米MMT/SBR复合改性沥青拥有更好的高温性能、抗老化性能、抗疲劳性能及热储存稳定性能,但其低温性能有所下降。实际使用时,考虑到加入4%纳米MMT后,复合改性沥青低温延度下降幅度较大,推荐纳米MMT掺量为3%～4%。  隐藏更多",
+				"conferenceName": "2022世界交通运输大会（WTC2022）",
+				"libraryCatalog": "SuperLib",
+				"proceedingsTitle": "2022世界交通运输大会（WTC2022）",
+				"url": "http://jour.ucdrs.superlib.net/views/specific/2929/CPDetail.jsp?dxNumber=330108499702&d=B5E6BEF31839C4BD39ED8471E85C4950&sw=%E7%BA%B3%E7%B1%B3",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "SBR"
+					},
+					{
+						"tag": "复合改性沥青"
+					},
+					{
+						"tag": "性能"
+					},
+					{
+						"tag": "纳米MMT"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "http://book.ucdrs.superlib.net/views/specific/2929/patentDetail.jsp?dxid=166050451063&d=DDA36D0C0E33BB3674CFCA8E87A1F4FE&sw=+%E7%BA%B3%E7%B1%B3&ecode=utf-8",
+		"items": [
+			{
+				"itemType": "patent",
+				"title": "黑板（纳米）",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "马燕",
+						"creatorType": "inventor"
+					},
+					{
+						"firstName": "",
+						"lastName": "金心茹",
+						"creatorType": "inventor"
+					}
+				],
+				"issueDate": "2023.10.03",
+				"abstractNote": "1.本外观设计产品的名称：黑板（纳米）。2.本外观设计产品的用途：用于书写的黑板。3.本外观设计产品的设计要点：在于形状。4.最能表明设计要点的图片或照片：立体图。1.本外观设计产品的名称：黑板（纳米）。2.本外观设计产品的用途：用于书写的黑板。3.本外观设计产品的设计要点：在于形状。4.最能表明设...\n展开",
+				"applicationNumber": "202330176115.6",
+				"filingDate": "2023-04-04",
+				"legalStatus": "授权",
+				"url": "http://book.ucdrs.superlib.net/views/specific/2929/patentDetail.jsp?dxid=166050451063&d=DDA36D0C0E33BB3674CFCA8E87A1F4FE&sw=+%E7%BA%B3%E7%B1%B3&ecode=utf-8",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "http://book.ucdrs.superlib.net/views/specific/2929/StdDetail.jsp?dxid=320151546977&d=F3BF82FD19585130C75082812F38D5C9&sw=+%E8%91%97%E5%BD%95",
+		"items": [
+			{
+				"itemType": "standard",
+				"title": "生态环境档案著录细则",
+				"creators": [],
+				"extra": "original-title: Description detailed regulations for ecological and environmental archives\nICS: 01.040.13\ndrafting-committee: 苏州大学\nreplacement: 替代HJ/T 9-1995",
+				"libraryCatalog": "SuperLib",
+				"number": "HJ 9—2022",
+				"url": "http://book.ucdrs.superlib.net/views/specific/2929/StdDetail.jsp?dxid=320151546977&d=F3BF82FD19585130C75082812F38D5C9&sw=+%E8%91%97%E5%BD%95",
+				"attachments": [],
+				"tags": [],
 				"notes": [],
 				"seeAlso": []
 			}
