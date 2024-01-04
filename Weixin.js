@@ -9,74 +9,109 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-09-27 07:06:52"
+	"lastUpdated": "2024-01-04 10:16:48"
 }
 
 /*
 	***** BEGIN LICENSE BLOCK *****
+
+	Copyright © 2022 l0o0
+
 	This file is part of Zotero.
+
 	Zotero is free software: you can redistribute it and/or modify
 	it under the terms of the GNU Affero General Public License as published by
 	the Free Software Foundation, either version 3 of the License, or
 	(at your option) any later version.
+
 	Zotero is distributed in the hope that it will be useful,
 	but WITHOUT ANY WARRANTY; without even the implied warranty of
 	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 	GNU Affero General Public License for more details.
+
 	You should have received a copy of the GNU Affero General Public License
 	along with Zotero. If not, see <http://www.gnu.org/licenses/>.
+
 	***** END LICENSE BLOCK *****
 */
 
-function scrape(doc, url) {
-	const item = new Zotero.Item("blogPost");
-	
-	const ogMetadataCache = new Map();
-	const nodeList = doc.head.querySelectorAll(':scope meta[property^="og:"]');
-	for (const node of nodeList) {
-		ogMetadataCache.set(node.getAttribute("property"), node.content);
-	}
-	
-	item.title = ogMetadataCache.get("og:title");
-	item.websiteType = ogMetadataCache.get("og:site_name");
-	item.blogTitle = doc.querySelector("#profileBt > a").innerText 
-	item.url = ogMetadataCache.get("og:url");
-	item.abstractNote = ogMetadataCache.get("og:description");
-	item.creators = getArticleCreator(doc, ogMetadataCache.get("og:article:author"));
-	item.date = doc.querySelector("#publish_time").innerText;
-	// note_content = doc.body.querySelector("#js_content").innerHTML.trim();
-	// note_content = note_content.replace(/\"/g, "'");
-	// note_content = note_content.replace(/<img .*?src='(.*?)'.*?>/g, "<img src='$1'\/>");
-	// note_content = `<h1>${item.title}</h1>` + note_content;
-	// item.notes.push({note:note_content});
-	item.attachments.push({url: url, title: "Snapshot", document: doc});
-	item.complete();
-}
 
-function detectWeb(doc, url) {
-	const ogType = doc.head.querySelector('meta[property="og:type"]');
-	if (ogType && ogType.content === "article") {
+function detectWeb(doc, _url) {
+	if (attr(doc, 'meta[property="og:type"]', 'content') === 'article') {
 		return "blogPost";
 	}
 	return false;
 }
 
-function doWeb(doc, url) {
-	if (detectWeb(doc, url) === "blogPost") {
-		scrape(doc, url);
+async function doWeb(doc, url) {
+	const newItem = new Z.Item('blogPost');
+	const metas = new Map();
+	const nodeList = doc.head.querySelectorAll(':scope meta[property^="og:"]');
+	for (const node of nodeList) {
+		metas.set(node.getAttribute('property'), node.content);
 	}
+	Z.debug(metas);
+	newItem.title = metas.get('og:title');
+	newItem.abstractNote = metas.get('og:description');
+	newItem.blogTitle = text(doc, '#profileBt > a');
+	newItem.websiteType = metas.get('og:site_name');
+	newItem.date = text(doc, '#publish_time');
+	newItem.url = metas.get('og:url');
+	[...new Set([text(doc, '#js_name'), metas.get('og:article:author')])].forEach((creator) => {
+		creator = ZU.cleanAuthor(creator, 'author');
+		if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+			creator.lastName = creator.firstName + creator.lastName;
+			creator.firstName = '';
+			creator.fieldMode = 1;
+		}
+		newItem.creators.push(creator);
+	});
+	newItem.attachments.push({
+		url: url,
+		title: 'Snapshot',
+		document: doc
+	});
+	newItem.complete();
 }
 
-function getArticleCreator(doc, authorName) {
-	const profileName = doc.querySelector("#js_name").innerText.trim();
-	if (!authorName.length || authorName === profileName) {
-		return [{lastName: profileName, creatorType: "author", fieldMode: 1}];
-	}
-	return [{lastName: authorName, creatorType: "author", fieldMode: 1}, 
-			{lastName: profileName, creatorType: "author", fieldMode: 1}
-		   ];
-}
 /** BEGIN TEST CASES **/
 var testCases = [
+	{
+		"type": "web",
+		"url": "https://mp.weixin.qq.com/s/NYENhzx7kF7OX_d4DTD4fA",
+		"items": [
+			{
+				"itemType": "blogPost",
+				"title": "Zotero 官方安卓测试版来了",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "学术废物收容所",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "l0o0",
+						"creatorType": "author"
+					}
+				],
+				"date": "2023-12-26 11:57",
+				"abstractNote": "来自官方的圣诞礼物🎁——Zotero 安卓测试版来了",
+				"blogTitle": "学术废物收容所",
+				"url": "http://mp.weixin.qq.com/s?__biz=MzkyNjUxNjgxNg==&mid=2247483816&idx=1&sn=86afcacc6b0403049380d86e6618cae7&chksm=c2375297f540db817078c81cefd63069b0da43222c8f5b9dfb4ac15eae87f42f0b4555e89fe1#rd",
+				"websiteType": "微信公众平台",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	}
 ]
 /** END TEST CASES **/
