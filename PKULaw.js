@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-02 14:15:56"
+	"lastUpdated": "2024-01-04 14:35:15"
 }
 
 /*
@@ -137,7 +137,6 @@ async function scrape(doc, url = doc.location.href) {
 				|| ZU.strToISO(labels.getWith('Date Issued'));
 			// newItem.pages = 页码;
 			// newItem.section = 条文序号;
-			newItem.session = tryMatch(text(doc, '#divFullText'), /(中国共产党)?第.*?届.*?第.*?次.*?会议/);
 			// newItem.history = 历史;
 			if (labels.getWith('时效性') == '失效') {
 				extraFields.Status = '已废止';
@@ -303,7 +302,6 @@ var testCases = [
 				"extra": "法宝引证码: CLI.1.304263",
 				"language": "zh-CN",
 				"publicLawNumber": "中华人民共和国主席令第80号",
-				"session": "第十二届全国人民代表大会常务委员会第三十次会议",
 				"shortTitle": "刑法修正案（十）",
 				"url": "https://www.pkulaw.com/chl/3ae7651e2659029abdfb.html",
 				"attachments": [
@@ -337,7 +335,6 @@ var testCases = [
 				"extra": "Edition: 2005年修订\n法宝引证码: CLI.1.60597",
 				"language": "zh-CN",
 				"publicLawNumber": "中华人民共和国主席令第42号",
-				"session": "第十届全国人民代表大会常务委员会第十八次会议",
 				"shortTitle": "公司法",
 				"url": "https://www.pkulaw.com/chl/e54c465cca59c137bdfb.html",
 				"attachments": [
@@ -689,7 +686,6 @@ var testCases = [
 				"extra": "original-title: 中华人民共和国个人所得税法（2011修正）\nCLI Code: CLI.1.153700(EN)",
 				"language": "en-US",
 				"publicLawNumber": "Order No.48 of the President of the People's Republic of China",
-				"session": "第五届全国人民代表大会第三次会议",
 				"url": "https://www.pkulaw.com/en_law/1fc5de53e239e30bbdfb.html",
 				"attachments": [
 					{
