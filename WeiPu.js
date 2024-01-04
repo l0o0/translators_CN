@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-11-02 14:54:26"
+	"lastUpdated": "2024-01-04 10:42:39"
 }
 
 /*
@@ -80,7 +80,7 @@ async function doWeb(doc, url) {
 	}
 }
 
-const FIELDMAP = {
+const fieldMap = {
 	title: "Titles > Title > Text",
 	language: "Titles > Title > Language",
 	abstractNote: "Abstracts > Abstract > Text",
@@ -92,8 +92,8 @@ const FIELDMAP = {
 	ISSN: "Periodical > ISSN",
 };
 
-const TRANSLATION = {
-	titleTranslation: "div.article-title > em",
+const extra = {
+	'original-title': "div.article-title > em",
 	abstractTranslation: "div.abstract > em:last-of-type > span"
 };
 
@@ -116,7 +116,8 @@ function matchCreator(creator) {
 
 async function scrape(doc, url = doc.location.href) {
 	var newItem = new Z.Item('journalArticle');
-	let ID = getIDFromUrl(url);
+	let id = getIDFromUrl(url);
+	Z.debug(`id: ${id}`);
 	let login = !!doc.querySelector('#Logout'); // '#user-nav>li>#Logout'
 	// var debugLog = `scraping ${url}\nlogin statue=${login}\n`;
 	try {
@@ -125,7 +126,7 @@ async function scrape(doc, url = doc.location.href) {
 			'/Qikan/Search/Export?from=Qikan_Article_ExportTilte',
 			{
 				method: 'POST',
-				body: `ids=${ID}&strType=title_info&type=endnote`
+				body: `ids=${id}&strType=title_info&type=endnote`
 			}
 		);
 		// debugLog += `Post result is\n${referText}\n`;
@@ -137,7 +138,8 @@ async function scrape(doc, url = doc.location.href) {
 		// debugLog += `get xml:\n${postResult}\n`;
 		// string -> xml
 		postResult = parser.parseFromString(postResult, "application/xml");
-		var data = {
+		Z.debug(postResult);
+		const data = {
 			innerData: postResult,
 			get: function (path) {
 				let result = this.innerData.querySelector(path);
@@ -150,38 +152,44 @@ async function scrape(doc, url = doc.location.href) {
 				return result.length ? result : [];
 			}
 		};
-		for (const field in FIELDMAP) {
-			const path = FIELDMAP[field];
+		for (const field in fieldMap) {
+			const path = fieldMap[field];
 			// debugLog += `in field ${field}, I get ${postResult.querySelector(path).textContent}\n`;
 			newItem[field] = data.get(path);
 		}
-		newItem.creators = data.getAll('Creators > Creator > Name').map(element => (matchCreator(element)));
-		newItem.tags = data.getAll('Keywords > Keyword').map(element => ({ tag: element }));
+		if (newItem.abstractNote) {
+			newItem.abstractNote = newItem.abstractNote.replace(/收起$/, '');
+		}
+		data.getAll('Creators > Creator > Name').forEach((element) => {
+			newItem.creators.push(matchCreator(element));
+		});
+		data.getAll('Keywords > Keyword').forEach(tag => newItem.tags.push(tag));
 		// fix language
 		if (newItem.language == 'chi') newItem.language = 'zh-CN';
 	}
 	catch (error) {
-		newItem.title = doc.querySelector('div.article-title > h1').innerText;
-		newItem.abstractNote = doc.querySelector('span.abstract:nth-of-type(3) > span').innerText;
-		newItem.creators = Array.from(doc.querySelectorAll('div.author > span > span > a > span')).map(element => (
-			matchCreator(element.innerText)
-		));
-		newItem.publicationTitle = doc.querySelector('div.journal > span.from > a').title;
-		var vol = ZU.trimInternal(doc.querySelector('div.journal > span.from > span.vol').innerText);
-		newItem.date = vol.split('年')[0];
-		newItem.issue = vol.split(/[第期]/)[1];
-		newItem.pages = vol.split(/[期,]/)[1];
-		newItem.tags = Array.from(doc.querySelectorAll('div.subject > span > a')).map(element => ({
-			tag: element.title
-		}));
+		newItem.title = innerText(doc, 'div.article-title > h1').replace(/ 认领$/, '');
+		newItem.abstractNote = innerText(doc, 'span.abstract:nth-of-type(3) > span').replace(/收起$/, '');
+		newItem.publicationTitle = attr(doc, 'div.journal > span.from > a', 'title');
+		let pubInfo = ZU.trimInternal(innerText(doc, 'div.journal > span.from > span.vol'));
+		Z.debug(pubInfo);
+		newItem.date = tryMatch(pubInfo, /(\d+)年/, 1);
+		newItem.issue = tryMatch(pubInfo, /第0*([1-9]\d*)期/, 1);
+		newItem.pages = tryMatch(pubInfo, /期([\d+,~-]*\d)/, 1).replace('+', ', ').replace('~', '-');
+		doc.querySelectorAll('div.author > span > span > a > span').forEach((element) => {
+			newItem.creators.push(matchCreator(element.innerText));
+		});
+		doc.querySelectorAll('div.subject > span > a').forEach((element) => {
+			newItem.tags.push(ZU.trimInternal(element.innerText));
+		});
 		// newItem.debugLog = debugLog;
 	}
-	
+
 	newItem.extra = '';
-	for (const field in TRANSLATION) {
-		const path = TRANSLATION[field];
+	for (const field in extra) {
+		const path = extra[field];
 		try {
-			newItem.extra += `\n${field}: ${doc.querySelector(path).innerText}`;
+			newItem.extra += `${field}: ${doc.querySelector(path).innerText}\n`;
 		}
 		catch (error) {
 			Z.debug("this is an error");
@@ -221,6 +229,14 @@ async function getPDF(fileid, filekey) {
 	return [fileurl, filename];
 }
 
+function tryMatch(string, pattern, index = 0) {
+	let match = string.match(pattern);
+	if (match && match[index]) {
+		return match[index];
+	}
+	return '';
+}
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -229,7 +245,7 @@ var testCases = [
 		"items": [
 			{
 				"itemType": "journalArticle",
-				"title": "数字时代背景下在线诉讼的发展路径与风险挑战 认领",
+				"title": "数字时代背景下在线诉讼的发展路径与风险挑战",
 				"creators": [
 					{
 						"lastName": "刘峥",
@@ -238,8 +254,8 @@ var testCases = [
 					}
 				],
 				"date": "2023",
-				"abstractNote": "在线诉讼是互联网时代的必然产物,它可能存在发展快或慢的问题,但它的到来不可避免且无法抗拒,其存在的必要性与合理性也是母庸置疑的。现行民事诉讼法已对在线诉讼的效力予以确认。应当明确,基于诉讼活动的特质和规律,目前,在线诉讼只是线下诉讼的有益补充,并非取而代之。本文从《人民法院在线诉讼规则》出发,论述了在线诉讼的时代背景和发展历程,阐明在线诉讼的程序规范性、权利保障性、方式便捷性、模式融合性。同时,在线诉讼将对未来司法制度的完善发展产生巨大推动作用,在理论更新、规则指引、制度完善、技术迭代、安全保障、人才培养等方面均需作出必要的配套跟进。收起",
-				"extra": "titleTranslation: Navigating Online Litigation in the Digital Age:Paths and Challenges\nabstractTranslation: The emergence of online litigation is an inevitable corollary of the Internet era.Although the speed of its development may vary,the necessity and rationality of its existence are indisputable.The Civil Procedure Law of the People's Republic of China has confirmed the legal effects of online litigation.Notably,online litigation currently serves as a complementary tool rather than a substitution for offline litigation,given the nature and law of litigation.Drawing on the Online Litigation Rules of the People's Courts,this article examines online litigation's historical background and development.We illustrate how online litigation standardizes procedures,protects litigants'rights,provides convenience to court users,and integrates different modes of litigation.Furthermore,we argue that online litigation can serve as a driving force behind the future advancement of the judicial system.To achieve this,measures such as theoretical innovation,rules-based guidance,institutional improvement,technological iteration,and talent cultivation need to be implemented.FEWER",
+				"abstractNote": "在线诉讼是互联网时代的必然产物,它可能存在发展快或慢的问题,但它的到来不可避免且无法抗拒,其存在的必要性与合理性也是母庸置疑的。现行民事诉讼法已对在线诉讼的效力予以确认。应当明确,基于诉讼活动的特质和规律,目前,在线诉讼只是线下诉讼的有益补充,并非取而代之。本文从《人民法院在线诉讼规则》出发,论述了在线诉讼的时代背景和发展历程,阐明在线诉讼的程序规范性、权利保障性、方式便捷性、模式融合性。同时,在线诉讼将对未来司法制度的完善发展产生巨大推动作用,在理论更新、规则指引、制度完善、技术迭代、安全保障、人才培养等方面均需作出必要的配套跟进。",
+				"extra": "original-title: Navigating Online Litigation in the Digital Age:Paths and Challenges\nabstractTranslation: The emergence of online litigation is an inevitable corollary of the Internet era.Although the speed of its development may vary,the necessity and rationality of its existence are indisputable.The Civil Procedure Law of the People's Republic of China has confirmed the legal effects of online litigation.Notably,online litigation currently serves as a complementary tool rather than a substitution for offline litigation,given the nature and law of litigation.Drawing on the Online Litigation Rules of the People's Courts,this article examines online litigation's historical background and development.We illustrate how online litigation standardizes procedures,protects litigants'rights,provides convenience to court users,and integrates different modes of litigation.Furthermore,we argue that online litigation can serve as a driving force behind the future advancement of the judicial system.To achieve this,measures such as theoretical innovation,rules-based guidance,institutional improvement,technological iteration,and talent cultivation need to be implemented.FEWER",
 				"issue": "2",
 				"libraryCatalog": "WeiPu",
 				"pages": "122-135",
