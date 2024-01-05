@@ -1,7 +1,7 @@
 {
 	"translatorID": "0fbde090-5376-4ed9-8636-2c39588f7a0c",
 	"label": "National Science and Technology Library - China",
-	"creator": "jiaojiaodubai23",
+	"creator": "jiaojiaodubai",
 	"target": "^https?://www\\.nstl\\.gov\\.cn",
 	"minVersion": "5.0",
 	"maxVersion": "",
@@ -9,13 +9,13 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-29 09:33:56"
+	"lastUpdated": "2024-01-05 12:41:33"
 }
 
 /*
 	***** BEGIN LICENSE BLOCK *****
 
-	Copyright © 2022 jiaojiaodubai@gmail.com
+	Copyright © 2022 jiaojiaodubai23@gmail.com
 
 	This file is part of Zotero.
 
@@ -47,7 +47,7 @@ const pageTypeMap = {
 };
 
 function detectWeb(doc, _url) {
-	let serverContent = doc.querySelector('serverleftcont');
+	let serverContent = doc.querySelector('.section');
 	if (serverContent) {
 		Z.monitorDOMChanges(serverContent, { childList: true, subtree: true });
 	}
@@ -65,14 +65,14 @@ function detectWeb(doc, _url) {
 function getSearchResults(doc, checkOnly) {
 	var items = {};
 	var found = false;
-	var rows = doc.querySelectorAll('.result-list-tit > a');
+	var rows = doc.querySelectorAll('.result-list-tit');
 	for (let row of rows) {
-		let href = row.href;
+		let id = row.getAttribute('data-id');
 		let title = ZU.trimInternal(row.textContent);
-		if (!href || !title) continue;
+		if (!id || !title) continue;
 		if (checkOnly) return true;
 		found = true;
-		items[href] = title;
+		items[id] = title;
 	}
 	return found ? items : false;
 }
@@ -81,9 +81,7 @@ async function doWeb(doc, url) {
 	if (detectWeb(doc, url) == 'multiple') {
 		let items = await Zotero.selectItems(getSearchResults(doc, false));
 		if (!items) return;
-		for (let url of Object.keys(items)) {
-			await scrape(await requestDocument(url));
-		}
+		await scrapeMulti(Object.keys(items));
 	}
 	else {
 		await scrape(doc, url);
@@ -91,6 +89,7 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url = doc.location.href) {
+	Z.debug(doc.body.innerText);
 	var newItem = new Z.Item(detectWeb(doc, url));
 	var creators = [];
 	let labels = new Labels(doc, '.summary');
@@ -151,7 +150,6 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.organization = labels.getWith('机构').replace(/ \| /g, ', ');
 			newItem.number = labels.getWith('标准号').replace('-', '—');
 			newItem.date = labels.getWith('发布日期');
-			newItem.place = labels.getWith('国家');
 			newItem.extra += addExtra('ICS', labels.getWith('ICS'));
 			newItem.extra += addExtra('CSS', labels.getWith('CCS'));
 			newItem.extra += addExtra('applyDate', labels.getWith('生效日期'));
@@ -179,9 +177,8 @@ async function scrape(doc, url = doc.location.href) {
 		日语: 'jp-JP'
 	}[labels.getWith('语种')] || 'en-US';
 	newItem.url = url;
-	newItem.archiveLocation = labels.getWith('馆藏');
 	newItem.libraryCatalog = '国家科技图书文献中心';
-	newItem.extra += addExtra('title-original', labels.getWith(['替代标题', '英文标题']));
+	newItem.extra += addExtra('original-title', labels.getWith(['替代标题', '英文标题']));
 	newItem.extra += addExtra('CLC', labels.getWith('分类号'));
 	Z.debug(creators);
 	newItem.creators = creators;
@@ -189,6 +186,90 @@ async function scrape(doc, url = doc.location.href) {
 		newItem.tags.push(ZU.trimInternal(element.textContent));
 	});
 	newItem.complete();
+}
+
+async function scrapeMulti(ids) {
+	Z.debug(ids);
+	let referUrl = 'https://www.nstl.gov.cn/api/service/nstl/web/execute'
+		+ '?target=nstl4.search4'
+		+ '&function=export/preview'
+		+ `&ids=${encodeURIComponent(ids.join(','))}`
+		+ '&format=RefWorks';
+	Z.debug(referUrl);
+	// id似乎有时效性
+	let referText = await requestJSON(
+		referUrl,
+		{
+			headers: {
+				refer: 'https://www.nstl.gov.cn/export_preview.html?exporttype=exportItemsId'
+			}
+		});
+	Z.debug(referText);
+	const rtMap = {
+		JournalPaper: 'Journal Article',
+		ProceedingsPaper: 'Conference Proceedings',
+		DegreePaper: 'Thesis',
+		// Report: 'Report',
+		Book: 'Book, Section',
+		CorpusCompile: 'Book, Section',
+		// StandardLiterature: 'Standard',
+		Patent: 'Patent'
+	};
+	referText = referText.data
+		// trim HTML tags
+		.map(field => field.slice(5, -6))
+		.join('\n')
+		.split('\n\n')
+		.map((record) => {
+			for (const key in rtMap) {
+				record = record.replace(new RegExp(`^RT ${key}(.*)`, 'gm'), `RT ${rtMap[key]}$1`);
+			}
+			return record;
+		});
+	Z.debug(referText);
+	for (let i = 0; i < referText.length; i++) {
+		let record = referText[i];
+		let translator = Zotero.loadTranslator('import');
+		// RefWorks
+		translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86');
+		translator.setString(record);
+		translator.setHandler('itemDone', (_obj, item) => {
+			if (/^RT StandardLiterature/m.test(record)) {
+				item.itemType = 'standard';
+			}
+			item.creators = /^A1/m.test(record)
+				? record.match(/^A1.*/gm).map((line) => {
+					let creator = ZU.cleanAuthor(line.slice(2), 'author');
+					if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+						creator.lastName = creator.firstName + creator.lastName;
+						creator.firstName = '';
+						creator.fieldMode = 1;
+					}
+					return creator;
+				})
+				: [];
+			switch (item.itemType) {
+				case 'thesis':
+					item.numPages = item.pages;
+					delete item.pages;
+					item.university = tryMatch(record, /^AD (.*?)$/m, 1);
+					break;
+				case 'conferencePaper':
+					item.proceedingsTitle = item.proceedingsTitle || item.publicationTitle;
+					delete item.publicationTitle;
+					break;
+				case 'bookSection':
+					item.bookTitle = item.publicationTitle.replace(/:$/, '');
+					delete item.publicationTitle;
+					break;
+				default:
+					break;
+			}
+			item.url = `https://www.nstl.gov.cn/paper_detail.html?id=${ids[i]}`;
+			item.complete();
+		});
+		await translator.translate();
+	}
 }
 
 class Labels {
@@ -263,6 +344,11 @@ function decodeAttr(node, selector, attribute = 'data-log') {
 var testCases = [
 	{
 		"type": "web",
+		"url": "https://www.nstl.gov.cn/search.html?t=JournalPaper,ProceedingsPaper,DegreePaper&q=6YeP5a2Q54K5",
+		"items": "multiple"
+	},
+	{
+		"type": "web",
 		"url": "https://www.nstl.gov.cn/paper_detail.html?id=11548b4483a0090a29ff858849128255",
 		"items": [
 			{
@@ -291,8 +377,7 @@ var testCases = [
 				"date": "2023",
 				"ISSN": "1007-5461",
 				"abstractNote": "量子保密求和是量子安全计算的基础,目的是在保护参与者私有信息的前提下求出参与者秘密信息的和.提出一个基于GHZ类态的三方量子保密求和协议,其中只有量子中心拥有全量子能力,其余参与者只能对接收的量子态进行反射或测量.理论分析表明,所提出的协议可以确保正确性,即多个参与者最后可以成功计算他们秘密的和;同时,该协议还可以抵抗参与者攻击和外部攻击,即无论是外部攻击者还是内部参与者都不能获得除自己的秘密与结果之外的任何信息.最后,进一步讨论了如何将协议的参与者由三方拓展至多方.",
-				"archiveLocation": "中国科学技术信息研究所",
-				"extra": "title-original: Measurement type quantum secure summation protocol based on quantum center\nCLC: O236.2",
+				"extra": "original-title: Measurement type quantum secure summation protocol based on quantum center\nCLC: O236.2",
 				"issue": "1",
 				"language": "zh-CN",
 				"libraryCatalog": "国家科技图书文献中心",
@@ -355,7 +440,6 @@ var testCases = [
 				"date": "2023",
 				"ISBN": "9780081027950",
 				"abstractNote": "2.1 Introduction Once photodetectors ceased to be used exclusively for creating images aimed to conserve the human memory or communicating ideas and were transformed into measuring devices, they almost immediately found their application in many different areas of science and industry. For an increasing number of applications, mainly related to material inspection and research, automation through optical sensing, particle physics, biology, or medicine, one of the main goals that photodetector technology has been striving for over the last decades is the ability to detect single photons over a variety of photon wavelengths, measuring their exact time of arrival to the detectors' active area and reconstructing their accurate spatial path. In other words, the \"holy grail\" of photodetection became offering the ability to measure as many characteristics as possible of a single photon in absence of other quanta of radiation. This proved to be a quite difficult task.",
-				"archiveLocation": "中科院文献情报中心",
 				"bookTitle": "Photodetectors",
 				"extra": "CLC: 红外探测、红外探测器",
 				"language": "en-US",
@@ -402,7 +486,6 @@ var testCases = [
 				],
 				"date": "2005-09-01",
 				"abstractNote": "Chapter One.Introduction  1.1.The Significance of the Thesis\n    Cultural identity is important in intercultural communication，because a   person's cultural identity exerts a profound influence on his or her communicative   style and there are cultural differences in the structures of expectation to identity.  When people from different ethnic or cultural background come in contact，cultural   differences and historical and economical disparity between these cultural or social   groups Can easily lead to stereotyping，prejudice，discrimination，ethnocentrism，  which are serious pronems to effective intercultural communication. Sometimes   cultural conflicts occur.among which identity conflict is one of those intractable   conflicts.So，it is important for people to appreciate what constitutes membership in   the cultures and how that membership might influence the manner in which people   approach，perceive，and interact with other cultures.  1.2.The Purpose of the Thesis\n    This thesis is the study of cultural identity of sonic minority or marginalized  social groups.The author describes stereotypes，prejudice，discrimination based on  those identities，analyses their formation from the cultural，social.political and  historical perspectives and their negative effects on intercultural communication,in  ordder that we can develop our sensitivity to cultural diversity and cultural differences  and find out some practical approaches to effective intercultural communication  1.3.The PractieaI Value of the Thesis\n    Cultural identity is a controversial issue all around the world.\n    Cultural diversity has become a fact.Cultural diversity is considered as one of  key phenomena shaping the contemporary world and greatly enhances sensitivity to  cultural identity.Today,in an age when discrete cultures themselves are under threat.the question of cultural identity becomes newly problematic and takes on new urgency.People become more and more concerned about the uniqueness or the particularity of their own culture.National governments that promote multicultural，multiracial harmony like Singapore，or the United States，in fact eahance ethnic separateness by constantly drawing attention tO“racial”,or“ethnic”identities.\n    Contemporarily or in the long run，to preserve and promote cultural identities  and to discover their traditional value and adaptive function can achieve the harmony  of multicultural or multiethnic societies，and eventual integration and assimilation of cultures，whether on the global level or on the local level.So，the study of cultaral identity in this thesis embodies great practical and historical value.1.4.Methodity\n    Theoretical and methodological developments of recent decades have transformed anthropology by situating local ethnographic researches within larger systems of power,and by focusing attention on the complex relationships between local communities and larger-scale structures within which these communities are embedded.Studying multi-level，multi-sited research problems is undertaken through the local setting but frames them in terms of global issues and often incorporates ethnographic experience elsewhere.Sociocultural and linguistic anthropologists share a study of many key phenomena and critically analyze and theorize these phenomena through ethnographic investigation of contemporary social, cultural，political，economic，and communicative processes.\n    This thesis is to study communicative problems based on some cultural identities in intercultural communication.The author develops this study on the basis of sociocultural，anthropological and ethnographic approaches.",
-				"archiveLocation": "中国科学技术信息研究所",
 				"extra": "CLC: H030;H315",
 				"language": "zh-CN",
 				"libraryCatalog": "国家科技图书文献中心",
@@ -462,9 +545,8 @@ var testCases = [
 				],
 				"date": "2007",
 				"abstractNote": "蛍光性半導体ナノ結晶、すなわち量子ドット(QDs)は、電子材料として開発されて以来、ここ十数年の間に著しく改良が加えられ、生物学分野へまでその適用範囲を拡げてきた。量子ドットは、半導体材料であるCdSeやCdTe,InP,InAsなどの様々な材料から合成され、それぞれのバンドギヤップエネルギーに応じた蛍光波長を有する。",
-				"archiveLocation": "中国科学技术信息研究所",
 				"bookTitle": "電気学会研究会資料 バイオ·マイクロシステム研究会 BMS-07-1~6",
-				"extra": "title-original: Bio-Molecule Imaging by Quantum Dots\nCLC: 医疗器械与设备",
+				"extra": "original-title: Bio-Molecule Imaging by Quantum Dots\nCLC: 医疗器械与设备",
 				"language": "jp-JP",
 				"libraryCatalog": "国家科技图书文献中心",
 				"pages": "25-28",
@@ -498,13 +580,11 @@ var testCases = [
 				"title": "制药机械(设备)材料选用导则",
 				"creators": [],
 				"date": "2023-03-17",
-				"archiveLocation": "中国标准化研究院国家标准馆",
-				"extra": "ICS: 11.120.30\nCSS: 制药、安全机械与设备综合\napplyDate: 2023-10-01\ntitle-original: General for selection material of pharmaceutical machinery\nCLC: 制药、安全机械与设备综合",
+				"extra": "ICS: 11.120.30\nCSS: 制药、安全机械与设备综合\napplyDate: 2023-10-01\noriginal-title: General for selection material of pharmaceutical machinery\nCLC: 制药、安全机械与设备综合",
 				"language": "zh-CN",
 				"libraryCatalog": "国家科技图书文献中心",
 				"number": "GB/T 42354—2023",
 				"organization": "国药集团重庆医药设计院有限公司, 山西太钢不锈钢股份有限公司, 中国制药装备行业协会, 湖南千山制药机械股份有限公司, 浙江厚达智能科技股份有限公司",
-				"place": "中国",
 				"url": "https://www.nstl.gov.cn/paper_detail.html?id=031c48a44b069d07c3405be97782013f",
 				"attachments": [],
 				"tags": [],
@@ -516,43 +596,33 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.nstl.gov.cn/paper_detail.html?id=693a65c33411667d124712efa881aca8",
-		"defer": true,
 		"items": [
 			{
 				"itemType": "patent",
 				"title": "不锈钢平底锅",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "黄桂深",
-						"creatorType": "author",
+						"creatorType": "inventor",
 						"fieldMode": 1
 					}
 				],
-				"issueDate": "2023",
+				"issueDate": "2023-03-14",
 				"abstractNote": "1.本外观设计产品的名称：不锈钢平底锅。2.本外观设计产品的用途：本外观设计产品用于烹调食物的锅。3.本外观设计产品的设计要点：在于形状。4.最能表明设计要点的图片或照片：立体图1。5.仰视图已在立体图2中体现出来故省略，省略仰视图。",
 				"applicationNumber": "CN202230481835.9",
-				"country": "CN",
-				"filingDate": "2022-07-27 08:00:00",
+				"country": "中国",
+				"filingDate": "2022-07-27",
 				"language": "zh-CN",
 				"legalStatus": "有效",
-				"patentNumber": "CN202230481835.9",
-				"place": "521000 广东省潮州市潮安区彩塘镇仙乐二村东彩路外侧内洋长池片",
-				"attachments": [
-					{
-						"title": "Snapshot",
-						"mimeType": "text/html"
-					}
-				],
+				"place": "中国",
+				"url": "https://www.nstl.gov.cn/paper_detail.html?id=693a65c33411667d124712efa881aca8",
+				"attachments": [],
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
 			}
 		]
-	},
-	{
-		"type": "web",
-		"url": "https://www.nstl.gov.cn/search.html?t=JournalPaper,ProceedingsPaper,DegreePaper&q=6YeP5a2Q",
-		"items": "multiple"
 	}
 ]
 /** END TEST CASES **/
