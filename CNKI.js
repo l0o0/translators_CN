@@ -1,7 +1,7 @@
 {
 	"translatorID": "5c95b67b-41c5-4f55-b71a-48d5d7183063",
 	"label": "CNKI",
-	"creator": "Aurimas Vinckevicius, Xingzhong Lin, jiaojiaodubai23",
+	"creator": "Aurimas Vinckevicius, Xingzhong Lin, jiaojiaodubai",
 	"target": "https?://.*?(thinker\\.cnki)|(cnki\\.com)|/(kns8?s?|kcms2?|KXReader|KNavi|Kreader)",
 	"minVersion": "3.0",
 	"maxVersion": "",
@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-31 05:04:07"
+	"lastUpdated": "2024-01-06 13:28:18"
 }
 
 /*
@@ -430,7 +430,7 @@ async function scrapeWithGetExport(doc, ids, itemKey, inMainland) {
 	// To avoid triggering anti crawlers due to frequent requests,
 	// uncomment the expression below during debugging to test functionality unrelated to requests.
 	/*
-	  referText = {
+	referText = {
 		code: 1,
 		msg: "返回成功",
 		data: [
@@ -455,7 +455,7 @@ async function scrapeWithGetExport(doc, ids, itemKey, inMainland) {
 		],
 		traceid: "a7af1c2425ec49b5973f756b194256c6.191.17014617381526837"
 	};
-	 */
+	*/
 
 	// During debugging, may manually throw errors to guide the program to run inward
 	// throw ReferenceError;
@@ -600,8 +600,8 @@ async function parseRefer(referText, doc, ids, itemKey) {
 		// Custom tag "9" corresponds to the degree of the graduation thesis,
 		//and tag "~" corresponds standard type (national standard or industry standard).
 		.replace(/^%[9~] /m, '%R ')
-		.replace(/^%V 0?/m, '%V ')
-		.replace(/^%N 0?/m, '%N ')
+		.replace(/^%V 0*/m, '%V ')
+		.replace(/^%N 0*/m, '%N ')
 		// \t in abstract
 		.replace(/\t/g, '')
 		.replace(/(\n\s*)+/g, '\n');
@@ -618,6 +618,7 @@ async function parseRefer(referText, doc, ids, itemKey) {
 		switch (newItem.itemType) {
 			case 'journalArticle':
 				delete newItem.callNumber;
+				newItem.ISSN = tryMatch(referText, /^%@ (.*)/m, 1);
 				break;
 			case 'statute':
 				newItem.itemType = 'standard';
@@ -640,6 +641,7 @@ async function parseRefer(referText, doc, ids, itemKey) {
 				break;
 			case 'newspaperArticle':
 				delete newItem.callNumber;
+				newItem.ISSN = tryMatch(referText, /^%@ (.*)/m, 1);
 				break;
 			case 'conferencePaper':
 				newItem.conferenceName = newItem.publicationTitle;
@@ -654,7 +656,6 @@ async function parseRefer(referText, doc, ids, itemKey) {
 			default:
 				break;
 		}
-		newItem.ISSN = tryMatch(referText, /^%@ (.*)/, 1);
 		delete newItem.archiveLocation;
 		newItem = Object.assign(newItem, fixItem(newItem, doc, ids, itemKey));
 		newItem.complete();
@@ -878,25 +879,32 @@ function getAttachments(doc, keepPDF, itemKey) {
 	// attr() can't get full link
 	var attachments = [];
 	let alterLink = Array.from(doc.querySelectorAll('a[href*="/down/"]'));
-	let pdfLink = doc.querySelector('a[id^="pdfDown"]')
+	let pdfLink = strChild(doc, 'a[id^="pdfDown"]', 'href')
+		// industry ver
 		|| alterLink.find(element => /PDF/i.test(element.textContent))
-		|| doc.querySelector('.operate-btn a[href*="Download"]');
-	Z.debug(`get PDF Link:\n${pdfLink.href}`);
-	let cajLink = doc.querySelector('a#cajDown')
-		|| alterLink.find(element => /CAJ/i.test(element.textContent));
-	Z.debug(`get CAJ link:\n${cajLink.href}`);
+		|| strChild(doc, '.operate-btn a[href*="Download"]', 'href')
+		// CNKI space
+		|| strChild(doc, '.down_button#ty_pdf', 'href');
+	Z.debug(`get PDF Link:\n${pdfLink}`);
+	let cajLink = strChild(doc, 'a#cajDown', 'href')
+		// industry ver
+		|| alterLink.find(element => /CAJ/i.test(element.textContent))
+		|| itemKey.downloadlink
+		// CNKI space
+		|| strChild(doc, '.down_button#ty_caj', 'href');
+	Z.debug(`get CAJ link:\n${cajLink}`);
 	if (keepPDF && pdfLink) {
 		attachments.push({
 			title: 'Full Text PDF',
 			mimeType: 'application/pdf',
-			url: pdfLink.href
+			url: pdfLink
 		});
 	}
 	else if (cajLink) {
 		attachments.push({
 			title: 'Full Text CAJ',
 			mimeType: 'application/caj',
-			url: cajLink.href || itemKey.downloadlink
+			url: cajLink
 		});
 	}
 	else {
@@ -982,6 +990,15 @@ function addExtra(key, value) {
 		: '';
 }
 
+function strChild(docOrElem, selector, key, index) {
+	let element = index
+		? docOrElem.querySelector(selector)
+		: docOrElem.querySelectorAll(selector).item(index);
+	return (element && element[key])
+		? element[key]
+		: '';
+}
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -1030,6 +1047,7 @@ var testCases = [
 					}
 				],
 				"date": "2014",
+				"ISSN": "1000-8713",
 				"abstractNote": "来自中药的水溶性多糖具有广谱治疗和低毒性特点,是天然药物及保健品研发中的重要组成部分。针对中药多糖结构复杂、难以表征的问题,本文以中药黄芪中的多糖为研究对象,采用\"自下而上\"法完成对黄芪多糖的表征。首先使用部分酸水解方法水解黄芪多糖,分别考察了水解时间、酸浓度和温度的影响。在适宜条件（4 h、1.5mol/L三氟乙酸、80℃）下,黄芪多糖被水解为特征性的寡糖片段。接下来,采用亲水作用色谱与质谱联用对黄芪多糖部分酸水解产物进行分离和结构表征。结果表明,提取得到的黄芪多糖主要为1→4连接线性葡聚糖,水解得到聚合度4~11的葡寡糖。本研究对其他中药多糖的表征具有一定的示范作用。",
 				"issue": "12",
 				"language": "zh-CN",
@@ -1238,10 +1256,12 @@ var testCases = [
 					}
 				],
 				"date": "2020",
+				"ISSN": "0258-4646",
 				"abstractNote": "目的利用生物信息学方法探索2型糖尿病发病的相关基因,并研究这些基因与阿尔茨海默病的关系。方法基因表达汇编（GEO）数据库下载GSE85192、GSE95849、GSE97760、GSE85426数据集,获得健康人和2型糖尿病患者外周血的差异基因,利用加权基因共表达网络（WGCNA）分析差异基因和临床性状的关系。使用DAVID数据库分析与2型糖尿病有关的差异基因的功能与相关通路,筛选关键蛋白。根据结果将Toll样受体4 （TLR4）作为关键基因,利用基因集富集分析（GSEA）分析GSE97760中与高表达TLR4基因相关的信号通路。通过GSE85426验证TLR4的表达量。结果富集分析显示,差异基因主要参与的生物学过程包括炎症反应、Toll样受体（TLR）信号通路、趋化因子产生的正向调节等。差异基因主要参与的信号通路有嘧啶代谢通路、TLR信号通路等。ILF2、TLR4、POLR2G、MMP9为2型糖尿病的关键基因。GSEA显示,TLR4上调可通过影响嘧啶代谢及TLR信号通路而导致2型糖尿病及阿尔茨海默病的发生。TLR4在阿尔茨海默病外周血中高表达。结论 ILF2、TLR4、POLR2G、MMP9为2型糖尿病发病的关键基因,TLR4基因上调与2型糖尿病、阿尔茨海默病发生有关。",
 				"issue": "12",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
+				"pages": "1106-1111, 1117",
 				"publicationTitle": "中国医科大学学报",
 				"url": "https://chn.oversea.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFD&dbname=CJFDLAST2020&filename=ZGYK202012011&v=%25mmd2BHGGqe3MG%25mmd2FiWsTP5sBgemYG4X5LOYXSuyd0Rs%25mmd2FAl1mzrLs%25mmd2F7KNcFfXQMiFAipAgN",
 				"volume": "49",
@@ -1480,6 +1500,7 @@ var testCases = [
 						"fieldMode": 1
 					}
 				],
+				"ISSN": "1674-3962",
 				"abstractNote": "随着材料加工快速化、智能化、数字化的发展要求，材料连接技术越来越受到广泛的重视，其中激光连接陶瓷技术是引人关注的重要技术之一，论述了近年来激光连接陶瓷技术的研究现状与进展。首先阐述了激光连接技术的原理和分类；其次对适合陶瓷激光连接的激光器类型和特点进行了介绍，并分析了影响激光连接陶瓷质量的关键因素；然后对基于激光连接技术的陶瓷与陶瓷之间的连接以及陶瓷与异质材料之间的连接进展进行了详细的介绍，阐述了各种激光连接陶瓷方法的特点、机理和连接强度；最后对激光连接陶瓷技术进行总结，并展望其发展趋势。",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
@@ -1563,6 +1584,7 @@ var testCases = [
 					}
 				],
 				"date": "2023",
+				"ISSN": "1002-8870",
 				"abstractNote": "林下经济是生态文明建设背景下推进山区绿色高质量发展、实现“两山”理念的重要载体。本文基于里昂惕夫生产函数和最优生产决策理论刻画林下经济的经济效应、环境效应及其协同的理论模型，并通过对典型案例县的研究，对林下经济的经济效应与环境效应协同发展的理论机制加以印证。研究发现：第一，林下经济经营中，给定其他条件不变，当劳动力投入效率增加时，劳动力投入先增加后降低、林地投入单调递增，林下经济的经济价值也是单调递增，而林下经济的生态价值先增加后降低，林下经济的经济价值和生态价值总和递增；第二，进一步基于扩展模型的分析发现，在适度经营规模下，林下经济产生生态反馈效应，经营主体不再单纯追求经济利润最大化，而是通过降低林地要素的投入来提高林地资源的生态反馈效应，从而提升环境效应，最终实现经济效应和环境效应协同发展；第三，浙江省松阳县的案例剖析表明，在政府的合理扶持下，依靠适度规模经营、生态化种植和三产融合能够实现林下经济的经济效应与环境效应协同发展。因此，林下经济作为“两山”理念的有效载体，应积极推广，通过科学有效经营，能够实现经济效应和环境效应的协同增长。",
 				"issue": "10",
 				"language": "zh-CN",
@@ -1579,7 +1601,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://t.cnki.net/kcms/article/abstract?v=_AqZbjAWWJQgA3EkLUxX7MnCK-Vs9bXIszipcfV1qiCJ2pVsIH3Kn-g8gSyeH55ceCouOYV8RI9HDC8xSOf4tgMfqMNXz6hFA_Ebj3MnmQqKtvmSl_41FECUugjK944daQUs2okdEkk=&uniplatform=NZKPT",
+		"url": "https://t.cnki.net/kcms/article/abstract?v=yO8aEz8cbf1MA60M_rsYeAW1-xpr0jRg6JMNWYKYZLTtfV6xUbtT8G6_Ja7HOAjxY4OvdZgXt1KuGf9-Y5e24-OGV8AFB4NhnpgxMS8aR2dkhCN1CrTD2D0A9wYN_VjMrsxEurUeagE=&uniplatform=NZKPT",
 		"items": [
 			{
 				"itemType": "journalArticle",
@@ -1618,13 +1640,14 @@ var testCases = [
 				],
 				"date": "2022",
 				"DOI": "10.13206/j.gjgS22031502",
+				"ISSN": "2096-6865",
 				"abstractNote": "金属面夹芯板以其保温绝热、降噪、自重轻和装配效率高等优点在围护结构中得到了很好的应用，基于金属面夹芯板的构造，提出一种新型的压型钢板与聚氨酯组合的夹芯楼板结构。为了研究压型钢板-聚氨酯夹芯楼板的受弯性能，对夹芯楼板试件进行了两点对称静载试验。在试验的基础上，提出并验证了夹芯楼板有限元模型，并对槽钢楼板厚度、压型钢板厚度和聚氨酯密度等进行了参数分析。研究结果表明：夹芯楼板的破坏形式主要表现为挠度过大，最大挠度达到了板跨度的1/42,并且跨中截面处的槽钢出现畸变屈曲；夹芯楼板受弯变形后，槽钢首先达到屈服状态，而受压钢板的材料性能未能得到充分发挥；新型压型钢板聚氨酯夹芯楼板相比传统金属面夹芯板的承载能力和刚度有明显提升，承载力和刚度均提高203%;楼板厚度和压型钢板厚度对夹芯楼板的承载能力和刚度均具有显著影响，而楼板厚度相比压型钢板厚度对刚度的影响效果更明显，当楼板厚度从120 mm增大到160 mm时，夹芯楼板的承载力在正常使用状态下提高87%,在承载能力极限状态下提高63%,刚度提高88%,钢板厚度由1 mm增至3 mm时，夹芯楼板的承载力在正常使用状态下提高59%,在承载能力极限状态下提高84%,刚度提高61%;聚氨酯泡沫密度的变化对夹芯楼板的承载能力和刚度影响较小，当密度从45 kg/m<sup>3</sup>变化到90 kg/m<sup>3</sup>时，正常使用状态下夹芯楼板的承载力增幅为12%,承载能力极限状态下的承载力增幅仅为2%,刚度增幅为12%。",
 				"issue": "8",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "9-16",
 				"publicationTitle": "钢结构(中英文)",
-				"url": "https://t.cnki.net/kcms/article/abstract?v=_AqZbjAWWJQgA3EkLUxX7MnCK-Vs9bXIszipcfV1qiCJ2pVsIH3Kn-g8gSyeH55ceCouOYV8RI9HDC8xSOf4tgMfqMNXz6hFA_Ebj3MnmQqKtvmSl_41FECUugjK944daQUs2okdEkk=&uniplatform=NZKPT",
+				"url": "https://t.cnki.net/kcms/article/abstract?v=yO8aEz8cbf1MA60M_rsYeAW1-xpr0jRg6JMNWYKYZLTtfV6xUbtT8G6_Ja7HOAjxY4OvdZgXt1KuGf9-Y5e24-OGV8AFB4NhnpgxMS8aR2dkhCN1CrTD2D0A9wYN_VjMrsxEurUeagE=&uniplatform=NZKPT",
 				"volume": "37",
 				"attachments": [
 					{
@@ -1686,7 +1709,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=_AqZbjAWWJSsy8m2aO_GvN0zvH1asMtnGHNcuSE1bHKoirGGqBvcSMufl5njcPKGEHAxmC9JWAHyDXIeb5RjkM0CMYGENoSB6z9QkzXD2ryioYQRQVh_Zr9DYWbfAw24EAMUJ-E9Z2A=&uniplatform=CHKD",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=yO8aEz8cbf3OFG9E799I_p_wcQECKbqsSy2E8KQgdapCxRp84e3FSvWqYbrhU21G4zWV4wvqebGf94h5qRrTGFeoIHWYgehq_7s2Hf2sSGsGvY0ReNV8fdshWIcTLAQz3fw9mSQ3TAw=&uniplatform=CHKD",
 		"items": [
 			{
 				"itemType": "journalArticle",
@@ -1700,6 +1723,7 @@ var testCases = [
 					}
 				],
 				"date": "2023-11-23",
+				"ISSN": "1674-070X",
 				"abstractNote": "笔者根据多年临床实践经验,总结中医诊治肿瘤病的四辨:辨部位、辨痰瘀、辨寒热、辨虚实,阐述肿瘤治疗四法:攻法、消法、散法、补法,并通过临床验案分享诊疗经验,以供同仁参考。",
 				"extra": "status: advance online publication",
 				"language": "zh-CN",
