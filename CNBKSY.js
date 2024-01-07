@@ -37,7 +37,7 @@
 
 
 function detectWeb(doc, url) {
-	Z.debug('---------- CNBKSY 2023-12-16 02:58:06 ----------')
+	Z.debug('---------- CNBKSY 2023-12-16 02:58:06 ----------');
 	let searchBox = doc.querySelector('.body_box');
 	if (searchBox) {
 		Z.monitorDOMChanges(searchBox, { childList: true, subtree: true });
@@ -116,7 +116,7 @@ async function scrape(doc, url = doc.location.href) {
 				.map(element => ({ tag: element }));
 			break;
 		case 'newspaperArticle':
-			newItem.title = data.fuzzyGet('标题');
+			newItem.title = labels.getWith('标题');
 			newItem.shortTitle = labels.getWith('标题2');
 			newItem.publicationTitle = labels.getWith('文献来源').replace(/^《|》$/g, '');
 			newItem.place = labels.getWith('新闻发布地');
