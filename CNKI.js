@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-07 07:59:18"
+	"lastUpdated": "2024-01-07 10:50:44"
 }
 
 /*
@@ -176,7 +176,7 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug("---------------- CNKI 2024-01-07 15:59:16 ------------------");
+	Z.debug("---------------- CNKI 2024-01-07 18:50:37 ------------------");
 	let ids = url.includes('www.cnki.com.cn')
 		// CNKI space
 		? new ID(url)
@@ -688,6 +688,7 @@ async function parseRefer(referText, doc, ids, itemKey) {
 		}
 		delete newItem.archiveLocation;
 		newItem = Object.assign(newItem, fixItem(newItem, doc, ids, itemKey));
+		Z.debug(newItem);
 		newItem.complete();
 	});
 	await translator.translate();
@@ -755,6 +756,7 @@ async function scrapeDoc(doc, ids, itemKey) {
 		|| '';
 	newItem.extra += addExtra('Genre', labels.getWith('专利类型'));
 	newItem = Object.assign(newItem, fixItem(newItem, doc, ids, itemKey));
+	Z.debug(newItem);
 	newItem.complete();
 }
 
@@ -908,17 +910,16 @@ async function scrapeZhBook(doc, url) {
 function getAttachments(doc, keepPDF, itemKey) {
 	// attr() can't get full link
 	var attachments = [];
-	let alterLink = Array.from(doc.querySelectorAll('a[href*="/down/"]'));
 	let pdfLink = strChild(doc, 'a[id^="pdfDown"]', 'href')
 		// industry ver
-		|| alterLink.find(element => /PDF/i.test(element.textContent))
+		|| strChild(doc, 'a[href*="pdfdown"]', 'href')
 		|| strChild(doc, '.operate-btn a[href*="Download"]', 'href')
 		// CNKI space
 		|| strChild(doc, '.down_button#ty_pdf', 'href');
 	Z.debug(`get PDF Link:\n${pdfLink}`);
 	let cajLink = strChild(doc, 'a#cajDown', 'href')
 		// industry ver
-		|| alterLink.find(element => /CAJ/i.test(element.textContent))
+		|| strChild(doc, 'a[href*="cajdown"]', 'href')
 		|| itemKey.downloadlink
 		// CNKI space
 		|| strChild(doc, '.down_button#ty_caj', 'href');
