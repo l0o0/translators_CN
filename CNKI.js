@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-06 13:28:18"
+	"lastUpdated": "2024-01-07 07:59:18"
 }
 
 /*
@@ -176,7 +176,7 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug("---------------- CNKI 2023-12-31 13:04:05 ------------------");
+	Z.debug("---------------- CNKI 2024-01-07 15:59:16 ------------------");
 	let ids = url.includes('www.cnki.com.cn')
 		// CNKI space
 		? new ID(url)
@@ -242,7 +242,7 @@ function detectWeb(doc, url) {
 		// 知网心可图书馆，CNKI thingker
 		return 'bookSection';
 	}
-	else if (multiplePattern.find(element => element.test(url)) && getSearchResults(doc, url, true)) {
+	else if (multiplePattern.some(element => element.test(url)) && getSearchResults(doc, url, true)) {
 		return 'multiple';
 	}
 	else {
@@ -255,17 +255,42 @@ function getSearchResults(doc, url, checkOnly) {
 	var found = false;
 	var searchTypes = [
 
-		/* journalNavigation */
+		/* journal navigation */
+		// https://navi.cnki.net/knavi/journals/ZGSK/detail?uniplatform=NZKPT
 		{
 			pattern: /\/journals\/.+\/detail/i,
-			rowSlector: 'dl#CataLogContent dd',
-			aSlector: 'span.name > a'
+			rowSlector: '#rightCatalog dd',
+			aSlector: '.name > a'
 		},
 
-		/* yearbookNavigation */
+		/* thesis navigation */
+		// https://navi.cnki.net/knavi/degreeunits/GBEJU/detail?uniplatform=NZKPT
+		{
+			pattern: /\/degreeunits\/.+\/detail/i,
+			rowSlector: '#rightCatalog tbody > tr',
+			aSlector: '.name > a'
+		},
+
+		/* conference navigation */
+		// https://navi.cnki.net/knavi/conferences/030681/proceedings/IKJS202311001/detail?uniplatform=NZKPT
+		{
+			pattern: /\/proceedings\/.+\/detail/i,
+			rowSlector: '#rightCatalog tbody > tr',
+			aSlector: '.name > a'
+		},
+
+		/* newspaper navigation */
+		// https://navi.cnki.net/knavi/newspapers/RMRB/detail?uniplatform=NZKPT
+		{
+			pattern: /\/newspapers\/.+\/detail/i,
+			rowSlector: '#rightCatalog tbody > tr',
+			aSlector: '.name > a'
+		},
+
+		/* yearbook navigation */
 		{
 			pattern: /\/yearbooks\/.+\/detail/i,
-			rowSlector: '#contentPanel .itemNav',
+			rowSlector: '#rightCatalog .itemNav',
 			aSlector: 'a'
 		},
 
@@ -315,8 +340,13 @@ function getSearchResults(doc, url, checkOnly) {
 		// Use the key to transmit some useful information.
 		items[JSON.stringify({
 			url: href,
-			// reference count
-			cite: text(row, 'td.quote'),
+
+			/*
+			reference count
+			"td[align="center"]:nth-child(6):not([title])" for navigation page
+			https://navi.cnki.net/knavi/conferences/030681/proceedings/IKJS202311001/detail?uniplatform=NZKPT
+			 */
+			cite: text(row, 'td.quote, td[align="center"]:nth-child(6):not([title])'),
 			// Another identifier for requesting data from the API.
 			// In Chinese Mainland, it is usually dynamic,
 			// while overseas is composed of fixed ids.filename.
