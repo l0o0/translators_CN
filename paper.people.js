@@ -106,7 +106,8 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.pages = tryMatch(pubInfo, /第0*([1-9]\d*)版/, 1);
 	pureText(doc.querySelector('.sec'))
 		// 预先将二字人名拼接起来
-		.replace(/□/, '').replace(/([^\u4e00-\u9fa5][\u4e00-\u9fa5])\s([\u4e00-\u9fa5][^\u4e00-\u9fa5])/g, '$1$2')
+		.replace(/□/, '')
+		.replace(/([^\u4e00-\u9fa5][\u4e00-\u9fa5])\s+([\u4e00-\u9fa5](?:[^\u4e00-\u9fa5]|$))/g, '$1$2')
 		.split(/\s/)
 		.filter(creator => !creator.includes('记者'))
 .forEach((creator) => {
