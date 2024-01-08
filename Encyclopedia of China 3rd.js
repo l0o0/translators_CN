@@ -9,30 +9,30 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-06 05:43:16"
+	"lastUpdated": "2024-01-08 13:46:35"
 }
 
 /*
-    ***** BEGIN LICENSE BLOCK *****
+	***** BEGIN LICENSE BLOCK *****
 
-    Copyright © 2022 pixiandouban, jiaojiaodubai<jiaojiaodubai23@gmail.com>
+	Copyright © 2022 pixiandouban, jiaojiaodubai<jiaojiaodubai23@gmail.com>
 
-    This file is part of Zotero.
+	This file is part of Zotero.
 
-    Zotero is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+	Zotero is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Affero General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-    Zotero is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-    GNU Affero General Public License for more details.
+	Zotero is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+	GNU Affero General Public License for more details.
 
-    You should have received a copy of the GNU Affero General Public License
-    along with Zotero. If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU Affero General Public License
+	along with Zotero. If not, see <http://www.gnu.org/licenses/>.
 
-    ***** END LICENSE BLOCK *****
+	***** END LICENSE BLOCK *****
 */
 
 
@@ -89,7 +89,8 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.url = url;
 	newItem.libraryCatalog = '中国大百科全书';
 	newItem.extra += addExtra('original-title', text(doc, '.enname i'));
-	doc.querySelectorAll('.author-noshadow .author-span').forEach((element) => {
+	// https://www.zgbk.com/ecph/words?SiteID=1&ID=456852&Type=bkzyb&SubID=99947
+	doc.querySelectorAll('.author:not([style^="display: none"]) .n-author > span').forEach((element) => {
 		let creator = element.innerText.replace(/(撰|修订)$/, '');
 		creator = ZU.cleanAuthor(creator, 'author');
 		if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
