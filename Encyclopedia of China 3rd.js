@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-08 13:46:35"
+	"lastUpdated": "2024-01-08 14:30:06"
 }
 
 /*
@@ -89,8 +89,8 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.url = url;
 	newItem.libraryCatalog = '中国大百科全书';
 	newItem.extra += addExtra('original-title', text(doc, '.enname i'));
-	// https://www.zgbk.com/ecph/words?SiteID=1&ID=456852&Type=bkzyb&SubID=99947
-	doc.querySelectorAll('.author:not([style^="display: none"]) .n-author > span').forEach((element) => {
+	// ".authorname .n-author > span"见于https://www.zgbk.com/ecph/words?SiteID=1&ID=456852&Type=bkzyb&SubID=99947
+	doc.querySelectorAll('.author-noshadow .author-span > span, .authorname .n-author > span').forEach((element) => {
 		let creator = element.innerText.replace(/(撰|修订)$/, '');
 		creator = ZU.cleanAuthor(creator, 'author');
 		if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
