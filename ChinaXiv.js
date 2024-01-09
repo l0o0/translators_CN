@@ -1,15 +1,15 @@
 {
 	"translatorID": "9282aac1-9c13-4591-9c92-4da3a65ff4e5",
 	"label": "ChinaXiv",
-	"creator": "jiaojiaodubai23",
-	"target": "^https?://(www\\.)?chinaxiv\\.((org)|(las.ac.cn))",
+	"creator": "jiaojiaodubai",
+	"target": "^https?://.*chinaxiv\\.((org)|(las.ac.cn))",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-15 07:49:36"
+	"lastUpdated": "2024-01-09 12:20:04"
 }
 
 /*
@@ -37,7 +37,7 @@
 
 
 function detectWeb(doc, url) {
-	Z.debug('---------- 2023-12-15 15:16:20 ----------');
+	Z.debug('---------- 2024-01-09 20:20:02 ----------');
 	if (url.includes('/abs/')) {
 		return 'preprint';
 	}
@@ -338,6 +338,16 @@ var testCases = [
 				"seeAlso": []
 			}
 		]
+	},
+	{
+		"type": "web",
+		"url": "http://phonomuse.chinaxiv.org/server/phoindex.htm",
+		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "http://nucl-ph.chinaxiv.org/server/nuclearphyindex.htm",
+		"items": "multiple"
 	}
 ]
 /** END TEST CASES **/
