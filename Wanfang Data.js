@@ -2,14 +2,14 @@
 	"translatorID": "eb876bd2-644c-458e-8d05-bf54b10176f3",
 	"label": "Wanfang Data",
 	"creator": "Ace Strong <acestrong@gmail.com>, rnicrosoft",
-	"target": "^https?://.*(d|s)\\.wanfangdata\\.com\\.cn",
+	"target": "^https?://.*(d|s)(\\.|-)wanfangdata(\\.|-)com(\\.|-)cn",
 	"minVersion": "2.0rc1",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-28 10:48:11"
+	"lastUpdated": "2024-01-09 12:03:47"
 }
 
 /*
@@ -138,7 +138,7 @@ async function doWeb(doc, url) {
 }
 
 async function scrapePage(doc, url = doc.location.href) {
-	Z.debug("--------------- WanFang Data 2023-12-26 15:20:18 ---------------");
+	Z.debug("--------------- WanFang Data 2024-01-09 19:39:21 ---------------");
 	let ids = new ID(doc, url);
 	var newItem = new Zotero.Item(ids.itemType);
 	newItem.title = text(doc, '.detailTitleCN > span:first-child') || text(doc, '.detailTitleCN');
@@ -159,14 +159,6 @@ async function scrapePage(doc, url = doc.location.href) {
 	Array.from(doc.querySelectorAll('.keyword > .item+* > a')).forEach((tag) => {
 		newItem.tags.push(tag.innerText);
 	});
-	let pdfLink = doc.querySelector('a.download');
-	if (pdfLink) {
-		newItem.attachments.push({
-			url: pdfLink.href,
-			title: 'Full Text PDF',
-			mimeType: 'application/pdf'
-		});
-	}
 	function addExtra(field, value) {
 		if (value) {
 			newItem.extra += `${field}: ${value}`;
@@ -181,7 +173,8 @@ async function scrapePage(doc, url = doc.location.href) {
 			newItem.issue = tryMatch(pubInfo, /0*\(([a-z\d]+)\)/, 1);
 			newItem.DOI = attr(doc, '.doiStyle > a', 'href');
 			newItem.ISSN = tryMatch(text(doc, '.periodicalDataItem'), /:\w+/);
-			break; }
+			break;
+		}
 		case 'thesis':
 			newItem.university = text(doc, '.detailOrganization');
 			newItem.thesisType = `${text(doc, '.degree > .item+*')}学位论文`;
@@ -214,7 +207,8 @@ async function scrapePage(doc, url = doc.location.href) {
 			newItem.issueDate = text(pickLabel(doc, '.applicationDate', '公开/公告日'), '.item+*');
 			newItem.legalStatus = text(doc, '.periodicalContent .messageTime > span:last-child');
 			newItem.rights = text(doc, '.signoryItem > .item+*');
-			break; }
+			break;
+		}
 		case 'standard':
 			newItem.number = text(doc, '.standardId > .item+*');
 			newItem.date = text(doc, '.issueDate > .item+*');
@@ -229,6 +223,14 @@ async function scrapePage(doc, url = doc.location.href) {
 			creator.fieldMode = 1;
 		}
 	});
+	// let pdfLink = getPDF(doc);
+	// if (pdfLink) {
+	// 	newItem.attachments.push({
+	// 		url: pdfLink,
+	// 		title: 'Full Text PDF',
+	// 		mimeType: 'application/pdf'
+	// 	});
+	// }
 	newItem.complete();
 }
 
@@ -258,13 +260,13 @@ async function scrapeRow(row) {
 		if (item.archiveLocation) {
 			item.archiveLocation = item.archiveLocation.replace(/\n.*$/, '');
 		}
-		if (ZU.xpath(row, '//div[contains(text(), "下载")]').length) {
-			item.attachments.push({
-				url: `https://oss.wanfangdata.com.cn/file/download/${ids.dbname}_${ids.filename}.aspx`,
-				title: 'Full Text PDF',
-				mimeType: 'application/pdf'
-			});
-		}
+		// if (ZU.xpath(row, '//div[contains(text(), "下载")]').length) {
+		// 	item.attachments.push({
+		// 		url: getPDF(row),
+		// 		title: 'Full Text PDF',
+		// 		mimeType: 'application/pdf'
+		// 	});
+		// }
 		item.creators.forEach((creator) => {
 			if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
 				creator.fieldMode = 1;
@@ -290,6 +292,13 @@ function pickLabel(doc, selector, label) {
 		? fineElement
 		: document.createElement('div');
 }
+
+// function getPDF(doc) {
+// 	let hiddenId = attr(doc, 'a.download', 'href') || ZU.trimInternal(text(doc, 'span.title-id-hidden'));
+// 	let match = hiddenId.match(/(\w+)_([^.]+)/);
+// 	if (!hiddenId || !match) return '';
+// 	return "https://oss.wanfangdata.com.cn/www/" + encodeURIComponent(doc.title) + ".ashx?isread=true&type=" + match[1] + "&resourceId=" + encodeURI(decodeURIComponent(match[2]));
+// }
 
 /** BEGIN TEST CASES **/
 var testCases = [
