@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-08 14:30:06"
+	"lastUpdated": "2024-01-09 07:22:38"
 }
 
 /*
@@ -88,7 +88,7 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.url = url;
 	newItem.url = url;
 	newItem.libraryCatalog = '中国大百科全书';
-	newItem.extra += addExtra('original-title', text(doc, '.enname i'));
+	newItem.extra += addExtra('original-title', text(doc, '.enname').replace(/\//g, ''));
 	// ".authorname .n-author > span"见于https://www.zgbk.com/ecph/words?SiteID=1&ID=456852&Type=bkzyb&SubID=99947
 	doc.querySelectorAll('.author-noshadow .author-span > span, .authorname .n-author > span').forEach((element) => {
 		let creator = element.innerText.replace(/(撰|修订)$/, '');
@@ -141,6 +141,7 @@ var testCases = [
 				"abstractNote": "（1889-08-27～1969-06-06）\n中国编辑出版家。别名雪村。",
 				"edition": "第三版·网络版",
 				"encyclopediaTitle": "中国大百科全书",
+				"extra": "original-title: Zhang Xichen",
 				"language": "zh-CN",
 				"libraryCatalog": "中国大百科全书",
 				"publisher": "中国大百科全书出版社",
