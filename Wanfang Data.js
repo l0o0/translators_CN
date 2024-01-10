@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-09 12:03:47"
+	"lastUpdated": "2024-01-10 05:33:41"
 }
 
 /*
@@ -138,7 +138,7 @@ async function doWeb(doc, url) {
 }
 
 async function scrapePage(doc, url = doc.location.href) {
-	Z.debug("--------------- WanFang Data 2024-01-09 19:39:21 ---------------");
+	Z.debug("--------------- WanFang Data 2024-01-10 13:17:08 ---------------");
 	let ids = new ID(doc, url);
 	var newItem = new Zotero.Item(ids.itemType);
 	newItem.title = text(doc, '.detailTitleCN > span:first-child') || text(doc, '.detailTitleCN');
@@ -154,7 +154,8 @@ async function scrapePage(doc, url = doc.location.href) {
 	newItem.pages = tryMatch(text(doc, '.pages > .item+* span, .pageNum > .item+*'), /[\d+,~-]+/).replace('+', ',').replace('~', '-');
 	newItem.url = url;
 	Array.from(doc.querySelectorAll('.author.detailTitle span')).forEach((creator) => {
-		newItem.creators.push(ZU.cleanAuthor(creator.innerText, 'author'));
+		creator = creator.innerText.replace(/[\s\d,]*$/, '');
+		newItem.creators.push(ZU.cleanAuthor(creator, 'author'));
 	});
 	Array.from(doc.querySelectorAll('.keyword > .item+* > a')).forEach((tag) => {
 		newItem.tags.push(tag.innerText);
@@ -212,8 +213,11 @@ async function scrapePage(doc, url = doc.location.href) {
 		case 'standard':
 			newItem.number = text(doc, '.standardId > .item+*');
 			newItem.date = text(doc, '.issueDate > .item+*');
+			newItem.publisher = text(doc, '.issueOrganization > itemUrl > a');
 			newItem.status = text(doc, '.status > .item+*');
 			addExtra('apply date', text(doc, '.applyDate > .item+*'));
+			addExtra('reference', text(doc, '.citeStandard > .itemKeyword'));
+			newItem.creators.push(ZU.cleanAuthor(text(doc, '.technicalCommittee > .itemUrl').replace(/\(.+?\)$/, ''), 'author'));
 			break;
 		default:
 			break;
