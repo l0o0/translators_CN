@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-10 15:54:49"
+	"lastUpdated": "2024-01-11 08:39:01"
 }
 
 /*
@@ -38,7 +38,7 @@
 
 function detectWeb(doc, url) {
 	if (/\/\d+\/[a-z\d]+/i.test(url)) {
-		return 'blogPost';
+		return 'forumPost';
 	}
 	else if (getSearchResults(doc, true)) {
 		return 'multiple';
@@ -46,18 +46,36 @@ function detectWeb(doc, url) {
 	return false;
 }
 
+function select(field) {
+	let pages = [
+		// https://weibo.com/
+		// https://weibo.com/7467277921/NBaFziUqv?refer_flag=1001030103_
+		{
+			row: 'article.woo-panel-main',
+			name: 'a[class*="head_name"]',
+			time: 'a[class*="head-info_time"]',
+			detail: 'div[class*="detail_text"]',
+			button: '[class*="toolbar_main"] > [class*="toolbar_item"]'
+		},
+		// https://s.weibo.com/weibo?q=%E5%A4%A9%E6%B0%94
+		{
+			row: '[action-type="feed_list_item"]',
+			name: 'a.name',
+			time: '.from > a',
+			detail: '[node-type*=feed_list_content]',
+			button: '.card-act li'
+		}
+	];
+	return pages.map(page => page[field]).join(',');
+}
+
 function getSearchResults(doc, checkOnly) {
 	var items = {};
 	var found = false;
-	// article.woo-panel-main见于首页
-	// [action-type="feed_list_item"]见于话题
-	var rows = doc.querySelectorAll('article.woo-panel-main, [action-type="feed_list_item"]');
-	// Z.debug(rows.length);
+	var rows = doc.querySelectorAll(select('row'));
 	for (let row of rows) {
-		let href = attr(row, '.from > a, a[class*="head-info_time"]', 'href');
-		// [class*="head_name"]、[class*="detail_wbtext"]见于首页
-		// a[nick-name]、p[node-type="feed_list_content"]见于话题
-		let title = `${text(row, '[class*="head_name"], a[nick-name]')}：${text(row, '[class*="detail_wbtext"], p[node-type="feed_list_content"]').substring(0, 30)}……`;
+		let href = attr(row, select('time'), 'href');
+		let title = `${text(row, select('name'))}：${text(row, select('detail')).substring(0, 30)}……`;
 		if (!href || !title) continue;
 		if (checkOnly) return true;
 		found = true;
@@ -68,12 +86,12 @@ function getSearchResults(doc, checkOnly) {
 
 async function doWeb(doc, url) {
 	if (detectWeb(doc, url) == 'multiple') {
-		let rows = Array.from(doc.querySelectorAll('article.woo-panel-main, [action-type="feed_list_item"]'));
+		let rows = Array.from(doc.querySelectorAll(select('row')));
 		let items = await Zotero.selectItems(getSearchResults(doc, false));
 		if (!items) return;
 		for (let url of Object.keys(items)) {
 			let row = rows.find(row => row.querySelector(`a[href="${url}"]`));
-			let href = row.querySelector('.from > a, a[class*="head-info_time"]').href;
+			let href = row.querySelector(select('time')).href;
 			await scrape(row, href);
 		}
 	}
@@ -83,23 +101,41 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url = doc.location.href) {
-	var newItem = new Z.Item('blogPost');
+	var newItem = new Z.Item('forumPost');
 	newItem.extra = '';
-	let detail = text(doc, '[class*="detail_wbtext"]');
+	let expand = doc.querySelector('.expand');
+	if (expand && expand.textContent.includes('展开')) {
+		await expand.click();
+		let startTime = Date.now();
+		// .expand展开后会变为.collapse
+		while (expand && Date.now() - startTime < 5000) {
+			expand = doc.querySelector('.expand');
+			await new Promise(resolve => setTimeout(resolve, 200));
+		}
+	}
+	let detail = text(doc, select('detail'), 1) || text(doc, select('detail'), 0);
+	detail = detail.replace(/\s*收起.?$/, '');
 	newItem.title = tryMatch(detail, /【(.+?)】/, 1).replace(/#/g, '')
 		|| tryMatch(detail, /#(.+?)#/, 1)
-		|| `${text(doc, '[class*="head_name"]')}的微博`;
-	newItem.abstractNote = text(doc, '[class*="detail_wbtext"]');
-	newItem.blogTitle = '新浪微博';
-	newItem.date = ZU.strToISO(text(doc, '[class*="head-info_time"]'));
+		|| `${text(doc, select('name'))}的微博`;
+	newItem.abstractNote = detail;
+	newItem.forumTitle = '新浪微博';
+	let time = text(doc, select('time'));
+	newItem.date = /(今天|小时|分钟)/.test(time)
+		? ZU.strToISO(new Date().toLocaleDateString())
+		: /\d+月\d+日/.test(time)
+			? ZU.strToISO(`${new Date().getFullYear()}年${time}`)
+			: ZU.strToISO(time);
 	newItem.url = tryMatch(url, /^.+?\/\d+\/[a-z\d]+/i) || url;
 	newItem.language = 'zh-CN';
-	newItem.extra += addExtra('reship', text(doc, '[class*="toolbar_num"]'));
-	newItem.extra += addExtra('comments', text(doc, '[class*="toolbar_num"]', 1));
-	newItem.extra += addExtra('likes', text(doc, '[class*="Detail_feed"] .woo-like-count') || text(doc, '.woo-like-count'));
+	// .card-act li见于关键词搜索
+	// https://s.weibo.com/weibo?q=%E5%A4%A9%E6%B0%94
+	newItem.extra += addExtra('reship', text(select('button'), 0));
+	newItem.extra += addExtra('comments', text(select('button'), 1));
+	newItem.extra += addExtra('likes', text(select('button'), 2));
 	newItem.creators.push({
 		firstName: '',
-		lastName: text(doc, '[class*="head_name"]'),
+		lastName: text(doc, select('name')),
 		creatorType: 'author',
 		fieldMode: 1
 	});
@@ -147,7 +183,12 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://weibo.com/newlogin?tabtype=weibo&gid=102803&openLoginLayer=0&url=https%3A%2F%2Fweibo.com%2F",
+		"url": "https://s.weibo.com/weibo?q=%E5%A4%A9%E6%B0%94",
+		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://weibo.com/1871802012",
 		"items": "multiple"
 	},
 	{
@@ -155,7 +196,7 @@ var testCases = [
 		"url": "https://weibo.com/7467277921/NBaFziUqv?refer_flag=1001030103_",
 		"items": [
 			{
-				"itemType": "blogPost",
+				"itemType": "forumPost",
 				"title": "大金砖来尔滨啦！迪拜小哥从沙漠来感受尔滨冬天",
 				"creators": [
 					{
@@ -167,8 +208,8 @@ var testCases = [
 				],
 				"date": "2010-01-24",
 				"abstractNote": "【大金砖来尔滨啦！#迪拜小哥从沙漠来感受尔滨冬天# 】#全球媒体争相报道尔滨盛况# #尔滨大火引来迪拜大金砖# 1月9日，黑龙江哈尔滨。为感受哈尔滨的冬天，迪拜小哥特意从沙漠来到魅力四射的哈尔滨并手动点赞表示尔滨很棒。网友纷纷表示，尔滨欢迎国际友人！@西部决策 西部决策的微博视频 ​​​",
-				"blogTitle": "新浪微博",
-				"extra": "reship: 82\ncomments: 181\nlikes: 5203",
+				"extra": "reship: 87\ncomments: 191\nlikes: 5467",
+				"forumTitle": "新浪微博",
 				"language": "zh-CN",
 				"url": "https://weibo.com/7467277921/NBaFziUqv",
 				"attachments": [
