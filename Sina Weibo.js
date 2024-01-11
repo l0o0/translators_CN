@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-11 08:39:01"
+	"lastUpdated": "2024-01-11 12:10:50"
 }
 
 /*
@@ -121,11 +121,24 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.abstractNote = detail;
 	newItem.forumTitle = '新浪微博';
 	let time = text(doc, select('time'));
-	newItem.date = /(今天|小时|分钟)/.test(time)
-		? ZU.strToISO(new Date().toLocaleDateString())
-		: /\d+月\d+日/.test(time)
-			? ZU.strToISO(`${new Date().getFullYear()}年${time}`)
-			: ZU.strToISO(time);
+	let today = new Date();
+	Z.debug(time);
+	if (/(今天|小时|分钟)/.test(time)) {
+		newItem.date = ZU.strToISO(today.toLocaleDateString());
+	}
+	else if (time.includes('昨天')) {
+		let yesterday = new Date();
+		yesterday.setDate(today.getDate() - 1);
+		newItem.date = ZU.strToISO(`${yesterday.getFullYear()}-${yesterday.getMonth() + 1}-${yesterday.getDate()}`);
+	}
+	// x月x日
+	// x-x  xx:xx
+	else if (/^\d{1,2}\S\d{1,2}/.test(time)) {
+		newItem.date = ZU.strToISO(`${today.getFullYear()}-${time.replace(/^(\d{1,2})\S(\d{1,2})/, '$1-$2')}`);
+	}
+	else {
+		newItem.date = ZU.strToISO(time);
+	}
 	newItem.url = tryMatch(url, /^.+?\/\d+\/[a-z\d]+/i) || url;
 	newItem.language = 'zh-CN';
 	// .card-act li见于关键词搜索
@@ -206,9 +219,9 @@ var testCases = [
 						"fieldMode": 1
 					}
 				],
-				"date": "2010-01-24",
+				"date": "2024-01-24",
 				"abstractNote": "【大金砖来尔滨啦！#迪拜小哥从沙漠来感受尔滨冬天# 】#全球媒体争相报道尔滨盛况# #尔滨大火引来迪拜大金砖# 1月9日，黑龙江哈尔滨。为感受哈尔滨的冬天，迪拜小哥特意从沙漠来到魅力四射的哈尔滨并手动点赞表示尔滨很棒。网友纷纷表示，尔滨欢迎国际友人！@西部决策 西部决策的微博视频 ​​​",
-				"extra": "reship: 87\ncomments: 191\nlikes: 5467",
+				"extra": "reship: 87\ncomments: 193\nlikes: 5475",
 				"forumTitle": "新浪微博",
 				"language": "zh-CN",
 				"url": "https://weibo.com/7467277921/NBaFziUqv",
