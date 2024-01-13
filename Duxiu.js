@@ -1,7 +1,7 @@
 {
 	"translatorID": "c198059a-3e3a-4ee5-adc0-c3011351365c",
 	"label": "Duxiu",
-	"creator": "Bo An",
+	"creator": "Bo An, jiaojiaodubai",
 	"target": ".*duxiu\\..*(getPage|search|bookDetail|JourDetail|NPDetail|thesisDetail|CPDetail|patentDetail|StdDetail|\\/base)",
 	"minVersion": "6.0",
 	"maxVersion": "",
@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-16 12:06:26"
+	"lastUpdated": "2024-01-13 10:22:39"
 }
 
 /*
@@ -37,19 +37,20 @@
 */
 
 function detectWeb(doc, url) {
-	Z.debug('---------- Duxiu 2023-12-16 20:05:02 ----------');
-	const types = [
-		{ subUrl: 'bookDetail', itemType: 'book' },
-		{ subUrl: 'JourDetail', itemType: 'journalArticle' },
-		{ subUrl: 'NPDetail', itemType: 'newspaperArticle' },
-		{ subUrl: 'thesisDetail', itemType: 'thesis' },
-		{ subUrl: 'CPDetail', itemType: 'conferencePaper' },
-		{ subUrl: 'patentDetail', itemType: 'patent' },
-		{ subUrl: 'StdDetail', itemType: 'standard' }
-	];
-	let type = types.find(type => url.includes(type.subUrl));
-	if (type) {
-		return type.itemType;
+	Z.debug('---------- Duxiu 2024-01-13 16:31:44 ----------');
+	const pageMap = {
+		'/book/base/': 'bookSection',
+		bookDetail: 'book',
+		JourDetail: 'journalArticle',
+		NPDetail: 'newspaperArticle',
+		thesisDetail: 'thesis',
+		CPDetail: 'conferencePaper',
+		patentDetail: 'patent',
+		StdDetail: 'standard'
+	};
+	let subUrl = Object.keys(pageMap).find(key => url.includes(key));
+	if (subUrl) {
+		return pageMap[subUrl];
 	}
 	else if (/search|getpage/i.test(url) && getSearchResults(doc, true)) {
 		return 'multiple';
@@ -60,10 +61,12 @@ function detectWeb(doc, url) {
 function getSearchResults(doc, checkOnly) {
 	var items = {};
 	var found = false;
-	var rows = doc.querySelectorAll('dt a');
+	var rows = doc.querySelectorAll('ul dt a');
 	for (let row of rows) {
 		let href = row.href;
+		Z.debug(href);
 		let title = ZU.trimInternal(row.textContent);
+		Z.debug(title);
 		if (!href || !title) continue;
 		if (checkOnly) return true;
 		found = true;
@@ -73,69 +76,107 @@ function getSearchResults(doc, checkOnly) {
 }
 
 async function doWeb(doc, url) {
-	if (detectWeb(doc, url) == 'multiple') {
+	Z.debug(doc.body.innerText);
+	const itemType = detectWeb(doc, url);
+	if (itemType == 'multiple') {
 		let items = await Zotero.selectItems(getSearchResults(doc, false));
 		if (!items) return;
 		for (let url of Object.keys(items)) {
 			// browser needed
-			await scrape(await requestDocument(url));
+			// 不支持图书章节，因为图书章节的页面是动态加载
+			let itemDoc = await requestDocument(url);
+			Z.debug(itemDoc.body.innerText);
+			await doWeb(itemDoc, url);
 		}
 	}
+	else if (itemType == 'bookSection') {
+		await scrapeBookSection(doc, url);
+	}
 	else {
-		await scrape(doc, url);
+		let newItem = await scrape(doc, url);
+		newItem.complete();
 	}
 }
 
 async function scrape(doc, url = doc.location.href) {
+	// Z.debug(doc.body.innerText);
 	let labels = new Labels(doc, 'dl > dd');
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	var newItem = new Z.Item(detectWeb(doc, url));
 	newItem.title = text(doc, 'dl > dt');
 	newItem.extra = '';
 	newItem.abstractNote = labels.getWith(['摘要', '内容提要', '简介']).replace(/\s*隐藏更多$/, '');
-	newItem.publicationTitle = labels.getWith('刊名, 来源');
-	let pubInfo = labels.getWith('出版发行');
-	newItem.date = labels.getWith(['出版日期', '日期', '学位年度', '实施日期']) || tryMatch(pubInfo, /[\d.]+/);
-	if (newItem.date) {
-		newItem.date = newItem.date.replace(/[.~]/g, '-').replace(/\+/g, ', ');
-	}
-	newItem.volume = tryMatch(labels.getWith('期号'), /0*(\d+)/, 1);
-	newItem.pages = labels.getWith('页码') || tryMatch(labels.getWith('版次'), /\d+/);
-	newItem.numPage = labels.getWith('页数');
-	newItem.ISSN = labels.getWith('ISSN');
-	newItem.ISBN = labels.getWith('ISBN');
-	newItem.place = tryMatch(pubInfo, /(.*)：/, 1) || labels.getWith('地址');
-	// 有时pubInfo仅含出版社
-	newItem.publisher = /[；，]/.test(pubInfo)
-		? pubInfo
-		: tryMatch(pubInfo, /：(.*)，/, 1);
 	labels.getWith(['作者', '发明人']).split(/[;；]\s*/)
-		.forEach((element) => {
-			let subElements = element.split(/[,，]\s*/);
-			let creatorType = /翻?译$/.test(subElements[subElements.length - 1])
+		.forEach((group) => {
+			let creators = group.split(/[,，]\s*/);
+			let creatorType = /翻?译$/.test(creators[creators.length - 1])
 				? 'translator'
 				: 'author';
-			subElements.forEach((element) => {
-				element = element.replace(/[主编著翻译\d\s]*$/g, '');
-				newItem.creators.push(ZU.cleanAuthor(element, creatorType));
+			creators.forEach((creator) => {
+				creator = creator
+					.replace(/^：/, '')
+					.replace(/[主编著翻译\d\s]*$/g, '');
+				creator = ZU.cleanAuthor(creator, creatorType);
+				if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+					creator.fieldMode = 1;
+				}
+				newItem.creators.push(creator);
 			});
 		});
-	newItem.creators.forEach((creator) => {
-		if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
-			creator.fieldMode = 1;
-		}
-	});
-	labels.getWith('关键词').split(/[,;，；]/).forEach(element => newItem.tags.push(element));
 	switch (newItem.itemType) {
+		case 'book': {
+			newItem.series = labels.getWith('丛书名');
+			let pubInfo = labels.getWith('出版发行');
+			// newItem.edition = 版本;
+			newItem.place = tryMatch(pubInfo, /(.+?)：/, 1);
+			// 有时pubInfo仅含出版社：https://book.duxiu.com/bookDetail.jsp?dxNumber=000007798830&d=84337FB71A1ED5917061A4BB4C3610AF
+			newItem.publisher = /[：，]/.test(pubInfo)
+				? tryMatch(pubInfo, /：(.+?)(?:，|\s*,\s*)/, 1)
+				: pubInfo;
+			newItem.date = ZU.strToISO(tryMatch(pubInfo, /[\d.-]*$/));
+			newItem.numPages = labels.getWith('页数');
+			newItem.ISBN = labels.getWith('ISBN');
+			// newItem.shortTitle = 短标题;
+			break;
+		}
+		case 'journalArticle':
+			newItem.publicationTitle = labels.getWith('刊名, 来源');
+			newItem.issue = tryMatch(labels.getWith('期号'), /0*(\d+)/, 1);
+			newItem.pages = labels.getWith('页码');
+			newItem.date = labels.getWith('出版日期');
+			newItem.ISSN = labels.getWith('ISSN');
+			break;
+		case 'newspaperArticle':
+			newItem.publicationTitle = labels.getWith('来源');
+			newItem.date = ZU.strToISO(labels.getWith('日期'));
+			newItem.pages = tryMatch(labels.getWith('版次'), /0*(\d+)/, 1);
+			break;
+		case 'thesis': {
+			newItem.university = labels.getWith('学位授予单位');
+			newItem.date = labels.getWith('学位年度');
+			newItem.thesisType = `${labels.getWith('学位名称')}学位论文`;
+			let tutors = labels.getWith('导师姓名');
+			if (tutors) {
+				tutors.split(/[,;，；]\s*/).forEach((tutor) => {
+					newItem.creators.push(ZU.cleanAuthor(tutor, 'contributor'));
+				});
+			}
+			break;
+		}
 		case 'conferencePaper':
-			newItem.conferenceName = labels.getWith('会议名称');
+			newItem.date = labels.getWith('日期');
 			newItem.proceedingsTitle = labels.getWith('会议录名称');
+			newItem.conferenceName = labels.getWith('会议名称');
+			// "place": "地点",
+			// "publisher": "出版社",
+			// "pages": "页码",
 			break;
 		case 'patent': {
+			newItem.place = labels.getWith('地址');
 			newItem.filingDate = ZU.strToISO(labels.getWith('申请日期'));
 			newItem.applicationNumber = labels.getWith('申请号');
 			let patentDetail = attr(doc, 'dd > a[href*="pat.hnipo"]', 'href');
-			if (newItem.itemType == 'patent' && patentDetail) {
+			if (patentDetail) {
 				let detailDoc = await requestDocument(patentDetail);
 				var tabel = {
 					cells: Array.from(detailDoc.querySelectorAll('td.table_15')),
@@ -149,33 +190,65 @@ async function scrape(doc, url = doc.location.href) {
 				newItem.issueDate = tabel.getNext('法律状态公告日');
 				newItem.legalStatus = tabel.getNext('法律状态');
 			}
-			newItem.extra += addExtra('Genre', labels.getWith('专利类型'));
-			break;
-		}
-		case 'thesis': {
-			newItem.university = labels.getWith('学位授予单位');
-			newItem.thesisType = `${labels.getWith('学位名称')}学位论文`;
-			let tutors = labels.getWith('导师姓名');
-			if (tutors) {
-				tutors.split(/[,;，；]\s*/).forEach((tutor) => {
-					newItem.creators.push(ZU.cleanAuthor(tutor, 'contributor'));
-				});
-			}
 			break;
 		}
 		case 'standard':
 			newItem.number = labels.getWith('标准号').replace('-', '—');
-			newItem.extra += addExtra('IPC number', labels.getWith('IPC分类号'));
-			newItem.extra += addExtra('ICS number', labels.getWith('ICS分类号'));
-			newItem.extra += addExtra('reference', labels.getWith('引用标准'));
-			newItem.extra += addExtra('replacement', labels.getWith('替代情况'));
-			newItem.extra += addExtra('CCS number', labels.getWith('中标分类号'));
 			break;
 	}
-	newItem.extra += addExtra('original-title', labels.getWith(['外文题名, 标准英文名']));
+	newItem.url = tryMatch(url, /^.+dxNumber=\w+/i) || url;
+	newItem.extra += addExtra('original-title', labels.getWith(['外文题名', '标准英文名']));
+	newItem.extra += addExtra('Genre', labels.getWith('专利类型'));
+	newItem.extra += addExtra('price', labels.getWith('原书定价'));
+	newItem.extra += addExtra('IF', labels.getWith('影响因子'));
+	newItem.extra += addExtra('fund', labels.getWith('基金'));
 	newItem.extra += addExtra('cite as', labels.getWith('参考文献格式'));
+	newItem.extra += addExtra('CLC', labels.getWith('中图法分类号'));
 	newItem.extra += addExtra('contact', labels.getWith('作者联系方式'));
-	newItem.complete();
+	newItem.extra += addExtra('IPC', labels.getWith('IPC'));
+	newItem.extra += addExtra('ICS', labels.getWith('ICS'));
+	newItem.extra += addExtra('reference', labels.getWith('引用标准'));
+	// https://book.duxiu.com/StdDetail.jsp?dxid=320151549195&d=443146B469770278DD217B9CF31D9D84
+	newItem.extra += addExtra('replacement', labels.getWith('替代情况'));
+	newItem.extra += addExtra('CCS', labels.getWith('中标分类号'));
+	labels.getWith(['关键词', '主题词']).split(/[;，；]/).forEach(tag => newItem.tags.push(tag));
+	return newItem;
+}
+
+async function scrapeBookSection(doc, url = doc.location.href) {
+	let bookUrl = tryMatch(Array.from(doc.querySelectorAll('script'))
+		.map(element => element.innerText)
+		.find(script => script.includes('bookDetail.jsp?')),
+	/\('(https:\/\/book\.duxiu\.com\/bookDetail.jsp\?dxNumber=\d+&d=\w+)'\)/i,
+	1
+	);
+	Z.debug(`bookUrl: ${bookUrl}`);
+	// 依赖浏览器环境
+	let bookItem = await scrape(await requestDocument(bookUrl));
+	Z.debug(bookItem);
+	var sectionItem = new Z.Item('bookSection');
+	sectionItem.title = text(doc, 'title');
+	sectionItem.pages = tryMatch(attr(doc, '#saveAs', 'href'), /PageRanges=([\d-]+)&/i, 1);
+	sectionItem.url = url;
+	bookItem.bookTitle = bookItem.title;
+	delete bookItem.itemType;
+	delete bookItem.title;
+	delete bookItem.pages;
+	delete bookItem.url;
+	bookItem = Object.assign(sectionItem, bookItem);
+	let pdfLink = doc.querySelector('#saveAs');
+	if (pdfLink) {
+		sectionItem.attachments.push({
+			url: pdfLink.href,
+			title: 'Full Text PDF',
+			mimeType: 'application/pdf'
+		});
+	}
+	sectionItem.attachments.push({
+		title: 'Snapshot',
+		document: doc
+	});
+	sectionItem.complete();
 }
 
 /* Util */
@@ -242,7 +315,7 @@ var testCases = [
 				"creators": [
 					{
 						"firstName": "",
-						"lastName": "：（德）海德格尔",
+						"lastName": "（德）海德格尔",
 						"creatorType": "author",
 						"fieldMode": 1
 					},
@@ -268,10 +341,21 @@ var testCases = [
 				"date": "2015-11",
 				"ISBN": "9787100094313",
 				"abstractNote": "本书分上、下两册，是作者1936至1940年间在弗莱堡大学做的讲座，又附加了若干篇论文，意在审视作者从1930年以来直至“关于人道主义的书信”（发表于1947年）所走过的思想道路。",
+				"extra": "price: 268.00（全2卷）\noriginal-title: ：Martin Heidegger Nietzsche\ncite as: （德）海德格尔著；孙周兴，王庆节主编；孙周兴译. 海德格尔文集 尼采 下[M]. 北京：商务印书馆, 2015.11.\nCLC: B516.47 ( 哲学、宗教->欧洲哲学->欧洲各国哲学->德国哲学 )",
 				"libraryCatalog": "Duxiu",
+				"numPages": "1235",
 				"place": "北京",
+				"publisher": "商务印书馆",
+				"url": "https://book.duxiu.com/bookDetail.jsp?dxNumber=000030156491",
 				"attachments": [],
-				"tags": [],
+				"tags": [
+					{
+						"tag": "F.W.（1844-1900）-哲学思想-研究"
+					},
+					{
+						"tag": "尼采"
+					}
+				],
 				"notes": [],
 				"seeAlso": []
 			}
@@ -281,22 +365,6 @@ var testCases = [
 		"type": "web",
 		"url": "https://book.duxiu.com/search?channel=search&gtag=&sw=%E5%9B%BD%E5%AD%A6&ecode=utf-8&Field=all&adminid=&btype=&seb=0&pid=0&year=&sectyear=&showc=0&fenleiID=&searchtype=&authid=0&exp=0&expertsw=&Sort=2",
 		"items": "multiple"
-	},
-	{
-		"type": "web",
-		"url": "https://book.duxiu.com/bookDetail.jsp?dxNumber=000007798830&d=84337FB71A1ED5917061A4BB4C3610AF",
-		"items": [
-			{
-				"itemType": "book",
-				"title": "中国包装年鉴  2010-2011",
-				"creators": [],
-				"libraryCatalog": "Duxiu",
-				"attachments": [],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
 	},
 	{
 		"type": "web",
@@ -334,9 +402,11 @@ var testCases = [
 				"date": "2015",
 				"ISSN": "2095-3070",
 				"abstractNote": "本文综述随机动力系统的基本概念、理论、方法与应用,内容包括Brownian运动、Lévy运动和随机微分方程及其解的刻画。重点讨论通过量化指标、不变结构、几何方法和非高斯性态来理解随机动力学现象。本文还介绍了段金桥的著作《An Introduction to Stochastic Dynamics(随机动力系统导论)》的基本内容。",
+				"extra": "original-title: What Are Stochastic Dynamical Systems\nIF: 1.1868(2022)\nfund: 国家自然科学基金项目；中央高校基本科研业务费专项资金\ncite as: 段金桥1,2,3,郑雅允2,白露2,姜涛2.什么是随机动力系统[J].数学建模及其应用,2015,(第4期).",
+				"issue": "4",
 				"libraryCatalog": "Duxiu",
 				"pages": "1-9",
-				"volume": "4",
+				"url": "https://jour.duxiu.com/JourDetail.jsp?dxNumber=100232796446",
 				"attachments": [],
 				"tags": [
 					{
@@ -379,9 +449,10 @@ var testCases = [
 					}
 				],
 				"date": "2022-05-17",
-				"abstractNote": "在中国，为人所称道的世家，其家族中肯定有一个甚至几个国学底蕴深厚的大师。对这样的家庭而言，其家风就从《老子》《论语》《孟子》这些经典中而来，化于日常生活之中。 所以，要树立良好的家风，学国学是必要的。就家风的构建而言，学国学的主要目的有两个：一是完善人性，二是修缮家庭关系。这两件事做好了，就将所学国学内化了，方可谈建功立业。但如今大多数人学国学，却将其当成一种知识，没有将其化为一种素养——不管怎么学，家人之间仍是一谈问题就吵架，天天针尖对麦芒。 那么，具体应该怎么做呢自2014年开始研习家风，我几乎每天都在思考这个问题。去过上百个城市演讲后，我愈发觉得社会...",
 				"libraryCatalog": "Duxiu",
 				"pages": "10",
+				"publicationTitle": "今晚报",
+				"url": "https://newspaper.duxiu.com/NPDetail.jsp?dxNumber=406009217912",
 				"attachments": [],
 				"tags": [],
 				"notes": [],
@@ -414,6 +485,7 @@ var testCases = [
 				"libraryCatalog": "Duxiu",
 				"thesisType": "硕士学位论文",
 				"university": "武汉大学",
+				"url": "https://jour.duxiu.com/thesisDetail.jsp?dxNumber=390107234763",
 				"attachments": [],
 				"tags": [
 					{
@@ -461,6 +533,7 @@ var testCases = [
 				"libraryCatalog": "Duxiu",
 				"thesisType": "硕士学位论文",
 				"university": "华东师范大学",
+				"url": "https://jour.duxiu.com/thesisDetail.jsp?dxNumber=390109152129",
 				"attachments": [],
 				"tags": [
 					{
@@ -581,13 +654,14 @@ var testCases = [
 						"fieldMode": 1
 					}
 				],
-				"issueDate": "2021-12-10",
+				"issueDate": "2022.04.15",
 				"abstractNote": "本发明公开了一种结合知网与词林的词语相似度获取方法及系统，利用《知网》义原层次树计算知网义原信息内容含量；并构建第一词语相似度计算模型；根据扩展版《同义词词林》词林拓扑树中的路径信息构建第二词语相似度计算模型；根据待测词语对在《知网》和扩展版《同义词词林》中的分布情况，综合两个计算模型的计算结果，获... 展开",
 				"applicationNumber": "202111510160.7",
-				"extra": "Genre: 发明专利",
+				"extra": "Genre: 发明专利\nIPC: G06F16/35;G06F40/247;G06F40/194",
 				"filingDate": "2021-12-10",
 				"legalStatus": "实质审查的生效",
 				"place": "400000 重庆市南岸区南山街道崇文路2号",
+				"url": "https://book.duxiu.com/patentDetail.jsp?dxid=166042694583&d=01E8862E4B5CAEAFB1E2CCDFEF566CF6",
 				"attachments": [],
 				"tags": [],
 				"notes": [],
@@ -603,36 +677,11 @@ var testCases = [
 				"itemType": "standard",
 				"title": "中国结绳",
 				"creators": [],
-				"date": "2019-07-01",
 				"abstractNote": "本标准规定了中国结绳的术语和定义、技术要求、分等规定、试验方法、检验规则、包装、标识、运输、贮存。 ;本标准适用于以涤纶长丝、锦纶长丝为主体原材料，直径为1.5 mmm～15 mm的中国结绳。",
-				"extra": "ICS number: 59.080.99\nreference: FZ/T 63043-2018",
+				"extra": "ICS: 59.080.99\nreference: FZ/T 63043-2018",
 				"libraryCatalog": "Duxiu",
-				"number": "FZ/T 63043-2018",
-				"attachments": [],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320151549195&d=443146B469770278DD217B9CF31D9D84",
-		"items": [
-			{
-				"itemType": "standard",
-				"title": "中国海图图式",
-				"creators": [
-					{
-						"firstName": "",
-						"lastName": "海军参谋部海图信息中心",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"extra": "ICS number: 07.040\nreplacement: 替代以下标准：GB 12319-1998\nCCS number: A79",
-				"libraryCatalog": "Duxiu",
-				"number": "20201885-Q-307",
+				"number": "FZ/T 63043—2018",
+				"url": "https://book.duxiu.com/StdDetail.jsp?dxid=320151457340&d=D15D61CC62E6E40DE6DB82785CA3212E",
 				"attachments": [],
 				"tags": [],
 				"notes": [],
