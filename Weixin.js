@@ -1,7 +1,7 @@
 {
 	"translatorID": "5a325508-cb60-42c3-8b0f-d4e3c6441058",
 	"label": "Weixin",
-	"creator": "Fushan Wen",
+	"creator": "Fushan Wen, jiaojiaodubai",
 	"target": "^https?://mp\\.weixin\\.qq\\.com",
 	"minVersion": "3.0",
 	"maxVersion": "",
@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-04 10:16:48"
+	"lastUpdated": "2024-01-15 13:22:16"
 }
 
 /*
@@ -54,7 +54,8 @@ async function doWeb(doc, url) {
 	newItem.title = metas.get('og:title');
 	newItem.abstractNote = metas.get('og:description');
 	newItem.blogTitle = text(doc, '#profileBt > a');
-	newItem.websiteType = metas.get('og:site_name');
+	// newItem.websiteType = metas.get('og:site_name');
+	newItem.websiteType = '微信公众号';
 	newItem.date = text(doc, '#publish_time');
 	newItem.url = metas.get('og:url');
 	[...new Set([text(doc, '#js_name'), metas.get('og:article:author')])].forEach((creator) => {
@@ -100,7 +101,7 @@ var testCases = [
 				"abstractNote": "来自官方的圣诞礼物🎁——Zotero 安卓测试版来了",
 				"blogTitle": "学术废物收容所",
 				"url": "http://mp.weixin.qq.com/s?__biz=MzkyNjUxNjgxNg==&mid=2247483816&idx=1&sn=86afcacc6b0403049380d86e6618cae7&chksm=c2375297f540db817078c81cefd63069b0da43222c8f5b9dfb4ac15eae87f42f0b4555e89fe1#rd",
-				"websiteType": "微信公众平台",
+				"websiteType": "微信公众号",
 				"attachments": [
 					{
 						"title": "Snapshot",
