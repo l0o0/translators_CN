@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-08 07:34:41"
+	"lastUpdated": "2024-01-16 10:45:34"
 }
 
 /*
@@ -110,8 +110,8 @@ async function scrape(doc, url = doc.location.href) {
 		text(doc, '.author, .sou1').replace(/【.+】/, ''),
 		tryMatch(text(doc, '.rm_txt_con > p[style*="indent"]', 0), /日[电讯]\s[(（［【[](.+?)[)）］】\]]/, 1),
 	].join(' ');
-	let editors = text(doc, '.edit');
-	newItem.creators = [...processName(authors, 'author'), ...processName(editors, 'editor')];
+	// let editors = text(doc, '.edit');
+	newItem.creators = processName(authors, 'author');
 	newItem.attachments.push({
 		title: 'Snapshot',
 		document: doc
@@ -169,18 +169,6 @@ var testCases = [
 						"lastName": "雷琦竣",
 						"creatorType": "author",
 						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "朱晓玲",
-						"creatorType": "editor",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "许荩文",
-						"creatorType": "editor",
-						"fieldMode": 1
 					}
 				],
 				"date": "2024-01-06",
@@ -212,18 +200,6 @@ var testCases = [
 						"firstName": "",
 						"lastName": "赵成",
 						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "赵欣悦",
-						"creatorType": "editor",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "胡永秋",
-						"creatorType": "editor",
 						"fieldMode": 1
 					}
 				],
