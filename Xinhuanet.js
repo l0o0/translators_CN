@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-08 12:07:46"
+	"lastUpdated": "2024-01-16 10:37:11"
 }
 
 /*
@@ -101,9 +101,9 @@ async function scrape(doc, url = doc.location.href) {
 		/记者(?:：|\s*)(.+)[)）]*/,
 		1
 	);
-	let editor = text(doc, '.editor');
-	Z.debug(editor);
-	newItem.creators = [...processName(authors, 'author'), ...processName(editor, 'editor')];
+	// let editor = text(doc, '.editor');
+	// Z.debug(editor);
+	newItem.creators = [...processName(authors, 'author')];
 	newItem.complete();
 }
 
@@ -145,12 +145,6 @@ var testCases = [
 						"lastName": "刘硕",
 						"creatorType": "author",
 						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "王頔",
-						"creatorType": "editor",
-						"fieldMode": 1
 					}
 				],
 				"date": "2024-01-06",
@@ -187,12 +181,6 @@ var testCases = [
 						"firstName": "",
 						"lastName": "陈涵旸",
 						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "周楚卿",
-						"creatorType": "editor",
 						"fieldMode": 1
 					}
 				],
@@ -237,12 +225,6 @@ var testCases = [
 						"lastName": "严勇",
 						"creatorType": "author",
 						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "刘笑冬",
-						"creatorType": "editor",
-						"fieldMode": 1
 					}
 				],
 				"date": "2024-01-07",
@@ -273,12 +255,6 @@ var testCases = [
 						"firstName": "",
 						"lastName": "周圆",
 						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "周楚卿",
-						"creatorType": "editor",
 						"fieldMode": 1
 					}
 				],
