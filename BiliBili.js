@@ -1,7 +1,7 @@
 {
 	"translatorID": "f9b132f7-8504-4a8f-b423-b61c8dae4783",
 	"label": "BiliBili",
-	"creator": "Felix Hui",
+	"creator": "Felix Hui, jiaojiaoduabi",
 	"target": "https?://(search|www).bilibili.com",
 	"minVersion": "3.0",
 	"maxVersion": "",
@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-14 05:54:08"
+	"lastUpdated": "2024-01-16 12:15:45"
 }
 
 /*
@@ -308,7 +308,9 @@ async function scrape({ url, type, json }) {
 		/* get tags */
 		switch (type.dbType) {
 			case 'video': {
-				let tags = await requestJSON(`https://api.bilibili.com/x/tag/archive/tags?bvid=${url.bvid}`);
+				Z.debug(type.id.bvid);
+				let tags = await requestJSON(`https://api.bilibili.com/x/tag/archive/tags?bvid=${url.match(type.id.bvid)[1]}`);
+				Z.debug(`tags`);
 				Z.debug(tags);
 				if (tags.code == 0) {
 					tags = tags.data;
@@ -408,12 +410,40 @@ var testCases = [
 				],
 				"date": "2020-4-2",
 				"abstractNote": "作曲：青瑶\n编曲：金大王gold\n\n\n录音：张洋\n混音：徐晓晖\n琵琶：青瑶\n中国鼓：王佳男（著名国乐大师，中国歌剧舞剧院首席打击乐演奏家）",
-				"extra": "like: 1314080\nview: 21917224",
+				"extra": "like: 1318443\nview: 22127322",
 				"libraryCatalog": "演奏",
 				"runningTime": "0:4:59",
 				"url": "https://www.bilibili.com/video/BV1PK411L7h5/",
 				"attachments": [],
-				"tags": [],
+				"tags": [
+					{
+						"tag": "中国华服日"
+					},
+					{
+						"tag": "中国鼓"
+					},
+					{
+						"tag": "动感视频"
+					},
+					{
+						"tag": "古风"
+					},
+					{
+						"tag": "国风新风尚"
+					},
+					{
+						"tag": "柳青瑶"
+					},
+					{
+						"tag": "汉服"
+					},
+					{
+						"tag": "王佳男"
+					},
+					{
+						"tag": "琵琶"
+					}
+				],
 				"notes": [],
 				"seeAlso": []
 			}
@@ -596,5 +626,6 @@ var testCases = [
 		"url": "https://www.bilibili.com/bangumi/media/md28227662/",
 		"items": "multiple"
 	}
+	
 ]
 /** END TEST CASES **/
