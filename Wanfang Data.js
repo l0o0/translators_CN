@@ -3,13 +3,13 @@
 	"label": "Wanfang Data",
 	"creator": "Ace Strong <acestrong@gmail.com>, rnicrosoft",
 	"target": "^https?://d|med.wanfangdata\\.com\\.cn",
-	"minVersion": "2.0rc1",
+	"minVersion": "6.0.24",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-07-19 08:48:13"
+	"lastUpdated": "2024-01-09 06:04:57"
 }
 
 /*
@@ -85,15 +85,18 @@ var nodeFieldMapper = {
 	"//div[contains(@class, 'applicantArea')]/div[@class='itemUrl']": 'country',
 	"//div[contains(@class, 'applicant')][1]/div[@class='itemUrl']": 'issuingAuthority',
 	"//div[contains(@class, 'signoryItem')][1]/div[@class='itemUrl']": '权力要求',
-	"//div[contains(@class, 'standardId list')][1]/div[@class='itemUrl']": "code",
-	"//div[contains(@class, 'draftsComp list')]": addCreators, // 购买后查看字段
-	"//div[contains(@class, 'issueOrganization list')][1]/div[@class='itemUrl']": "rights", // 购买后查看字段
-	"//div[contains(@class, 'applyDate list')][1]/div[@class='itemUrl']": "dateEnacted",
-	"//div[contains(@class, 'status list')]": addExtra,
+	"//div[contains(@class, 'standardId list')][1]/div[@class='itemUrl']": "number",
+	"//div[contains(@class, 'draftsComp list')][1]": addExtra, // 起草人 购买后查看字段
+	"//div[contains(@class, 'draftsComp list')][2]": addExtra, // 起草单位 购买后查看字段
+	"//div[contains(@class, 'technicalCommittee list')][1]/div[@class='itemUrl']": addCreators, // 归口单位 购买后查看字段
+	"//div[contains(@class, 'issueOrganization list')][1]/div[@class='itemUrl']": "publisher", // 出版单位 购买后查看字段
+	"//div[contains(@class, 'issueOrganization list')][2]": addExtra, // 发布单位 购买后查看字段
+	"//div[contains(@class, 'issueDate list')][1]/div[@class='itemUrl']": "date",
+	"//div[contains(@class, 'status list')][1]/div[@class='itemUrl']": "status",
 	"//div[contains(@class, 'isForce list')]": addExtra,
 	"//div[contains(@class, 'applyDate list')]": addExtra,
-	"//div[contains(@class, 'standardPageNum list')][1]/div[@class='itemUrl']": "pages",
-	"//div[contains(@class, 'newStandard list')][1]/div[@class='itemUrl']": addHistory, // 购买后查看字段
+	"//div[contains(@class, 'standardPageNum list')][1]/div[@class='itemUrl']": "numPages",
+	"//div[contains(@class, 'newStandard list')][1]": addExtra, // 购买后查看字段
 };
 
 var nodeFieldMapperForMed = {
@@ -229,6 +232,9 @@ var creatorTypeMap = {
 function addCreators(newItem, creators) {
 	var creatorType = "author";
 	var isComp = false;
+	if (newItem.itemType === "standard") {
+		isComp = true;
+	}
 	for (let name of creators) {
 		if (/^\d+$/.test(name)) continue;
 		if (name in creatorTypeMap) {
@@ -249,11 +255,6 @@ function addCreators(newItem, creators) {
 		creator.creatorType = creatorType;
 		newItem.creators.push(creator);
 	}
-}
-
-function addHistory(newItem, history) {
-	history.map(ele => ele.replace(/;$/, ''));
-	addField(newItem, "history", history.slice(1).join('; '));
 }
 
 
@@ -294,9 +295,6 @@ function scrape(doc) {
 				? addField(newItem, v, texts.join('; '))
 				: v(newItem, texts);
 		}
-	}
-	if (doc.URL.includes("wanfangdata.com.cn/standard/")) {
-		addExtra(newItem, ["Type", "standard"]); // https://forums.zotero.org/discussion/comment/409058/#Comment_409058
 	}
 	
 	if (newItem.abstractNote) newItem.abstractNote = newItem.abstractNote.replace(/^摘要：;/, "");
@@ -354,11 +352,20 @@ function getIDFromPage(doc, url) {
 	var ele = doc.querySelector("a.download") || doc.querySelector("span.title-id-hidden");
 	if (ele === null) return false;
 	var hiddenId = ele.getAttribute('href') || ele.innerText;
-	var tmp = hiddenId.match(/(\w+)_([^.]+)/);
-	if (tmp === null) return false;
-	return {
-		dbname: getTypeFromDBName(tmp[1]),
-		filename: decodeURI(tmp[2]), url: url || `https://d.wanfangdata.com.cn/${hiddenId.replace("_", "/")}`
+	if (hiddenId.includes("f.wanfangdata.com.cn/download/pc/standard/")) {  // For standard
+		var tmp = hiddenId.match(/(standard)\/([^?]+)/);
+		if (tmp === null) return false;
+		return {
+			dbname: getTypeFromDBName(tmp[1]),
+			filename: decodeURI(tmp[2]), url: url || `https://d.wanfangdata.com.cn/${tmp[0]}`
+		}
+	} else {
+		var tmp = hiddenId.match(/(\w+)_([^.]+)/);
+		if (tmp === null) return false;
+		return {
+			dbname: getTypeFromDBName(tmp[1]),
+			filename: decodeURI(tmp[2]), url: url || `https://d.wanfangdata.com.cn/${hiddenId.replace("_", "/")}`
+		}
 	}
 }
 
@@ -378,8 +385,8 @@ function getTypeFromDBName(db) {
 		PeriodicalPaper: "journalArticle",  // For med
 		DegreePaper: "thesis",
 		ConferencePaper: "conferencePaper",
-		standard: "statute",
-		Standard: "statute",
+		standard: "standard",
+		Standard: "standard",
 	};
 	if (db) {
 		return dbType[db];
@@ -436,6 +443,11 @@ function getPDF(newItem, doc) {
 	var ele = doc.querySelector("a.download") || doc.querySelector("span.title-id-hidden");
 	if (ele === null) return false;
 	var hiddenId = ele.getAttribute('href') || ele.innerText;
+	if (hiddenId.includes("wanfangdata.com.cn/download/pc/standard/")) {  // For standard
+		Z.debug("Warning: standard type detected, which need to raise a purchase request for full text PDF. Please download PDF in your browser manually! Download link: "+hiddenId);
+		// return false;
+		// TODO: simulate purchase request
+	}
 	var tmp = hiddenId.match(/(\w+)_([^.]+)/);
 	if (tmp === null) return false;
 	// Z.debug(tmp)
@@ -842,15 +854,17 @@ var testCases = [
 		"url": "https://d.wanfangdata.com.cn/standard/GB%252FT%25252019001-2016",
 		"items": [
 			{
-				"itemType": "statute",
+				"itemType": "standard",
 				"nameOfAct": "质量管理体系 要求",
 				"creators": [],
-				"dateEnacted": "2017-07-01",
+				"publisher": "质检出版社",
+				"dateEnacted": "2016-12-30",
 				"abstractNote": "本标准为下列组织规定了质量管理体系要求:\r\na)需要证实其具有稳定提供满足顾客要求及适用法律法规要求的产品和服务的能力;\r\nb)通过体系的有效应用，包括体系改进的过程，以及保证符合顾客要求和适用的法律法规要求，旨在增强顾客满意。\r\n本标准规定的所有要求是通用的，旨在适用于各种类型、不同规模和提供不同产品和服务的组织。",
-				"code": "GB/T 19001-2016",
-				"extra": "状态: 现行\n强制性标准: 否\n实施日期: 2017-07-01\nType: standard",
+				"number": "GB/T 19001-2016",
+				"status": "现行",
+				"extra": "起草人: 田武; 康键; 张惠才; 李强; 任青钺; 李明; 郑元辉; 黄学良; 曲辛田; 郑燕; 梁平; 王梅; 李平; 夏芳; 王金德; 曹华; 邓湘宁; 裴洁; 林创; 周红波; 李晔秋; 李辰暄; 范叶娟; 解辉; 朱江涛; 魏向阳; 柳叶; 董晓红\n起草单位: 中国标准化研究院; 国家认证认可监督管理委员会; 中国认证认可协会; 中国合格评定国家认可中心; 中国质量认证中心; 天津华诚认证中心; 中国船级社质量认证公司; 深圳市环通认证中心有限公司; 中国新时代认证中心; 方圆标志认证集团有限公司; 北京新世纪检验认证有限公司; 国培认证培训(北京)中心; 华夏认证中心有限公司; 上海质量体系审核中心; 中质协质量保证中心; 上汽通用五菱汽车股份有限公司; 内蒙古北方重型汽车股份有限公司; 泰兴龙溢端子有限公司; 上海建科工程咨询公司; 内蒙古伊利实业集团股份有限公司; 天津天地伟业科技有限公司; 重庆长安汽车股份有限公司; 内蒙古和信园蒙草抗旱绿化股份有限公司; 南京造币有限公司等\n发布单位: 中华人民共和国国家质量监督检验检疫总局; 中国国家标准化管理委员会\n强制性标准: 否\n实施日期: 2017-07-01\n替代关系: 该标准替代了如下标准：; GB/T 19001-2008;",
 				"language": "zh-CN",
-				"pages": "31",
+				"numPages": "31",
 				"url": "https://d.wanfangdata.com.cn/standard/GB%252FT%25252019001-2016",
 				"attachments": [],
 				"tags": [],

@@ -5,11 +5,11 @@
     },
     "BiliBili.js": {
         "label": "Bilibili视频",
-        "lastUpdated": "2023-12-14 05:54:08"
+        "lastUpdated": "2024-01-16 12:15:45"
     },
     "CCPINFO.js": {
         "label": "国家出版发行信息公共服务平台",
-        "lastUpdated": "2023-12-14 06:40:13"
+        "lastUpdated": "2024-01-10 09:49:44"
     },
     "CNBKSY.js": {
         "label": "全国报刊索引",
@@ -17,7 +17,7 @@
     },
     "CNKI.js": {
         "label": "中国知网",
-        "lastUpdated": "2023-12-31 05:04:07"
+        "lastUpdated": "2024-01-09 08:27:53"
     },
     "China Judgements Online.js": {
         "label": "中国裁判文书网",
@@ -25,7 +25,7 @@
     },
     "ChinaXiv.js": {
         "label": "中国科学院科技论文预发布平台",
-        "lastUpdated": "2023-12-15 07:49:36"
+        "lastUpdated": "2024-01-10 08:09:46"
     },
     "Cubox.js": {
         "label": "Cubox",
@@ -37,15 +37,19 @@
     },
     "Douban.js": {
         "label": "豆瓣",
-        "lastUpdated": "2024-01-02 08:48:32"
+        "lastUpdated": "2024-01-09 05:07:21"
     },
     "Duxiu.js": {
         "label": "读秀",
-        "lastUpdated": "2023-12-16 12:06:26"
+        "lastUpdated": "2024-01-13 10:22:39"
     },
     "E-Tiller.js": {
         "label": "勤云科技",
         "lastUpdated": "2023-12-16 19:56:45"
+    },
+    "Encyclopedia of China 3rd.js": {
+        "label": "中国大百科全书",
+        "lastUpdated": "2024-01-09 07:22:38"
     },
     "GFSOSO.js": {
         "label": "谷粉搜搜",
@@ -121,11 +125,11 @@
     },
     "SuperLib.js": {
         "label": "全国图书馆联盟",
-        "lastUpdated": "2024-01-03 16:27:48"
+        "lastUpdated": "2024-01-14 05:39:05"
     },
     "Wanfang Data.js": {
         "label": "万方",
-        "lastUpdated": "2023-07-19 08:48:13"
+        "lastUpdated": "2024-01-09 06:04:57"
     },
     "WeiPu.js": {
         "label": "维普",
@@ -133,15 +137,15 @@
     },
     "Weixin.js": {
         "label": "微信",
-        "lastUpdated": "2024-01-04 10:16:48"
+        "lastUpdated": "2024-01-15 13:22:16"
     },
     "Wenjin.js": {
         "label": "国图-文津",
-        "lastUpdated": "2020-08-29 14:11:42"
+        "lastUpdated": "2024-01-18 14:39:43"
     },
     "Zhihu.js": {
         "label": "知乎",
-        "lastUpdated": "2023-09-27 07:14:43"
+        "lastUpdated": "2024-01-05 15:37:31"
     },
     "chaoxingqikan.js": {
         "label": "超星期刊",
@@ -149,7 +153,7 @@
     },
     "dpaper.js": {
         "label": "中国科学院文献情报中心",
-        "lastUpdated": "2023-12-16 10:37:06"
+        "lastUpdated": "2024-01-18 14:06:55"
     },
     "xiaoyuzhoufm.js": {
         "label": "小宇宙FM",

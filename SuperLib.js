@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-03 16:27:48"
+	"lastUpdated": "2024-01-14 05:39:05"
 }
 
 /*
@@ -36,17 +36,17 @@
 */
 
 const urlMap = {
-	'/bookDetail': 'book',
-	'/JourDetail': 'journalArticle',
-	'/NPDetail': 'newspaperArticle',
-	'/thesisDetail': 'thesis',
-	'/CPDetail': 'conferencePaper',
-	'/patentDetail': 'patent',
-	'/StdDetail': 'standard'
+	bookDetail: 'book',
+	JourDetail: 'journalArticle',
+	NPDetail: 'newspaperArticle',
+	thesisDetail: 'thesis',
+	CPDetail: 'conferencePaper',
+	patentDetail: 'patent',
+	StdDetail: 'standard'
 };
 
 function detectWeb(doc, url) {
-	let type = Object.keys(urlMap).find(key => url.includes(key));
+	let type = Object.keys(urlMap).find(key => new RegExp(`${key}\\.`, 'i').test(url));
 	if (type) {
 		return urlMap[type];
 	}
@@ -97,7 +97,7 @@ async function scrape(doc, url = doc.location.href) {
 	// .tu_content 见于图书
 	// #more 见于学位论文
 	// div[id^="content"]见于专利
-	newItem.abstractNote = innerText(doc, '#zymore, .tu_content, #more, div[id^="content"]').replace(/^【摘 要】/, '');
+	newItem.abstractNote = innerText(doc, '#zymore, .tu_content, #more, div[id^="content"]').replace(/^【摘 要】/, '') || labels.getWith('简介');
 	switch (newItem.itemType) {
 		case 'book': {
 			let pubInfo = labels.getWith('出版项');
@@ -666,6 +666,32 @@ var testCases = [
 				"libraryCatalog": "SuperLib",
 				"number": "HJ 9—2022",
 				"url": "http://book.ucdrs.superlib.net/views/specific/2929/StdDetail.jsp?dxid=320151546977&d=F3BF82FD19585130C75082812F38D5C9&sw=+%E8%91%97%E5%BD%95",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "http://eng.ucdrs.superlib.net/views/specific/2929/FBookDetail.jsp?dxNumber=164030712467&d=AF328D3CD1401FE9489CF56D78387CFE#ctop",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "Phonetics: The Science of Speech",
+				"creators": [
+					{
+						"firstName": "Martin J. Ball; Joan",
+						"lastName": "Rahilly",
+						"creatorType": "author"
+					}
+				],
+				"abstractNote": "In their comprehensive new introduction to phonetics, Ball and Rahilly offer a detailed explanation of the process of speech production, from the anatomical initiation of sounds and their modification in the larynx, through to the final articulation of vowels and consonants in the oral and nasal tracts.This textbook is one of the few to give a balanced account of segmental and suprasegmental aspects of speech, showing clearly that the communication chain is incomplete without accurate production of both individual speech sounds(segmental features)and aspects such as stress and intonation(suprasegmental features).Throughout the book the authors provide advice on transcription, primarily using the International Phonetic Alphabet(IPA).Students are expertly guided from basic attempts to record speech sounds on paper, to more refined accounts of phonetic detail in speech.The authors go on to explain acoustic phonetics in a manner accessible both to new students in phonetics, and to those who wish to advance their knowledge of key pursuits in the area, including the sound spectrograph.They describe how speech waves can be measured, as well as considering how they are heard and decoded by listeners, discussing both physiological and neurological aspects of hearing and examining the methods of psychoacoustic experimentation.A range of instrumentation for studying speech production is also presented.The next link is acoustic phonetics, the study of speech transmission.Here the authors introduce the basic concepts of sound acoustics and the instrumentation used to analyse the characteristics of speech waves.Finally, the chain is completed by examining auditory phonetics, and providing a fascinating psychoacoustic experimentation, used to determine what parts of the speech signal are most crucial for listener understanding.The book concludes with a comprehensive survey and description of modern phonetic instrumentation, from the sound spectrograph to magnetic resonance imaging(MRI)",
+				"extra": "creatorsExt: [{\"firstName\":\"Martin J. Ball; Joan\",\"lastName\":\"Rahilly\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\"}]",
+				"libraryCatalog": "SuperLib",
+				"shortTitle": "Phonetics",
+				"url": "http://eng.ucdrs.superlib.net/views/specific/2929/FBookDetail.jsp?dxNumber=164030712467&d=AF328D3CD1401FE9489CF56D78387CFE#ctop",
 				"attachments": [],
 				"tags": [],
 				"notes": [],

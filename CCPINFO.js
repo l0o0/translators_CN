@@ -1,15 +1,15 @@
 {
 	"translatorID": "4c4b0a6c-a5e9-42ed-a742-f10f3e2ef711",
 	"label": "CCPINFO",
-	"creator": "jiaojiaodubai23",
+	"creator": "jiaojiaodubai",
 	"target": "^https?://book\\.cppinfo\\.cn",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
-	"translatorType": 4,
+	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-14 06:40:13"
+	"lastUpdated": "2024-01-10 09:49:44"
 }
 
 /*
@@ -35,9 +35,60 @@
 	***** END LICENSE BLOCK *****
 */
 
+function detectSearch(items) {
+	return (filterQuery(items).length > 0);
+}
+
+// return an array of ISBNs from the query (items or text)
+function filterQuery(items) {
+	if (!items) return [];
+
+	if (typeof items == 'string' || !items.length) items = [items];
+
+	// filter out invalid queries
+	var isbns = [], isbn;
+	for (var i = 0, n = items.length; i < n; i++) {
+		if (items[i].ISBN && (isbn = ZU.cleanISBN(items[i].ISBN))) {
+			isbns.push(isbn);
+		}
+		else if (typeof items[i] == 'string' && (isbn = ZU.cleanISBN(items[i]))) {
+			isbns.push(isbn);
+		}
+	}
+	isbns = isbns.filter(isbn => isbn.startsWith('9787'));
+	return isbns;
+}
+
+async function doSearch(items) {
+	Z.debug('get items:');
+	Z.debug(items);
+	for (let isbn of filterQuery(items)) {
+		await processISBN(isbn);
+	}
+}
+
+async function processISBN(isbn) {
+	Z.debug(`prosessing ISBN: ${isbn}`);
+	let search = await requestText(
+		'https://book.cppinfo.cn/So/Search/Index',
+		{
+			method: 'POST',
+			body: 'key=&author=&keyword='
+				+ `&isbn=${isbn}`
+				+ '&sm=&publishedClassification=&offset=1&sort=&order=&ids=&minprice=&maxprice=&languages=&cip=&hasEbook=false&pubyear=&authorsure=&publishersure=&cipsearch=',
+			headers: {
+				Refer: `https://book.cppinfo.cn/So/Home/QHSearch?isbn=${isbn}`
+			}
+		}
+	);
+	let href = 'https://book.cppinfo.cn' + tryMatch(search, /"p-text"><a href="(.+?)" onclick/, 1);
+	Z.debug(`get search resualt: ${href}`);
+	await scrape(await requestDocument(href));
+}
+
 
 function detectWeb(doc, url) {
-	Z.debug('---------- CCPINFO 2023-12-14 14:34:33 ----------');
+	Z.debug('---------- CCPINFO 2024-01-10 17:49:42 ----------');
 	if (new URL(url).searchParams.get('id')) {
 		return 'book';
 	}
@@ -89,41 +140,70 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.publisher = labels.getWith('出版社');
 	newItem.date = labels.getWith('出版时间').replace(/\D$/, '').replace(/(\d)\D(\d)/g, '$1-$2');
 	newItem.ISBN = labels.getWith('ISBN');
+	if (newItem.ISBN) {
+		try {
+			let searchLang = await requestText(
+				'https://book.cppinfo.cn/So/Search/LangSearch',
+				{
+					method: 'POST',
+					body: `key=${newItem.ISBN}&offset=1&hasEbook=false`
+				}
+			);
+			// Z.debug(searchLang);
+			let langFlag = searchLang.split('\r\n')[1].match(/([a-z]+)(?=(&))/)[0];
+			Z.debug(langFlag);
+			newItem.language = {
+				chi: 'zh-CN',
+				eng: 'en-US',
+				ger: 'de-DE',
+				fre: 'fr-FR',
+				jpn: 'jp-JP'
+			}[langFlag];
+		}
+		catch (error) {
+			Z.debug('reqtest failed');
+		}
+	}
 	newItem.url = url;
-	newItem.extra += addExtra('中图分类', labels.getWith('中图分类'));
-	let creators = labels.getWith('著者').replace(/[等主编原著]*$/, '').split(/[;；,，]/g);
+	newItem.extra += addExtra('CLC', labels.getWith('中图分类'));
+	newItem.extra += addExtra('price', labels.getWith('定价'));
+	let authors = labels.getWith('著者').replace(/[等主编原著]*$/, '').split(/[;；,，]/g)
+		.filter(string => string != '暂无')
+		.map((creator) => {
+			// 方括号：https://book.cppinfo.cn/Encyclopedias/home/index?id=4483977
+			// 西文括号：https://book.cppinfo.cn/Encyclopedias/home/index?id=4616652
+			// 中文括号：https://book.cppinfo.cn/Encyclopedias/home/index?id=4557869
+			let country = tryMatch(creator, /^[[(（](.+?)[\])）]/, 1);
+			creator = creator.replace(/^[[(（].+?[\])）]/, '');
+			creator = ZU.cleanAuthor(creator, 'author');
+			creator.country = country;
+			return creator;
+		});
+	let translators = labels.getWith('译者').replace(/[翻译]*$/, '').split(/[;；,，]/g)
+		.filter(string => string != '暂无')
+		.map((translator) => {
+			return ZU.cleanAuthor(translator, 'translator');
+		});
+	// https://book.cppinfo.cn/Encyclopedias/home/index?id=4286780
+	let contributors = labels.getWith('编辑').replace(/[编校注]*$/, '').split(/[;；,，]/g)
+		.filter(string => string != '暂无')
+		.map((translator) => {
+			return ZU.cleanAuthor(translator, 'contributor');
+		});
+	let creators = [...authors, ...translators, ...contributors];
+	if (creators.some(creator => creator.country)) {
+		newItem.extra += addExtra('creatorsExt', JSON.stringify(creators));
+	}
 	creators.forEach((creator) => {
-		newItem.creators.push(ZU.cleanAuthor(creator, 'author'));
-	});
-	let translators = labels.getWith('译者').replace(/[翻译]*$/, '').split(/[;；,，]/g);
-	translators.forEach((translator) => {
-		newItem.creators.push(ZU.cleanAuthor(translator, 'translator'));
-	});
-	newItem.creators.forEach((creator) => {
-		if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+		if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
 			creator.fieldMode = 1;
 		}
+		delete creator.country;
+		newItem.creators.push(creator);
 	});
 	Z.debug(creators);
 	let tags = doc.querySelectorAll('div.book_label > div.label_in > span');
 	tags.forEach(tag => newItem.tags.push(tag.innerText));
-	let searchLang = await requestText(
-		'https://book.cppinfo.cn/So/Search/LangSearch',
-		{
-			method: 'POST',
-			body: `key=${newItem.ISBN}&offset=1&hasEbook=false`
-		}
-	);
-	// Z.debug(searchLang);
-	let langFlag = searchLang.split('\r\n')[1].match(/([a-z]+)(?=(&))/)[0];
-	Z.debug(langFlag);
-	newItem.language = {
-		chi: 'zh-CN',
-		eng: 'en-US',
-		ger: 'de-DE',
-		fre: 'fr-FR',
-		jpn: 'jp-JP'
-	}[langFlag];
 	newItem.complete();
 }
 
@@ -170,6 +250,22 @@ function addExtra(key, value) {
 		: '';
 }
 
+/**
+ * Attempts to get the part of the pattern described from the character,
+ * and returns an empty string if not match.
+ * @param {String} string
+ * @param {RegExp} pattern
+ * @param {Number} index
+ * @returns
+ */
+function tryMatch(string, pattern, index = 0) {
+	if (!string) return '';
+	let match = string.match(pattern);
+	return (match && match[index])
+		? match[index]
+		: '';
+}
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -182,7 +278,7 @@ var testCases = [
 				"creators": [
 					{
 						"firstName": "",
-						"lastName": "(英)马克·福利",
+						"lastName": "马克·福利",
 						"creatorType": "author",
 						"fieldMode": 1
 					}
@@ -190,7 +286,7 @@ var testCases = [
 				"date": "2022-07",
 				"ISBN": "9787562866350",
 				"abstractNote": "《朗文新编英语语法》由我社从培生教育出版公司引进，可供中学生、大学生以及英语学习者自学使用。本书由诊断测试、语法讲解和练习答案三部分组成。学习者可利用图书前面的诊断测试，在单元学习前，了解自己的薄弱项，从而进行有针对性的学习。语法知识点讲解部分共分为36个单元，包含一般语法书中的所有内容，语法解释详细，内容条理清晰。每个单元还配套丰富的练习题，学习者可通过练习巩固所学的语法点。本书所有例句均选自语料库，表达地道，是中高水平学习者巩固语法的不二之选。",
-				"extra": "中图分类: H314",
+				"extra": "CLC: H314\nprice: ￥ 80.00\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"马克·福利\",\"creatorType\":\"author\",\"country\":\"英\"},{\"firstName\":\"\",\"lastName\":\"\",\"creatorType\":\"translator\"}]",
 				"language": "zh-CN",
 				"libraryCatalog": "CCPINFO",
 				"publisher": "郑州大学出版社有限公司",
@@ -251,7 +347,7 @@ var testCases = [
 				"date": "2023-10",
 				"ISBN": "9787214275707",
 				"abstractNote": "本书全面、系统地梳理了330-610年拜占庭王朝历史以及帝国的崛起。上编为皇帝列传，介绍了君士坦丁王朝、瓦伦提尼安诸帝、塞奥多西王朝、利奥王朝、查士丁尼王朝历史。下编为拜占庭帝国的崛起，从世界地理观、宗教、种族与身份认同、自然灾害等方面加以论述，聚焦拜占庭帝国历史的第一黄金时代，对查士丁尼时代的司法改革、宗教思想和政策、制度、经济生活等方面进行系统论述，展现拜占庭帝国的崛起图景。本书是具有唯物史观特色的、有可靠依据的独立意见和系列研究成果，形成了我国学者对拜占庭历史发展和文化演化的话语体系。",
-				"extra": "中图分类: K134",
+				"extra": "CLC: K134\nprice: ￥ 248.00",
 				"language": "zh-CN",
 				"libraryCatalog": "CCPINFO",
 				"publisher": "江苏人民出版社",
@@ -303,7 +399,7 @@ var testCases = [
 				"date": "2022-11",
 				"ISBN": "9787119132037",
 				"abstractNote": "Since the 18th National Congress of the Communist Party of China in 2012， the drive to develop socialism with Chinese characteristics has entered a new era. The past decade has seen the country forging ahead and embracing historic changes， with remarkable achievements made by the Party and the state.\n  So how did China make these achievements? What are the secrets to the CPC's governance of China? What is the key to the success of China's governance in the new era?\n  This book covers such important topics as \"how to break the cycle of rise and fall\"， \"whole-process people's democracy\"， \"self-reform and social revolution\"， \"cyber governance\"， and \"Chinese-style modernization\"， reveals the secrets to the success of China's governance in the new era， and shares China's wisdom and solutions with the world.",
-				"extra": "中图分类: D616",
+				"extra": "CLC: D616\nprice: ￥ 118.00",
 				"language": "en-US",
 				"libraryCatalog": "CCPINFO",
 				"publisher": "外文出版社",
@@ -323,6 +419,39 @@ var testCases = [
 		"type": "web",
 		"url": "https://book.cppinfo.cn/so/home/qhsearch?q=%E4%B8%89%E4%BD%93",
 		"items": "multiple"
+	},
+	{
+		"type": "search",
+		"input": {
+			"ISBN": "9787572609268"
+		},
+		"items": [
+			{
+				"itemType": "book",
+				"title": "我在北京送快递",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "胡安焉",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2023-04",
+				"ISBN": "9787572609268",
+				"abstractNote": "进入社会工作至今的十年间，胡安焉走南闯北，辗转于广东、广西、云南、上海、北京等地，做过快递员、夜班拣货工人、便利店店员、保安、自行车店销售、服装店销售、加油站加油工……他将工作的点滴和生活的甘苦化作真诚的自述，记录了一个平凡人在工作中的辛劳、私心、温情、正气。在物流公司夜间拣货的一年，给他留下了深刻的生理印记：“这份工作还会令人脾气变坏，因为长期熬夜以及过度劳累，人的情绪控制力会明显下降……我已经感到脑子不好使了，主要是反应变得迟钝，记忆力开始衰退。”",
+				"extra": "CLC: I25\nprice: ￥ 56.00",
+				"language": "zh-CN",
+				"libraryCatalog": "CCPINFO",
+				"publisher": "湖南文艺出版社",
+				"url": "https://book.cppinfo.cn/Encyclopedias/home/index?id=4498142",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
 	}
 ]
+
 /** END TEST CASES **/

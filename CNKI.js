@@ -1,15 +1,15 @@
 {
 	"translatorID": "5c95b67b-41c5-4f55-b71a-48d5d7183063",
 	"label": "CNKI",
-	"creator": "Aurimas Vinckevicius, Xingzhong Lin, jiaojiaodubai23",
+	"creator": "Aurimas Vinckevicius, Xingzhong Lin, jiaojiaodubai",
 	"target": "https?://.*?(thinker\\.cnki)|(cnki\\.com)|/(kns8?s?|kcms2?|KXReader|KNavi|Kreader)",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
-	"translatorType": 4,
+	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-31 05:04:07"
+	"lastUpdated": "2024-01-09 08:27:53"
 }
 
 /*
@@ -30,7 +30,49 @@
 	***** END LICENSE BLOCK *****
 */
 
-/* A series of identifiers for item, used to request data from APIs. */
+function detectSearch(items) {
+	return (filterQuery(items).length > 0);
+}
+
+/**
+ * @param {*} items items or string.
+ * @returns an array of DOIs.
+ */
+function filterQuery(items) {
+	Z.debug('input items:');
+	Z.debug(items);
+	if (!items) return [];
+
+	if (typeof items == 'string' || !items.length) items = [items];
+
+	// filter out invalid queries
+	var dois = [], doi;
+	for (var i = 0, n = items.length; i < n; i++) {
+		if (items[i].DOI && /(\/j\.issn|\/j\.cnki)/i.test(items[i].DOI) && (doi = ZU.cleanDOI(items[i].DOI))) {
+			dois.push(doi);
+		}
+		else if (typeof items[i] == 'string' && /(\/j\.issn|\/j\.cnki)/i.test(items[i]) && (doi = ZU.cleanDOI(items[i]))) {
+			dois.push(doi);
+		}
+	}
+	Z.debug('return dois:');
+	Z.debug(dois);
+	return dois;
+}
+
+async function doSearch(items) {
+	for (let doi of filterQuery(items)) {
+		let url = `https://doi.org/${encodeURIComponent(doi)}`;
+		Z.debug(`search url: ${url}`);
+		let doc = await requestDocument(url);
+		// Z.debug(doc);
+		await doWeb(doc, url);
+	}
+}
+
+/**
+ * A series of identifiers for item, used to request data from APIs.
+ */
 class ID {
 	constructor(doc, url) {
 		this.dbname = '';
@@ -40,14 +82,14 @@ class ID {
 		if (doc && url) {
 			this.commonId(doc, url);
 		}
-		// For cases where there is only one parameter, what is passed in is actually a URL
+		// when there is only one parameter, what is passed in is actually a URL.
 		else if (doc) {
 			this.spaceId(doc);
 		}
 	}
 
 
-	/* ID initialization method suitable for CNKI space */
+	/** ID initialization method suitable for CNKI space */
 	// e.g. https://www.cnki.com.cn/Article/CJFDTOTAL-CXKJ202311006.htm
 	spaceId(url) {
 		this.filename = tryMatch(url, /-([A-Z\d]+)\./, 1);
@@ -61,7 +103,7 @@ class ID {
 	}
 
 
-	/* ID initialization method suitable for ordinary CNKI */
+	/** ID initialization method suitable for ordinary CNKI. */
 	commonId(doc, url) {
 		let frame = {
 			dbname: {
@@ -92,13 +134,16 @@ class ID {
 		this.url = url;
 	}
 
+	/**
+	 * @returns true when necessary .dbcode and filename are available.
+	 */
 	toBoolean() {
 		return Boolean(this.dbname && this.filename);
 	}
 
 	toItemtype() {
 		let typeMap = {
-			// 学术辑刊 zh
+			// 学术辑刊 journal zh
 			CCJD: 'journalArticle',
 			// 学术期刊 journal zh
 			CJFQ: 'journalArticle',
@@ -107,7 +152,10 @@ class ID {
 			// 特色期刊 journal
 			CJFN: 'journalArticle',
 
-			/* 余下journal未在页面找到，可能已经过时 */
+			/*
+			The mapping relationship below was not found on the page,
+			it may be outdated code.
+			 */
 			CDMD: 'journalArticle',
 			CJFD: 'journalArticle',
 			CAPJ: 'journalArticle',
@@ -126,7 +174,7 @@ class ID {
 			// 境外专利 patent en
 			SOPD: 'patent',
 			SCOD: 'patent',
-			// 年鉴 almanac zh，无对应条目类型，以期刊记录
+			// 年鉴 almanac zh, record as journal
 			CYFD: 'journalArticle',
 			// 国内会议 conference zh
 			CPFD: 'conferencePaper',
@@ -139,7 +187,8 @@ class ID {
 			IPFD: 'conferencePaper',
 			// 视频 video zh
 			// CCVD
-			/* 实际上无法匹配到图书的dbcode */
+
+			/* dbcode of book is useless*/
 			// 中文图书 book zh
 			WBFD: 'book',
 			// 外文图书 book en
@@ -154,7 +203,8 @@ class ID {
 			SOSD: 'standard',
 			// 成果 achievements
 			// SNAD
-			/* hospital */
+
+			/* hospital version */
 			// https://chkdx.cnki.net/kns8/#/
 			CLKM: 'thesis',
 			CHKJ: 'journalArticle',
@@ -176,7 +226,7 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug("---------------- CNKI 2023-12-31 13:04:05 ------------------");
+	Z.debug("---------------- CNKI 2024-01-09 17:27:34 ------------------");
 	let ids = url.includes('www.cnki.com.cn')
 		// CNKI space
 		? new ID(url)
@@ -242,7 +292,7 @@ function detectWeb(doc, url) {
 		// 知网心可图书馆，CNKI thingker
 		return 'bookSection';
 	}
-	else if (multiplePattern.find(element => element.test(url)) && getSearchResults(doc, url, true)) {
+	else if (multiplePattern.some(element => element.test(url)) && getSearchResults(doc, url, true)) {
 		return 'multiple';
 	}
 	else {
@@ -255,17 +305,42 @@ function getSearchResults(doc, url, checkOnly) {
 	var found = false;
 	var searchTypes = [
 
-		/* journalNavigation */
+		/* journal navigation */
+		// https://navi.cnki.net/knavi/journals/ZGSK/detail?uniplatform=NZKPT
 		{
 			pattern: /\/journals\/.+\/detail/i,
-			rowSlector: 'dl#CataLogContent dd',
-			aSlector: 'span.name > a'
+			rowSlector: '#rightCatalog dd',
+			aSlector: '.name > a'
 		},
 
-		/* yearbookNavigation */
+		/* thesis navigation */
+		// https://navi.cnki.net/knavi/degreeunits/GBEJU/detail?uniplatform=NZKPT
+		{
+			pattern: /\/degreeunits\/.+\/detail/i,
+			rowSlector: '#rightCatalog tbody > tr',
+			aSlector: '.name > a'
+		},
+
+		/* conference navigation */
+		// https://navi.cnki.net/knavi/conferences/030681/proceedings/IKJS202311001/detail?uniplatform=NZKPT
+		{
+			pattern: /\/proceedings\/.+\/detail/i,
+			rowSlector: '#rightCatalog tbody > tr',
+			aSlector: '.name > a'
+		},
+
+		/* newspaper navigation */
+		// https://navi.cnki.net/knavi/newspapers/RMRB/detail?uniplatform=NZKPT
+		{
+			pattern: /\/newspapers\/.+\/detail/i,
+			rowSlector: '#rightCatalog tbody > tr',
+			aSlector: '.name > a'
+		},
+
+		/* yearbook navigation */
 		{
 			pattern: /\/yearbooks\/.+\/detail/i,
-			rowSlector: '#contentPanel .itemNav',
+			rowSlector: '#rightCatalog .itemNav',
 			aSlector: 'a'
 		},
 
@@ -315,8 +390,13 @@ function getSearchResults(doc, url, checkOnly) {
 		// Use the key to transmit some useful information.
 		items[JSON.stringify({
 			url: href,
-			// reference count
-			cite: text(row, 'td.quote'),
+
+			/*
+			reference count
+			"td[align="center"]:nth-child(6):not([title])" for navigation page
+			https://navi.cnki.net/knavi/conferences/030681/proceedings/IKJS202311001/detail?uniplatform=NZKPT
+			 */
+			cite: text(row, 'td.quote, td[align="center"]:nth-child(6):not([title])'),
 			// Another identifier for requesting data from the API.
 			// In Chinese Mainland, it is usually dynamic,
 			// while overseas is composed of fixed ids.filename.
@@ -336,7 +416,7 @@ async function doWeb(doc, url) {
 
 	/*
 	For multiple items, prioritize trying to crawl them one by one, as documents always provide additional information;
-	If it is not possible to obtain the document, consider using bulk export API.
+	If it is not possible to obtain the document, consider using bulk-export API.
 	 */
 	if (detectWeb(doc, url) == "multiple") {
 		let items = await Z.selectItems(getSearchResults(doc, url, false));
@@ -355,10 +435,10 @@ async function doWeb(doc, url) {
 				await scrape(doc, itemKey.url, itemKey, inMainland);
 			}
 			catch (erro1) {
-				Z.debug('Attempt to use bulk export API');
+				Z.debug('Attempt to use bulk-export API');
 				try {
 					if (Object.keys(items).some(element => JSON.parse(element).cookieName)) {
-						throw new TypeError('This page is not suitable for using bulk export API');
+						throw new TypeError('This page is not suitable for using bulk-export API');
 					}
 					var itemKeys = Object.keys(items)
 						.map(element => JSON.parse(element))
@@ -424,13 +504,23 @@ async function scrape(doc, url = doc.location.href, itemKey, inMainland) {
 	}
 }
 
-/* API from "cite" button */
+/**
+ * API from the "cite" button of the page.
+ * @param {Element} doc
+ * @param {ID} ids
+ * @param {*} itemKey some extra information from "multiple" page.
+ * @param {Boolean} inMainland Whether in Chinese Mainland.
+ */
 async function scrapeWithGetExport(doc, ids, itemKey, inMainland) {
-	Z.debug('use API GetExport');
-	// To avoid triggering anti crawlers due to frequent requests,
-	// uncomment the expression below during debugging to test functionality unrelated to requests.
+	Z.debug('use API: GetExport');
+
 	/*
-	  referText = {
+	To avoid triggering anti crawlers due to frequent requests,
+	uncomment the object below during debugging to test functionality unrelated to requests.
+	*/
+
+	/*
+	referText = {
 		code: 1,
 		msg: "返回成功",
 		data: [
@@ -455,9 +545,9 @@ async function scrapeWithGetExport(doc, ids, itemKey, inMainland) {
 		],
 		traceid: "a7af1c2425ec49b5973f756b194256c6.191.17014617381526837"
 	};
-	 */
+	*/
 
-	// During debugging, may manually throw errors to guide the program to run inward
+	// During debugging, may manually throw errors to guide the program to run inward.
 	// throw ReferenceError;
 
 	// e.g. https://ras.cdutcm.lib4s.com:7080/s/net/cnki/kns/G.https/dm/API/GetExport?uniplatform=NZKPT
@@ -496,14 +586,22 @@ async function scrapeWithGetExport(doc, ids, itemKey, inMainland) {
 	await parseRefer(referText, doc, ids, itemKey);
 }
 
-/* API from "Check - Export citations" */
+/**
+ * API from buulk-export button.
+ * @param {*} itemKey some extra information from "multiple" page.
+ * @param {Boolean} inMainland Whether in Chinese Mainland.
+ */
 async function scrapeWithShowExport(itemKeys, inMainland) {
 	var fileNames = itemKeys.map(element => element.cookieName);
-	Z.debug('use API showExport');
-	// To avoid triggering anti crawlers due to frequent requests,
-	// uncomment the expression below during debugging to test functionality unrelated to requests.
+	Z.debug('use API: showExport');
 
-	/* let referText = {
+	/*
+	To avoid triggering anti crawlers due to frequent requests,
+	uncomment the expression below during debugging to test functionality unrelated to requests.
+	*/
+
+	/*
+	let referText = {
 		status: 200,
 		headers: {
 			connection: "close",
@@ -513,7 +611,8 @@ async function scrapeWithShowExport(itemKeys, inMainland) {
 			"transfer-encoding": "chunked"
 		},
 		body: "<ul class='literature-list'><li> %0 Journal Article<br> %A 贾玲 <br> %+ 晋中市太谷区北洸乡人民政府;<br> %T 抗旱转基因小麦的研究进展<br> %J 种子科技<br> %D 2023<br> %V 41<br>%N 17<br> %K 小麦;抗旱;转基因<br> %X 受气候复杂多变的影响，小麦生长期间干旱胁迫成为影响其产量的主要因素之一，利用基因工程技术提高小麦抗旱性非常必要。目前，已鉴定出一部分与小麦抗旱性相关并可以提高产量的基因，但与水稻、玉米和其他粮食作物相比，对抗旱转基因小麦的开发研究较少。文章重点关注小麦耐旱性的评价标准以及转基因小麦品种在提高抗旱性方面的进展，讨论了当前在转基因小麦方面取得的一些成就和发展中存在的问题，以期为小麦抗旱性基因工程育种提供理论依据。<br>%P 11-14<br> %@ 1005-2690<br> %U https: //link.cnki.net/doi/10.19904/j.cnki.cn14-1160/s.2023.17.004<br> %R 10.19904/j.cnki.cn14-1160/s.2023.17.004<br> %W CNKI<br> </li><li> %0 Journal Article<br> %A 刘志宏<br> %A 田媛<br> %A 陈红娜<br> %A 周志豪<br> %A 郑洁<br> %A 杨晓怀 <br> %+深圳市农业科技促进中心;暨南大学食品科学与工程系;<br> %T 水稻转基因育种的研究进展与应用现状<br> %J 中国种业<br> %D 2023<br> %V <br> %N 09<br> %K 转基因育种;水稻;病虫害;除草剂<br> %X 随着生物技术发展的不断深入，我国水稻种业的发展也面临着全新的机遇和挑战。目前，改善水稻品种质量的主要方法有分子标记技术、基因编辑技术和转基因技术。其中，转基因水稻是利用生物技术手段将外源基因转入到目标水稻的基因组中，通过外源基因的表达，获得具有抗病、抗虫、抗除草剂等优良性状的水稻品种。近年来，国内外在采用转基因技术进行水稻育种，提升水稻产量、改善水稻品质方面具有较多的研究进展。在阐述转基因技术工作原理的基础上，概述国内外利用转基因技术在优质水稻育种方面的研究进展，进一步探究转基因技术在我国水稻育种领域的发展前景。<br>%P 11-17<br> %@ 1671-895X<br> %U https: //link.cnki.net/doi/10.19462/j.cnki.1671-895x.2023.09.038<br> %R10.19462/j.cnki.1671-895x.2023.09.038<br> %W CNKI<br> </li><li> %0 Journal Article<br> %A 孙萌<br> %A 李荣田 <br> %+ 黑龙江大学生命科学学院/黑龙江省普通高等学校分子生物学重点实验室;黑龙江大学农业微生物技术教育部工程研究中心;<br> %T 基于文献计量学的中国水稻转录组研究进展<br> %J 环境工程<br> %D 2023<br> %V 41<br> %N S2<br> %K 水稻转录组;文献计量学;VOSviewer<br> %X 为了探究水稻转录组(Ricetranscriptome)研究的热点与趋势,本研究基于CNKI数据库,基于文献计量学的方法,对中国的发文量、关键词、研究机构、作者、基金、学科方向,进行相关分析。发现水稻转录组的研究进展与趋势动态,旨在为水稻转录组等领域的研究人员提供一定量的数据进行参考。结果显示:2003—2021年水稻转录组的研究论文数量共1512篇;文献的数量逐年增加,其中在2020年的产出数量最高;发文量前3的作者分别是刘向东、吴锦文、梁五生;华中农业大学,南京农业大学,浙江大学,中国农业科学院,华南农业大学发表的水稻转录组文献数量居全国前5位;该领域主要研究学科是,农作物、植物保护、园艺、生物学和林业等;国家自然科学基金是支持水稻转录组研究的主要项目。综合来看,中国在研究水稻转录组领域处于优势地位。<br>%P 1016-1019<br> %@ 1000-8942<br> %U https://kns.cnki.net/kcms2/article/abstract?v=ebrKgZyeBkxImzDUXjcVU04XYh7-VuK-twxFNRUx7mIL4CLVOe5VfbRl0TM7H3f_mb78up_-AjT2Rwgo5xU0wbsknYXBxlrO6GG-wlfR5dIIK8MKL8g8Vmc4O-Q3_qdDWz1MlRhZmckhhPAGlFwAFQ==&uniplatform=NZKPT&language=CHS<br>%W CNKI<br> </li></ul><input id='hidMode' type='hidden' value='BATCH_DOWNLOAD,EXPORT,CLIPYBOARD,PRINT'><input id='traceid' type='hidden'value='27077cd0510c4c989a7ac58b5541a910.173062.17016154007783847'>"
-	}; */
+	};
+	 */
 
 	// During debugging, may manually throw errors to guide the program to run inward
 	// throw ReferenceError;
@@ -568,8 +667,11 @@ async function scrapeWithShowExport(itemKeys, inMainland) {
 		await parseRefer(
 			text,
 			document.createElement('div'),
-			// This function is designed to be used when the item documents are unavailable,
-			// so passing an empty Element to meet compatibility requirements.
+
+			/*
+			This function is designed to be used when the item documents are unavailable,
+			so passing an empty Element to meet compatibility requirements.
+			*/
 			{
 				dbname: '',
 				filename: '',
@@ -580,6 +682,13 @@ async function scrapeWithShowExport(itemKeys, inMainland) {
 	}
 }
 
+/**
+ * Parse Refer format string, and save Item.
+ * @param {String} referText Refer format, see <https://hcibib.org/refer.html> for detail.
+ * @param {Element} doc
+ * @param {ID} ids
+ * @param {*} itemKey some extra information from "multiple" page.
+ */
 async function parseRefer(referText, doc, ids, itemKey) {
 	Z.debug('parsing referText:');
 	Z.debug(referText);
@@ -600,8 +709,8 @@ async function parseRefer(referText, doc, ids, itemKey) {
 		// Custom tag "9" corresponds to the degree of the graduation thesis,
 		//and tag "~" corresponds standard type (national standard or industry standard).
 		.replace(/^%[9~] /m, '%R ')
-		.replace(/^%V 0?/m, '%V ')
-		.replace(/^%N 0?/m, '%N ')
+		.replace(/^%V 0*/m, '%V ')
+		.replace(/^%N 0*/m, '%N ')
 		// \t in abstract
 		.replace(/\t/g, '')
 		.replace(/(\n\s*)+/g, '\n');
@@ -611,13 +720,14 @@ async function parseRefer(referText, doc, ids, itemKey) {
 	translator.setTranslator('881f60f2-0802-411a-9228-ce5f47b64c7d');
 	translator.setString(referText);
 	translator.setHandler('itemDone', (_obj, newItem) => {
-		// Record the yearbook as a journal article.
+		// Record the yearbook as journal article.
 		if (newItem.type == '年鉴') {
 			newItem.itemType = 'journalArticle';
 		}
 		switch (newItem.itemType) {
 			case 'journalArticle':
 				delete newItem.callNumber;
+				newItem.ISSN = tryMatch(referText, /^%@ (.*)/m, 1);
 				break;
 			case 'statute':
 				newItem.itemType = 'standard';
@@ -640,6 +750,7 @@ async function parseRefer(referText, doc, ids, itemKey) {
 				break;
 			case 'newspaperArticle':
 				delete newItem.callNumber;
+				newItem.ISSN = tryMatch(referText, /^%@ (.*)/m, 1);
 				break;
 			case 'conferencePaper':
 				newItem.conferenceName = newItem.publicationTitle;
@@ -654,17 +765,24 @@ async function parseRefer(referText, doc, ids, itemKey) {
 			default:
 				break;
 		}
-		newItem.ISSN = tryMatch(referText, /^%@ (.*)/, 1);
 		delete newItem.archiveLocation;
 		newItem = Object.assign(newItem, fixItem(newItem, doc, ids, itemKey));
+		Z.debug(newItem);
 		newItem.complete();
 	});
 	await translator.translate();
 }
 
-/* TODO: Compatible with English labels in English version of CNKI. */
+/**
+ * Alternative offline scrapping solution.
+ * @param {Element} doc
+ * @param {ID} ids
+ * @param {*} itemKey some extra information from "multiple" page.
+ */
 async function scrapeDoc(doc, ids, itemKey) {
 	Z.debug('scraping from document...');
+
+	/* TODO: Compatible with English labels in English version of CNKI. */
 	var newItem = new Zotero.Item(ids.toItemtype());
 	newItem.extra = newItem.extra ? newItem.extra : '';
 	// "#content p, .summary li.pdfN" only found on geology version
@@ -724,12 +842,15 @@ async function scrapeDoc(doc, ids, itemKey) {
 		|| '';
 	newItem.extra += addExtra('Genre', labels.getWith('专利类型'));
 	newItem = Object.assign(newItem, fixItem(newItem, doc, ids, itemKey));
+	Z.debug(newItem);
 	newItem.complete();
 }
 
-/* TODO: Compatible with English labels in English version of CNKI. */
+/** Further optimizes Item for a specific item type. */
 function fixItem(newItem, doc, ids, itemKey) {
 	Z.debug('fixing item...');
+
+	/* TODO: Compatible with English labels in English version of CNKI. */
 	// ".row", ".row_1" for normal version
 	// "#content p, .summary li.pdfN" for geology version
 	// "[class^="content"] p" for space version
@@ -844,7 +965,7 @@ function fixItem(newItem, doc, ids, itemKey) {
 	return newItem;
 }
 
-/* A dedicated scrape scheme for Chinese books in CNKI thingker. */
+/** A dedicated scrape scheme for Chinese books in CNKI thingker. */
 async function scrapeZhBook(doc, url) {
 	var bookItem = new Z.Item(detectWeb(doc, url));
 	bookItem.title = text(doc, '#b-name, .art-title > h1');
@@ -873,30 +994,36 @@ async function scrapeZhBook(doc, url) {
 	bookItem.complete();
 }
 
-// add pdf or caj to attachments, default is pdf
+/** add pdf or caj to attachments, default is pdf */
 function getAttachments(doc, keepPDF, itemKey) {
 	// attr() can't get full link
 	var attachments = [];
-	let alterLink = Array.from(doc.querySelectorAll('a[href*="/down/"]'));
-	let pdfLink = doc.querySelector('a[id^="pdfDown"]')
-		|| alterLink.find(element => /PDF/i.test(element.textContent))
-		|| doc.querySelector('.operate-btn a[href*="Download"]');
-	Z.debug(`get PDF Link:\n${pdfLink.href}`);
-	let cajLink = doc.querySelector('a#cajDown')
-		|| alterLink.find(element => /CAJ/i.test(element.textContent));
-	Z.debug(`get CAJ link:\n${cajLink.href}`);
+	let pdfLink = strChild(doc, 'a[id^="pdfDown"]', 'href')
+		// industry ver
+		|| strChild(doc, 'a[href*="pdfdown"]', 'href')
+		|| strChild(doc, '.operate-btn a[href*="Download"]', 'href')
+		// CNKI space
+		|| strChild(doc, '.down_button#ty_pdf', 'href');
+	Z.debug(`get PDF Link:\n${pdfLink}`);
+	let cajLink = strChild(doc, 'a#cajDown', 'href')
+		// industry ver
+		|| strChild(doc, 'a[href*="cajdown"]', 'href')
+		|| itemKey.downloadlink
+		// CNKI space
+		|| strChild(doc, '.down_button#ty_caj', 'href');
+	Z.debug(`get CAJ link:\n${cajLink}`);
 	if (keepPDF && pdfLink) {
 		attachments.push({
 			title: 'Full Text PDF',
 			mimeType: 'application/pdf',
-			url: pdfLink.href
+			url: pdfLink
 		});
 	}
 	else if (cajLink) {
 		attachments.push({
 			title: 'Full Text CAJ',
 			mimeType: 'application/caj',
-			url: cajLink.href || itemKey.downloadlink
+			url: cajLink
 		});
 	}
 	else {
@@ -958,6 +1085,14 @@ class LabelsX {
 	}
 }
 
+/**
+ * Attempts to get the part of the pattern described from the character,
+ * and returns an empty string if not match.
+ * @param {String} string
+ * @param {RegExp} pattern
+ * @param {Number} index
+ * @returns
+ */
 function tryMatch(string, pattern, index = 0) {
 	if (!string) return '';
 	let match = string.match(pattern);
@@ -966,6 +1101,10 @@ function tryMatch(string, pattern, index = 0) {
 		: '';
 }
 
+/**
+ * @param {Element} element
+ * @returns Text in an element (without child elements).
+ */
 function pureText(element) {
 	if (!element) return '';
 	// Deep copy to avoid affecting the original page.
@@ -976,9 +1115,33 @@ function pureText(element) {
 	return ZU.trimInternal(elementCopy.innerText);
 }
 
+/**
+ * When value is valid, return a key-value pair in string form.
+ * @param {String} key
+ * @param {*} value
+ * @returns
+ */
 function addExtra(key, value) {
 	return value
 		? `${key}: ${value}\n`
+		: '';
+}
+
+/**
+ * For elements specified with selector and index,
+ * return the value specified by key.
+ * @param {Element} docOrElem
+ * @param {String} selector
+ * @param {String} key
+ * @param {Number} index
+ * @returns
+ */
+function strChild(docOrElem, selector, key, index) {
+	let element = index
+		? docOrElem.querySelector(selector)
+		: docOrElem.querySelectorAll(selector).item(index);
+	return (element && element[key])
+		? element[key]
 		: '';
 }
 
@@ -1030,6 +1193,7 @@ var testCases = [
 					}
 				],
 				"date": "2014",
+				"ISSN": "1000-8713",
 				"abstractNote": "来自中药的水溶性多糖具有广谱治疗和低毒性特点,是天然药物及保健品研发中的重要组成部分。针对中药多糖结构复杂、难以表征的问题,本文以中药黄芪中的多糖为研究对象,采用\"自下而上\"法完成对黄芪多糖的表征。首先使用部分酸水解方法水解黄芪多糖,分别考察了水解时间、酸浓度和温度的影响。在适宜条件（4 h、1.5mol/L三氟乙酸、80℃）下,黄芪多糖被水解为特征性的寡糖片段。接下来,采用亲水作用色谱与质谱联用对黄芪多糖部分酸水解产物进行分离和结构表征。结果表明,提取得到的黄芪多糖主要为1→4连接线性葡聚糖,水解得到聚合度4~11的葡寡糖。本研究对其他中药多糖的表征具有一定的示范作用。",
 				"issue": "12",
 				"language": "zh-CN",
@@ -1238,10 +1402,12 @@ var testCases = [
 					}
 				],
 				"date": "2020",
+				"ISSN": "0258-4646",
 				"abstractNote": "目的利用生物信息学方法探索2型糖尿病发病的相关基因,并研究这些基因与阿尔茨海默病的关系。方法基因表达汇编（GEO）数据库下载GSE85192、GSE95849、GSE97760、GSE85426数据集,获得健康人和2型糖尿病患者外周血的差异基因,利用加权基因共表达网络（WGCNA）分析差异基因和临床性状的关系。使用DAVID数据库分析与2型糖尿病有关的差异基因的功能与相关通路,筛选关键蛋白。根据结果将Toll样受体4 （TLR4）作为关键基因,利用基因集富集分析（GSEA）分析GSE97760中与高表达TLR4基因相关的信号通路。通过GSE85426验证TLR4的表达量。结果富集分析显示,差异基因主要参与的生物学过程包括炎症反应、Toll样受体（TLR）信号通路、趋化因子产生的正向调节等。差异基因主要参与的信号通路有嘧啶代谢通路、TLR信号通路等。ILF2、TLR4、POLR2G、MMP9为2型糖尿病的关键基因。GSEA显示,TLR4上调可通过影响嘧啶代谢及TLR信号通路而导致2型糖尿病及阿尔茨海默病的发生。TLR4在阿尔茨海默病外周血中高表达。结论 ILF2、TLR4、POLR2G、MMP9为2型糖尿病发病的关键基因,TLR4基因上调与2型糖尿病、阿尔茨海默病发生有关。",
 				"issue": "12",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
+				"pages": "1106-1111, 1117",
 				"publicationTitle": "中国医科大学学报",
 				"url": "https://chn.oversea.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFD&dbname=CJFDLAST2020&filename=ZGYK202012011&v=%25mmd2BHGGqe3MG%25mmd2FiWsTP5sBgemYG4X5LOYXSuyd0Rs%25mmd2FAl1mzrLs%25mmd2F7KNcFfXQMiFAipAgN",
 				"volume": "49",
@@ -1480,6 +1646,7 @@ var testCases = [
 						"fieldMode": 1
 					}
 				],
+				"ISSN": "1674-3962",
 				"abstractNote": "随着材料加工快速化、智能化、数字化的发展要求，材料连接技术越来越受到广泛的重视，其中激光连接陶瓷技术是引人关注的重要技术之一，论述了近年来激光连接陶瓷技术的研究现状与进展。首先阐述了激光连接技术的原理和分类；其次对适合陶瓷激光连接的激光器类型和特点进行了介绍，并分析了影响激光连接陶瓷质量的关键因素；然后对基于激光连接技术的陶瓷与陶瓷之间的连接以及陶瓷与异质材料之间的连接进展进行了详细的介绍，阐述了各种激光连接陶瓷方法的特点、机理和连接强度；最后对激光连接陶瓷技术进行总结，并展望其发展趋势。",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
@@ -1563,6 +1730,7 @@ var testCases = [
 					}
 				],
 				"date": "2023",
+				"ISSN": "1002-8870",
 				"abstractNote": "林下经济是生态文明建设背景下推进山区绿色高质量发展、实现“两山”理念的重要载体。本文基于里昂惕夫生产函数和最优生产决策理论刻画林下经济的经济效应、环境效应及其协同的理论模型，并通过对典型案例县的研究，对林下经济的经济效应与环境效应协同发展的理论机制加以印证。研究发现：第一，林下经济经营中，给定其他条件不变，当劳动力投入效率增加时，劳动力投入先增加后降低、林地投入单调递增，林下经济的经济价值也是单调递增，而林下经济的生态价值先增加后降低，林下经济的经济价值和生态价值总和递增；第二，进一步基于扩展模型的分析发现，在适度经营规模下，林下经济产生生态反馈效应，经营主体不再单纯追求经济利润最大化，而是通过降低林地要素的投入来提高林地资源的生态反馈效应，从而提升环境效应，最终实现经济效应和环境效应协同发展；第三，浙江省松阳县的案例剖析表明，在政府的合理扶持下，依靠适度规模经营、生态化种植和三产融合能够实现林下经济的经济效应与环境效应协同发展。因此，林下经济作为“两山”理念的有效载体，应积极推广，通过科学有效经营，能够实现经济效应和环境效应的协同增长。",
 				"issue": "10",
 				"language": "zh-CN",
@@ -1579,7 +1747,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://t.cnki.net/kcms/article/abstract?v=_AqZbjAWWJQgA3EkLUxX7MnCK-Vs9bXIszipcfV1qiCJ2pVsIH3Kn-g8gSyeH55ceCouOYV8RI9HDC8xSOf4tgMfqMNXz6hFA_Ebj3MnmQqKtvmSl_41FECUugjK944daQUs2okdEkk=&uniplatform=NZKPT",
+		"url": "https://t.cnki.net/kcms/article/abstract?v=yO8aEz8cbf1MA60M_rsYeAW1-xpr0jRg6JMNWYKYZLTtfV6xUbtT8G6_Ja7HOAjxY4OvdZgXt1KuGf9-Y5e24-OGV8AFB4NhnpgxMS8aR2dkhCN1CrTD2D0A9wYN_VjMrsxEurUeagE=&uniplatform=NZKPT",
 		"items": [
 			{
 				"itemType": "journalArticle",
@@ -1618,13 +1786,14 @@ var testCases = [
 				],
 				"date": "2022",
 				"DOI": "10.13206/j.gjgS22031502",
+				"ISSN": "2096-6865",
 				"abstractNote": "金属面夹芯板以其保温绝热、降噪、自重轻和装配效率高等优点在围护结构中得到了很好的应用，基于金属面夹芯板的构造，提出一种新型的压型钢板与聚氨酯组合的夹芯楼板结构。为了研究压型钢板-聚氨酯夹芯楼板的受弯性能，对夹芯楼板试件进行了两点对称静载试验。在试验的基础上，提出并验证了夹芯楼板有限元模型，并对槽钢楼板厚度、压型钢板厚度和聚氨酯密度等进行了参数分析。研究结果表明：夹芯楼板的破坏形式主要表现为挠度过大，最大挠度达到了板跨度的1/42,并且跨中截面处的槽钢出现畸变屈曲；夹芯楼板受弯变形后，槽钢首先达到屈服状态，而受压钢板的材料性能未能得到充分发挥；新型压型钢板聚氨酯夹芯楼板相比传统金属面夹芯板的承载能力和刚度有明显提升，承载力和刚度均提高203%;楼板厚度和压型钢板厚度对夹芯楼板的承载能力和刚度均具有显著影响，而楼板厚度相比压型钢板厚度对刚度的影响效果更明显，当楼板厚度从120 mm增大到160 mm时，夹芯楼板的承载力在正常使用状态下提高87%,在承载能力极限状态下提高63%,刚度提高88%,钢板厚度由1 mm增至3 mm时，夹芯楼板的承载力在正常使用状态下提高59%,在承载能力极限状态下提高84%,刚度提高61%;聚氨酯泡沫密度的变化对夹芯楼板的承载能力和刚度影响较小，当密度从45 kg/m<sup>3</sup>变化到90 kg/m<sup>3</sup>时，正常使用状态下夹芯楼板的承载力增幅为12%,承载能力极限状态下的承载力增幅仅为2%,刚度增幅为12%。",
 				"issue": "8",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "9-16",
 				"publicationTitle": "钢结构(中英文)",
-				"url": "https://t.cnki.net/kcms/article/abstract?v=_AqZbjAWWJQgA3EkLUxX7MnCK-Vs9bXIszipcfV1qiCJ2pVsIH3Kn-g8gSyeH55ceCouOYV8RI9HDC8xSOf4tgMfqMNXz6hFA_Ebj3MnmQqKtvmSl_41FECUugjK944daQUs2okdEkk=&uniplatform=NZKPT",
+				"url": "https://t.cnki.net/kcms/article/abstract?v=yO8aEz8cbf1MA60M_rsYeAW1-xpr0jRg6JMNWYKYZLTtfV6xUbtT8G6_Ja7HOAjxY4OvdZgXt1KuGf9-Y5e24-OGV8AFB4NhnpgxMS8aR2dkhCN1CrTD2D0A9wYN_VjMrsxEurUeagE=&uniplatform=NZKPT",
 				"volume": "37",
 				"attachments": [
 					{
@@ -1686,7 +1855,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=_AqZbjAWWJSsy8m2aO_GvN0zvH1asMtnGHNcuSE1bHKoirGGqBvcSMufl5njcPKGEHAxmC9JWAHyDXIeb5RjkM0CMYGENoSB6z9QkzXD2ryioYQRQVh_Zr9DYWbfAw24EAMUJ-E9Z2A=&uniplatform=CHKD",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=yO8aEz8cbf3OFG9E799I_p_wcQECKbqsSy2E8KQgdapCxRp84e3FSvWqYbrhU21G4zWV4wvqebGf94h5qRrTGFeoIHWYgehq_7s2Hf2sSGsGvY0ReNV8fdshWIcTLAQz3fw9mSQ3TAw=&uniplatform=CHKD",
 		"items": [
 			{
 				"itemType": "journalArticle",
@@ -1700,6 +1869,7 @@ var testCases = [
 					}
 				],
 				"date": "2023-11-23",
+				"ISSN": "1674-070X",
 				"abstractNote": "笔者根据多年临床实践经验,总结中医诊治肿瘤病的四辨:辨部位、辨痰瘀、辨寒热、辨虚实,阐述肿瘤治疗四法:攻法、消法、散法、补法,并通过临床验案分享诊疗经验,以供同仁参考。",
 				"extra": "status: advance online publication",
 				"language": "zh-CN",
@@ -1762,6 +1932,209 @@ var testCases = [
 				"seeAlso": []
 			}
 		]
+	},
+	{
+		"type": "search",
+		"input": {
+			"DOI": "10.13374/j.issn2095-9389.2022.11.11.005"
+		},
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "生物质材料炭化的研究进展及其应用展望",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "田学坤",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "王霞",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "苏凯",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "欧阳德泽",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "赵振毅",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "刘新红",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2023",
+				"DOI": "10.13374/j.issn2095-9389.2022.11.11.005",
+				"abstractNote": "生物质属于可再生资源，在我国含量丰富，生物质材料炭化后的产物在储能、吸附等领域得到了广泛应用.研究生物质材料的炭化过程，有利于生物质炭的有效利用.总结了生物质材料炭化过程中，生物质的种类和炭化条件（包括炭化温度、预处理等）对炭化产物中碳的结构、形态、性质的影响，期望为生物质炭化产物的有效利用提供理论基础.同时总结了在催化剂作用下，利用生物质材料炭化来制备碳纳米管，并分析了生物质材料中木质素和纤维素等组分对碳纳米管制备的影响.在此基础上，展望了生物质材料在含碳耐火材料中的应用前景，以期为制备低成本和高性能的新型含碳耐火材料提供思路.",
+				"issue": "12",
+				"language": "zh-CN",
+				"libraryCatalog": "CNKI",
+				"pages": "2026-2036",
+				"publicationTitle": "工程科学学报",
+				"url": "https://doi.org/10.13374%2Fj.issn2095-9389.2022.11.11.005",
+				"volume": "45",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					}
+				],
+				"tags": [
+					{
+						"tag": "含碳耐火材料"
+					},
+					{
+						"tag": "炭化条件"
+					},
+					{
+						"tag": "生物质材料"
+					},
+					{
+						"tag": "生物质炭"
+					},
+					{
+						"tag": "碳纳米管"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "search",
+		"input": {
+			"DOI": "10.13801/j.cnki.fhclxb.20240008.002"
+		},
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "Ag量子点协同四环素的抑菌及其机制研究",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "郭少波",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "陈惠惠",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "刘珂",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "胡瑞玲",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "王嘉伟",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "余凡",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "刘智峰",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "史娟",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "郭婷",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "季晓晖",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "张田雷",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2024-01-09",
+				"DOI": "10.13801/j.cnki.fhclxb.20240008.002",
+				"abstractNote": "四环素类抗生素因具有高效、低毒、广谱抑菌性等优点而被广泛使用，但随着抗生素的滥用致使大量的耐药菌出现，使四环素类抗生素的药用价值逐渐降低。超小粒径的纳米Ag虽可使细菌甚至耐药菌失活，但单独使用毒性较强，且易团聚。为此，本研究利用Ag的d轨道为满电子结构，可与供电子基团配位的原理，设计了核壳型介孔Fe3O4@SiO2@mTiO2@Ag-四环素(FSmTA-T)复合材料用以解决抗生素耐药和纳米Ag团聚、强毒性问题。研究结果显示，制备的复合材料中纳米Ag量子点的粒径约为2.84 nm，可与四环素环3中的羰基键合，同时，相比四环素，复合材料对大肠杆菌，金黄色葡萄球菌，耐四环素沙门氏菌和白色念珠菌均具有较高的抑菌活性，并可有效破坏细菌细胞壁而使其死亡，且对哺乳细胞的毒性降低为原来的1/3。因此，其优越的抑菌活性可应用于污水处理领域。",
+				"extra": "status: advance online publication",
+				"language": "zh-CN",
+				"libraryCatalog": "CNKI",
+				"pages": "2605",
+				"publicationTitle": "复合材料学报",
+				"url": "https://doi.org/10.13801%2Fj.cnki.fhclxb.20240008.002",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					}
+				],
+				"tags": [
+					{
+						"tag": "Ag量子点"
+					},
+					{
+						"tag": "四环素"
+					},
+					{
+						"tag": "抑菌"
+					},
+					{
+						"tag": "抑菌机制"
+					},
+					{
+						"tag": "纳米复合材料"
+					},
+					{
+						"tag": "耐药"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
 	}
 ]
+
 /** END TEST CASES **/
