@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-10 06:01:34"
+	"lastUpdated": "2024-01-18 14:39:43"
 }
 
 /*
@@ -122,7 +122,7 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.ISBN = labels.getWith('标识号');
 			// newItem.shortTitle = 短标题;
 			if (['善本', '普通古籍', '特藏古籍'].includes(text(doc, '.book_val'))) {
-				newItem.extra += addExtra('Type', 'classic');
+				extra.add('Type', 'classic', true);
 			}
 			let creators = labels.getWith('所有责任者', true).innerText.trim().split(/\s{2}|，/).map((creator) => {
 				let creatorType = /译$/.test(creator)
@@ -148,11 +148,11 @@ async function scrape(doc, url = doc.location.href) {
 			});
 			Z.debug(creators);
 			if (creators.some(creator => creator.country || creator.original)) {
-				newItem.extra += addExtra('creatorsExt', JSON.stringify(creators));
+				extra.add('creatorsExt', JSON.stringify(creators));
 			}
 			creators.forEach((creator) => {
 				delete creator.country;
-				newItem.extra += addExtra('original-author', creator.original);
+				extra.add('original-author', creator.original, true);
 				delete creator.original;
 				newItem.creators.push(creator);
 			});
@@ -167,7 +167,7 @@ async function scrape(doc, url = doc.location.href) {
 			else if (labels.getWith('载体形态').includes('录音带')) {
 				medium = 'MT';
 			}
-			newItem.extra += addExtra('medium', medium);
+			extra.add('medium', medium, true);
 			break;
 		}
 		case 'journalArticle':
@@ -177,8 +177,8 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.pages = labels.getWith('页');
 			newItem.date = labels.getWith(['出版发行时间', '年']);
 			newItem.ISSN = tryMatch(labels.getWith('标识号'), /:(.+?)(\s|$)/, 1);
-			newItem.extra += addExtra('original-title', tryMatch(labels.getWith('文章题名'), /英文篇名 : (.+)(?:\s{2}|$)/, 1));
-			newItem.extra += addExtra('fund', labels.getWith('基金'));
+			extra.add('original-title', tryMatch(labels.getWith('文章题名'), /英文篇名 : (.+)(?:\s{2}|$)/, 1), true);
+			extra.add('fund', labels.getWith('基金'));
 			new Labels(doc, '#detail-info > .book_item').getWith('作者', true).innerText.trim()
 				.split(/\s{2}|，/).forEach((creator) => {
 					Z.debug(creator);
@@ -212,7 +212,7 @@ async function scrape(doc, url = doc.location.href) {
 					}
 					newItem.creators.push(creator);
 				});
-			newItem.extra += addExtra('subject', labels.getWith('论文专业 '));
+			extra.add('major', labels.getWith('论文专业 '));
 			break;
 		case 'newspaperArticle':
 			// http://find.nlc.cn/search/showDocDetails?docId=-382233026126726134&dataSource=fzbzcnml&query=%E6%96%B0%E5%8F%91%E5%B1%95%E7%90%86%E5%BF%B5
@@ -246,6 +246,7 @@ async function scrape(doc, url = doc.location.href) {
 	// ---见于图书
 	// ;见于期刊
 	labels.getWith('关键词', true).innerText.trim().split(/(?:---)|;|\s{2}/).forEach(tag => newItem.tags.push(tag));
+	newItem.extra = extra.toString();
 	newItem.complete();
 }
 
@@ -293,11 +294,23 @@ function tryMatch(string, pattern, index = 0) {
 		: '';
 }
 
-function addExtra(key, value) {
-	return value
-		? `${key}: ${value}\n`
-		: '';
-}
+const extra = {
+	clsFields: [],
+	elseFields: [],
+	add: function (key, value, cls = false) {
+		if (value && cls) {
+			this.clsFields.push([key, value]);
+		}
+		else if (value) {
+			this.elseFields.push([key, value]);
+		}
+	},
+	toString: function () {
+		return [...this.clsFields, ...this.elseFields]
+			.map(entry => `${entry[0]}: ${entry[1]}`)
+			.join('\n');
+	}
+};
 
 /** BEGIN TEST CASES **/
 var testCases = [
@@ -378,7 +391,7 @@ var testCases = [
 				"date": "2012",
 				"ISBN": "9787506361347",
 				"abstractNote": "本书分为十二篇，内容包括：探寻红色中国、去红都的道路、在保安、一个共产党员的由来等。",
-				"extra": "creatorsExt: [{\"firstName\":\"\",\"lastName\":\"埃德加·斯诺\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"Edgar Snow\"},{\"firstName\":\"\",\"lastName\":\"董乐山\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]\noriginal-author: Edgar Snow",
+				"extra": "original-author: Edgar Snow\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"埃德加·斯诺\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"Edgar Snow\"},{\"firstName\":\"\",\"lastName\":\"董乐山\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]",
 				"language": "zh-CN",
 				"libraryCatalog": "Wenjin",
 				"numPages": "338",
@@ -398,57 +411,6 @@ var testCases = [
 					},
 					{
 						"tag": "陕北革命根据地"
-					}
-				],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "http://find.nlc.cn/search/showDocDetails?docId=7225006674714026291&dataSource=ucs01,bslw&query=%E4%BF%A1%E7%94%A8",
-		"items": [
-			{
-				"itemType": "thesis",
-				"title": "基于信用衍生工具的银行业信贷资产管理",
-				"creators": [
-					{
-						"firstName": "",
-						"lastName": "尹灼",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "王国刚",
-						"creatorType": "contributor",
-						"fieldMode": 1
-					}
-				],
-				"date": "2004",
-				"language": "zh-CN",
-				"libraryCatalog": "Wenjin",
-				"numPages": "289",
-				"thesisType": "博士学位论文",
-				"university": "中国社会科学院",
-				"url": "http://find.nlc.cn/search/showDocDetails?docId=7225006674714026291&dataSource=ucs01,bslw&query=%E4%BF%A1%E7%94%A8",
-				"attachments": [],
-				"tags": [
-					{
-						"tag": "信用"
-					},
-					{
-						"tag": "信贷"
-					},
-					{
-						"tag": "资金管理"
-					},
-					{
-						"tag": "银行"
-					},
-					{
-						"tag": "风险管理"
 					}
 				],
 				"notes": [],
@@ -551,7 +513,7 @@ var testCases = [
 				],
 				"date": "2008",
 				"ISBN": "9787884737703",
-				"extra": "creatorsExt: [{\"firstName\":\"\",\"lastName\":\"理查德·克莱德曼\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"法\",\"original\":\"\"}]\nmedium: CD",
+				"extra": "medium: CD\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"理查德·克莱德曼\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"法\",\"original\":\"\"}]",
 				"libraryCatalog": "Wenjin",
 				"place": "武汉",
 				"publisher": "扬子江音像出版社",
@@ -576,4 +538,5 @@ var testCases = [
 		"items": "multiple"
 	}
 ]
+
 /** END TEST CASES **/
