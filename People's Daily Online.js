@@ -1,6 +1,6 @@
 {
 	"translatorID": "05189607-49fe-43f6-8c68-9ffe931fd590",
-	"label": "people.cn",
+	"label": "People's Daily Online",
 	"creator": "jiaojiaoduabi",
 	"target": "^http://.*\\.people(\\.com\\.)?cn",
 	"minVersion": "5.0",

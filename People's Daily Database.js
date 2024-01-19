@@ -1,6 +1,6 @@
 {
 	"translatorID": "dbc3b499-88b6-4661-88c0-c27ac57ccd59",
-	"label": "data.people",
+	"label": "People's Daily Database",
 	"creator": "pixiandouban",
 	"target": "^https?://data.people.com.cn/rmrb",
 	"minVersion": "5.0",

@@ -1,6 +1,6 @@
 {
 	"translatorID": "84bd7e84-c61d-4348-8615-3b56d9ebb848",
-	"label": "paper.people",
+	"label": "People's Daily Epaper",
 	"creator": "jiaojiaodubai",
 	"target": "^http://paper\\.people(\\.com)?\\.cn",
 	"minVersion": "5.0",
