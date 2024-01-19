@@ -95,9 +95,17 @@
         "label": "专利之星",
         "lastUpdated": "2023-12-31 10:29:30"
     },
-    "People's Daily.js": {
-        "label": "People's Daily.js",
+    "People's Daily Database.js": {
+        "label": "人民日报图文数据库",
         "lastUpdated": "2023-12-31 11:19:42"
+    },
+    "People's Daily Epaper.js": {
+        "label": "人民日报（电子版）",
+        "lastUpdated": "2024-01-07 15:11:26"
+    },
+    "People's Daily Online.js": {
+        "label": "人民网",
+        "lastUpdated": "2024-01-16 10:45:34"
     },
     "Pishu Data.js": {
         "label": "皮书数据库",
