@@ -1,6 +1,6 @@
 {
 	"translatorID": "dbc3b499-88b6-4661-88c0-c27ac57ccd59",
-	"label": "People's Daily.js",
+	"label": "People's Daily Database",
 	"creator": "pixiandouban",
 	"target": "^https?://data.people.com.cn/rmrb",
 	"minVersion": "5.0",
@@ -41,7 +41,7 @@ function detectWeb(doc, url) {
 		Z.monitorDOMChanges(box, { childList: true, subtree: true });
 	}
 	let lists = doc.querySelector('.title_list, .daodu_warp');
-	if(doc.querySelector('.rmrb_detail_pop')){
+	if (doc.querySelector('.rmrb_detail_pop')) {
 		return 'newspaperArticle';
 	}
 	else if (url.includes('qs') || lists) {
@@ -85,18 +85,19 @@ async function scrape(doc, url = doc.location.href) {
 	let subTitle = text(doc, 'div.subtitle');
 	if (subTitle) {
 		newItem.shortTitle = newItem.title;
-		newItem.title = newItem.title + subTitle;
+		newItem.title += subTitle;
 	}
 	newItem.date = text(doc, 'div.sha_left span:nth-child(1)');
-	newItem.pages = text(doc, 'div.sha_left span:nth-child(2)'); 
+	newItem.pages = text(doc, 'div.sha_left span:nth-child(2)');
 	newItem.language = 'zh-CN';
 	newItem.ISSN = '1672-8386';
 	newItem.url = url;
-	text(doc, 'div.author').slice(4, -1).split(/[，、\s;]+/).forEach((creator) => {
-		creator = ZU.cleanAuthor(creator, 'author');
-		creator.fieldMode = 1;
-		newItem.creators.push(creator);
-		});
+	text(doc, 'div.author').slice(4, -1).split(/[，、\s;]+/)
+.forEach((creator) => {
+	creator = ZU.cleanAuthor(creator, 'author');
+	creator.fieldMode = 1;
+	newItem.creators.push(creator);
+});
 	newItem.attachments.push({
 		title: 'Snapshot',
 		document: doc
@@ -147,4 +148,5 @@ var testCases = [
 		]
 	}
 ]
+
 /** END TEST CASES **/
