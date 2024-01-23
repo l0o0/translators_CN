@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-22 10:04:28"
+	"lastUpdated": "2024-01-23 11:00:46"
 }
 
 /*
@@ -154,8 +154,6 @@ async function scrape(doc, url = doc.location.href) {
 			Z.debug(json);
 			title = title.replace(/ \(\d{4}\)$/, '');
 			if (/^[\u4e00-\u9fff ]+ [\w() ]+/i.test(title)) {
-				Z.debug(title);
-				Z.debug('zh + en');
 				newItem.title = tryMatch(title, /(^[\u4e00-\u9fff ]+) [\w() ]+/i, 1);
 				extra.add('original-title', tryMatch(title, / ([\w() ]+)/i, 1), true);
 			}
@@ -178,15 +176,19 @@ async function scrape(doc, url = doc.location.href) {
 			extra.add('IMDb', labels.getWith('IMDb'));
 			extra.add('style', labels.getWith('类型'));
 			let creatorsMap = {
-				director: json.actor,
+				director: json.director,
 				scriptwriter: json.author,
 				contributor: json.actor
 			};
 			for (const creatorType in creatorsMap) {
 				for (let creator of creatorsMap[creatorType]) {
+					// https://movie.douban.com/subject/35725869/，赵天爱
+					creator.name = creator.name.replace(/&#(\d+);/g, function (_match, dec) {
+						return String.fromCharCode(dec);
+					});
 					// 仅给出双语的需要替换
-					creator = /([\u4e00-\u9fffA-Z·]+) ([\w .]+)/.test(creator.name)
-						? creator.name.replace(/([\u4e00-\u9fffA-Z·]+) ([\w .]+)/, '$1($2)')
+					creator = /([\u4e00-\u9fffA-Z·]+) ([^\u4e00-\u9fff]+)/.test(creator.name)
+						? creator.name.replace(/([\u4e00-\u9fffA-Z·]+) ([^\u4e00-\u9fff]+)/, '$1($2)')
 						: creator.name.trim();
 					creators.push(processName(creator, creatorType));
 				}
@@ -224,7 +226,9 @@ async function scrape(doc, url = doc.location.href) {
 	extra.add('ratingPeople', text(doc, '.rating_people'));
 	extra.add('comments', tryMatch(text(doc, '#comments-section h2'), /\d+/));
 	Z.debug(creators);
-	extra.add('creatorsExt', JSON.stringify(creators));
+	if (creators.some(creator => creator.country || creator.original)) {
+		extra.add('creatorsExt', JSON.stringify(creators));
+	}
 	creators.forEach((creator) => {
 		extra.add('original-author', creator.original, true);
 		delete creator.country;
@@ -565,151 +569,7 @@ var testCases = [
 				"creators": [
 					{
 						"firstName": "",
-						"lastName": "蒂姆·罗宾斯",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "摩根·弗里曼",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "鲍勃·冈顿",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "威廉姆·赛德勒",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "克兰西·布朗",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "吉尔·贝罗斯",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "马克·罗斯顿",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "詹姆斯·惠特摩",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "杰弗里·德曼",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "拉里·布兰登伯格",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "尼尔·吉恩托利",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "布赖恩·利比",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "大卫·普罗瓦尔",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "约瑟夫·劳格诺",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "祖德·塞克利拉",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "保罗·麦克兰尼",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "芮妮·布莱恩",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "阿方索·弗里曼",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "V·J·福斯特",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "弗兰克·梅德拉诺",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "马克·迈尔斯",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "尼尔·萨默斯",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "耐德·巴拉米",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "布赖恩·戴拉特",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "唐·麦克马纳斯",
+						"lastName": "弗兰克·德拉邦特",
 						"creatorType": "director",
 						"fieldMode": 1
 					},
@@ -878,7 +738,7 @@ var testCases = [
 				],
 				"date": "1994-09-10",
 				"abstractNote": "一场谋杀案使银行家安迪（蒂姆•罗宾斯 Tim Robbins 饰）蒙冤入狱，谋杀妻子及其情人的指控将囚禁他终生。在肖申克监狱的首次现身就让监狱“大哥”瑞德（摩根•弗里曼 Morgan Freeman 饰）对他另眼相看。瑞德帮助他搞到一把石锤和一幅女明星海报，两人渐成患难 之交。很快，安迪在监狱里大显其才，担当监狱图书管理员，并利用自己的金融知识帮助监狱官避税，引起了典狱长的注意，被招致麾下帮助典狱长洗黑钱。偶然一次，他得知一名新入狱的小偷能够作证帮他洗脱谋杀罪。燃起一丝希望的安迪找到了典狱长，希望他能帮自己翻案。阴险伪善的狱长假装答应安迪，背后却派人杀死小偷，让他唯一能合法出狱的希望泯灭。沮丧的安迪并没有绝望，在一个电闪雷鸣的风雨夜，一场暗藏几十年的越狱计划让他自我救赎，重获自由！老朋友瑞德在他的鼓舞和帮助下，也勇敢地奔向自由。 本片获得1995年奥...",
-				"extra": "original-title: The Shawshank Redemption\nplace: 美国\nalias: 月黑高飞(港) / 刺激1995(台) / 地狱诺言 / 铁窗岁月 / 消香克的救赎\nIMDb: tt0111161\nstyle: 剧情 / 犯罪\nrating: 9.7\nratingPeople: 2973784人评价\ncomments: 581206\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"蒂姆·罗宾斯\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Tim Robbins\"},{\"firstName\":\"\",\"lastName\":\"摩根·弗里曼\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Morgan Freeman\"},{\"firstName\":\"\",\"lastName\":\"鲍勃·冈顿\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Bob Gunton\"},{\"firstName\":\"\",\"lastName\":\"威廉姆·赛德勒\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"William Sadler\"},{\"firstName\":\"\",\"lastName\":\"克兰西·布朗\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Clancy Brown\"},{\"firstName\":\"\",\"lastName\":\"吉尔·贝罗斯\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Gil Bellows\"},{\"firstName\":\"\",\"lastName\":\"马克·罗斯顿\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Mark Rolston\"},{\"firstName\":\"\",\"lastName\":\"詹姆斯·惠特摩\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"James Whitmore\"},{\"firstName\":\"\",\"lastName\":\"杰弗里·德曼\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Jeffrey DeMunn\"},{\"firstName\":\"\",\"lastName\":\"拉里·布兰登伯格\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Larry Brandenburg\"},{\"firstName\":\"\",\"lastName\":\"尼尔·吉恩托利\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Neil Giuntoli\"},{\"firstName\":\"\",\"lastName\":\"布赖恩·利比\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Brian Libby\"},{\"firstName\":\"\",\"lastName\":\"大卫·普罗瓦尔\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"David Proval\"},{\"firstName\":\"\",\"lastName\":\"约瑟夫·劳格诺\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Joseph Ragno\"},{\"firstName\":\"\",\"lastName\":\"祖德·塞克利拉\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Jude Ciccolella\"},{\"firstName\":\"\",\"lastName\":\"保罗·麦克兰尼\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Paul McCrane\"},{\"firstName\":\"\",\"lastName\":\"芮妮·布莱恩\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Renee Blaine\"},{\"firstName\":\"\",\"lastName\":\"阿方索·弗里曼\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Alfonso Freeman\"},{\"firstName\":\"\",\"lastName\":\"V·J·福斯特\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"V.J. Foster\"},{\"firstName\":\"\",\"lastName\":\"弗兰克·梅德拉诺\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Frank Medrano\"},{\"firstName\":\"\",\"lastName\":\"马克·迈尔斯\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Mack Miles\"},{\"firstName\":\"\",\"lastName\":\"尼尔·萨默斯\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Neil Summers\"},{\"firstName\":\"\",\"lastName\":\"耐德·巴拉米\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Ned Bellamy\"},{\"firstName\":\"\",\"lastName\":\"布赖恩·戴拉特\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Brian Delate\"},{\"firstName\":\"\",\"lastName\":\"唐·麦克马纳斯\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Don McManus\"},{\"firstName\":\"\",\"lastName\":\"弗兰克·德拉邦特\",\"creatorType\":\"scriptwriter\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Frank Darabont\"},{\"firstName\":\"\",\"lastName\":\"斯蒂芬·金\",\"creatorType\":\"scriptwriter\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Stephen King\"},{\"firstName\":\"\",\"lastName\":\"蒂姆·罗宾斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Tim Robbins\"},{\"firstName\":\"\",\"lastName\":\"摩根·弗里曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Morgan Freeman\"},{\"firstName\":\"\",\"lastName\":\"鲍勃·冈顿\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Bob Gunton\"},{\"firstName\":\"\",\"lastName\":\"威廉姆·赛德勒\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"William Sadler\"},{\"firstName\":\"\",\"lastName\":\"克兰西·布朗\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Clancy Brown\"},{\"firstName\":\"\",\"lastName\":\"吉尔·贝罗斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Gil Bellows\"},{\"firstName\":\"\",\"lastName\":\"马克·罗斯顿\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Mark Rolston\"},{\"firstName\":\"\",\"lastName\":\"詹姆斯·惠特摩\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"James Whitmore\"},{\"firstName\":\"\",\"lastName\":\"杰弗里·德曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Jeffrey DeMunn\"},{\"firstName\":\"\",\"lastName\":\"拉里·布兰登伯格\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Larry Brandenburg\"},{\"firstName\":\"\",\"lastName\":\"尼尔·吉恩托利\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Neil Giuntoli\"},{\"firstName\":\"\",\"lastName\":\"布赖恩·利比\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Brian Libby\"},{\"firstName\":\"\",\"lastName\":\"大卫·普罗瓦尔\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"David Proval\"},{\"firstName\":\"\",\"lastName\":\"约瑟夫·劳格诺\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Joseph Ragno\"},{\"firstName\":\"\",\"lastName\":\"祖德·塞克利拉\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Jude Ciccolella\"},{\"firstName\":\"\",\"lastName\":\"保罗·麦克兰尼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Paul McCrane\"},{\"firstName\":\"\",\"lastName\":\"芮妮·布莱恩\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Renee Blaine\"},{\"firstName\":\"\",\"lastName\":\"阿方索·弗里曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Alfonso Freeman\"},{\"firstName\":\"\",\"lastName\":\"V·J·福斯特\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"V.J. Foster\"},{\"firstName\":\"\",\"lastName\":\"弗兰克·梅德拉诺\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Frank Medrano\"},{\"firstName\":\"\",\"lastName\":\"马克·迈尔斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Mack Miles\"},{\"firstName\":\"\",\"lastName\":\"尼尔·萨默斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Neil Summers\"},{\"firstName\":\"\",\"lastName\":\"耐德·巴拉米\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Ned Bellamy\"},{\"firstName\":\"\",\"lastName\":\"布赖恩·戴拉特\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Brian Delate\"},{\"firstName\":\"\",\"lastName\":\"唐·麦克马纳斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Don McManus\"}]\noriginal-author: Tim Robbins\noriginal-author: Morgan Freeman\noriginal-author: Bob Gunton\noriginal-author: William Sadler\noriginal-author: Clancy Brown\noriginal-author: Gil Bellows\noriginal-author: Mark Rolston\noriginal-author: James Whitmore\noriginal-author: Jeffrey DeMunn\noriginal-author: Larry Brandenburg\noriginal-author: Neil Giuntoli\noriginal-author: Brian Libby\noriginal-author: David Proval\noriginal-author: Joseph Ragno\noriginal-author: Jude Ciccolella\noriginal-author: Paul McCrane\noriginal-author: Renee Blaine\noriginal-author: Alfonso Freeman\noriginal-author: V.J. Foster\noriginal-author: Frank Medrano\noriginal-author: Mack Miles\noriginal-author: Neil Summers\noriginal-author: Ned Bellamy\noriginal-author: Brian Delate\noriginal-author: Don McManus\noriginal-author: Frank Darabont\noriginal-author: Stephen King\noriginal-author: Tim Robbins\noriginal-author: Morgan Freeman\noriginal-author: Bob Gunton\noriginal-author: William Sadler\noriginal-author: Clancy Brown\noriginal-author: Gil Bellows\noriginal-author: Mark Rolston\noriginal-author: James Whitmore\noriginal-author: Jeffrey DeMunn\noriginal-author: Larry Brandenburg\noriginal-author: Neil Giuntoli\noriginal-author: Brian Libby\noriginal-author: David Proval\noriginal-author: Joseph Ragno\noriginal-author: Jude Ciccolella\noriginal-author: Paul McCrane\noriginal-author: Renee Blaine\noriginal-author: Alfonso Freeman\noriginal-author: V.J. Foster\noriginal-author: Frank Medrano\noriginal-author: Mack Miles\noriginal-author: Neil Summers\noriginal-author: Ned Bellamy\noriginal-author: Brian Delate\noriginal-author: Don McManus",
+				"extra": "original-title: The Shawshank Redemption\noriginal-author: Frank Darabont\noriginal-author: Frank Darabont\noriginal-author: Stephen King\noriginal-author: Tim Robbins\noriginal-author: Morgan Freeman\noriginal-author: Bob Gunton\noriginal-author: William Sadler\noriginal-author: Clancy Brown\noriginal-author: Gil Bellows\noriginal-author: Mark Rolston\noriginal-author: James Whitmore\noriginal-author: Jeffrey DeMunn\noriginal-author: Larry Brandenburg\noriginal-author: Neil Giuntoli\noriginal-author: Brian Libby\noriginal-author: David Proval\noriginal-author: Joseph Ragno\noriginal-author: Jude Ciccolella\noriginal-author: Paul McCrane\noriginal-author: Renee Blaine\noriginal-author: Alfonso Freeman\noriginal-author: V.J. Foster\noriginal-author: Frank Medrano\noriginal-author: Mack Miles\noriginal-author: Neil Summers\noriginal-author: Ned Bellamy\noriginal-author: Brian Delate\noriginal-author: Don McManus\nplace: 美国\nalias: 月黑高飞(港) / 刺激1995(台) / 地狱诺言 / 铁窗岁月 / 消香克的救赎\nIMDb: tt0111161\nstyle: 剧情 / 犯罪\nrating: 9.7\nratingPeople: 2974206人评价\ncomments: 581283\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"弗兰克·德拉邦特\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Frank Darabont\"},{\"firstName\":\"\",\"lastName\":\"弗兰克·德拉邦特\",\"creatorType\":\"scriptwriter\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Frank Darabont\"},{\"firstName\":\"\",\"lastName\":\"斯蒂芬·金\",\"creatorType\":\"scriptwriter\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Stephen King\"},{\"firstName\":\"\",\"lastName\":\"蒂姆·罗宾斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Tim Robbins\"},{\"firstName\":\"\",\"lastName\":\"摩根·弗里曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Morgan Freeman\"},{\"firstName\":\"\",\"lastName\":\"鲍勃·冈顿\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Bob Gunton\"},{\"firstName\":\"\",\"lastName\":\"威廉姆·赛德勒\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"William Sadler\"},{\"firstName\":\"\",\"lastName\":\"克兰西·布朗\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Clancy Brown\"},{\"firstName\":\"\",\"lastName\":\"吉尔·贝罗斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Gil Bellows\"},{\"firstName\":\"\",\"lastName\":\"马克·罗斯顿\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Mark Rolston\"},{\"firstName\":\"\",\"lastName\":\"詹姆斯·惠特摩\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"James Whitmore\"},{\"firstName\":\"\",\"lastName\":\"杰弗里·德曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Jeffrey DeMunn\"},{\"firstName\":\"\",\"lastName\":\"拉里·布兰登伯格\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Larry Brandenburg\"},{\"firstName\":\"\",\"lastName\":\"尼尔·吉恩托利\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Neil Giuntoli\"},{\"firstName\":\"\",\"lastName\":\"布赖恩·利比\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Brian Libby\"},{\"firstName\":\"\",\"lastName\":\"大卫·普罗瓦尔\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"David Proval\"},{\"firstName\":\"\",\"lastName\":\"约瑟夫·劳格诺\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Joseph Ragno\"},{\"firstName\":\"\",\"lastName\":\"祖德·塞克利拉\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Jude Ciccolella\"},{\"firstName\":\"\",\"lastName\":\"保罗·麦克兰尼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Paul McCrane\"},{\"firstName\":\"\",\"lastName\":\"芮妮·布莱恩\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Renee Blaine\"},{\"firstName\":\"\",\"lastName\":\"阿方索·弗里曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Alfonso Freeman\"},{\"firstName\":\"\",\"lastName\":\"V·J·福斯特\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"V.J. Foster\"},{\"firstName\":\"\",\"lastName\":\"弗兰克·梅德拉诺\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Frank Medrano\"},{\"firstName\":\"\",\"lastName\":\"马克·迈尔斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Mack Miles\"},{\"firstName\":\"\",\"lastName\":\"尼尔·萨默斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Neil Summers\"},{\"firstName\":\"\",\"lastName\":\"耐德·巴拉米\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Ned Bellamy\"},{\"firstName\":\"\",\"lastName\":\"布赖恩·戴拉特\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Brian Delate\"},{\"firstName\":\"\",\"lastName\":\"唐·麦克马纳斯\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Don McManus\"}]",
 				"language": "zh-CN",
 				"libraryCatalog": "Douban",
 				"runningTime": "142 min",
@@ -899,71 +759,6 @@ var testCases = [
 				"itemType": "tvBroadcast",
 				"title": "良医 第六季",
 				"creators": [
-					{
-						"firstName": "",
-						"lastName": "弗莱迪·海默",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "菲奥娜·嘉伯曼",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "李威尹",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "克里斯蒂娜·张",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "布里亚·亨德森",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "诺亚·盖尔文",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "希尔·哈勃",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "理查德·希夫",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "布兰登·拉瑞昆特",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "Jennifer",
-						"lastName": "Tong",
-						"creatorType": "director"
-					},
-					{
-						"firstName": "",
-						"lastName": "胡安尼·费利兹",
-						"creatorType": "director",
-						"fieldMode": 1
-					},
 					{
 						"firstName": "",
 						"lastName": "大卫·肖",
@@ -1038,7 +833,7 @@ var testCases = [
 				],
 				"date": "2022-10-03",
 				"abstractNote": "ABC续订弗莱迪·海默主演《良医》第6季。",
-				"extra": "original-title: The Good Doctor Season 6\nplace: 美国\nalias: 好医生 / 仁医 / 良医心 / 良医墨非\nIMDb: tt19267596\nstyle: 剧情\nrating: 8.7\nratingPeople: 2544人评价\ncomments: 620\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"弗莱迪·海默\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Freddie Highmore\"},{\"firstName\":\"\",\"lastName\":\"菲奥娜·嘉伯曼\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Fiona Gubelmann\"},{\"firstName\":\"\",\"lastName\":\"李威尹\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Will Yun Lee\"},{\"firstName\":\"\",\"lastName\":\"克里斯蒂娜·张\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Christina Chang\"},{\"firstName\":\"\",\"lastName\":\"布里亚·亨德森\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Bria Henderson\"},{\"firstName\":\"\",\"lastName\":\"诺亚·盖尔文\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Noah Galvin\"},{\"firstName\":\"\",\"lastName\":\"希尔·哈勃\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Hill Harper\"},{\"firstName\":\"\",\"lastName\":\"理查德·希夫\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Richard Schiff\"},{\"firstName\":\"\",\"lastName\":\"布兰登·拉瑞昆特\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Brandon Larracuente\"},{\"firstName\":\"Jennifer\",\"lastName\":\"Tong\",\"creatorType\":\"director\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"胡安尼·费利兹\",\"creatorType\":\"director\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Juani Feliz\"},{\"firstName\":\"\",\"lastName\":\"大卫·肖\",\"creatorType\":\"scriptwriter\",\"fieldMode\":1,\"country\":\"\",\"original\":\"David Shore\"},{\"firstName\":\"\",\"lastName\":\"弗莱迪·海默\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Freddie Highmore\"},{\"firstName\":\"\",\"lastName\":\"菲奥娜·嘉伯曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Fiona Gubelmann\"},{\"firstName\":\"\",\"lastName\":\"李威尹\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Will Yun Lee\"},{\"firstName\":\"\",\"lastName\":\"克里斯蒂娜·张\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Christina Chang\"},{\"firstName\":\"\",\"lastName\":\"布里亚·亨德森\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Bria Henderson\"},{\"firstName\":\"\",\"lastName\":\"诺亚·盖尔文\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Noah Galvin\"},{\"firstName\":\"\",\"lastName\":\"希尔·哈勃\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Hill Harper\"},{\"firstName\":\"\",\"lastName\":\"理查德·希夫\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Richard Schiff\"},{\"firstName\":\"\",\"lastName\":\"布兰登·拉瑞昆特\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Brandon Larracuente\"},{\"firstName\":\"Jennifer\",\"lastName\":\"Tong\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"胡安尼·费利兹\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Juani Feliz\"}]\noriginal-author: Freddie Highmore\noriginal-author: Fiona Gubelmann\noriginal-author: Will Yun Lee\noriginal-author: Christina Chang\noriginal-author: Bria Henderson\noriginal-author: Noah Galvin\noriginal-author: Hill Harper\noriginal-author: Richard Schiff\noriginal-author: Brandon Larracuente\noriginal-author: Juani Feliz\noriginal-author: David Shore\noriginal-author: Freddie Highmore\noriginal-author: Fiona Gubelmann\noriginal-author: Will Yun Lee\noriginal-author: Christina Chang\noriginal-author: Bria Henderson\noriginal-author: Noah Galvin\noriginal-author: Hill Harper\noriginal-author: Richard Schiff\noriginal-author: Brandon Larracuente\noriginal-author: Juani Feliz",
+				"extra": "original-title: The Good Doctor Season 6\noriginal-author: David Shore\noriginal-author: Freddie Highmore\noriginal-author: Fiona Gubelmann\noriginal-author: Will Yun Lee\noriginal-author: Christina Chang\noriginal-author: Bria Henderson\noriginal-author: Noah Galvin\noriginal-author: Hill Harper\noriginal-author: Richard Schiff\noriginal-author: Brandon Larracuente\noriginal-author: Juani Feliz\nplace: 美国\nalias: 好医生 / 仁医 / 良医心 / 良医墨非\nIMDb: tt19267596\nstyle: 剧情\nrating: 8.7\nratingPeople: 2549人评价\ncomments: 622\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"大卫·肖\",\"creatorType\":\"scriptwriter\",\"fieldMode\":1,\"country\":\"\",\"original\":\"David Shore\"},{\"firstName\":\"\",\"lastName\":\"弗莱迪·海默\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Freddie Highmore\"},{\"firstName\":\"\",\"lastName\":\"菲奥娜·嘉伯曼\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Fiona Gubelmann\"},{\"firstName\":\"\",\"lastName\":\"李威尹\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Will Yun Lee\"},{\"firstName\":\"\",\"lastName\":\"克里斯蒂娜·张\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Christina Chang\"},{\"firstName\":\"\",\"lastName\":\"布里亚·亨德森\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Bria Henderson\"},{\"firstName\":\"\",\"lastName\":\"诺亚·盖尔文\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Noah Galvin\"},{\"firstName\":\"\",\"lastName\":\"希尔·哈勃\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Hill Harper\"},{\"firstName\":\"\",\"lastName\":\"理查德·希夫\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Richard Schiff\"},{\"firstName\":\"\",\"lastName\":\"布兰登·拉瑞昆特\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Brandon Larracuente\"},{\"firstName\":\"Jennifer\",\"lastName\":\"Tong\",\"creatorType\":\"contributor\",\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"胡安尼·费利兹\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\",\"original\":\"Juani Feliz\"}]",
 				"language": "zh-CN",
 				"libraryCatalog": "Douban",
 				"url": "https://movie.douban.com/subject/35840681/",
