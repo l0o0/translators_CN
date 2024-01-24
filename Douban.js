@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-23 11:00:46"
+	"lastUpdated": "2024-01-24 10:14:49"
 }
 
 /*
@@ -43,7 +43,7 @@ const typeMap = {
 };
 
 function detectWeb(doc, url) {
-	Z.debug('---------- Douban 2024-01-09 11:22:42 ----------');
+	Z.debug('---------- Douban 2024-01-24 18:14:47 ----------');
 	let typeKey = Object.keys(typeMap).find(key => new RegExp(`${key}/\\d+/`).test(url));
 	if (typeKey) {
 		return typeMap[typeKey];
@@ -150,15 +150,15 @@ async function scrape(doc, url = doc.location.href) {
 		}
 		case 'film': {
 			Z.debug('this is a film');
-			let json = JSON.parse(text(doc, 'script[type="application/ld+json"]'));
+			let json = JSON.parse(ZU.trimInternal(text(doc, 'script[type="application/ld+json"]')));
 			Z.debug(json);
 			title = title.replace(/ \(\d{4}\)$/, '');
-			if (/^[\u4e00-\u9fff ]+ [\w() ]+/i.test(title)) {
-				newItem.title = tryMatch(title, /(^[\u4e00-\u9fff ]+) [\w() ]+/i, 1);
-				extra.add('original-title', tryMatch(title, / ([\w() ]+)/i, 1), true);
-			}
-			else {
-				newItem.title = title;
+			// 很难用正则从title中匹配出中文标题
+			// https://movie.douban.com/subject/3183628/
+			let zhTitle = doc.title.replace(/ \(豆瓣\)$/, '');
+			newItem.title = zhTitle;
+			if (new RegExp(`${zhTitle}.+`).test(title)) {
+				extra.add('original-title', title.replace(`${zhTitle} `, ''), true);
 			}
 			if (/tv/i.test(json['@type'])) {
 				newItem.itemType = 'tvBroadcast';
@@ -169,7 +169,7 @@ async function scrape(doc, url = doc.location.href) {
 				newItem.date = tryMatch(labels.getWith('上映日期'), /[\d-]+/);
 			}
 			// https://movie.douban.com/subject/35725869/
-			newItem.abstractNote = text('.related-info .all, .related-info [property*="summary"]');
+			newItem.abstractNote = text('.related-info .all') || text(doc, '.related-info [property*="summary"]');
 			newItem.runningTime = labels.getWith('片长').replace('分钟', ' min');
 			extra.add('place', labels.getWith('制片国家'));
 			extra.add('alias', labels.getWith('又名'));
