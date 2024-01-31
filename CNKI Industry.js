@@ -214,7 +214,7 @@ async function scrape(doc, url = doc.location.href) {
 				newItem.place = labels.getWith('会议地点');
 				break;
 		}
-		newItem.disconnect = labels.getWith('DOI');
+		newItem.DOI = labels.getWith('DOI');
 		newItem.url = url;
 		procesAttachment(newItem, doc);
 		newItem.extra = extra.toString();
