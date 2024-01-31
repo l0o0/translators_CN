@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-23 13:47:37"
+	"lastUpdated": "2024-01-31 09:59:21"
 }
 
 /*
@@ -37,7 +37,7 @@
 
 
 function detectWeb(doc, url) {
-	if (url.includes('/detail2.html?')) {
+	if (/\/detail\d?\.html?/.test(url)) {
 		return text(doc, '#xlwj') == '司法解释'
 			? 'report'
 			: 'statute';
@@ -51,12 +51,9 @@ function detectWeb(doc, url) {
 function getSearchResults(doc, checkOnly) {
 	var items = {};
 	var found = false;
-	// TODO: adjust the CSS selector
-	var rows = doc.querySelectorAll('h2 > a.title[href*="/article/"]');
+	var rows = doc.querySelectorAll('p.list-wen');
 	for (let row of rows) {
-		// TODO: check and maybe adjust
-		let href = row.href;
-		// TODO: check and maybe adjust
+		let href = 'https://flk.npc.gov.cn' + tryMatch(row.getAttribute('onclick'), /window\.open\('(.+?)'/, 1);
 		let title = ZU.trimInternal(row.textContent);
 		if (!href || !title) continue;
 		if (checkOnly) return true;
@@ -70,54 +67,62 @@ async function doWeb(doc, url) {
 	if (detectWeb(doc, url) == 'multiple') {
 		let items = await Zotero.selectItems(getSearchResults(doc, false));
 		if (!items) return;
+		Z.debug(items);
 		for (let url of Object.keys(items)) {
-			await scrape(await requestDocument(url));
+			await scrape(url);
 		}
 	}
 	else {
-		await scrape(doc, url);
+		await scrape(url);
 	}
 }
 
-async function scrape(doc, url = doc.location.href) {
-	var newItem = new Z.Item(detectWeb(doc, url));
-	newItem.title = text(doc, '#flName');
+async function scrape(url) {
+	let json = await requestJSON('https://flk.npc.gov.cn/api/detail', {
+		method: 'POST',
+		body: `id=${tryMatch(url, /html\?([^&/]+)/, 1)}`
+	});
+	json = json.result;
+	Z.debug(json);
+	var newItem = new Z.Item(json.level == '司法解释' ? 'report' : 'statute');
+	newItem.title = json.title;
 	if (newItem.title.startsWith('中华人民共和国')) {
 		newItem.shortTitle = newItem.title.substring(7);
 	}
 	switch (newItem.itemType) {
 		case 'statute': {
-			newItem.dateEnacted = text(doc, '#gbrq');
-			if (text(doc, '#xlwj') == '行政法规') {
+			newItem.dateEnacted = ZU.strToISO(json.publish);
+			if (json.level.includes('法规')) {
 				extra.add('Type', 'regulation', true);
 			}
-			extra.add('appyDate', text(doc, '#sxrq'));
+			extra.add('appyDate', ZU.strToISO(json.expiry));
 			break;
 		}
 		case 'report':
-			newItem.date = text(doc, '#gbrq');
+			newItem.date = ZU.strToISO(json.publish);
 			break;
 	}
 	newItem.rights = '版权所有 © 全国人大常委会办公厅';
 	newItem.language = 'zh-CN';
 	newItem.url = url;
-	if (text(doc, '#sxx') == '已废止') {
+	if (json.status == 9) {
 		extra.add('Status', '已废止', true);
 	}
-	text(doc, '#zdjg').split('、').forEach((creator) => {
+	json.office.split('、').forEach((creator) => {
 		creator = ZU.cleanAuthor(creator, 'author');
 		creator.fieldMode = 1;
 		newItem.creators.push(creator);
 	});
-	let pdfLink = attr(doc, '#codeMa', 'src');
-	Z.debug(pdfLink);
-	if (pdfLink) {
-		newItem.attachments.push({
-			url: pdfLink.replace(/([\w.:/]+)\/PNG\/(\w+)\.png/, '$1/PDF/$2.pdf'),
-			title: 'Full Text PDF',
-			mimeType: 'application/pdf'
-		});
-	}
+	let attachment = json.body.find(att => att.type == 'PDF') || json.body.find(att => att.type == 'WORD');
+	let type = {
+		PDF: 'pdf',
+		WORD: 'docx'
+	}[attachment.type];
+	newItem.attachments.push({
+		url: 'https://flk.npc.gov.cn' + attachment.path,
+		title: `Full Text ${type.toUpperCase()}`,
+		mimeType: `application/${type}`
+	});
 	newItem.extra = extra.toString();
 	newItem.complete();
 }
@@ -139,6 +144,22 @@ const extra = {
 			.join('\n');
 	}
 };
+
+/**
+ * Attempts to get the part of the pattern described from the character,
+ * and returns an empty string if not match.
+ * @param {String} string
+ * @param {RegExp} pattern
+ * @param {Number} index
+ * @returns
+ */
+function tryMatch(string, pattern, index = 0) {
+	if (!string) return '';
+	let match = string.match(pattern);
+	return (match && match[index])
+		? match[index]
+		: '';
+}
 
 /** BEGIN TEST CASES **/
 var testCases = [
@@ -239,6 +260,11 @@ var testCases = [
 				"seeAlso": []
 			}
 		]
+	},
+	{
+		"type": "web",
+		"url": "https://flk.npc.gov.cn/index.html",
+		"items": "multiple"
 	}
 ]
 /** END TEST CASES **/
