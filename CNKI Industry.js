@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-31 04:48:07"
+	"lastUpdated": "2024-01-31 16:26:32"
 }
 
 /*
@@ -119,9 +119,9 @@ async function scrape(doc, url = doc.location.href) {
 	}
 	extra.add('foundation', labels.getWith('基金'));
 	extra.add('CLC', labels.getWith('分类号'));
-	extra.add('citation', labels.getWith('被引频次'));
+	extra.add('CNKICite', labels.getWith('被引频次'));
 	extra.add('download', labels.getWith('下载'));
-	extra.add('host', labels.getWith('主办单位'));
+	extra.add('organizer', labels.getWith('主办单位'));
 	let typeKey = text(doc, '#catalog_Ptitle');
 	try {
 		// throw new Error('debug');
@@ -148,8 +148,17 @@ async function scrape(doc, url = doc.location.href) {
 		translator.setString(referText);
 		translator.setHandler('itemDone', (_obj, item) => {
 			switch (item.itemType) {
-				case 'thesis':
+				case 'thesis': {
+					let pubInfo = labels.getWith('作者基本信息');
 					item.thesisType = `${typeKey}学位论文`;
+					item.university = labels.getWith('网络出版投稿人') || pubInfo.split(/，\s?/)[0];
+					break;
+				}
+				case 'conferencePaper':
+					item.date = labels.getWith('会议时间');
+					item.proceedingsTitle = labels.getWith('会议录名称');
+					item.conferenceName = labels.getWith('会议名称');
+					item.place = labels.getWith('会议地点');
 					break;
 			}
 			procesAttachment(item, doc);
@@ -163,7 +172,7 @@ async function scrape(doc, url = doc.location.href) {
 		newItem.title = text(doc, '#chTitle, #main h3');
 		newItem.abstractNote = labels.getWith(['摘要', 'Abstract']).replace(/\s*更多还原$/, '');
 		labels.getWith(['作者', 'Author'], true).querySelectorAll('a').forEach((creator) => {
-			creator = ZU.cleanAuthor(ZU.capitalizeName(ZU.trimInternal(creator.textContent)), 'author');
+			creator = ZU.cleanAuthor(ZU.capitalizeName(ZU.trimInternal(creator.textContent).replace(/[;；]/g, '')), 'author');
 			if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
 				creator.lastName = creator.firstName + creator.lastName;
 				creator.firstName = '';
@@ -416,7 +425,7 @@ var testCases = [
 				"date": "2008",
 				"ISSN": "1672-6472",
 				"abstractNote": "近年来,我国对药用真菌的研究和利用越来越重视,相关报道逐年增加。针对有些种类鉴定有误、拉丁学名使用没有严格遵守最新国际植物命名法规、命名人缩写不规范等问题,作者系统考证了我国药用真菌的名称,共收录473种,对每种名称按新近的研究成果和最新命名法规(维也纳法规)进行了订正,对过去的错误报道或不存在的名称进行了修正,将曾报道的、但应作为其他种的同物异名者列在其正名之后,所有名称定名人的缩写全部按国际植物命名法规的要求加以规范化。每种名称之后还列举了该种的主要药用功能或价值,并引证了主要参考文献。",
-				"extra": "foundation: 国家高技术研究发展计划(No.2007AA021506);国家自然科学基金(No.30771730)\nCLC: S567.3\ncitation: 874\ndownload: 4287",
+				"extra": "foundation: 国家高技术研究发展计划(No.2007AA021506);国家自然科学基金(No.30771730)\nCLC: S567.3\nCNKICite: 874\ndownload: 4287",
 				"issue": "6",
 				"libraryCatalog": "CNKI Industry",
 				"pages": "801-824",
@@ -466,10 +475,11 @@ var testCases = [
 				],
 				"date": "2010",
 				"abstractNote": "中国是世界秸秆大国。秸秆资源的开发利用,既涉及到农业生产系统中的物质高效转化和能量高效循环,成为循环农业和低碳经济的重要实现途径,又涉及到整个农业生态系统中的土壤肥力、环境安全以及可再生资源高效利用等可持续发展问题,还涉及到农民生活系统中的家居温暖和环境清洁,逐步成为农业和农村社会经济可持续发展的必然要求。\n秸秆资源数量估算主要有三种方法:一是草谷比法;二是副产品比重法;三是收获指数法。本文以大量的农作物种植试验研究文献为主要依据,利用其提供的农作物各部分生物量、收获指数(经济系数)、谷草比等基础数据,结合现实的草谷比实测结果,对我国各类农作物的草谷比进行了仔细的考证,从而建立了更为系统、更为精确的草谷比体系。继而以新建草谷比体系为依据,结合历年农作物生产统计数据,对1952年以来我国历年各类农作物秸秆产量和2008年分省(市、自治区)各类农作物秸秆产量进行了全面系统的估算,并汇总出了1952-2008年全国农作物秸秆总产量和2008年全国各省(市、自治区)秸秆总产量。计算结果表明:(1)2008年全国秸秆产量达到84219.41万t,与1952年(21690.62万t)相比净增2.88倍;(2)中国是世界第一秸秆大国;(3)秸秆是我国陆地植被中年生长量最高的生物质资源,分别相当于全国林地生物质年生长量的1.36倍、牧草地年总产草量的2.56倍和园地生物质年生长量的7.75倍;(4)水稻、小麦、玉米三大粮食作物秸秆产量合计占全国秸秆总产量的2/3左右;(5)全国近一半的秸秆资源分布于全国百分之十几的土地上。\n在农产品收获过程中,许多农作物需要留茬收割;在农作物生长过程中,尤其是在收获过程中,多数农作物都会有一定量的枝叶脱离其植株而残留在田中;在秸秆运输过程中也会有部分损失,因此并不是所有的秸秆都能够被收集起来。本文通过对各类农作物株高、收割留茬高度、叶部生物量比重、枝叶脱落率、收贮运损失率的调查和资料收集,制定了我国各类农作物秸秆的可收集利用系数,并据此估算了我国各类农作物的可收集利用量。计算结果表明:2008年我国秸秆的可收集利用总量为65102.19万t,平均可收集系数为0.77。\n秸秆主要有五个方面的用途:一是用作燃料;二是用作饲料;三是用作肥料;四是用作工业原料;五是用作食用菌基料,简称“五料”。本文依据秸秆的形态、质地、密度、物体结构、物质组分、养分含量、热值等",
-				"extra": "CLC: S38\ncitation: 744\ndownload: 20197",
+				"extra": "CLC: S38\nCNKICite: 744\ndownload: 20197",
 				"libraryCatalog": "CNKI Industry",
 				"numPages": "243",
 				"thesisType": "博士学位论文",
+				"university": "中国农业科学院",
 				"attachments": [
 					{
 						"title": "Full Text PDF",
@@ -517,15 +527,16 @@ var testCases = [
 					},
 					{
 						"firstName": "",
-						"lastName": "付秀娟；",
+						"lastName": "付秀娟",
 						"creatorType": "contributor",
 						"fieldMode": 1
 					}
 				],
 				"date": "2015",
 				"abstractNote": "目的：阿司匹林（Aspirin）是一种应用历史悠久的非甾体抗炎药，近几年来更是成为血栓栓塞性疾病治疗的首选药物。当人体血液中血小板被活化时，细胞内钙离子浓度升高，促使细胞膜磷脂释放出花生四烯酸，花生四烯酸在环氧化酶作用下分别转化成血栓素A2和前列环素，而阿司匹林通过使环氧化酶乙酰化失活来减少血栓素A2的生成，进而抑制血小板聚集，达到减少血管堵塞的发生率，有效地预防血栓形成的目的，常用于冠状动脉血管栓塞导致的心肌梗塞（AMI）及心绞痛；脑血管栓塞导致的脑血栓中风；肺动脉栓塞导致的肺梗塞、肺源性心脏病；肢体动脉栓塞导致的肢端疼痛或坏死，肢体静脉栓塞导致的局部水肿和疼痛等。但长期大量服用阿司匹林易造成胃肠道不良反应，如胃溃疡，胃肠穿孔甚至胃出血。现需要改变其剂型进而减少其不良反应的发生，延长药物半衰期，缓慢释药，使其血药浓度在较长时间内不会出现大的波动，改善药效，更好的提高生物利用度。本文对阿司匹林肠溶缓释片的制备工艺及质量标准进行了考察。方法：本文通过释放度检测试验对阿司匹林肠溶缓释片的处方进行了初步筛选，并运用均匀设计法对处方进行了优化；将处方量扩大100倍进行中试实验，验证了处方的可行性及合理性。对阿司匹林肠溶缓释片的质量标准进行考察，采用紫外-可见分光光度计法对其释放度进行测定，并采用高效液相色谱法进行了方法学考察。最后，对阿司匹林肠溶缓释片进行了稳定性考察，包括高温、高湿条件下的影响因素考察，为期六个月的加速实验以及十二个月的长期实验，考察其外观、释放度及含量的变化。结果：筛选出的最佳处方为：阿司匹林25g，淀粉9g，十二烷基硫酸钠0.75g，微晶纤维素2g，羟丙基甲基纤维素(K15M)5.25g，滑石粉1g，3%聚乙烯吡咯烷酮醇溶液适量。经过中试实验结果考察，该处方符合国家标准。阿司匹林肠溶缓释片质量标准的考察结果，确认该制备工艺可行、重现性良好。稳定性考察实验结果良好，各项指标均未见明显变化，表明该工艺制备的阿司匹林肠溶缓释片的质量稳定。结论：该论文对处方辅料配比及制备工艺进行优化，得到体外释放度较好的阿司匹林肠溶缓释片，从而在减少胃肠道不良反应的同时提高其生物利用度，同时减少服药次数，使药物缓慢释放，达到一个稳态的血药浓度，提高阿司匹林肠溶缓释片的临床应用效果，提高了患者的依从性。",
-				"extra": "CLC: R943\ncitation: 9\ndownload: 3399",
+				"extra": "CLC: R943\nCNKICite: 9\ndownload: 3399",
 				"libraryCatalog": "CNKI Industry",
+				"numPages": "41",
 				"thesisType": "硕士学位论文",
 				"university": "吉林大学",
 				"attachments": [
@@ -534,7 +545,23 @@ var testCases = [
 						"mimeType": "application/pdf"
 					}
 				],
-				"tags": [],
+				"tags": [
+					{
+						"tag": "处方筛选"
+					},
+					{
+						"tag": "肠溶缓释片"
+					},
+					{
+						"tag": "质量标准"
+					},
+					{
+						"tag": "释放度"
+					},
+					{
+						"tag": "阿司匹林"
+					}
+				],
 				"notes": [],
 				"seeAlso": []
 			}
@@ -574,10 +601,11 @@ var testCases = [
 					}
 				],
 				"date": "2023-06-03",
-				"abstractNote": "我国基层医疗卫生机构健康服务水平不断优化,但服务能力和人员配置等方面仍存在不足,而且目前缺乏对基层卫生机构未来发展趋势的研究。分析我国基层医疗机构发展现状,对其未来发展趋势进行预测,以期为今后卫生政策的制定提供参考依据。基于我国2012—2022年的统计年鉴资料,选择机构数、床位数、万元以上设备数、乡村医生和卫生员数、卫生技术人员数和诊疗人次作为测量指标,构建GM(1,1)灰色预测模型对我国202",
+				"abstractNote": "我国基层医疗卫生机构健康服务水平不断优化,但服务能力和人员配置等方面仍存在不足,而且目前缺乏对基层卫生机构未来发展趋势的研究。分析我国基层医疗机构发展现状,对其未来发展趋势进行预测,以期为今后卫生政策的制定提供参考依据。基于我国2012—2022年的统计年鉴资料,选择机构数、床位数、万元以上设备数、乡村医生和卫生员数、卫生技术人员数和诊疗人次作为测量指标,构建GM(1,1)灰色预测模型对我国2022—2025年基层医疗卫生机构的发展趋势进行预测。除诊疗人次外其他指标所构建的GM(1,1)预测模型精度均>95%,预测值与实际值之间的平均相对误差均小于6%,模型精度较高;发展系数精度检验结果显示模型具有中长期预测的能力,模型选择合理。我国2022—2025年基层医疗卫生机构的乡村医生和卫生人员数呈逐渐减少趋势,但机构数、床位数、万元以上设备数、卫生技术人员数和诊疗人次持续增长。我国基层医疗卫生机构设施建设逐年向好,但基层卫生技术人员短缺和乡村医生断档现象仍将持续,其服务能力、效率尚需提升。国家和地方政府卫生投入应进一步向基层倾斜,制定吸引和保持人才的政策,提高基层医疗卫生服务能力和效率。",
 				"conferenceName": "首届全国全科医疗质量论坛",
-				"extra": "CLC: R197\nhost: 全科医疗质量控制联盟",
+				"extra": "CLC: R197\norganizer: 全科医疗质量控制联盟",
 				"libraryCatalog": "CNKI Industry",
+				"pages": "1, 1",
 				"place": "中国上海",
 				"proceedingsTitle": "首届全国全科医疗质量论坛论文摘要集",
 				"attachments": [
@@ -586,7 +614,23 @@ var testCases = [
 						"mimeType": "application/pdf"
 					}
 				],
-				"tags": [],
+				"tags": [
+					{
+						"tag": "乡村医生"
+					},
+					{
+						"tag": "人员配置"
+					},
+					{
+						"tag": "发展趋势"
+					},
+					{
+						"tag": "基层医疗卫生机构"
+					},
+					{
+						"tag": "灰色预测"
+					}
+				],
 				"notes": [],
 				"seeAlso": []
 			}
@@ -664,6 +708,7 @@ var testCases = [
 				"abstractNote": "The Japan Aerospace Exploration Agency (JAXA) will make the world's first solar power sail craft demonstration of photon propulsion and thin film solar power generation during its interplanetary cruise by IKAROS (Interplanetary Kite-craft Accelerated by Radiation Of the Sun). The spacecraft deploys and spans a membrane of 20 meters in diameter taking the advantage of the spin centrifugal force. The spacecraft weighs approximately 310kg, launched together with the agency's Venus Climate Orbiter, AKATSUKI in May 2010. This will be the first actual solar sail flying an interplanetary voyage. 更多还原 AbstractFilter('ChDivSummary_YWZY','ChDivSummaryMore_YWZY','ChDivSummaryReset_YWZY');",
 				"libraryCatalog": "CNKI Industry",
 				"publicationTitle": "TRANSACTIONS OF THE JAPAN SOCIETY FOR AERONAUTICAL AND SPACE SCIENCES, AEROSPACE TECHNOLOGY JAPAN",
+				"url": "https://inds.cnki.net/kcms/detail?v=nbJUGfh75xq6UFfci6hGq0esDmD2PSyIbgAMsQQ/TuaRp4WgwSy5kQ0jJydTRF8roZqVTffbItmN3p8aaNGwVNsQ3gBFjY75X2%2bAdvTzIqUUxeHopYsWCR/f35LlFsu6M0xYmG1ZjB2cclIe/qdrWw==",
 				"attachments": [],
 				"tags": [],
 				"notes": [],
