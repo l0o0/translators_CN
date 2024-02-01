@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-29 15:39:16"
+	"lastUpdated": "2024-02-01 17:17:17"
 }
 
 /*
@@ -97,6 +97,7 @@ async function scrape(doc, url = doc.location.href) {
 	Z.debug(`ISBN: ${isbn}`);
 	try {
 		// throw new Error('debug');
+		if (!doi && !isbn) throw new ReferenceError('no identifier available');
 		let translator = Zotero.loadTranslator('search');
 		translator.setSearch({ ISBN: isbn, DOI: doi });
 		translator.setHandler('translators', (_, translators) => {
@@ -121,6 +122,7 @@ async function scrape(doc, url = doc.location.href) {
 		await translator.translate();
 	}
 	catch (error) {
+		Z.debug(error);
 		Z.debug(`failed to use search translator.`);
 		var newItem = new Z.Item(detectWeb(doc, url));
 		let title = doc.querySelector('#doc-title').cloneNode(true);
@@ -196,6 +198,7 @@ async function scrape(doc, url = doc.location.href) {
 			}
 		}
 		newItem.extra = extra.toString();
+		Z.debug(newItem);
 		newItem.complete();
 	}
 }
@@ -568,5 +571,4 @@ var testCases = [
 		]
 	}
 ]
-
 /** END TEST CASES **/
