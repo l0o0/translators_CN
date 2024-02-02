@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-01 17:17:17"
+	"lastUpdated": "2024-02-02 14:59:51"
 }
 
 /*
@@ -89,136 +89,145 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url = doc.location.href) {
+	try {
+		await scrapeSearch(doc);
+	}
+	catch (error) {
+		Z.debug(error);
+		Z.debug(`failed to use search translator.`);
+		await scrapeDoc(doc, url);
+	}
+}
+
+async function scrapeSearch(doc) {
 	let labels = new Labels(doc, '[id*="doc-about"] .infoBox-item, div[class*="detail_item__"]');
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	let doi = text(doc, '[class^="detail_doc-doi"] > a');
 	let isbn = labels.getWith('ISBN');
 	Z.debug(`DOI: ${doi}`);
 	Z.debug(`ISBN: ${isbn}`);
-	try {
-		// throw new Error('debug');
-		if (!doi && !isbn) throw new ReferenceError('no identifier available');
-		let translator = Zotero.loadTranslator('search');
-		translator.setSearch({ ISBN: isbn, DOI: doi });
-		translator.setHandler('translators', (_, translators) => {
-			translator.setTranslator(translators);
-		});
-		translator.setHandler('itemDone', (_, item) => {
-			if (['journalArticle', 'thesis'].includes(item.itemType)) {
-				item.abstractNote = text(doc, '#doc-summary-content-text');
-				item.date = ZU.strToISO(item.date);
-				if (/^en/i.test(item.language)) {
-					item.language = 'en-US';
-				}
-				if (!item.tags.length) {
-					doc.querySelectorAll('#doc-keyword-text a')
-						.forEach(element => item.tags.push(ZU.trimInternal(element.textContent).replace(/;$/, '')));
-				}
-				item.notes.push('<h1>Highlights / 研究要点</h1>\n' + text(doc, '#doc-hightlights-text > .value'));
+	// throw new Error('debug');
+	if (!doi && !isbn) throw new ReferenceError('no identifier available');
+	let translator = Zotero.loadTranslator('search');
+	translator.setSearch({ ISBN: isbn, DOI: doi });
+	translator.setHandler('translators', (_, translators) => {
+		translator.setTranslator(translators);
+	});
+	translator.setHandler('itemDone', (_, item) => {
+		if (['journalArticle', 'thesis'].includes(item.itemType)) {
+			item.abstractNote = text(doc, '#doc-summary-content-text');
+			item.date = ZU.strToISO(item.date);
+			if (/^en/i.test(item.language)) {
+				item.language = 'en-US';
 			}
-			item.complete();
-		});
-		await translator.getTranslators();
-		await translator.translate();
-	}
-	catch (error) {
-		Z.debug(error);
-		Z.debug(`failed to use search translator.`);
-		var newItem = new Z.Item(detectWeb(doc, url));
-		let title = doc.querySelector('#doc-title').cloneNode(true);
-		let button = title.querySelector('#changeActive');
-		if (button) {
-			title.removeChild(button);
+			if (!item.tags.length) {
+				doc.querySelectorAll('#doc-keyword-text a')
+					.forEach(element => item.tags.push(ZU.trimInternal(element.textContent).replace(/;$/, '')));
+			}
+			item.notes.push('<h1>Highlights / 研究要点</h1>\n' + text(doc, '#doc-hightlights-text > .value'));
 		}
-		newItem.title = ZU.trimInternal(title.textContent);
-		newItem.DOI = doi;
-		newItem.url = url;
-		if (/^en|英语/i.test(labels.getWith('语种'))) {
-			newItem.language = 'en-US';
-		}
-		doc.querySelectorAll('[class^="detail_doc-author"] [class^="detail_text"] > a').forEach((element) => {
-			element = ZU.trimInternal(element.textContent).replace(/\s*;$/, '');
-			newItem.creators.push(ZU.cleanAuthor(element, 'author'));
-		});
-		if (['journalArticle', 'thesis', 'conferencePaper'].includes(newItem.itemType)) {
-			newItem.abstractNote = text(doc, '#doc-summary-content-text');
-			doc.querySelectorAll('#doc-keyword-text a').forEach((element) => {
-				newItem.tags.push(ZU.trimInternal(element.textContent).replace(/;$/, ''));
-			});
-			let hightlights = text(doc, '#doc-hightlights-text > .value');
-			if (hightlights) {
-				newItem.notes.push('<h1>Highlights / 研究要点</h1>\n' + hightlights);
-			}
-			switch (newItem.itemType) {
-				case 'conferencePaper':
-				case 'journalArticle': {
-					let pubInfo = text(doc, '[class^="detail_issue-year-page"]');
-					newItem.publicationTitle = text(doc, '[class^="detail_journal_name"]');
-					newItem.volume = tryMatch(pubInfo, /Volume 0*([1-9]\d*)/, 1);
-					newItem.issue = tryMatch(pubInfo, /Issue 0*([1-9]\d*)/, 1);
-					newItem.pages = tryMatch(pubInfo, /PP ([\d+, ~-]*)/, 1);
-					newItem.date = tryMatch(pubInfo, /(?:\.\s)?(\d{4})(?:\.\s)?/, 1);
-					break;
-				}
-				case 'thesis': {
-					let pubInfo = labels.getWith('学位授予');
-					newItem.thesisType = {
-						Doctor: 'Doctoral dissertation',
-						Master: 'Master thesis'
-					}[labels.getWith('学位类型')];
-					newItem.university = tryMatch(pubInfo, /^[\w ]+/);
-					newItem.place = tryMatch(pubInfo, /\(([\w, ]+)\)$/, 1);
-					extra.add('major', labels.getWith('专业'));
-					extra.add('subject', labels.getWith('学科主题'));
-					newItem.creators.push(ZU.cleanAuthor(labels.getWith('作者'), 'author'));
-					break;
-				}
-			}
-			if (newItem.itemType == 'conferencePaper') {
-				newItem.proceedingsTitle = newItem.publicationTitle;
-				delete newItem.publicationTitle;
-			}
-		}
-		else if (['book', 'bookSection'].includes(newItem.itemType)) {
-			switch (newItem.itemType) {
-				case 'book':
-					newItem = Object.assign(patchBook(doc), newItem);
-					break;
-				case 'bookSection': {
-					let pubInfo = text(doc, '[class^="detail_issue-year-page"]');
-					newItem.pages = tryMatch(pubInfo, /Page ([\d+, ~-]*)/, 1);
-					let bookItem = patchBook(await requestDocument(doc.querySelector('[class^="detail_journal_name"] > a').href));
-					bookItem.bookTitle = bookItem.title;
-					delete bookItem.title;
-					delete bookItem.numPages;
-					delete bookItem.itemType;
-					newItem = Object.assign(bookItem, newItem);
-					break;
-				}
-			}
-		}
-		newItem.extra = extra.toString();
-		Z.debug(newItem);
-		newItem.complete();
-	}
+		item.complete();
+	});
+	translator.setHandler('error', () => { });
+	await translator.getTranslators();
+	await translator.translate();
 }
 
-function patchBook(doc) {
-	let labels = new Labels(doc, '[id*="doc-about"] .infoBox-item');
+async function scrapeDoc(doc, url = doc.location.href) {
+	let labels = new Labels(doc, '[id*="doc-about"] .infoBox-item, div[class*="detail_item__"]');
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
-	var bookItem = new Z.Item('book');
+	let doi = text(doc, '[class^="detail_doc-doi"] > a');
+	let isbn = labels.getWith('ISBN');
+	Z.debug(`DOI: ${doi}`);
+	Z.debug(`ISBN: ${isbn}`);
+	var newItem = new Z.Item(detectWeb(doc, url));
 	let title = doc.querySelector('#doc-title').cloneNode(true);
 	let button = title.querySelector('#changeActive');
 	if (button) {
 		title.removeChild(button);
 	}
-	bookItem.title = ZU.trimInternal(title.textContent);
+	newItem.title = ZU.trimInternal(title.textContent);
+	newItem.DOI = doi;
+	newItem.url = url;
+	if (/^en|英语/i.test(labels.getWith('语种'))) {
+		newItem.language = 'en-US';
+	}
+	doc.querySelectorAll('[class^="detail_doc-author"] [class^="detail_text"] > a').forEach((element) => {
+		element = ZU.trimInternal(element.textContent).replace(/\s*;$/, '');
+		newItem.creators.push(ZU.cleanAuthor(element, 'author'));
+	});
+	if (['journalArticle', 'thesis', 'conferencePaper'].includes(newItem.itemType)) {
+		newItem.abstractNote = text(doc, '#doc-summary-content-text');
+		doc.querySelectorAll('#doc-keyword-text a').forEach((element) => {
+			newItem.tags.push(ZU.trimInternal(element.textContent).replace(/;$/, ''));
+		});
+		let hightlights = text(doc, '#doc-hightlights-text > .value');
+		if (hightlights) {
+			newItem.notes.push('<h1>Highlights / 研究要点</h1>\n' + hightlights);
+		}
+		switch (newItem.itemType) {
+			case 'conferencePaper':
+			case 'journalArticle': {
+				let pubInfo = text(doc, '[class^="detail_issue-year-page"]');
+				newItem.publicationTitle = text(doc, '[class^="detail_journal_name"]');
+				newItem.volume = tryMatch(pubInfo, /Volume 0*([1-9]\d*)/, 1);
+				newItem.issue = tryMatch(pubInfo, /Issue 0*([1-9]\d*)/, 1);
+				newItem.pages = tryMatch(pubInfo, /PP ([\d+, ~-]*)/, 1);
+				newItem.date = tryMatch(pubInfo, /(?:\.\s)?(\d{4})(?:\.\s)?/, 1);
+				break;
+			}
+			case 'thesis': {
+				let pubInfo = labels.getWith('学位授予');
+				newItem.thesisType = {
+					Doctor: 'Doctoral dissertation',
+					Master: 'Master thesis'
+				}[labels.getWith('学位类型')];
+				newItem.university = tryMatch(pubInfo, /^[\w ]+/);
+				newItem.place = tryMatch(pubInfo, /\(([\w, ]+)\)$/, 1);
+				extra.add('major', labels.getWith('专业'));
+				extra.add('subject', labels.getWith('学科主题'));
+				newItem.creators.push(ZU.cleanAuthor(labels.getWith('作者'), 'author'));
+				break;
+			}
+		}
+		if (newItem.itemType == 'conferencePaper') {
+			newItem.proceedingsTitle = newItem.publicationTitle;
+			delete newItem.publicationTitle;
+		}
+	}
+	else if (['book', 'bookSection'].includes(newItem.itemType)) {
+		switch (newItem.itemType) {
+			case 'book':
+				patchBook(newItem, doc);
+				newItem.numPages = labels.getWith('页数');
+				break;
+			case 'bookSection': {
+				let pubInfo = text(doc, '[class^="detail_issue-year-page"]');
+				newItem.pages = tryMatch(pubInfo, /Page ([\d+, ~-]*)/, 1);
+				let bookDoc = await requestDocument(doc.querySelector('[class^="detail_journal_name"] > a').href);
+				let bookTitle = bookDoc.querySelector('#doc-title').cloneNode(true);
+				let button = bookTitle.querySelector('#changeActive');
+				if (button) {
+					bookTitle.removeChild(button);
+				}
+				newItem.bookTitle = bookTitle;
+				patchBook(newItem, bookDoc);
+				break;
+			}
+		}
+	}
+	newItem.extra = extra.toString();
+	newItem.complete();
+}
+
+function patchBook(bookItem, doc) {
+	let labels = new Labels(doc, '[id*="doc-about"] .infoBox-item');
+	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	bookItem.abstractNote = labels.getWith('摘要');
 	bookItem.series = labels.getWith('书系');
 	bookItem.publisher = text(doc, '[class^="detail_journal_name"]');
 	let pubInfo = text(doc, '[class^="detail_issue-year-page"]');
 	bookItem.date = tryMatch(pubInfo, /(?:\.\s)?(\d{4})(?:\.\s)?/, 1);
-	bookItem.numPages = labels.getWith('页数');
 	bookItem.ISBN = labels.getWith('ISBN');
 	extra.add('subject', labels.getWith('学科分类'));
 	extra.add('CLC', labels.getWith('中图分类号'));
@@ -226,7 +235,6 @@ function patchBook(doc) {
 		element = ZU.trimInternal(element.textContent).replace(/\s*;$/, '');
 		bookItem.creators.push(ZU.cleanAuthor(element, 'author'));
 	});
-	return bookItem;
 }
 
 class Labels {
@@ -420,6 +428,16 @@ var testCases = [
 						"firstName": "Merrill",
 						"lastName": "Singer",
 						"creatorType": "author"
+					},
+					{
+						"firstName": "Hans A.",
+						"lastName": "Baer",
+						"creatorType": "author"
+					},
+					{
+						"firstName": "Merrill",
+						"lastName": "Singer",
+						"creatorType": "author"
 					}
 				],
 				"date": "2024",
@@ -446,10 +464,16 @@ var testCases = [
 			{
 				"itemType": "bookSection",
 				"title": "4. Thinking the Unthinkable",
-				"creators": [],
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "LydiaDotto",
+						"creatorType": "author"
+					}
+				],
 				"date": "2006",
 				"ISBN": "9780889209688",
-				"bookTitle": "Thinking the Unthinkable:Civilization and Rapid Climate Change",
+				"bookTitle": "[object HTMLDivElement]",
 				"libraryCatalog": "CNKI Scholar",
 				"pages": "55-64",
 				"publisher": "Wilfrid Laurier University Press",
