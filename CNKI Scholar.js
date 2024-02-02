@@ -2,14 +2,14 @@
 	"translatorID": "b9b97a32-a8aa-4688-bd81-491bec21b1de",
 	"label": "CNKI Scholar",
 	"creator": "jiaojiaodubai",
-	"target": "^https?://scholar\\.cnki\\.net",
+	"target": "^https?://(scholar\\.cnki\\.net|kns\\.cnki\\.net/kcms2?/article)",
 	"minVersion": "5.0",
 	"maxVersion": "",
-	"priority": 100,
+	"priority": 150,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-02 14:59:51"
+	"lastUpdated": "2024-02-02 16:50:24"
 }
 
 /*
@@ -36,22 +36,23 @@
 */
 
 const typeMap = {
-	Journal: 'journalArticle',
+	journal: 'journalArticle',
 	book: 'book',
-	BookChapter: 'bookSection',
-	Conference: 'conferencePaper',
-	EDT: 'thesis'
+	bookchapter: 'bookSection',
+	conference: 'conferencePaper',
+	edt: 'thesis'
 };
 
 function detectWeb(doc, _url) {
-	let typeKey = text(doc, '#journal-summarize > span:first-of-type');
-	if (typeMap[typeKey] == 'book') {
+	let typeKey = text(doc, '#journal-summarize > span:first-of-type, .top-tip-scholar > span:first-child');
+	Z.debug(typeKey);
+	if (typeMap[typeKey.toLowerCase()] == 'book') {
 		return doc.querySelector('#doc-chapters')
 			? 'multiple'
 			: 'book';
 	}
 	else if (typeKey) {
-		return typeMap[typeKey];
+		return typeMap[typeKey.toLowerCase()];
 	}
 	else if (getSearchResults(doc, true)) {
 		return 'multiple';
@@ -100,9 +101,9 @@ async function scrape(doc, url = doc.location.href) {
 }
 
 async function scrapeSearch(doc) {
-	let labels = new Labels(doc, '[id*="doc-about"] .infoBox-item, div[class*="detail_item__"]');
+	let labels = new Labels(doc, '[id*="doc-about"] .infoBox-item, div[class*="detail_item__"], .scholar-margin h3, .row-scholar');
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
-	let doi = text(doc, '[class^="detail_doc-doi"] > a');
+	let doi = text(doc, '[class*="detail_doc-doi"] > a') || labels.getWith('DOI');
 	let isbn = labels.getWith('ISBN');
 	Z.debug(`DOI: ${doi}`);
 	Z.debug(`ISBN: ${isbn}`);
@@ -115,16 +116,19 @@ async function scrapeSearch(doc) {
 	});
 	translator.setHandler('itemDone', (_, item) => {
 		if (['journalArticle', 'thesis'].includes(item.itemType)) {
-			item.abstractNote = text(doc, '#doc-summary-content-text');
+			item.abstractNote = item.abstractNote || text(doc, '#doc-summary-content-text, .abstract-text');
 			item.date = ZU.strToISO(item.date);
 			if (/^en/i.test(item.language)) {
 				item.language = 'en-US';
 			}
 			if (!item.tags.length) {
-				doc.querySelectorAll('#doc-keyword-text a')
+				doc.querySelectorAll('[id*="doc-keyword"] a')
 					.forEach(element => item.tags.push(ZU.trimInternal(element.textContent).replace(/;$/, '')));
 			}
-			item.notes.push('<h1>Highlights / 研究要点</h1>\n' + text(doc, '#doc-hightlights-text > .value'));
+			let hightlights = text(doc, '#doc-hightlights-text > .value');
+			if (hightlights) {
+				item.notes.push('<h1>Highlights / 研究要点</h1>\n' + hightlights);
+			}
 		}
 		item.complete();
 	});
@@ -134,31 +138,31 @@ async function scrapeSearch(doc) {
 }
 
 async function scrapeDoc(doc, url = doc.location.href) {
-	let labels = new Labels(doc, '[id*="doc-about"] .infoBox-item, div[class*="detail_item__"]');
+	let labels = new Labels(doc, '[id*="doc-about"] .infoBox-item, div[class*="detail_item__"], .scholar-margin h3, .row-scholar');
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
-	let doi = text(doc, '[class^="detail_doc-doi"] > a');
+	let doi = text(doc, '[class*="detail_doc-doi"] > a') || labels.getWith('DOI');
 	let isbn = labels.getWith('ISBN');
 	Z.debug(`DOI: ${doi}`);
 	Z.debug(`ISBN: ${isbn}`);
 	var newItem = new Z.Item(detectWeb(doc, url));
-	let title = doc.querySelector('#doc-title').cloneNode(true);
-	let button = title.querySelector('#changeActive');
+	let title = doc.querySelector('#doc-title, .h1-scholar').cloneNode(true);
+	let button = title.querySelector('#changeActive, .mt-strans-title');
 	if (button) {
 		title.removeChild(button);
 	}
 	newItem.title = ZU.trimInternal(title.textContent);
 	newItem.DOI = doi;
 	newItem.url = url;
-	if (/^en|英语/i.test(labels.getWith('语种'))) {
+	if (/^en|英语/i.test(labels.getWith(['语种', 'Language']))) {
 		newItem.language = 'en-US';
 	}
-	doc.querySelectorAll('[class^="detail_doc-author"] [class^="detail_text"] > a').forEach((element) => {
+	doc.querySelectorAll('[class*="detail_doc-author"] [class*="detail_text"] > a, .author-scholar > a').forEach((element) => {
 		element = ZU.trimInternal(element.textContent).replace(/\s*;$/, '');
 		newItem.creators.push(ZU.cleanAuthor(element, 'author'));
 	});
 	if (['journalArticle', 'thesis', 'conferencePaper'].includes(newItem.itemType)) {
-		newItem.abstractNote = text(doc, '#doc-summary-content-text');
-		doc.querySelectorAll('#doc-keyword-text a').forEach((element) => {
+		newItem.abstractNote = text(doc, '#doc-summary-content-text, .abstract-text');
+		doc.querySelectorAll('[id*="doc-keyword"] a').forEach((element) => {
 			newItem.tags.push(ZU.trimInternal(element.textContent).replace(/;$/, ''));
 		});
 		let hightlights = text(doc, '#doc-hightlights-text > .value');
@@ -168,14 +172,16 @@ async function scrapeDoc(doc, url = doc.location.href) {
 		switch (newItem.itemType) {
 			case 'conferencePaper':
 			case 'journalArticle': {
-				let pubInfo = text(doc, '[class^="detail_issue-year-page"]');
-				newItem.publicationTitle = text(doc, '[class^="detail_journal_name"]');
+				let pubInfo = text(doc, '[class*="detail_issue-year-page"], .top-tip-scholar');
+				newItem.publicationTitle = text(doc, '[class*="detail_journal_name"], .top-tip-scholar > span >a');
 				newItem.volume = tryMatch(pubInfo, /Volume 0*([1-9]\d*)/, 1);
 				newItem.issue = tryMatch(pubInfo, /Issue 0*([1-9]\d*)/, 1);
 				newItem.pages = tryMatch(pubInfo, /PP ([\d+, ~-]*)/, 1);
 				newItem.date = tryMatch(pubInfo, /(?:\.\s)?(\d{4})(?:\.\s)?/, 1);
 				break;
 			}
+
+			/* thesis is only available on scholar.cnki.net */
 			case 'thesis': {
 				let pubInfo = labels.getWith('学位授予');
 				newItem.thesisType = {
@@ -198,19 +204,22 @@ async function scrapeDoc(doc, url = doc.location.href) {
 	else if (['book', 'bookSection'].includes(newItem.itemType)) {
 		switch (newItem.itemType) {
 			case 'book':
+				newItem.creators = [];
 				patchBook(newItem, doc);
 				newItem.numPages = labels.getWith('页数');
 				break;
+
+			/* book section is only available on scholar.cnki.net */
 			case 'bookSection': {
-				let pubInfo = text(doc, '[class^="detail_issue-year-page"]');
+				let pubInfo = text(doc, '[class*="detail_issue-year-page"]');
 				newItem.pages = tryMatch(pubInfo, /Page ([\d+, ~-]*)/, 1);
-				let bookDoc = await requestDocument(doc.querySelector('[class^="detail_journal_name"] > a').href);
+				let bookDoc = await requestDocument(doc.querySelector('[class*="detail_journal_name"] > a').href);
 				let bookTitle = bookDoc.querySelector('#doc-title').cloneNode(true);
 				let button = bookTitle.querySelector('#changeActive');
 				if (button) {
 					bookTitle.removeChild(button);
 				}
-				newItem.bookTitle = bookTitle;
+				newItem.bookTitle = ZU.trimInternal(bookTitle);
 				patchBook(newItem, bookDoc);
 				break;
 			}
@@ -223,15 +232,15 @@ async function scrapeDoc(doc, url = doc.location.href) {
 function patchBook(bookItem, doc) {
 	let labels = new Labels(doc, '[id*="doc-about"] .infoBox-item');
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
-	bookItem.abstractNote = labels.getWith('摘要');
+	bookItem.abstractNote = labels.getWith(['摘要', 'Abstract']);
 	bookItem.series = labels.getWith('书系');
-	bookItem.publisher = text(doc, '[class^="detail_journal_name"]');
-	let pubInfo = text(doc, '[class^="detail_issue-year-page"]');
+	bookItem.publisher = text(doc, '[class*="detail_journal_name"], .all-source a');
+	let pubInfo = text(doc, '[class*="detail_issue-year-page"], .top-tip-scholar');
 	bookItem.date = tryMatch(pubInfo, /(?:\.\s)?(\d{4})(?:\.\s)?/, 1);
 	bookItem.ISBN = labels.getWith('ISBN');
 	extra.add('subject', labels.getWith('学科分类'));
-	extra.add('CLC', labels.getWith('中图分类号'));
-	doc.querySelectorAll('[class^="detail_doc-author"] [class^="detail_text"] > a').forEach((element) => {
+	extra.add('CLC', labels.getWith(['中图分类号', 'CLC']));
+	doc.querySelectorAll('[class*="detail_doc-author"] [class*="detail_text"] > a, .author-scholar > a').forEach((element) => {
 		element = ZU.trimInternal(element.textContent).replace(/\s*;$/, '');
 		bookItem.creators.push(ZU.cleanAuthor(element, 'author'));
 	});
@@ -428,16 +437,6 @@ var testCases = [
 						"firstName": "Merrill",
 						"lastName": "Singer",
 						"creatorType": "author"
-					},
-					{
-						"firstName": "Hans A.",
-						"lastName": "Baer",
-						"creatorType": "author"
-					},
-					{
-						"firstName": "Merrill",
-						"lastName": "Singer",
-						"creatorType": "author"
 					}
 				],
 				"date": "2024",
@@ -590,6 +589,147 @@ var testCases = [
 					}
 				],
 				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=phUvsea1i7YNS5znM1G66x3jDJpx3L1zcm6u9YthZbUuBFoxPotxkL56i7W1yfe0GoocNQkff_ksvrgOiypVY0vfWhsTm-7iAkVlpCzcDro0hBUuXajM1Snj4R10pMhHNxDTyQVdV9Z2DmNHQARAOYrNAlw18XlPLU3VAWMRKMKswIf3yAQryw==&uniplatform=NZKPT&language=CHS",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "IMF Terminology Bulletin: Climate & the Environment, Fintech, Gender, and Related Acronyms: English to Arabic",
+				"creators": [],
+				"date": "10/2023",
+				"ISBN": "9798400251245",
+				"extra": "DOI: 10.5089/9798400251245.073",
+				"language": "ar",
+				"libraryCatalog": "DOI.org (Crossref)",
+				"place": "Washington, D.C.",
+				"publisher": "International Monetary Fund",
+				"shortTitle": "IMF Terminology Bulletin",
+				"url": "https://elibrary.imf.org/openurl?genre=book&isbn=9798400251245&cid=537460-com-dsp-crossref",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=phUvsea1i7b0LBhQwIVxbNbzKBRWIJp8hSX7PW0Uh_sDA_1ULXt8qcyRECdNOTy3NcitPSkXnaQcN051Rb7NtmChDNB1pmvOBleSaIJ3VDSIkWqqqpOALLL5qZSSMkpkTokstP4K9tRA1TywWgO-2OW4Tod3_pUcHuq24TOLnp8x5uPR3hlvGA==&uniplatform=NZKPT&language=CHS",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "Long-term analysis of microseism during extreme weather events: Medicanes and common storms in the Mediterranean Sea",
+				"creators": [
+					{
+						"creatorType": "author",
+						"firstName": "Alfio Marco",
+						"lastName": "Borzì"
+					},
+					{
+						"creatorType": "author",
+						"firstName": "Vittorio",
+						"lastName": "Minio"
+					},
+					{
+						"creatorType": "author",
+						"firstName": "Raphael",
+						"lastName": "De Plaen"
+					},
+					{
+						"creatorType": "author",
+						"firstName": "Thomas",
+						"lastName": "Lecocq"
+					},
+					{
+						"creatorType": "author",
+						"firstName": "Flavio",
+						"lastName": "Cannavò"
+					},
+					{
+						"creatorType": "author",
+						"firstName": "Giuseppe",
+						"lastName": "Ciraolo"
+					},
+					{
+						"creatorType": "author",
+						"firstName": "Sebastiano",
+						"lastName": "D'Amico"
+					},
+					{
+						"creatorType": "author",
+						"firstName": "Carlo Lo",
+						"lastName": "Re"
+					},
+					{
+						"creatorType": "author",
+						"firstName": "Carmelo",
+						"lastName": "Monaco"
+					},
+					{
+						"creatorType": "author",
+						"firstName": "Marco",
+						"lastName": "Picone"
+					},
+					{
+						"creatorType": "author",
+						"firstName": "Giovanni",
+						"lastName": "Scardino"
+					},
+					{
+						"creatorType": "author",
+						"firstName": "Giovanni",
+						"lastName": "Scicchitano"
+					},
+					{
+						"creatorType": "author",
+						"firstName": "Andrea",
+						"lastName": "Cannata"
+					}
+				],
+				"date": "2024-03",
+				"DOI": "10.1016/j.scitotenv.2024.169989",
+				"ISSN": "00489697",
+				"abstractNote": "本文从地震角度分析了2011年11月至2021年11月期间发生在地中海的12次气象事件。特别地,我们考虑了8个Medicanes和4个更常见的风暴。这些事件虽然有明显差异,但都造成了强降水、强阵风和强风暴潮,其有效波高通常> 3 ? m。我们利用两种不同的方法(基于幅度衰减的网格搜索和阵列技术)从频谱含量、振幅的时空变化和震源位置等方面处理了这些气象事件与微震(是地球上最连续、最广泛的地震信号)特征之间的关系。通过将微震震源位置与风暴潮显著区域进行对比,我们观察到在(两位医生在气象参数方面表现出很低的强度,微震振幅在这两次事件中没有表现出显著的变化)分析的12个事件中,有10个事件的微震位置与风暴潮的实际位置一致。我们还进行了两次分析,通过使用一种利用连续地震噪声相干性的方法来获得这些事件的地震特征,并从地震角度获得它们的强度,称为\"微震降低幅度\"。此外,通过整合这两种方法得到的结果,我们能够\"地震地\"区分Medicanes和普通风暴。因此,我们展示了通过将微震信息与其他常用的研究气象现象的技术结合起来,为地中海气象事件建立一个新的监测系统的可能性。将微震与海况监测(例如,波浪浮...",
+				"journalAbbreviation": "Science of The Total Environment",
+				"language": "en-US",
+				"libraryCatalog": "DOI.org (Crossref)",
+				"pages": "169989",
+				"publicationTitle": "Science of The Total Environment",
+				"shortTitle": "Long-term analysis of microseism during extreme weather events",
+				"url": "https://linkinghub.elsevier.com/retrieve/pii/S0048969724001232",
+				"volume": "915",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "Climate change"
+					},
+					{
+						"tag": "Common storms"
+					},
+					{
+						"tag": "Hindcast maps"
+					},
+					{
+						"tag": "Medicanes"
+					},
+					{
+						"tag": "Mediterranean Sea"
+					},
+					{
+						"tag": "Microseism"
+					},
+					{
+						"tag": "Monitoring sea state"
+					},
+					{
+						"tag": "Wave buoys"
+					}
+				],
 				"seeAlso": []
 			}
 		]
