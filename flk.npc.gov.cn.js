@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-31 09:59:21"
+	"lastUpdated": "2024-02-02 10:30:43"
 }
 
 /*
@@ -37,7 +37,7 @@
 
 
 function detectWeb(doc, url) {
-	if (/\/detail\d?\.html?/.test(url)) {
+	if (/\/detail\d?\.html\?|xf\/html/.test(url)) {
 		return text(doc, '#xlwj') == '司法解释'
 			? 'report'
 			: 'statute';
@@ -51,9 +51,13 @@ function detectWeb(doc, url) {
 function getSearchResults(doc, checkOnly) {
 	var items = {};
 	var found = false;
-	var rows = doc.querySelectorAll('p.list-wen');
+	// #flData .l-wen 见于“更多”
+	var rows = doc.querySelectorAll('p.list-wen, #flData .l-wen');
 	for (let row of rows) {
-		let href = 'https://flk.npc.gov.cn' + tryMatch(row.getAttribute('onclick'), /window\.open\('(.+?)'/, 1);
+		let clikArg = row.getAttribute('onclick');
+		let href = 'https://flk.npc.gov.cn' + (clikArg.startsWith('window.open')
+			? tryMatch(clikArg, /window\.open\('(.+?)'/, 1)
+			: tryMatch(clikArg, /\/xf\/html\/xf\d+.html/));
 		let title = ZU.trimInternal(row.textContent);
 		if (!href || !title) continue;
 		if (checkOnly) return true;
@@ -69,15 +73,24 @@ async function doWeb(doc, url) {
 		if (!items) return;
 		Z.debug(items);
 		for (let url of Object.keys(items)) {
-			await scrape(url);
+			await scrape(await requestDocument(url), url);
 		}
 	}
 	else {
-		await scrape(url);
+		await scrape(doc, url);
 	}
 }
 
-async function scrape(url) {
+async function scrape(doc, url = doc.location.href) {
+	if (url.includes('/xf/')) {
+		await scrapeXF(doc, url);
+	}
+	else {
+		await scrapeAPI(url);
+	}
+}
+
+async function scrapeAPI(url) {
 	let json = await requestJSON('https://flk.npc.gov.cn/api/detail', {
 		method: 'POST',
 		body: `id=${tryMatch(url, /html\?([^&/]+)/, 1)}`
@@ -119,10 +132,43 @@ async function scrape(url) {
 		WORD: 'docx'
 	}[attachment.type];
 	newItem.attachments.push({
-		url: 'https://flk.npc.gov.cn' + attachment.path,
+		url: 'https://wb.flk.npc.gov.cn' + attachment.path,
 		title: `Full Text ${type.toUpperCase()}`,
 		mimeType: `application/${type}`
 	});
+	newItem.extra = extra.toString();
+	newItem.complete();
+}
+
+async function scrapeXF(doc, url = doc.location.href) {
+	var newItem = new Z.Item('statute');
+	newItem.nameOfAct = text(doc, '#flName');
+	newItem.shortTitle = newItem.nameOfAct.substring(7);
+	newItem.dateEnacted = text(doc, '#gbrq');
+	extra.add('appyDate', text(doc, '#sxrq'));
+	newItem.rights = '版权所有 © 全国人大常委会办公厅';
+	newItem.language = 'zh-CN';
+	newItem.url = url;
+	if (text(doc, '#sxx') == '已废止') {
+		extra.add('Status', '已废止', true);
+	}
+	text(doc, '#zdjg').split('、').forEach((creator) => {
+		creator = ZU.cleanAuthor(creator, 'author');
+		creator.fieldMode = 1;
+		newItem.creators.push(creator);
+	});
+	let js = doc.querySelector('script[src*="/js/xf"]');
+	if (js) {
+		js = await requestText(js.src);
+		Z.debug(js);
+		let attLink = tryMatch(js, /downLoadPdfFileFileB\s?s=\s?"([^"]+?)"/, 1) || tryMatch(js, /downLoadWordFileFileBs\s?s=\s?"([^"]+?)"/, 1);
+		Z.debug(attLink);
+		newItem.attachments.push({
+			url: attLink,
+			title: `Full Text ${tryMatch(attLink, /\.([a-z]{3,4})$/, 1).toUpperCase()}`,
+			mimeType: `application/${tryMatch(attLink, /\.([a-z]{3,4})$/, 1)}`
+		});
+	}
 	newItem.extra = extra.toString();
 	newItem.complete();
 }
@@ -264,6 +310,44 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://flk.npc.gov.cn/index.html",
+		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://flk.npc.gov.cn/xf/html/xf4.html",
+		"items": [
+			{
+				"itemType": "statute",
+				"nameOfAct": "中华人民共和国宪法修正案（2004年）",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "全国人民代表大会",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"dateEnacted": "2004-03-14",
+				"extra": "appyDate: 2004-03-14",
+				"language": "zh-CN",
+				"rights": "版权所有 © 全国人大常委会办公厅",
+				"shortTitle": "宪法修正案（2004年）",
+				"url": "https://flk.npc.gov.cn/xf/html/xf4.html",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://flk.npc.gov.cn/xf.html",
 		"items": "multiple"
 	}
 ]
