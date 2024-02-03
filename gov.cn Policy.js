@@ -2,14 +2,14 @@
 	"translatorID": "74ab6c0d-0bb8-46fa-80ab-75538acf7cc6",
 	"label": "gov.cn Policy",
 	"creator": "jiaojiaodubai",
-	"target": "^https?://(sousuo\\.)?www\\.gov\\.cn/(zcwjk)|(zhengce)",
+	"target": "^https?://(sousuo\\.)?www\\.gov\\.cn/(zcwjk|zhengce|gongbao)",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-06 11:03:24"
+	"lastUpdated": "2024-02-03 11:28:39"
 }
 
 /*
@@ -43,6 +43,9 @@ function detectWeb(doc, url) {
 			? 'webpage'
 			: 'statute';
 	}
+	else if (/\/gongbao\/.*content_\d+\.htm/.test(url)) {
+		return 'journalArticle';
+	}
 	else if (getSearchResults(doc, true)) {
 		return 'multiple';
 	}
@@ -52,7 +55,7 @@ function detectWeb(doc, url) {
 function getSearchResults(doc, checkOnly) {
 	var items = {};
 	var found = false;
-	var rows = Array.from(doc.querySelectorAll('a')).filter(element => /\/zhengce\/.*content_\d+\.htm/.test(element.href));
+	var rows = Array.from(doc.querySelectorAll('a')).filter(element => /\/(zhengce|gongbao)\/.*content_\d+\.htm/.test(element.href));
 	for (let row of rows) {
 		let href = row.href;
 		let title = ZU.trimInternal(row.textContent);
@@ -102,7 +105,7 @@ async function scrape(doc, url = doc.location.href) {
 		}
 		case 'webpage': {
 			newItem.title = text(doc, 'h1#ti');
-			newItem.websiteTitle = doc.title;
+			newItem.websiteTitle = '中国政府网';
 			newItem.date = ZU.strToISO(text(doc, '.pages-date'));
 			let creator = innerText(doc, '.pages-date > span').slice(3);
 			if (/.*部网站/.test(creator)) {
@@ -114,6 +117,24 @@ async function scrape(doc, url = doc.location.href) {
 				creatorType: 'author',
 				fieldMode: 1
 			});
+			break;
+		}
+		case 'journalArticle': {
+			newItem.title = ZU.trimInternal(text(doc, '.share-title'));
+			newItem.abstractNote = attr(doc, 'meta[name="description"]', 'content');
+			newItem.publicationTitle = '中华人民共和国国务院公报';
+			newItem.ISSN = '1004-3438';
+			newItem.issue = tryMatch(attr(doc, 'meta[name="lanmu"]', 'content'), /(\d+)号/, 1);
+			newItem.date = ZU.strToISO(attr(doc, 'meta[name="firstpublishedtime"]'), 'content');
+			Array.from(doc.querySelectorAll('[label="右对齐"]'))
+				.map(element => element.textContent.replace(/\s/g, ''))
+				.filter(string => /^[\u4e00-\u9fff]+$/.test(string))
+				.forEach((creator) => {
+					creator = ZU.cleanAuthor(creator, 'author');
+					creator.fieldMode = 1;
+					newItem.creators.push(creator);
+				});
+			newItem.tags = attr(doc, 'meta[name="keywords"]', 'content').split(';');
 			break;
 		}
 	}
@@ -157,6 +178,14 @@ class CellLabels {
 			? ZU.trimInternal(keyValPair[1].innerText)
 			: '';
 	}
+}
+
+
+function tryMatch(string, pattern, index = 0) {
+	let match = string.match(pattern);
+	return match && match[index]
+		? match[index]
+		: '';
 }
 
 /** BEGIN TEST CASES **/
@@ -351,7 +380,7 @@ var testCases = [
 				"date": "2024-01-03",
 				"language": "zh-CN",
 				"url": "https://www.gov.cn/zhengce/202401/content_6923947.htm",
-				"websiteTitle": "商务部外贸司负责人解读《商务部等10部门关于提升加工贸易发展水平的意见》_政策解读_中国政府网",
+				"websiteTitle": "中国政府网",
 				"attachments": [
 					{
 						"title": "Snapshot",
@@ -382,7 +411,7 @@ var testCases = [
 				"date": "2024-01-05",
 				"language": "zh-CN",
 				"url": "https://www.gov.cn/zhengce/202401/content_6924392.htm",
-				"websiteTitle": "我国将推广农村客运车辆代运邮件快件_政策解读_中国政府网",
+				"websiteTitle": "中国政府网",
 				"attachments": [
 					{
 						"title": "Snapshot",
@@ -409,6 +438,122 @@ var testCases = [
 		"type": "web",
 		"url": "https://www.gov.cn/zhengce/index.htm",
 		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://www.gov.cn/gongbao/2023/issue_10886/202312/content_6921258.html",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "民政部 国家发展改革委 财政部 人力资源社会保障部 自然资源部 住房城乡建设部 农业农村部 商务部 应急管理部 税务总局 市场监管总局关于印发《积极发展老年助餐 服务行动方案》的通知 积极发展老年助餐服务行动方案",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "民政部国家发展改革委",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "财政部人力资源社会保障部",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "自然资源部住房城乡建设部",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "农业农村部商务部",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "应急管理部税务总局",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "市场监管总局",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "民政部国家发展改革委",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "财政部人力资源社会保障部",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "自然资源部住房城乡建设部",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "农业农村部商务部",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "应急管理部税务总局",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "市场监管总局",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"ISSN": "1004-3438",
+				"abstractNote": "经国务院同意，现将《积极发展老年助餐服务行动方案》印发给你们，请结合实际，认真组织实施。",
+				"issue": "35",
+				"language": "zh-CN",
+				"libraryCatalog": "gov.cn Policy",
+				"publicationTitle": "中华人民共和国国务院公报",
+				"url": "https://www.gov.cn/gongbao/2023/issue_10886/202312/content_6921258.html",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [
+					{
+						"tag": "民政部"
+					},
+					{
+						"tag": "老年助餐"
+					},
+					{
+						"tag": "通知"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.gov.cn/gongbao/2024/issue_11086/",
+		"items": "multiple"
 	}
 ]
+
 /** END TEST CASES **/
