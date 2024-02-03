@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-10 05:33:41"
+	"lastUpdated": "2024-02-03 09:43:15"
 }
 
 /*
@@ -56,7 +56,7 @@
 // };
 
 class ID {
-	constructor(node, url) {
+	constructor(node, _url) {
 		// url有时是加密过的字符，而“收藏”按钮上有含id的链接
 		let hiddenId = text(node, 'span.title-id-hidden') || attr(node, '.collection > wf-favourite', 'url');
 		Z.debug(`hiddenId: ${hiddenId}`);
@@ -76,7 +76,7 @@ class ID {
 			standard: "standard",
 		};
 		this.itemType = dbType[this.dbname];
-		this.url = url || `https://d.wanfangdata.com.cn/${hiddenId.replace("_", "/")}`;
+		this.url = `https://d.wanfangdata.com.cn/${this.dbname}/${this.filename}`;
 	}
 }
 
@@ -138,11 +138,10 @@ async function doWeb(doc, url) {
 }
 
 async function scrapePage(doc, url = doc.location.href) {
-	Z.debug("--------------- WanFang Data 2024-01-10 13:17:08 ---------------");
+	Z.debug("--------------- WanFang Data 2024-02-03 17:20:49 ---------------");
 	let ids = new ID(doc, url);
 	var newItem = new Zotero.Item(ids.itemType);
 	newItem.title = text(doc, '.detailTitleCN > span:first-child') || text(doc, '.detailTitleCN');
-	newItem.extra = '';
 	// Display full abstract
 	let clickMore = Array.from(doc.querySelectorAll('span.abstractIcon.btn, .moreFlex > span:first-child'));
 	for (let button of clickMore) {
@@ -152,7 +151,7 @@ async function scrapePage(doc, url = doc.location.href) {
 	newItem.abstractNote = text(doc, '.summary > .item+*');
 	newItem.publicationTitle = text(doc, '.periodicalName');
 	newItem.pages = tryMatch(text(doc, '.pages > .item+* span, .pageNum > .item+*'), /[\d+,~-]+/).replace('+', ',').replace('~', '-');
-	newItem.url = url;
+	newItem.url = ids.url;
 	Array.from(doc.querySelectorAll('.author.detailTitle span')).forEach((creator) => {
 		creator = creator.innerText.replace(/[\s\d,]*$/, '');
 		newItem.creators.push(ZU.cleanAuthor(creator, 'author'));
@@ -160,12 +159,7 @@ async function scrapePage(doc, url = doc.location.href) {
 	Array.from(doc.querySelectorAll('.keyword > .item+* > a')).forEach((tag) => {
 		newItem.tags.push(tag.innerText);
 	});
-	function addExtra(field, value) {
-		if (value) {
-			newItem.extra += `${field}: ${value}`;
-		}
-	}
-	addExtra('original-title', text(doc, '.detailTitleEN'));
+	extra.add('original-title', text(doc, '.detailTitleEN'), true);
 	switch (newItem.itemType) {
 		case 'journalArticle': {
 			let pubInfo = text(doc, '.publishData > .item+*');
@@ -198,11 +192,11 @@ async function scrapePage(doc, url = doc.location.href) {
 			Array.from(doc.querySelectorAll('.agent .itemUrl > span')).forEach((creator) => {
 				newItem.creators.push(ZU.cleanAuthor(creator.innerText, 'attorneyAgent'));
 			});
-			addExtra('Genre', text(doc, '.patentType > .item+*'));
-			newItem.place = text(doc, '.applicantAddress > .item+*');
-			newItem.country = text(doc, '.applicantArea > .item+*');
-			newItem.assignee = text(pickLabel(doc, '.applicant', '申请/专利权人'), '.item+*');
-			newItem.patentNumber = text(doc, '.patentCode > .item+*');
+			extra.add('Genre', text(doc, '.patentType > .item+*'), true);
+			newItem.patentNumber = text(doc, '.publicationNo > .item+*');
+			newItem.applicationNumber = text(doc, '.patentCode > .item+*');
+			newItem.place = patentCountry(newItem.patentNumber || newItem.applicationNumber);
+			newItem.country = newItem.place;
 			newItem.filingDate = text(pickLabel(doc, '.applicationDate', '申请日期'), '.item+*');
 			newItem.priorityNumbers = text(pickLabel(doc, '.applicant', '优先权'), '.item+*');
 			newItem.issueDate = text(pickLabel(doc, '.applicationDate', '公开/公告日'), '.item+*');
@@ -211,19 +205,17 @@ async function scrapePage(doc, url = doc.location.href) {
 			break;
 		}
 		case 'standard':
-			newItem.number = text(doc, '.standardId > .item+*');
+			newItem.number = text(doc, '.standardId > .item+*').replace('-', '—');
 			newItem.date = text(doc, '.issueDate > .item+*');
 			newItem.publisher = text(doc, '.issueOrganization > itemUrl > a');
 			newItem.status = text(doc, '.status > .item+*');
-			addExtra('apply date', text(doc, '.applyDate > .item+*'));
-			addExtra('reference', text(doc, '.citeStandard > .itemKeyword'));
+			extra.add('applyDate', text(doc, '.applyDate > .item+*'));
+			extra.add('reference', text(doc, '.citeStandard > .itemKeyword'));
 			newItem.creators.push(ZU.cleanAuthor(text(doc, '.technicalCommittee > .itemUrl').replace(/\(.+?\)$/, ''), 'author'));
-			break;
-		default:
 			break;
 	}
 	newItem.creators.forEach((creator) => {
-		if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+		if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
 			creator.fieldMode = 1;
 		}
 	});
@@ -272,7 +264,7 @@ async function scrapeRow(row) {
 		// 	});
 		// }
 		item.creators.forEach((creator) => {
-			if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+			if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
 				creator.fieldMode = 1;
 			}
 		});
@@ -283,10 +275,9 @@ async function scrapeRow(row) {
 
 function tryMatch(string, pattern, index = 0) {
 	let match = string.match(pattern);
-	if (match && match[index]) {
-		return match[index];
-	}
-	return '';
+	return match && match[index]
+		? match[index]
+		: '';
 }
 
 function pickLabel(doc, selector, label) {
@@ -303,6 +294,37 @@ function pickLabel(doc, selector, label) {
 // 	if (!hiddenId || !match) return '';
 // 	return "https://oss.wanfangdata.com.cn/www/" + encodeURIComponent(doc.title) + ".ashx?isread=true&type=" + match[1] + "&resourceId=" + encodeURI(decodeURIComponent(match[2]));
 // }
+
+const extra = {
+	clsFields: [],
+	elseFields: [],
+	add: function (key, value, cls = false) {
+		if (value && cls) {
+			this.clsFields.push([key, value]);
+		}
+		else if (value) {
+			this.elseFields.push([key, value]);
+		}
+	},
+	toString: function () {
+		return [...this.clsFields, ...this.elseFields]
+			.map(entry => `${entry[0]}: ${entry[1]}`)
+			.join('\n');
+	}
+};
+
+function patentCountry(idNumber) {
+	return {
+		AD: '安道尔', AE: '阿拉伯联合酋长国', AF: '阿富汗', AG: '安提瓜和巴布达', AI: '安圭拉', AL: '阿尔巴尼亚', AM: '亚美尼亚', AN: '菏属安的列斯群岛', AO: '安哥拉', AR: '阿根廷', AT: '奥地利', AU: '澳大利亚', AW: '阿鲁巴', AZ: '阿塞拜疆', BB: '巴巴多斯', BD: '孟加拉国', BE: '比利时', BF: '布莱基纳法索', BG: '保加利亚', BH: '巴林', BI: '布隆迪', BJ: '贝宁', BM: '百慕大', BN: '文莱', BO: '玻利维亚', BR: '巴西', BS: '巴哈马', BT: '不丹', BU: '缅甸', BW: '博茨瓦纳', BY: '白俄罗斯', BZ: '伯利兹', CA: '加拿大', CF: '中非共和国', CG: '刚果', CH: '瑞士', CI: '科特迪瓦', CL: '智利', CM: '喀麦隆', CN: '中国', CO: '哥伦比亚', CR: '哥斯达黎加', CS: '捷克斯洛伐克', CU: '古巴', CV: '怫得角', CY: '塞浦路斯',
+		DE: '联邦德国', DJ: '吉布提', DK: '丹麦', DM: '多米尼加岛', DO: '多米尼加共和国', DZ: '阿尔及利亚', EC: '厄瓜多尔', EE: '爱沙尼亚', EG: '埃及', EP: '欧洲专利局', ES: '西班牙', ET: '埃塞俄比亚', FI: '芬兰', FJ: '斐济', FK: '马尔维纳斯群岛', FR: '法国',
+		GA: '加蓬', GB: '英国', GD: '格林那达', GE: '格鲁吉亚', GH: '加纳', GI: '直布罗陀', GM: '冈比亚', GN: '几内亚', GQ: '赤道几内亚', GR: '希腊', GT: '危地马拉', GW: '几内亚比绍', GY: '圭亚那', HK: '香港', HN: '洪都拉斯', HR: '克罗地亚', HT: '海地', HU: '匈牙利', HV: '上沃尔特', ID: '印度尼西亚', IE: '爱尔兰', IL: '以色列', IN: '印度', IQ: '伊拉克', IR: '伊朗', IS: '冰岛', IT: '意大利',
+		JE: '泽西岛', JM: '牙买加', JO: '约旦', JP: '日本', KE: '肯尼亚', KG: '吉尔吉斯', KH: '柬埔寨', KI: '吉尔伯特群岛', KM: '科摩罗', KN: '圣克里斯托夫岛', KP: '朝鲜', KR: '韩国', KW: '科威特', KY: '开曼群岛', KZ: '哈萨克', LA: '老挝', LB: '黎巴嫩', LC: '圣卢西亚岛', LI: '列支敦士登', LK: '斯里兰卡', LR: '利比里亚', LS: '莱索托', LT: '立陶宛', LU: '卢森堡', LV: '拉脱维亚', LY: '利比亚',
+		MA: '摩洛哥', MC: '摩纳哥', MD: '莫尔多瓦', MG: '马达加斯加', ML: '马里', MN: '蒙古', MO: '澳门', MR: '毛里塔尼亚', MS: '蒙特塞拉特岛', MT: '马耳他', MU: '毛里求斯', MV: '马尔代夫', MW: '马拉维', MX: '墨西哥', MY: '马来西亚', MZ: '莫桑比克', NA: '纳米比亚', NE: '尼日尔', NG: '尼日利亚', NH: '新赫布里底', NI: '尼加拉瓜', NL: '荷兰', NO: '挪威', NP: '尼泊尔', NR: '瑙鲁', NZ: '新西兰', OA: '非洲知识产权组织', OM: '阿曼',
+		PA: '巴拿马', PC: 'PCT', PE: '秘鲁', PG: '巴布亚新几内亚', PH: '菲律宾', PK: '巴基斯坦', PL: '波兰', PT: '葡萄牙', PY: '巴拉圭', QA: '卡塔尔', RO: '罗马尼亚', RU: '俄罗斯联邦', RW: '卢旺达',
+		SA: '沙特阿拉伯', SB: '所罗门群岛', SC: '塞舌尔', SD: '苏丹', SE: '瑞典', SG: '新加坡', SH: '圣赫勒拿岛', SI: '斯洛文尼亚', SL: '塞拉利昂', SM: '圣马利诺', SN: '塞内加尔', SO: '索马里', SR: '苏里南', ST: '圣多美和普林西比岛', SU: '苏联', SV: '萨尔瓦多', SY: '叙利亚', SZ: '斯威士兰', TD: '乍得', TG: '多哥', TH: '泰国', TJ: '塔吉克', TM: '土库曼', TN: '突尼斯', TO: '汤加', TR: '土耳其', TT: '特立尼达和多巴哥', TV: '图瓦卢', TZ: '坦桑尼亚', UA: '乌克兰', UG: '乌干达', US: '美国', UY: '乌拉圭', UZ: '乌兹别克',
+		VA: '梵蒂冈', VC: '圣文森特岛和格林纳达', VE: '委内瑞拉', VG: '维尔京群岛', VN: '越南', VU: '瓦努阿图', WO: '世界知识产权组织', WS: '萨摩亚', YD: '民主也门', YE: '也门', YU: '南斯拉夫', ZA: '南非', ZM: '赞比亚', ZR: '扎伊尔', ZW: '津巴布韦'
+	}[idNumber.substring(0, 2).toUpperCase()] || '';
+}
 
 /** BEGIN TEST CASES **/
 var testCases = [
@@ -512,22 +534,16 @@ var testCases = [
 				],
 				"issueDate": "2019-10-11",
 				"abstractNote": "生物体签名系统保持将从用户的部位得到的第一生物体信息转换而得到的第一模板和通过单向性转换将从该用户的该部位得到的第二生物体信息进行转换而得到的第二模板，根据认证对象的第一生物体信息生成第一模板，对使用参数修正后的认证对象的第一模板与生物体签名系统保持的第一模板之间的相似度高的该参数进行特定，分别根据分别使用包括该特定出的参数在内的规定范围所包括的参数修正后的认证对象的第二生物体信息，生成第二模板，并将该生成的第二模板分别与生物体签名系统保持的第二模板进行比较来判定认证对象的认证成功与否。",
-				"assignee": "株式会社日立制作所",
-				"country": "日本;JP",
-				"extra": "Genre: 发明专利",
+				"applicationNumber": "CN201880013080.0",
+				"country": "中国",
 				"filingDate": "2018-02-14",
 				"legalStatus": "公开",
-				"patentNumber": "CN201880013080.0",
-				"place": "日本东京都",
+				"patentNumber": "CN110326254A",
+				"place": "中国",
 				"priorityNumbers": "2017-114023 2017.06.09 JP",
 				"rights": "1.一种生物体签名系统，其特征在于， 包括处理器和存储器， 所述存储器保持第一模板和第二模板，该第一模板表示通过规定的转换将从用户的规定部位得到的第一生物体信息进行转换后的结果，该第二模板表示通过规定的单向性转换将从所述用户的所述规定部位得到的第二生物体信息进行转换后的结果， 所述处理器进行以下处理： 获取认证对象的所述第一生物体信息和所述第二生物体信息， 根据获取到的所述第一生物体信息生成所述认证对象的第一模板， 对使用参数修正后的所述认证对象的第一模板与所述存储器保持的第一模板之间的相似度比规定条件高的所述参数进行特定， 分别使用包括特定出的所述参数在内的规定范围所包括的参数来修正所述认证对象的第二生物体信息， 分别根据修正后的所述第二生物体信息生成所述认证对象的第二模板， 将生成的所述第二模板分别与所述存储器保持的第二模板进行比较来判定所述认证对象的认证成功与否。 2.根据权利要求1所述的生物体签名系统，其特征在于， 所述处理器通过所述规定的转换对获取到的所述第一生物体信息进行转换而生成所述认证对象的第一模板。 3.根据权利要求1所述的生物体签名系统，其特征在于， 所述处理器通过所述规定的单向性转换对修正后的所述第二生物体信息分别进行转换而生成所述认证对象的第二模板。 4.根据权利要求1所述的生物体签名系统，其特征在于， 储存于所述存储器内的第一生物体信息与第二生物体信息的相关系数为规定值以下。 5.根据权利要求1所述的生物体签名系统，其特征在于， 所述参数包括所述第一模板及所述第二模板的修正中的、表示平行移动量的参数和表示旋转量的参数。 6.根据权利要求1所述的生物体签名系统，其特征在于， 所述存储器保持多个用户的第一模板和第二模板， 所述处理器进行以下处理： 对与所述存储器保持的多个第一模板中的、存在所述相似度比规定条件高的所述参数的第一模板对应的用户群进行特定， 关于特定出的所述用户群的每个用户，分别使用包括特定出的参数在内的规定范围所包括的参数来修正所述认证对象的第二生物体信息并生成第二模板，并且将该生成的第二模板分别与该用户的第二模板进行比较， 基于分别针对特定出的所述用户群的比较结果来判定所述认证对象的认证成功与否。 7.一种生物体签名方法，由生物体签名系统进行生物体签名，其特征在于， 所述生物体签名系统保持第一模板和第二模板，该第一模板表示通过规定的转换将从用户的规定部位得到的第一生物体信息进行转换后的结果，该第二模板表示通过规定的单向性转换将从所述用户的所述规定部位得到的第二生物体信息进行转换后的结果， 在所述方法中，所述生物体签名系统进行以下处理： 获取认证对象的所述第一生物体信息和所述第二生物体信息， 根据获取到的所述第一生物体信息生成所述认证对象的第一模板， 对使用参数修正后的所述认证对象的第一模板与所述生物体签名系统保持的第一模板之间的相似度比规定条件高的所述参数进行特定， 分别使用包括特定出的所述参数在内的规定范围所包括的参数来修正所述认证对象的第二生物体信息， 分别从修正后的所述第二生物体信息生成所述认证对象的第二模板， 将生成的所述第二模板分别与所述生物体签名系统保持的第二模板进行比较来判定所述认证对象的认证成功与否。 8.根据权利要求7所述的方法，其特征在于， 在所述方法中，所述生物体签名系统通过所述规定的转换对获取到的所述第一生物体信息进行转换而生成所述认证对象的第一模板。 9.根据权利要求7所述的方法，其特征在于， 在所述方法中，所述生物体签名系统通过所述规定的单向性转换对修正后的所述第二生物体信息分别进行转换而生成所述认证对象的第二模板。 10.根据权利要求7所述的方法，其特征在于， 储存于所述生物体签名系统内的第一生物体信息与第二生物体信息的相关系数为规定值以下。 11.根据权利要求7所述的方法，其特征在于， 所述参数包括所述第一模板及所述第二模板的修正中的、表示平行移动量的参数和表示旋转量的参数。 12.根据权利要求7所述的方法，其特征在于， 所述生物体签名系统保持多个用户的第一模板和第二模板， 在所述方法中，所述生物体签名系统进行以下处理： 对与所述生物体签名系统保持的多个第一模板中的、存在所述相似度比规定条件高的所述参数的第一模板对应的用户群进行特定， 关于特定出的所述用户群的每个用户，分别使用包括特定出的参数在内的规定范围所包括的参数来修正所述认证对象的第二生物体信息并生成第二模板，并且将该生成的第二模板分别与该用户的第二模板进行比较， 基于分别针对特定出的所述用户群的比较结果来判定所述认证对象的认证成功与否。",
 				"url": "https://d.wanfangdata.com.cn/patent/CN201880013080.0",
-				"attachments": [
-					{
-						"title": "Full Text PDF",
-						"mimeType": "application/pdf"
-					}
-				],
+				"attachments": [],
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
@@ -544,11 +560,10 @@ var testCases = [
 				"creators": [],
 				"date": "2016-12-30",
 				"abstractNote": "本标准为下列组织规定了质量管理体系要求:\r\na)需要证实其具有稳定提供满足顾客要求及适用法律法规要求的产品和服务的能力;\r\nb)通过体系的有效应用，包括体系改进的过程，以及保证符合顾客要求和适用的法律法规要求，旨在增强顾客满意。\r\n本标准规定的所有要求是通用的，旨在适用于各种类型、不同规模和提供不同产品和服务的组织。",
-				"extra": "original-title: Quality management systems-Requirementsapply date: 2017-07-01",
 				"libraryCatalog": "Wanfang Data",
-				"number": "GB/T 19001-2016",
+				"number": "GB/T 19001—2016",
 				"status": "现行",
-				"url": "https://d.wanfangdata.com.cn/standard/GB%252FT%25252019001-2016",
+				"url": "https://d.wanfangdata.com.cn/standard/GB/T 19001-2016",
 				"attachments": [],
 				"tags": [],
 				"notes": [],
@@ -562,4 +577,5 @@ var testCases = [
 		"items": "multiple"
 	}
 ]
+
 /** END TEST CASES **/
