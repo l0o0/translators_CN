@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-28 10:02:40"
+	"lastUpdated": "2024-02-03 10:18:43"
 }
 
 /*
@@ -169,7 +169,7 @@ async function scrape(fileCode, url, directory) {
 	}[file.language[0]];
 	newItem.url = tryMatch(url, /^.+fileCode=\w+/);
 	newItem.libraryCatalog = '抗日战争与近代中日关系文献数据平台';
-	extra.add('provider', file.orgName);
+	newItem.archive = file.orgName;
 	var creators = [
 		...processName(file.firstResponsible, file.firstResponsibleNation, file.firstCreationWay, 'author'),
 		...processName(file.secondResponsible, file.secondResponsibleNation, file.secondCreationWay, 'contributor')
@@ -224,8 +224,8 @@ async function scrape(fileCode, url, directory) {
 			newItem.place = file.place[0];
 			newItem.publisher = file.publisher[0];
 			newItem.date = ZU.strToISO(file.publishTime);
-			newItem.archive = file.title;
-			newItem.archiveLocation = dir.directoryCode;
+			newItem.archiveLocation = file.title + dir.directoryCode;
+			extra.add('Type', 'collection', true);
 			extra.add('numPages', dir.endPage, true);
 			break;
 		}
@@ -429,8 +429,9 @@ var testCases = [
 					}
 				],
 				"date": "1949-06-01",
+				"archive": "社会来源",
 				"edition": "第一版",
-				"extra": "provider: 社会来源\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"斯大林\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"苏联\"},{\"firstName\":\"\",\"lastName\":\"蓝火\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\"}]",
+				"extra": "creatorsExt: [{\"firstName\":\"\",\"lastName\":\"斯大林\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"苏联\"},{\"firstName\":\"\",\"lastName\":\"蓝火\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\"}]",
 				"language": "zh-CN",
 				"libraryCatalog": "抗日战争与近代中日关系文献数据平台",
 				"numPages": "61",
@@ -481,8 +482,9 @@ var testCases = [
 					}
 				],
 				"date": "1949-01-01",
+				"archive": "社会来源",
 				"bookTitle": "艺术的真实",
-				"extra": "provider: 社会来源\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"马克思\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"德国\"},{\"firstName\":\"\",\"lastName\":\"恩格斯\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"\"},{\"firstName\":\"\",\"lastName\":\"郭沫若\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\"}]",
+				"extra": "creatorsExt: [{\"firstName\":\"\",\"lastName\":\"马克思\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"德国\"},{\"firstName\":\"\",\"lastName\":\"恩格斯\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"\"},{\"firstName\":\"\",\"lastName\":\"郭沫若\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\"}]",
 				"language": "zh-CN",
 				"libraryCatalog": "抗日战争与近代中日关系文献数据平台",
 				"pages": "9-16",
@@ -522,11 +524,11 @@ var testCases = [
 				],
 				"date": "1946",
 				"abstractNote": "本数据经上海交通大学出版社授权发布，仅供学术研究使用用。以任何形式用于商业目的，请务必与版权方联系。",
-				"extra": "provider: 上海交通大学东京审判研究中心",
+				"archive": "上海交通大学东京审判研究中心",
 				"language": "zh-CN",
 				"libraryCatalog": "抗日战争与近代中日关系文献数据平台",
 				"runningTime": "6:43:31",
-				"url": "https://www.modernhistory.org.cn/#/Detailedreading?fileCode=0002_sp_00000001",
+				"url": "https://www.modernhistory.org.cn/#/DocumentDetails_ysp_hc?fileCode=0002_sp_00000001",
 				"videoRecordingFormat": "mp4",
 				"attachments": [],
 				"tags": [
@@ -540,43 +542,6 @@ var testCases = [
 						"tag": "关东军"
 					}
 				],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://www.modernhistory.org.cn/#/Detailedreading?docType=qk&fileCode=9999_qk_05012&treeId=106125531&qkTitle=%E7%AC%AC%E4%B8%80%E5%8D%B7%E7%AC%AC%E4%BA%8C%E5%8F%B7%2810%E6%9C%8820%E6%97%A5%29&uniqTag=9999_qk_05012_0002&dirCode=14eafa1a666145bfb3cbc530b2562085&contUrl=https%3A%2F%2Fkrwxk-prod.oss-cn-beijing.aliyuncs.com%2F9999_qk_05012%2F9999_qk_05012_0002%2F9999_qk_05012_0002.json",
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "一个现代人的忏悔",
-				"creators": [
-					{
-						"firstName": "",
-						"lastName": "亚弗雷米赛",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "夏莱蒂",
-						"creatorType": "translator",
-						"fieldMode": 1
-					}
-				],
-				"date": "1928-10-20",
-				"extra": "provider: 社会来源\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"亚弗雷米赛\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"法国\"},{\"firstName\":\"\",\"lastName\":\"夏莱蒂\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\"}]",
-				"issue": 2,
-				"language": "zh-CN",
-				"libraryCatalog": "抗日战争与近代中日关系文献数据平台",
-				"pages": "119-164",
-				"publicationTitle": "大众文艺",
-				"url": "https://www.modernhistory.org.cn/#/Detailedreading?fileCode=9999_qk_05012",
-				"volume": 1,
-				"attachments": [],
-				"tags": [],
 				"notes": [],
 				"seeAlso": []
 			}
@@ -603,8 +568,9 @@ var testCases = [
 						"fieldMode": 1
 					}
 				],
+				"archive": "社会捐赠",
 				"audioRecordingFormat": "mp3",
-				"extra": "place: 深圳\ngenre: Album\nprovider: 社会捐赠",
+				"extra": "place: 深圳\ngenre: Album",
 				"label": "中国唱片深圳公司",
 				"language": "zh-CN",
 				"libraryCatalog": "抗日战争与近代中日关系文献数据平台",
@@ -632,8 +598,9 @@ var testCases = [
 					}
 				],
 				"date": "1879",
+				"archive": "社会来源",
 				"artworkMedium": "photography",
-				"extra": "provider: 社会来源\namount: 95\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"香港华芳照相馆\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"中国\"},{\"firstName\":\"\",\"lastName\":\"\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\"}]",
+				"extra": "amount: 95\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"香港华芳照相馆\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"中国\"},{\"firstName\":\"\",\"lastName\":\"\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\"}]",
 				"libraryCatalog": "抗日战争与近代中日关系文献数据平台",
 				"url": "https://www.modernhistory.org.cn/#/DocumentDetails_tp?fileCode=9999_tp_00000006",
 				"attachments": [],
@@ -660,7 +627,7 @@ var testCases = [
 				],
 				"date": "1946",
 				"abstractNote": "本数据经上海交通大学出版社授权发布，仅供学术研究使用用。以任何形式用于商业目的，请务必与版权方联系。",
-				"extra": "provider: 上海交通大学东京审判研究中心",
+				"archive": "上海交通大学东京审判研究中心",
 				"language": "zh-CN",
 				"libraryCatalog": "抗日战争与近代中日关系文献数据平台",
 				"runningTime": "6:43:31",
