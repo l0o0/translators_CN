@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-11 12:22:57"
+	"lastUpdated": "2024-02-03 11:45:55"
 }
 
 /*
@@ -102,7 +102,6 @@ async function doWeb(doc, url) {
 
 async function scrape(doc, url = doc.location.href) {
 	var newItem = new Z.Item('forumPost');
-	newItem.extra = '';
 	let expand = doc.querySelector('.expand');
 	if (expand && expand.textContent.includes('展开')) {
 		await expand.click();
@@ -143,9 +142,10 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.language = 'zh-CN';
 	// .card-act li见于关键词搜索
 	// https://s.weibo.com/weibo?q=%E5%A4%A9%E6%B0%94
-	newItem.extra += addExtra('reship', text(select('button'), 0));
-	newItem.extra += addExtra('comments', text(select('button'), 1));
-	newItem.extra += addExtra('likes', text(select('button'), 2));
+	extra.add('reship', text(select('button'), 0));
+	extra.add('comment', text(select('button'), 1));
+	extra.add('like', text(select('button'), 2));
+	extra.add('Status', text(doc, '[class*="head-info_edit"]'), true);
 	newItem.creators.push({
 		firstName: '',
 		lastName: text(doc, select('name')),
@@ -156,6 +156,7 @@ async function scrape(doc, url = doc.location.href) {
 		title: 'Snapshot',
 		document: doc
 	});
+	newItem.extra = extra.toString();
 	newItem.complete();
 }
 
@@ -175,17 +176,29 @@ function tryMatch(string, pattern, index = 0) {
 		: '';
 }
 
-/**
- * When value is valid, return a key-value pair in string form.
- * @param {String} key
- * @param {*} value
- * @returns
- */
-function addExtra(key, value) {
-	return value
-		? `${key}: ${value}\n`
-		: '';
-}
+const extra = {
+	clsFields: [],
+	elseFields: [],
+	add: function (key, value, cls = false) {
+		if (value && cls) {
+			this.clsFields.push([key, value]);
+		}
+		else if (value) {
+			this.elseFields.push([key, value]);
+		}
+	},
+	toString: function (original) {
+		return original
+			? [
+				...this.clsFields.map(entry => `${entry[0]}: ${entry[1]}`),
+				original.replace(/^\n|\n$/g, ''),
+				...this.elseFields.map(entry => `${entry[0]}: ${entry[1]}`)
+			].join('\n')
+			: [...this.clsFields, ...this.elseFields]
+				.map(entry => `${entry[0]}: ${entry[1]}`)
+				.join('\n');
+	}
+};
 
 /** BEGIN TEST CASES **/
 var testCases = [
@@ -220,10 +233,8 @@ var testCases = [
 					}
 				],
 				"date": "2024-01-24",
-				"date": "2024-01-24",
 				"abstractNote": "【大金砖来尔滨啦！#迪拜小哥从沙漠来感受尔滨冬天# 】#全球媒体争相报道尔滨盛况# #尔滨大火引来迪拜大金砖# 1月9日，黑龙江哈尔滨。为感受哈尔滨的冬天，迪拜小哥特意从沙漠来到魅力四射的哈尔滨并手动点赞表示尔滨很棒。网友纷纷表示，尔滨欢迎国际友人！@西部决策 西部决策的微博视频 ​​​",
-				"extra": "reship: 87\ncomments: 193\nlikes: 5475",
-				"extra": "reship: 87\ncomments: 193\nlikes: 5475",
+				"extra": "Status: 已编辑\nreship: 85\ncomment: 194\nlike: 5481",
 				"forumTitle": "新浪微博",
 				"language": "zh-CN",
 				"url": "https://weibo.com/7467277921/NBaFziUqv",
@@ -240,4 +251,5 @@ var testCases = [
 		]
 	}
 ]
+
 /** END TEST CASES **/
