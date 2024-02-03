@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-03 11:45:55"
+	"lastUpdated": "2024-02-03 14:24:01"
 }
 
 /*
@@ -132,8 +132,8 @@ async function scrape(doc, url = doc.location.href) {
 	}
 	// x月x日
 	// x-x  xx:xx
-	else if (/^\d{1,2}\D\d{1,2}/.test(time)) {
-		newItem.date = ZU.strToISO(`${today.getFullYear()}-${time.replace(/^(\d{1,2})D(\d{1,2})/, '$1-$2')}`);
+	else if (/^\d{2}\D\d{1,2}\D\d{1,2}/.test(time)) {
+		newItem.date = ZU.strToISO(`${today.getFullYear().toString().substring(0, 2)}${time.replace(/\b(\d)\b/g, '0$1')}`);
 	}
 	else {
 		newItem.date = ZU.strToISO(time);
@@ -232,7 +232,7 @@ var testCases = [
 						"fieldMode": 1
 					}
 				],
-				"date": "2024-01-24",
+				"date": "2024-01-10",
 				"abstractNote": "【大金砖来尔滨啦！#迪拜小哥从沙漠来感受尔滨冬天# 】#全球媒体争相报道尔滨盛况# #尔滨大火引来迪拜大金砖# 1月9日，黑龙江哈尔滨。为感受哈尔滨的冬天，迪拜小哥特意从沙漠来到魅力四射的哈尔滨并手动点赞表示尔滨很棒。网友纷纷表示，尔滨欢迎国际友人！@西部决策 西部决策的微博视频 ​​​",
 				"extra": "Status: 已编辑\nreship: 85\ncomment: 194\nlike: 5481",
 				"forumTitle": "新浪微博",
@@ -251,5 +251,4 @@ var testCases = [
 		]
 	}
 ]
-
 /** END TEST CASES **/
