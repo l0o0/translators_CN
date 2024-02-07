@@ -924,6 +924,7 @@ function fixItem(newItem, doc, ids, itemKey) {
 	});
 	if (doc.querySelector('.icon-shoufa')) {
 		newItem.extra += 'status: advance online publication\n';
+		newItem.date = tryMatch(innerText(doc, '.head-time, .head-tag'), /：([\d-]*)/, 1);
 	}
 	newItem.language = ids.toLanguage();
 
