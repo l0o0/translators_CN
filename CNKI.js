@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-09 08:27:53"
+	"lastUpdated": "2024-02-06 12:41:35"
 }
 
 /*
@@ -924,8 +924,6 @@ function fixItem(newItem, doc, ids, itemKey) {
 	});
 	if (doc.querySelector('.icon-shoufa')) {
 		newItem.extra += 'status: advance online publication\n';
-		newItem.extra += addExtra('available-date', newItem.data);
-		// delete newItem.date;
 		newItem.date = tryMatch(innerText(doc, '.head-time, .head-tag'), /：([\d-]*)/, 1);
 	}
 	newItem.language = ids.toLanguage();
@@ -2136,5 +2134,4 @@ var testCases = [
 		]
 	}
 ]
-
 /** END TEST CASES **/
