@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-16 19:56:45"
+	"lastUpdated": "2024-02-06 12:50:28"
 }
 
 /*
@@ -98,8 +98,6 @@ async function scrape(doc, url = doc.location.href) {
 	translator.setHandler('itemDone', (_obj, item) => {
 		item.extra = '';
 		if (item.title.includes('（网络首发、推荐阅读）')) {
-			item.extra += addExtra('available-date', item.date);
-			delete item.date;
 			item.extra += addExtra('Status', 'advance online publication');
 			item.title = item.title.replace(/（网络首发、推荐阅读）$/, '');
 		}
