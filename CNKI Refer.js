@@ -8,7 +8,7 @@
 	"priority": 99,
 	"inRepository": true,
 	"translatorType": 1,
-	"lastUpdated": "2024-02-03 19:26:08"
+	"lastUpdated": "2024-02-08 13:58:51"
 }
 
 /*
@@ -61,9 +61,17 @@ async function doImport() {
 	translator.setTranslator('881f60f2-0802-411a-9228-ce5f47b64c7d');
 	translator.setHandler('itemDone', (_obj, item) => {
 		Z.debug(item.itemType);
-		// Record the yearbook as journal article.
-		if (item.type == '年鉴') {
-			item.itemType = 'journalArticle';
+		if (/年鉴/.test(item.type)) {
+			item.itemType = 'bookSection';
+			item.date = ZU.strToISO(item.date);
+			delete item.type;
+			item.ISBN = ZU.cleanISBN(item.volume);
+			delete item.volume;
+		}
+		else if (/科技成果/.test(item.type)) {
+			item.itemType = 'report';
+			item.reportType = '科技报告';
+			delete item.type;
 		}
 		switch (item.itemType) {
 			case 'conferencePaper':
@@ -72,6 +80,12 @@ async function doImport() {
 				extra.add('organizer', tryMatch(record, /^%\? (.*)/m, 1));
 				break;
 			case 'newspaperArticle':
+				item.publicationTitle = item.publisher;
+				delete item.publisher;
+				delete item.callNumber;
+				item.ISSN = item.ISBN;
+				delete item.ISBN;
+				break;
 			case 'journalArticle':
 				delete item.callNumber;
 				item.ISSN = item.ISBN;
@@ -86,18 +100,24 @@ async function doImport() {
 					extra.add('Genre', item.type, true);
 				}
 				delete item.type;
-				item.place = tryMatch(record, /^%~ (.*)/m, 1).replace(/专利$/, '');
+				item.place = patentCountry(item.patentNumber);
 				item.country = item.place;
 				break;
 			case 'statute':
 				item.itemType = 'standard';
 				item.creators = [];
+				item.numPages = item.pages;
 				delete item.pages;
 				if (item.volume) {
 					item.number = item.volume.replace('-', '—');
 				}
 				delete item.volume;
+				if (item.number.startsWith('GB')) {
+					item.number = item.number.replace('-', '——');
+					item.title = item.title.replace(/([\u4e00-\u9fff]) ([\u4e00-\u9fff])/, '$1　$2');
+				}
 				delete item.publisher;
+				delete item.type;
 				break;
 			case 'thesis':
 				item.numPages = item.pages;
@@ -115,17 +135,24 @@ async function doImport() {
 				});
 				break;
 		}
-		if (ZU.fieldIsValidForType('DOI', item.itemType)) {
-			item.DOI = tryMatch(record, /%O (.*)/, 1);
-		}
-		else {
-			extra.add('DOI', tryMatch(record, /%O (.*)/, 1), true);
+		let doi = tryMatch(record, /%O (.*)/, 1);
+		if (doi) {
+			if (ZU.fieldIsValidForType('DOI', item.itemType)) {
+				item.DOI = doi;
+			}
+			else {
+				extra.add('DOI', doi, true);
+			}
+			if (!item.url || /kcms2/i.test(item.url)) {
+				item.url = 'https://doi.org/' + doi;
+			}
 		}
 		if (ZU.fieldIsValidForType('pages', item.itemType) && item.pages) {
-			item.pages = item.pages.replace(/~/g, '-').replace(/\+/g, ', ');
+			item.pages = item.pages
+				.replace(/\d+/g, match => match.replace(/0*([1-9]\d*)/, '$1'))
+				.replace(/~/g, '-').replace(/\+/g, ', ');
 		}
 		delete item.archiveLocation;
-		item.extra = extra.toString();
 		item.creators.forEach((creator) => {
 			if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
 				creator.lastName = creator.firstName + creator.lastName;
@@ -133,22 +160,23 @@ async function doImport() {
 				creator.fieldMode = 1;
 			}
 		});
+		item.extra = extra.toString();
 		item.complete();
+		extra.clsFields = [];
+		extra.elseFields = [];
 	});
 	while ((line = Zotero.read()) !== false) {
 		line = line.replace(/^\s+/, '');
 		record += '\n' + line;
 		if (line == '%W CNKI') {
 			record = record
-				// breakline
-				.replace(/<br>\s*|\r/g, '\n')
 				// If a non-empty line does not contain a tag, it is considered a continuation of the previous line.
 				.replace(/\n([^%].+?\n)/g, '$1')
 				// Sometimes, authors, contributors, or keywords have their tags, but do not wrap before the tags.
-				.replace(/^(.+)(%[KAYI]) /gm, '$1\n$2 ')
+				.replace(/([^\r\n])(%[KAYI]) /gm, '$1\n$2 ')
 				// Sometimes, authors, contributors, or keywords may be mistakenly placed in the same tag.
-				.replace(/^%([KAYI]) .*/gm, (match) => {
-					return match.replace(/[;，；]\s?/g, `\n%${match[1]} `);
+				.replace(/^%([KAYI]) .*/gm, (fuuMatch, tag) => {
+					return fuuMatch.replace(/,\s?([\u4e00-\u9fff])/g, `\n%${tag} $1`).replace(/[;，；]\s?/g, `\n%${tag} `);
 				})
 				.replace(/^%R /m, '%O ')
 				// Custom tag "9" corresponds to the degree of the graduation thesis,
@@ -156,7 +184,7 @@ async function doImport() {
 				.replace(/^%[9~] /m, '%R ')
 				.replace(/^%V 0*/m, '%V ')
 				.replace(/^%N 0*/m, '%N ')
-				.replace(/^%P (.+)/, match => '%P ' + match.replace(/~/g, '-').replace(/\+/g, ', '))
+				.replace(/^%P .+/, match => '%P ' + match.replace(/~/g, '-').replace(/\+/g, ', '))
 				// \t in abstract
 				.replace(/\t/g, '')
 				.replace(/(\n\s*)+/g, '\n');
@@ -200,6 +228,19 @@ function tryMatch(string, pattern, index = 0) {
 	return (match && match[index])
 		? match[index]
 		: '';
+}
+
+function patentCountry(idNumber) {
+	return {
+		AD: '安道尔', AE: '阿拉伯联合酋长国', AF: '阿富汗', AG: '安提瓜和巴布达', AI: '安圭拉', AL: '阿尔巴尼亚', AM: '亚美尼亚', AN: '菏属安的列斯群岛', AO: '安哥拉', AR: '阿根廷', AT: '奥地利', AU: '澳大利亚', AW: '阿鲁巴', AZ: '阿塞拜疆', BB: '巴巴多斯', BD: '孟加拉国', BE: '比利时', BF: '布莱基纳法索', BG: '保加利亚', BH: '巴林', BI: '布隆迪', BJ: '贝宁', BM: '百慕大', BN: '文莱', BO: '玻利维亚', BR: '巴西', BS: '巴哈马', BT: '不丹', BU: '缅甸', BW: '博茨瓦纳', BY: '白俄罗斯', BZ: '伯利兹', CA: '加拿大', CF: '中非共和国', CG: '刚果', CH: '瑞士', CI: '科特迪瓦', CL: '智利', CM: '喀麦隆', CN: '中国', CO: '哥伦比亚', CR: '哥斯达黎加', CS: '捷克斯洛伐克', CU: '古巴', CV: '怫得角', CY: '塞浦路斯',
+		DE: '联邦德国', DJ: '吉布提', DK: '丹麦', DM: '多米尼加岛', DO: '多米尼加共和国', DZ: '阿尔及利亚', EC: '厄瓜多尔', EE: '爱沙尼亚', EG: '埃及', EP: '欧洲专利局', ES: '西班牙', ET: '埃塞俄比亚', FI: '芬兰', FJ: '斐济', FK: '马尔维纳斯群岛', FR: '法国',
+		GA: '加蓬', GB: '英国', GD: '格林那达', GE: '格鲁吉亚', GH: '加纳', GI: '直布罗陀', GM: '冈比亚', GN: '几内亚', GQ: '赤道几内亚', GR: '希腊', GT: '危地马拉', GW: '几内亚比绍', GY: '圭亚那', HK: '香港', HN: '洪都拉斯', HR: '克罗地亚', HT: '海地', HU: '匈牙利', HV: '上沃尔特', ID: '印度尼西亚', IE: '爱尔兰', IL: '以色列', IN: '印度', IQ: '伊拉克', IR: '伊朗', IS: '冰岛', IT: '意大利',
+		JE: '泽西岛', JM: '牙买加', JO: '约旦', JP: '日本', KE: '肯尼亚', KG: '吉尔吉斯', KH: '柬埔寨', KI: '吉尔伯特群岛', KM: '科摩罗', KN: '圣克里斯托夫岛', KP: '朝鲜', KR: '韩国', KW: '科威特', KY: '开曼群岛', KZ: '哈萨克', LA: '老挝', LB: '黎巴嫩', LC: '圣卢西亚岛', LI: '列支敦士登', LK: '斯里兰卡', LR: '利比里亚', LS: '莱索托', LT: '立陶宛', LU: '卢森堡', LV: '拉脱维亚', LY: '利比亚',
+		MA: '摩洛哥', MC: '摩纳哥', MD: '莫尔多瓦', MG: '马达加斯加', ML: '马里', MN: '蒙古', MO: '澳门', MR: '毛里塔尼亚', MS: '蒙特塞拉特岛', MT: '马耳他', MU: '毛里求斯', MV: '马尔代夫', MW: '马拉维', MX: '墨西哥', MY: '马来西亚', MZ: '莫桑比克', NA: '纳米比亚', NE: '尼日尔', NG: '尼日利亚', NH: '新赫布里底', NI: '尼加拉瓜', NL: '荷兰', NO: '挪威', NP: '尼泊尔', NR: '瑙鲁', NZ: '新西兰', OA: '非洲知识产权组织', OM: '阿曼',
+		PA: '巴拿马', PC: 'PCT', PE: '秘鲁', PG: '巴布亚新几内亚', PH: '菲律宾', PK: '巴基斯坦', PL: '波兰', PT: '葡萄牙', PY: '巴拉圭', QA: '卡塔尔', RO: '罗马尼亚', RU: '俄罗斯联邦', RW: '卢旺达',
+		SA: '沙特阿拉伯', SB: '所罗门群岛', SC: '塞舌尔', SD: '苏丹', SE: '瑞典', SG: '新加坡', SH: '圣赫勒拿岛', SI: '斯洛文尼亚', SL: '塞拉利昂', SM: '圣马利诺', SN: '塞内加尔', SO: '索马里', SR: '苏里南', ST: '圣多美和普林西比岛', SU: '苏联', SV: '萨尔瓦多', SY: '叙利亚', SZ: '斯威士兰', TD: '乍得', TG: '多哥', TH: '泰国', TJ: '塔吉克', TM: '土库曼', TN: '突尼斯', TO: '汤加', TR: '土耳其', TT: '特立尼达和多巴哥', TV: '图瓦卢', TZ: '坦桑尼亚', UA: '乌克兰', UG: '乌干达', US: '美国', UY: '乌拉圭', UZ: '乌兹别克',
+		VA: '梵蒂冈', VC: '圣文森特岛和格林纳达', VE: '委内瑞拉', VG: '维尔京群岛', VN: '越南', VU: '瓦努阿图', WO: '世界知识产权组织', WS: '萨摩亚', YD: '民主也门', YE: '也门', YU: '南斯拉夫', ZA: '南非', ZM: '赞比亚', ZR: '扎伊尔', ZW: '津巴布韦'
+	}[idNumber.substring(0, 2).toUpperCase()] || '';
 }
 
 /** BEGIN TEST CASES **/
@@ -411,7 +452,9 @@ var testCases = [
 				],
 				"issueDate": "2023-05-16",
 				"abstractNote": "Provided is a font generating method including generating an intermediate code by adding attributes for METAFONT to code of an outline font, generating a font in the METAFONT by parsing the intermediate code, hierarchizing the font into a whole set representing a whole of a character and a partial set representing a part of the character, and changing a style of the font according to a relational equation representing a relationship between the whole set and the partial set.",
+				"country": "美国",
 				"patentNumber": "US11651140",
+				"place": "美国",
 				"attachments": [],
 				"tags": [],
 				"notes": [],
@@ -428,6 +471,7 @@ var testCases = [
 				"title": "船舶及海洋工程用不锈钢复合钢板",
 				"creators": [],
 				"date": "2023-09-07",
+				"numPages": "12",
 				"number": "GB/T 43109—2023",
 				"type": "国家标准",
 				"url": "https://kns.cnki.net/kcms2/article/abstract?v=4j1cDaxzFAkUKsKELQcXk35ZPv_FR6EQU9GhJgKt5MR1sJc3EaGeSopmhS9vO3xi9S3AFOQO3Xu9nnSXHay_VmuFMZyVXGEWwfvPLpIq_bH75z4-MZuOvehDd7XuulOVmkprVcTe494=&uniplatform=NZKPT&language=CHS",
@@ -435,6 +479,56 @@ var testCases = [
 				"tags": [
 					{
 						"tag": "不锈钢复合钢板"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "import",
+		"input": "%0 Newspaper Article\r\n%A 刘霞\r\n%T 灭绝物种RNA首次分离测序\r\n%J 科技日报\r\n%8 2023-09-21\r\n%P 004\r\n%I 科技日报\r\n%L 11-0315\r\n%R 10.28502/n.cnki.nkjrb.2023.005521\r\n%W CNKI",
+		"items": [
+			{
+				"itemType": "newspaperArticle",
+				"title": "灭绝物种RNA首次分离测序",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "刘霞",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2023-09-21",
+				"extra": "DOI: 10.28502/n.cnki.nkjrb.2023.005521",
+				"pages": "4",
+				"publicationTitle": "科技日报",
+				"url": "https://doi.org/10.28502/n.cnki.nkjrb.2023.005521",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "import",
+		"input": "%0 Legal Rule or Regulation\r\n%T 国家统配煤炭工业煤炭外调量\r\n%D 1995/01/01\r\n%V 7-203-03520-4\r\n%K 煤炭外调量\r\n%~ 年鉴\r\n%P 156\r\n%U https://kns.cnki.net/kcms2/article/abstract?v=-0THPtffOh3X1yaBBkMCatOnpdIbXJHtXHguzwTx01Y6HcO47AM_4NtZTLG5xc3LMzdrpeqNtRpqXaU4SJjePUAmSn1Qn5RzEMWSZ3-X2m2Z_rZhKom6PuDEwAyQQGSUjNIdjX8RAmr4PlceakIM7Q==&uniplatform=NZKPT&language=CHS\r\n%W CNKI\r\n",
+		"items": [
+			{
+				"itemType": "bookSection",
+				"title": "国家统配煤炭工业煤炭外调量",
+				"creators": [],
+				"date": "1995-01-01",
+				"ISBN": "7203035204",
+				"pages": "156",
+				"url": "https://kns.cnki.net/kcms2/article/abstract?v=-0THPtffOh3X1yaBBkMCatOnpdIbXJHtXHguzwTx01Y6HcO47AM_4NtZTLG5xc3LMzdrpeqNtRpqXaU4SJjePUAmSn1Qn5RzEMWSZ3-X2m2Z_rZhKom6PuDEwAyQQGSUjNIdjX8RAmr4PlceakIM7Q==&uniplatform=NZKPT&language=CHS",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "煤炭外调量"
 					}
 				],
 				"notes": [],

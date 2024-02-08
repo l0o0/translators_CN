@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-02 16:50:24"
+	"lastUpdated": "2024-02-08 12:05:58"
 }
 
 /*
@@ -35,7 +35,7 @@
 	***** END LICENSE BLOCK *****
 */
 
-const typeMap = {
+var typeMap = {
 	journal: 'journalArticle',
 	book: 'book',
 	bookchapter: 'bookSection',
@@ -85,7 +85,6 @@ async function doWeb(doc, url) {
 	}
 	else {
 		await scrape(doc, url);
-		Z.debug('done');
 	}
 }
 
@@ -94,16 +93,30 @@ async function scrape(doc, url = doc.location.href) {
 		await scrapeSearch(doc);
 	}
 	catch (error) {
-		Z.debug(error);
 		Z.debug(`failed to use search translator.`);
+		Z.debug(error);
 		await scrapeDoc(doc, url);
 	}
 }
 
+var selectors = {
+	labels: '[id*="doc-about"] .infoBox-item, div[class*="detail_item__"]',
+	title: '#doc-title',
+	abstractNote: '#doc-summary-content-text',
+	publicationTitle: '[class*="detail_journal_name"]',
+	pubInfo: '[class*="detail_issue-year-page"]',
+	publisher: '[class*="detail_journal_name"], .all-source a',
+	DOI: '[class*="detail_doc-doi"] > a',
+	creators: '[class*="detail_doc-author"] [class*="detail_text"] > a',
+	tags: '[id*="doc-keyword"] a',
+	hightlights: '#doc-hightlights-text > .value',
+	bookUrl: '[class*="detail_journal_name"] > a'
+};
+
 async function scrapeSearch(doc) {
-	let labels = new Labels(doc, '[id*="doc-about"] .infoBox-item, div[class*="detail_item__"], .scholar-margin h3, .row-scholar');
+	let labels = new Labels(doc, exports.selectors.labels);
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
-	let doi = text(doc, '[class*="detail_doc-doi"] > a') || labels.getWith('DOI');
+	let doi = text(doc, exports.selectors.DOI) || labels.getWith('DOI');
 	let isbn = labels.getWith('ISBN');
 	Z.debug(`DOI: ${doi}`);
 	Z.debug(`ISBN: ${isbn}`);
@@ -115,17 +128,22 @@ async function scrapeSearch(doc) {
 		translator.setTranslator(translators);
 	});
 	translator.setHandler('itemDone', (_, item) => {
+		let title = doc.querySelector(exports.selectors.title).cloneNode(true);
+		if (title.querySelector(':not(sup):not(sub)')) {
+			title.removeChild(title.querySelector(':not(sup):not(sub)'));
+		}
+		item.title = ZU.trimInternal(title.innerHTML);
 		if (['journalArticle', 'thesis'].includes(item.itemType)) {
-			item.abstractNote = item.abstractNote || text(doc, '#doc-summary-content-text, .abstract-text');
+			item.abstractNote = item.abstractNote || text(doc, exports.selectors.abstractNote);
 			item.date = ZU.strToISO(item.date);
 			if (/^en/i.test(item.language)) {
 				item.language = 'en-US';
 			}
 			if (!item.tags.length) {
-				doc.querySelectorAll('[id*="doc-keyword"] a')
+				doc.querySelectorAll(exports.selectors.tags)
 					.forEach(element => item.tags.push(ZU.trimInternal(element.textContent).replace(/;$/, '')));
 			}
-			let hightlights = text(doc, '#doc-hightlights-text > .value');
+			let hightlights = text(doc, exports.selectors.hightlights);
 			if (hightlights) {
 				item.notes.push('<h1>Highlights / 研究要点</h1>\n' + hightlights);
 			}
@@ -138,46 +156,45 @@ async function scrapeSearch(doc) {
 }
 
 async function scrapeDoc(doc, url = doc.location.href) {
-	let labels = new Labels(doc, '[id*="doc-about"] .infoBox-item, div[class*="detail_item__"], .scholar-margin h3, .row-scholar');
+	let labels = new Labels(doc, exports.selectors.labels);
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
-	let doi = text(doc, '[class*="detail_doc-doi"] > a') || labels.getWith('DOI');
+	let doi = text(doc, exports.selectors.DOI) || labels.getWith('DOI');
 	let isbn = labels.getWith('ISBN');
 	Z.debug(`DOI: ${doi}`);
 	Z.debug(`ISBN: ${isbn}`);
 	var newItem = new Z.Item(detectWeb(doc, url));
-	let title = doc.querySelector('#doc-title, .h1-scholar').cloneNode(true);
-	let button = title.querySelector('#changeActive, .mt-strans-title');
-	if (button) {
-		title.removeChild(button);
+	let title = doc.querySelector(exports.selectors.title).cloneNode(true);
+	if (title.querySelector(':not(sup):not(sub)')) {
+		title.removeChild(title.querySelector(':not(sup):not(sub)'));
 	}
-	newItem.title = ZU.trimInternal(title.textContent);
+	newItem.title = ZU.trimInternal(title.innerHTML);
 	newItem.DOI = doi;
 	newItem.url = url;
 	if (/^en|英语/i.test(labels.getWith(['语种', 'Language']))) {
 		newItem.language = 'en-US';
 	}
-	doc.querySelectorAll('[class*="detail_doc-author"] [class*="detail_text"] > a, .author-scholar > a').forEach((element) => {
+	doc.querySelectorAll(exports.selectors.creators).forEach((element) => {
 		element = ZU.trimInternal(element.textContent).replace(/\s*;$/, '');
 		newItem.creators.push(ZU.cleanAuthor(element, 'author'));
 	});
 	if (['journalArticle', 'thesis', 'conferencePaper'].includes(newItem.itemType)) {
-		newItem.abstractNote = text(doc, '#doc-summary-content-text, .abstract-text');
-		doc.querySelectorAll('[id*="doc-keyword"] a').forEach((element) => {
+		newItem.abstractNote = text(doc, exports.selectors.abstractNote);
+		doc.querySelectorAll(exports.selectors.tags).forEach((element) => {
 			newItem.tags.push(ZU.trimInternal(element.textContent).replace(/;$/, ''));
 		});
-		let hightlights = text(doc, '#doc-hightlights-text > .value');
+		let hightlights = text(doc, exports.selectors.hightlights);
 		if (hightlights) {
 			newItem.notes.push('<h1>Highlights / 研究要点</h1>\n' + hightlights);
 		}
 		switch (newItem.itemType) {
 			case 'conferencePaper':
 			case 'journalArticle': {
-				let pubInfo = text(doc, '[class*="detail_issue-year-page"], .top-tip-scholar');
-				newItem.publicationTitle = text(doc, '[class*="detail_journal_name"], .top-tip-scholar > span >a');
-				newItem.volume = tryMatch(pubInfo, /Volume 0*([1-9]\d*)/, 1);
-				newItem.issue = tryMatch(pubInfo, /Issue 0*([1-9]\d*)/, 1);
-				newItem.pages = tryMatch(pubInfo, /PP ([\d+, ~-]*)/, 1);
-				newItem.date = tryMatch(pubInfo, /(?:\.\s)?(\d{4})(?:\.\s)?/, 1);
+				let pubInfo = text(doc, exports.selectors.pubInfo);
+				newItem.publicationTitle = text(doc, exports.selectors.publicationTitle) || labels.getWith('journals?$');
+				newItem.volume = tryMatch(pubInfo, /Volume 0*([1-9]\d*)/, 1) || labels.getWith('volume');
+				newItem.issue = tryMatch(pubInfo, /Issue 0*([1-9]\d*)/, 1) || labels.getWith('issue');
+				newItem.pages = tryMatch(pubInfo, /PP ([\d+, ~-]*)/, 1) || labels.getWith('pages');
+				newItem.date = tryMatch(pubInfo, /(?:\.\s)?(\d{4})(?:\.\s)?/, 1) || labels.getWith('year|date');
 				break;
 			}
 
@@ -211,15 +228,14 @@ async function scrapeDoc(doc, url = doc.location.href) {
 
 			/* book section is only available on scholar.cnki.net */
 			case 'bookSection': {
-				let pubInfo = text(doc, '[class*="detail_issue-year-page"]');
+				let pubInfo = text(doc, exports.selectors.pubInfo);
 				newItem.pages = tryMatch(pubInfo, /Page ([\d+, ~-]*)/, 1);
-				let bookDoc = await requestDocument(doc.querySelector('[class*="detail_journal_name"] > a').href);
+				let bookDoc = await requestDocument(doc.querySelector(exports.selectors.book).href);
 				let bookTitle = bookDoc.querySelector('#doc-title').cloneNode(true);
-				let button = bookTitle.querySelector('#changeActive');
-				if (button) {
-					bookTitle.removeChild(button);
+				if (bookTitle.querySelector(':not(sup):not(sub)')) {
+					bookTitle.removeChild(bookTitle.querySelector(':not(sup):not(sub)'));
 				}
-				newItem.bookTitle = ZU.trimInternal(bookTitle);
+				newItem.bookTitle = ZU.trimInternal(bookTitle.innerHTML);
 				patchBook(newItem, bookDoc);
 				break;
 			}
@@ -234,13 +250,13 @@ function patchBook(bookItem, doc) {
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	bookItem.abstractNote = labels.getWith(['摘要', 'Abstract']);
 	bookItem.series = labels.getWith('书系');
-	bookItem.publisher = text(doc, '[class*="detail_journal_name"], .all-source a');
-	let pubInfo = text(doc, '[class*="detail_issue-year-page"], .top-tip-scholar');
+	bookItem.publisher = text(doc, exports.selectors.publisher);
+	let pubInfo = text(doc, exports.selectors.pubInfo);
 	bookItem.date = tryMatch(pubInfo, /(?:\.\s)?(\d{4})(?:\.\s)?/, 1);
 	bookItem.ISBN = labels.getWith('ISBN');
 	extra.add('subject', labels.getWith('学科分类'));
 	extra.add('CLC', labels.getWith(['中图分类号', 'CLC']));
-	doc.querySelectorAll('[class*="detail_doc-author"] [class*="detail_text"] > a, .author-scholar > a').forEach((element) => {
+	doc.querySelectorAll(exports.selectors.creators).forEach((element) => {
 		element = ZU.trimInternal(element.textContent).replace(/\s*;$/, '');
 		bookItem.creators.push(ZU.cleanAuthor(element, 'author'));
 	});
@@ -273,7 +289,7 @@ class Labels {
 					? document.createElement('div')
 					: '';
 		}
-		let pattern = new RegExp(label);
+		let pattern = new RegExp(label, 'i');
 		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
 		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
 		return keyValPair
@@ -306,6 +322,11 @@ const extra = {
 			.map(entry => `${entry[0]}: ${entry[1]}`)
 			.join('\n');
 	}
+};
+
+var exports = {
+	scrape: scrape,
+	selectors: selectors
 };
 
 /** BEGIN TEST CASES **/
