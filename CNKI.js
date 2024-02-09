@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-08 15:14:04"
+	"lastUpdated": "2024-02-09 08:49:08"
 }
 
 /*
@@ -29,6 +29,10 @@
 	along with Zotero. If not, see <http://www.gnu.org/licenses/>.
 	***** END LICENSE BLOCK *****
 */
+
+/*********************
+ * search translator *
+ *********************/
 
 function detectSearch(items) {
 	return (filterQuery(items).length > 0);
@@ -70,9 +74,21 @@ async function doSearch(items) {
 	}
 }
 
+/******************
+ * web translator *
+ ******************/
+
+/**
+ * A mapping table of database code to item type.
+ * It may be modified when this Translator called by other translators.
+ */
 var typeMap = {
 
-	/* In the following comments, "wai wen" indicates the pinyin of the Chinese word "外文", meaning "foreign languages". */
+	/*
+	In the following comments,
+	"wai wen" indicates the pinyin of Chinese word "外文", meaning "foreign language",
+	"zong ku" indicates the pinyin of Chinese word "总库", meaning "total database".
+	 */
 	// 中国学术期刊全文数据库（China Academic Journal Full-text Database, AKA CAJD, CJZK）
 	CJFD: 'journalArticle',
 	CJFQ: 'journalArticle',
@@ -82,7 +98,7 @@ var typeMap = {
 	WWJD: 'journalArticle',
 	// 特色期刊 journal
 	CJFN: 'journalArticle',
-	// 中国学术辑刊全文数据库（China Collection Journal Database）
+	// 中国学术辑刊全文数据库（China Collected Journal Database）
 	CCJD: 'journalArticle',
 
 	/* thesis */
@@ -114,9 +130,9 @@ var typeMap = {
 	IPFD: 'conferencePaper',
 	// 国外会议全文数据库（Wai Wen Proceeding Full-text Database）
 	WWPD: 'conferencePaper',
-	// 会议视频 video, zh
+	// 会议视频（China Proceeding Video Database）
 	CPVD: 'conferencePaper',
-	// 视频 video, zh
+	// 视频（China Conference Video Database）
 	CCVD: 'videoRecording',
 
 	/* book */
@@ -130,19 +146,19 @@ var typeMap = {
 	/* Standard */
 	// 标准数据总库（Cina & International Stand Database）
 	CISD: 'standard',
-	// 中国标准全文数据库（Chinese Standard Full-text Database）
+	// 中国标准全文数据库（China Standard Full-text Database）
 	SCSF: 'standard',
-	// 中国行业标准全文数据库 standard, zh
+	// 中国行业标准全文数据库（China Hang Ye Standard Full-text Database）
 	SCHF: 'standard',
-	// 中国标准题录数据库（China Standard Full-text Database） standard, zh
+	// 中国标准题录数据库（China Standard Full-text Database）
 	SCSD: 'standard',
 	// 国外标准全文数据库（Outbound Standard Full-text Database）
 	SOSD: 'standard',
 
 	/* report */
-	// 中国科技项目创新成果鉴定意见数据库（China Science and Technology Project Innovation Achievement Appraisal Opinion Database）
+	// 中国科技项目创新成果鉴定意见数据库（National Science and Technology Project Innovation Achievement Appraisal Opinion Database）
 	SNAD: 'report',
-	// 科技报告
+	// 科技报告（Chinese pinyin "Ke Ji Bao Gao", means "Science & Technology Report"）
 	KJBG: 'report',
 
 	/* statute */
@@ -159,8 +175,12 @@ var typeMap = {
 	SSJD: 'journalArticle'
 };
 
+// A list of databases containing only English literature for language determination.
+// It may be modified when this Translator called by other translators.
 var enDatabase = ['WWJD', 'IPFD', 'WWPD', 'WWBD', 'SOSD'];
 
+// A list of databases that look like CNKI Scholar.
+// It may be modified when this Translator called by other translators.
 var scholarLike = ['WWJD', 'WWBD'];
 
 /**
@@ -191,7 +211,7 @@ class ID {
 	}
 
 	/**
-	 * @returns true when necessary .dbcode and filename are available.
+	 * @returns true when both necessary dbcode and filename are available.
 	 */
 	toBoolean() {
 		return Boolean(this.dbname && this.filename);
@@ -211,7 +231,7 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug("---------------- CNKI 2024-02-01 16:28:19 ------------------");
+	Z.debug("---------------- CNKI 2024-02-09 15:00:42 ------------------");
 	let ids = new ID(doc, url);
 	Z.debug('detect ids:');
 	Z.debug(ids);
@@ -242,7 +262,7 @@ function detectWeb(doc, url) {
 	];
 	// #ModuleSearchResult for commom CNKI,
 	// #contentPanel for journal/yearbook navigation,
-	// .main_sh for oldversion
+	// .main_sh for old version
 	let searchResult = doc.querySelector('#ModuleSearchResult, #contentPanel, .main_sh');
 	if (searchResult) {
 		Z.monitorDOMChanges(searchResult, { childList: true, subtree: true });
@@ -374,10 +394,15 @@ function getSearchResults(doc, url, checkOnly) {
 	return found ? items : false;
 }
 
+// Whether user ip is in Chinese Mainland, default is true.
 var inMainland = true;
 
+// Platform of CNKI, default to the National Zong Ku Ping Tai(pin yin of "Total Database Platform").
+// It may be modified when this Translator called by other translators.
 var platform = 'NZKPT';
 
+// Css selectors for CNKI Scholar like page, to change the default behavior of CNKI Scholar translator.
+// It may be modified when this Translator called by other translators.
 var csSelectors = {
 	labels: '.brief h3, .row-scholar',
 	title: '.h1-scholar',
@@ -393,15 +418,11 @@ var csSelectors = {
 };
 
 async function doWeb(doc, url) {
-	// Because CNKI has different APIs inside and outside Chinese Mainland, it needs to be differentiated.
+	// for inside and outside Chinese Mainland IP, CNKI uses different APIs.
 	inMainland = !/oversea/i.test(url);
 	Z.debug(`inMainland: ${inMainland}`);
 
-	/*
-	For multiple items, prioritize trying to crawl them one by one, as documents always provide additional information;
-	if it is not possible to obtain item's document, consider using batch export API.
-	 */
-	if (detectWeb(doc, url) == "multiple") {
+	if (detectWeb(doc, url) == 'multiple') {
 		let items = await Z.selectItems(getSearchResults(doc, url, false));
 		if (!items) return;
 		await scrapeMulti(items);
@@ -411,6 +432,11 @@ async function doWeb(doc, url) {
 	}
 }
 
+/**
+ * For multiple items, prioritize trying to scrape them one by one, as documents always provide more information;
+ * if it is not possible to obtain item's document, consider using batch export API.
+ * @param {Object} items, items from Zotero.selectedItems().
+ */
 async function scrapeMulti(items) {
 	for (let key in items) {
 		let itemKey = JSON.parse(key);
@@ -477,7 +503,6 @@ async function scrape(doc, itemKey = { url: '', cite: '', cookieName: '', downlo
 		let cs = await translator.getTranslatorObject();
 		cs.selectors = exports.csSelectors;
 		await cs.scrape(doc, url);
-		// await translator.translate();
 	}
 	else if (ids.toItemtype() == 'videoRecording') {
 		await scrapeDoc(doc, itemKey);
@@ -567,9 +592,9 @@ async function scrapeWithGetExport(doc, ids, itemKey) {
 		: `${doc.querySelector('.logo > a, a.cnki-logo').href}/kns8/manage/APIGetExport`;
 	// "1": row's sequence in search result page, defualt 1; "0": index of page in search result pages, defualt 0.
 	let postData = `filename=${ids.dbname}!${ids.filename}!${ids.toItemtype() == 'bookSection' ? 'ALMANAC_LM' : '1!0'}`
-		// Although there are two data formats that are redundant,
-		// this can make the request more "ordinary" to the server.
 		+ `${inMainland ? `&uniplatform=${exports.platform}` : ''}`
+		// Although there are two data formats that are redundant,
+		// it can make the request more "ordinary" to server.
 		+ '&displaymode=GBTREFER%2Celearning%2CEndNote';
 	Z.debug(postUrl);
 	Z.debug(postData);
@@ -587,7 +612,6 @@ async function scrapeWithGetExport(doc, ids, itemKey) {
 	Z.debug(referText);
 
 	if (!referText.data || !referText.data.length) {
-		// throw new ReferenceError('Failed to retrieve data from API: GetExport');
 		throw new ReferenceError(`Failed to retrieve data from API: GetExport\n${JSON.stringify(ids)}\n${JSON.stringify(referText)}`);
 	}
 	referText = referText.data[2].value[0].replace(/<br>/g, '\n');
@@ -659,7 +683,8 @@ async function scrapeWithShowExport(itemKeys, doc = document.createElement('div'
 		// prefix
 		.replace(/^<ul class='literature-list'>/, '')
 		// suffix
-		.replace(/<\/ul><input.*>$/, '').match(/<li>.*?<\/li>/g);
+		.replace(/<\/ul><input.*>$/, '')
+		.match(/<li>.*?<\/li>/g);
 
 	for (let i = 0; i < referText.length; i++) {
 		let text = referText[i];
@@ -674,14 +699,13 @@ async function scrapeWithShowExport(itemKeys, doc = document.createElement('div'
 }
 
 /**
- * Alternative offline scrapping solution.
+ * Alternative offline scrapping scheme.
  * @param {Element} doc
  * @param {*} itemKey some extra information from "multiple" page.
  */
 async function scrapeDoc(doc, itemKey) {
 	Z.debug('scraping from document...');
 
-	/* TODO: Compatible with English labels in English version of CNKI. */
 	let url = doc.location.href;
 	let ids = new ID(doc, url);
 	let more = doc.querySelector('#ChDivSummaryMore');
@@ -745,23 +769,25 @@ async function scrapeDoc(doc, itemKey) {
 				.test(string)))
 			.map(string => string.replace(/[\d\s,~-]*$/, ''));
 	}
-	if (!creators.length && doc.querySelectorAll('h3 > span')) {
-		creators = ZU.trimInternal(doc.querySelectorAll('h3 > span').textContent)
-			.map(string => string.replace(/[\d\s,;，；~-]*$/, ''));
+	if (!creators.length && doc.querySelectorAll('h3 > span').length) {
+		creators = Array.from(doc.querySelectorAll('h3 > span')).map(string => ZU.trimInternal(string.replace(/[\d\s,;，；~-]*$/, '')));
 	}
 	creators.forEach((string) => {
 		newItem.creators.push(cleanName(string, 'author'));
 	});
-	doc.querySelectorAll('.keywords > a').forEach(element => newItem.tags.push(ZU.trimInternal(element.textContent).replace(/[，；,;]$/, '')));
-	if (doc.querySelector('.icon-shoufa')) {
-		extra.add('Status', 'advance online publication');
-		newItem.date = ZU.strToISO(text(doc, '.head-time'));
-	}
 
+	/* tags */
+	let tags = [
+		Array.from(doc.querySelectorAll('.keywords > a')).map(element => ZU.trimInternal(element.textContent).replace(/[，；,;]$/, '')),
+		labels.getWith(['关键词', 'keywords']).split(/[;，；]\s*/)
+	].find(arr => arr.length);
+	if (tags) newItem.tags = tags;
+
+	/* specific Fields */
 	switch (newItem.itemType) {
 		case 'journalArticle': {
 			let pubInfo = text(doc, '.top-tip');
-			newItem.publicationTitle = tryMatch(pubInfo, /^(.+?)\./, 1).replace(/^(.+?)\(([\u4e00-\u9fff]*)\)$/, '$1（$2）');
+			newItem.publicationTitle = tryMatch(pubInfo, /^(.+?)\./, 1).replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
 			newItem.volume = tryMatch(pubInfo, /0*([1-9]\d*)\(/, 1);
 			newItem.issue = tryMatch(pubInfo, /\([A-Z]?0*([1-9]\d*)\)/, 1);
 			newItem.pages = labels.getWith(['页码', 'Page$']);
@@ -769,7 +795,7 @@ async function scrapeDoc(doc, itemKey) {
 			break;
 		}
 		case 'thesis': {
-			newItem.university = text(doc, 'h3 >span >  a[href*="/organ/"]');
+			newItem.university = text(doc, 'h3 >span >  a[href*="/organ/"]').replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
 			newItem.thesisType = inMainland
 				? {
 					CMFD: '硕士学位论文',
@@ -803,7 +829,25 @@ async function scrapeDoc(doc, itemKey) {
 			newItem.abstractNote = text(doc, '.abstract-text');
 			newItem.publicationTitle = text(doc, '.top-tip > a');
 			newItem.date = ZU.strToISO(labels.getWith(['报纸日期', 'NewspaperDate']));
-			newItem.pages = tryMatch(labels.getWith(['版号', 'EditionCode']), /\([A-Z]?0*([1-9]\d*)\)/, 1);
+			newItem.pages = labels.getWith(['版号', 'EditionCode']);
+			break;
+		case 'bookSection':
+			newItem.bookTitle = text(doc, '.book-info .book-tit');
+			newItem.date = tryMatch(labels.getWith(['来源年鉴', 'SourceYearbook']), /\d{4}/);
+			newItem.pages = labels.getWith(['页码', 'Page$']);
+			newItem.creators = labels.getWith(['责任说明', 'Statementofresponsibility'])
+				.replace(/\s*([主]?编|Editor)$/, '')
+				.split(/[,;，；]/)
+				.map(creator => cleanName(creator, 'author'));
+			break;
+		case 'report':
+			newItem.abstractNote = labels.getWith('成果简介');
+			newItem.creators = labels.getWith('成果完成人').split(/[,;，；]/).map(creator => cleanName(creator, 'author'));
+			newItem.date = labels.getWith('入库时间');
+			newItem.institution = labels.getWith('第一完成单位');
+			extra.add('achievementType', labels.getWith('成果类别'));
+			extra.add('level', labels.getWith('成果水平'));
+			extra.add('evaluation', labels.getWith('评价形式'));
 			break;
 		case 'standard':
 			newItem.number = labels.getWith(['标准号', 'StandardNo']);
@@ -814,26 +858,30 @@ async function scrapeDoc(doc, itemKey) {
 			newItem.status = text(doc, 'h1 > .type');
 			newItem.date = labels.getWith(['发布日期', 'IssuanceDate']);
 			newItem.numPages = labels.getWith(['总页数', 'TotalPages']);
-			extra.add('original-title', text(doc, 'h1 > span'), true);
-			newItem.creators = labels.getWith(['标准技术委员会', 'StandardTechnicalCommittee']).split(/[;，；、]/).map(creator => ({
-				firstName: '',
-				lastName: creator.replace(/\(.*?\)$/, ''),
-				creatorType: 'author',
-				fieldMode: 1
-			}));
+			extra.add('original-title', text(doc, 'h1 > span'));
+			newItem.creators = labels.getWith(['标准技术委员会', '归口单位', 'StandardTechnicalCommittee'])
+				.split(/[;，；、]/)
+				.map(creator => ({
+					firstName: '',
+					lastName: creator.replace(/\(.+?\)$/, ''),
+					creatorType: 'author',
+					fieldMode: 1
+				}));
 			extra.add('applyDate', labels.getWith('实施日期'), true);
 			break;
 		case 'patent':
 			newItem.patentNumber = labels.getWith(['申请公布号', 'PublicationNo']);
 			newItem.applicationNumber = labels.getWith(['申请\\(专利\\)号', 'ApplicationNumber']);
-			newItem.place = newItem.country = patentCountry(newItem.applicationNumber);
+			newItem.place = newItem.country = patentCountry(newItem.patentNumber || newItem.applicationNumber);
 			newItem.filingDate = labels.getWith(['申请日', 'ApplicationDate']);
 			newItem.issueDate = labels.getWith(['授权公告日', 'IssuanceDate']);
 			newItem.rights = text(doc, '.claim > h5 + div');
 			extra.add('Genre', labels.getWith('专利类型'), true);
-			labels.getWith(['发明人', 'Inventor']).split(/[;，；]\s*/).forEach((inventor) => {
-				newItem.creators.push(cleanName(ZU.trimInternal(inventor), 'inventor'));
-			});
+			labels.getWith(['发明人', 'Inventor'])
+				.split(/[;，；]\s*/)
+				.forEach((inventor) => {
+					newItem.creators.push(cleanName(ZU.trimInternal(inventor), 'inventor'));
+				});
 			break;
 		case 'videoRecording':
 			newItem.abstractNote = labels.getWith('视频简介').replace(/\s*更多还原$/, '');
@@ -844,39 +892,45 @@ async function scrapeDoc(doc, itemKey) {
 				newItem.creators.push(cleanName(ZU.trimInternal(element.textContent), 'author'));
 			});
 			break;
-		case 'bookSection':
-			newItem.bookTitle = text(doc, '.book-info .book-tit');
-			newItem.date = tryMatch(labels.getWith(['来源年鉴', 'SourceYearbook']), /\d{4}/);
-			newItem.pages = labels.getWith(['页码', 'Page$']);
-			newItem.creators = labels.getWith(['责任说明', 'Statementofresponsibility']).replace(/\s*([主]?编|Editor)$/, '').split(/[,;，；]/)
-				.map(creator => ({
-					firstName: '',
-					lastName: creator,
-					creatorType: 'author',
-					fieldMode: 1
-				}));
 	}
+
+	/* pages */
 	if (ZU.fieldIsValidForType('pages', newItem.itemType) && newItem.pages) {
-		newItem.pages = newItem.pages.replace(/~/g, '-').replace(/\+/g, ', ');
+		newItem.pages = newItem.pages
+			.replace(/\d+/g, match => match.replace(/0*([1-9]\d*)/, '$1'))
+			.replace(/~/g, '-').replace(/\+/g, ', ');
 	}
+
+	/* date, advance online */
+	if (doc.querySelector('.icon-shoufa')) {
+		extra.add('Status', 'advance online publication');
+		newItem.date = ZU.strToISO(text(doc, '.head-time'));
+	}
+
+	/* extra */
 	extra.add('foundation', labels.getWith('基金'));
 	extra.add('download', labels.getWith(['下载', 'Download']) || itemKey.download);
 	extra.add('album', labels.getWith(['专辑', 'Series']));
 	extra.add('CLC', labels.getWith(['分类号', 'ClassificationCode']));
 	extra.add('CNKICite', itemKey.cite || attr(doc, '#paramcitingtimes', 'value') || text(doc, '#citations+span').substring(1, -1));
-	addAttachments(newItem, doc, url, itemKey);
 	await addPubDetail(newItem, ids, doc);
 	newItem.extra = extra.toString();
+	addAttachments(newItem, doc, url, itemKey);
 	newItem.complete();
 	extra.reset();
 }
 
+/**
+ * Call CNKI Refer.js to parse the text returned by API and supplement some fields from doc elements and itemKey.
+ * @param {String} referText Refer/BibIX format text from API.
+ * @param {Element} doc
+ * @param {String} url
+ * @param {*} itemKey
+ */
 async function parseRefer(referText, doc, url, itemKey) {
 	let item = {};
 
-	/* TODO: Compatible with English labels in English version of CNKI. */
-	// ".row", ".row_1" for normal version
-	let labels = new LabelsX(doc, 'div.doc div[class^="row"], li.top-space');
+	let labels = new LabelsX(doc, 'div.doc div[class^="row"], li.top-space, .total-inform > span');
 	Z.debug('get labels:');
 	Z.debug(labels.innerData.map(element => [element[0], ZU.trimInternal(element[1].textContent)]));
 	let ids = new ID(doc, url);
@@ -893,7 +947,7 @@ async function parseRefer(referText, doc, url, itemKey) {
 	richTextTitle(item, doc);
 
 	/* url */
-	if (!item.url || /kcms2/i.test(item.url)) {
+	if (!item.url || !/filename=/i.test(item.url)) {
 		item.url = 'https://kns.cnki.net/KCMS/detail/detail.aspx?'
 			+ `dbcode=${ids.dbcode}`
 			+ `&dbname=${ids.dbname}`
@@ -904,7 +958,7 @@ async function parseRefer(referText, doc, url, itemKey) {
 	switch (item.itemType) {
 		case 'journalArticle':
 			if (item.publicationTitle) {
-				item.publicationTitle = item.publicationTitle.replace(/^(.+?)\(([\u4e00-\u9fff]*)\)$/, '$1（$2）');
+				item.publicationTitle = item.publicationTitle.replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
 			}
 			if (doc.querySelector('.icon-shoufa')) {
 				extra.add('Status', 'advance online publication');
@@ -912,7 +966,10 @@ async function parseRefer(referText, doc, url, itemKey) {
 			}
 			break;
 		case 'thesis':
-			extra.add('major', labels.getWith('学科专业'));
+			if (item.university) {
+				item.university = item.university.replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
+			}
+			extra.add('major', labels.getWith(['学科专业', 'Retraction']));
 			break;
 		case 'conferencePaper': {
 			if (item.abstractNote) {
@@ -922,48 +979,45 @@ async function parseRefer(referText, doc, url, itemKey) {
 			break;
 		}
 		case 'newspaperArticle':
-			item.abstractNote = labels.getWith('正文快照');
+			item.abstractNote = text(doc, '.abstract-text');
 			item.tags = labels.getWith('关键词').split(/[;，；]/);
 			break;
 
-		/* 年鉴 */
+		/* yearbook */
 		case 'bookSection': {
 			item.bookTitle = text(doc, '.book-tit');
-			item.creators = labels.getWith('责任说明')
-				.replace(/\s*[主]?编$/, '')
-				.split(/[,;，；]/)
-				.map(creator => ({
-					firstName: '',
-					lastName: creator,
-					creatorType: 'author',
-					fieldMode: 1
-				}));
+			item.creators = labels.getWith(['责任说明', 'Statementofresponsibility'])
+			.replace(/\s*([主]?编|Editor)$/, '')
+			.split(/[,;，；]/)
+			.map(creator => cleanName(creator, 'author'));
 			break;
 		}
 		case 'report':
 			item.creators = labels.getWith('成果完成人').split(/[,;，；]/).map(creator => cleanName(creator, 'author'));
 			item.date = labels.getWith('入库时间');
 			item.institution = labels.getWith('第一完成单位');
-			extra.add('Genre', labels.getWith('成果类别'), true);
+			extra.add('achievementType', labels.getWith('成果类别'), true);
 			extra.add('level', labels.getWith('成果水平'));
 			extra.add('evaluation', labels.getWith('评价形式'));
 			break;
 		case 'standard':
 			extra.add('original-title', text(doc, 'h1 > span'), true);
 			item.status = text(doc, '.type');
-			item.creators = labels.getWith(['标准技术委员会', '归口单位']).split(/[;，；、]/).map(creator => ({
-				firstName: '',
-				lastName: creator.replace(/\(.*?\)$/, ''),
-				creatorType: 'author',
-				fieldMode: 1
-			}));
+			item.creators = labels.getWith(['标准技术委员会', '归口单位', 'StandardTechnicalCommittee'])
+				.split(/[;，；、]/)
+				.map(creator => ({
+					firstName: '',
+					lastName: creator.replace(/\(.+?\)$/, ''),
+					creatorType: 'author',
+					fieldMode: 1
+				}));
 			extra.add('applyDate', labels.getWith('实施日期'), true);
 			break;
 		case 'patent':
 			// item.place = labels.getWith('地址');
-			item.filingDate = labels.getWith('申请日');
-			item.applicationNumber = labels.getWith('申请\\(专利\\)号');
-			item.issueDate = labels.getWith('授权公告日');
+			item.filingDate = labels.getWith(['申请日', 'ApplicationDate']);
+			item.applicationNumber = labels.getWith(['申请\\(专利\\)号', 'ApplicationNumber']);
+			item.issueDate = labels.getWith(['授权公告日', 'IssuanceDate']);
 			item.rights = text(doc, '.claim > h5 + div');
 			break;
 	}
@@ -973,14 +1027,17 @@ async function parseRefer(referText, doc, url, itemKey) {
 	extra.add('album', labels.getWith('专辑'));
 	extra.add('CLC', labels.getWith('分类号'));
 	extra.add('CNKICite', itemKey.cite || attr(doc, '#paramcitingtimes', 'value') || text(doc, '#citations+span').substring(1, -1));
-	addAttachments(item, doc, url, itemKey);
 	await addPubDetail(item, ids, doc);
 	item.extra = extra.toString(item.extra);
+	addAttachments(item, doc, url, itemKey);
 	item.complete();
 	extra.reset();
 }
 
-/* Util */
+/*********
+ * utils *
+ *********/
+
 class LabelsX {
 	constructor(doc, selector) {
 		this.innerData = [];
@@ -1024,7 +1081,7 @@ class LabelsX {
 					? document.createElement('div')
 					: '';
 		}
-		let pattern = new RegExp(label);
+		let pattern = new RegExp(label, 'i');
 		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
 		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
 		return keyValPair
@@ -1199,6 +1256,9 @@ async function addPubDetail(item, ids, doc) {
 	}
 }
 
+/**
+ * Return the country name according to the patent number or patent application number.
+ */
 function patentCountry(idNumber) {
 	return {
 		AD: '安道尔', AE: '阿拉伯联合酋长国', AF: '阿富汗', AG: '安提瓜和巴布达', AI: '安圭拉', AL: '阿尔巴尼亚', AM: '亚美尼亚', AN: '菏属安的列斯群岛', AO: '安哥拉', AR: '阿根廷', AT: '奥地利', AU: '澳大利亚', AW: '阿鲁巴', AZ: '阿塞拜疆', BB: '巴巴多斯', BD: '孟加拉国', BE: '比利时', BF: '布莱基纳法索', BG: '保加利亚', BH: '巴林', BI: '布隆迪', BJ: '贝宁', BM: '百慕大', BN: '文莱', BO: '玻利维亚', BR: '巴西', BS: '巴哈马', BT: '不丹', BU: '缅甸', BW: '博茨瓦纳', BY: '白俄罗斯', BZ: '伯利兹', CA: '加拿大', CF: '中非共和国', CG: '刚果', CH: '瑞士', CI: '科特迪瓦', CL: '智利', CM: '喀麦隆', CN: '中国', CO: '哥伦比亚', CR: '哥斯达黎加', CS: '捷克斯洛伐克', CU: '古巴', CV: '怫得角', CY: '塞浦路斯',
