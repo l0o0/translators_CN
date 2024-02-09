@@ -52,7 +52,7 @@ function filterQuery(items) {
 	// filter out invalid queries
 	var dois = [], doi;
 	for (var i = 0, n = items.length; i < n; i++) {
-		if (items[i].DOI && /(\/j\.issn|\/j\.cnki)/i.test(items[i].DOI) && (doi = ZU.cleanDOI(items[i].DOI))) {
+		if (items[i].DOI && /(\/j\.issn|\/[a-z]\.cnki)/i.test(items[i].DOI) && (doi = ZU.cleanDOI(items[i].DOI))) {
 			dois.push(doi);
 		}
 		else if (typeof items[i] == 'string' && /(\/j\.issn|\/[a-z]\.cnki)/i.test(items[i]) && (doi = ZU.cleanDOI(items[i]))) {
