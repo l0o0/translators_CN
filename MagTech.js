@@ -5,7 +5,7 @@
 	"target": "^https?://.*(/CN/)?.*(.shtml)?",
 	"minVersion": "5.0",
 	"maxVersion": "",
-	"priority": 330,
+	"priority": 200,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",

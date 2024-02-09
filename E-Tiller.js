@@ -5,7 +5,7 @@
 	"target": "^https?://.*(/ch/)?.*(.aspx)?",
 	"minVersion": "5.0",
 	"maxVersion": "",
-	"priority": 100,
+	"priority": 200,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
