@@ -2,14 +2,14 @@
 	"translatorID": "5b731187-04a7-4256-83b4-3f042fa3eaa4",
 	"label": "Ncpssd",
 	"creator": "018<lyb018@gmail.com>,l0o0<linxzh1989@gmail.com>",
-	"target": "^https?://([^/]+\\.)?ncpssd\\.org",
+	"target": "^https?://([^/]+\\.)?ncpssd\\.(org|cn)",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-31 09:11:34"
+	"lastUpdated": "2024-02-10 13:18:05"
 }
 
 /*
@@ -63,7 +63,7 @@ class ID {
 
 	static toUrl(ids) {
 		return encodeURI(
-			'https://www.ncpssd.org/Literature/articleinfo'
+			'https://www.ncpssd.cn/Literature/articleinfo'
 			+ `?id=${ids.id}`
 			+ `&type=${ids.datatype}`
 			+ `&typename=${ids.typename}`
@@ -78,7 +78,7 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug('---------- NCPSSD 2023-12-31 2023-12-31 ----------');
+	Z.debug('---------- NCPSSD 2024-02-10 21:01:15 ----------');
 	let ids = new ID(url);
 	Z.debug(ids);
 	if (ids.toBoolean()) {
@@ -110,7 +110,7 @@ function getSearchResults(doc, checkOnly) {
 				typename: row.getAttribute('data-type'),
 				barcodenum: row.getAttribute('data-barcodenum')
 			})
-			: `https://www.ncpssd.org${tryMatch(row.getAttribute('onclick'), /\('(.+)'\)/, 1)}`;
+			: `https://www.ncpssd.cn${tryMatch(row.getAttribute('onclick'), /\('(.+)'\)/, 1)}`;
 		if (checkOnly) return true;
 		found = true;
 		items[url] = title;
@@ -226,7 +226,7 @@ async function scrape(url) {
 		};
 	}
 	else {
-		let postUrl = `https://www.ncpssd.org/articleinfoHandler/${ids.datatype == 'Ancient' ? 'getancientbooktable' : 'getjournalarticletable'}`;
+		let postUrl = `https://www.ncpssd.cn/articleinfoHandler/${ids.datatype == 'Ancient' ? 'getancientbooktable' : 'getjournalarticletable'}`;
 		Z.debug(postUrl);
 		json = await requestJSON(
 			postUrl,
@@ -257,7 +257,7 @@ async function scrape(url) {
 	switch (newItem.itemType) {
 		case 'journalArticle':
 			newItem.volume = tryMatch(data.getWith('vol'), /0*([1-9]\d*)/, 1);
-			newItem.issue = tryMatch(data.getWith('num'), /0*([1-9]\d*)/, 1);
+			newItem.issue = data.getWith('num').replace(/([A-Z]?)0*([1-9]\d*)/i, '$1$2');
 			newItem.pages = Array.from(
 				new Set([data.getWith('beginpage'), data.getWith('endpage')].filter(page => page))
 			).join('-');
@@ -265,7 +265,7 @@ async function scrape(url) {
 			newItem.ISSN = data.getWith('issn');
 			data.getWith('showwriter').split(';').forEach((string) => {
 				let creator = ZU.cleanAuthor(string.replace(/\[.*\]$/, ''), 'author');
-				if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+				if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
 					creator.lastName = creator.firstName + creator.lastName;
 					creator.firstName = '';
 					creator.fieldMode = 1;
@@ -280,25 +280,23 @@ async function scrape(url) {
 			newItem.edition = data.getWith('section');
 			data.getWith('authorc').split(';').forEach((string) => {
 				let creator = ZU.cleanAuthor(string.slice(3, -1), 'author');
-				if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+				if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
 					creator.lastName = creator.firstName + creator.lastName;
 					creator.firstName = '';
 					creator.fieldMode = 1;
 				}
 				newItem.creators.push(creator);
 			});
-			newItem.extra += addExtra('classify', data.getWith('classname'));
-			newItem.extra += addExtra('remark', data.getWith('remarkc'));
-			newItem.extra += addExtra('barcode', data.getWith('barcodenum'));
-			newItem.extra += addExtra('Type', 'classic');
-			break;
-		default:
+			extra.add('classify', data.getWith('classname'));
+			extra.add('remark', data.getWith('remarkc'));
+			extra.add('barcode', data.getWith('barcodenum'));
+			extra.add('Type', 'classic', true);
 			break;
 	}
 	newItem.language = ['zh-CN', 'en-US'][data.getWith('language') - 1];
 	newItem.url = ID.toUrl(ids);
 	newItem.libraryCatalog = '国家哲学社会科学文献中心';
-	newItem.extra += addExtra('original-title', data.getWith('titlee'));
+	extra.add('original-title', data.getWith('titlee'), true);
 	data.getWith('keywordc').split(';').forEach(tag => newItem.tags.push(tag));
 	let pdfLink = data.getWith('pdfurl');
 	if (pdfLink) {
@@ -308,14 +306,27 @@ async function scrape(url) {
 			title: 'Full Text PDF',
 		});
 	}
+	newItem.extra = extra.toString();
 	newItem.complete();
 }
 
-function addExtra(key, value) {
-	return value
-		? `${key}: ${value}\n`
-		: '';
-}
+const extra = {
+	clsFields: [],
+	elseFields: [],
+	add: function (key, value, cls = false) {
+		if (value && cls) {
+			this.clsFields.push([key, value]);
+		}
+		else if (value) {
+			this.elseFields.push([key, value]);
+		}
+	},
+	toString: function () {
+		return [...this.clsFields, ...this.elseFields]
+			.map(entry => `${entry[0]}: ${entry[1]}`)
+			.join('\n');
+	}
+};
 
 function tryMatch(string, pattern, index = 0) {
 	if (!string) return '';
@@ -359,7 +370,7 @@ var testCases = [
 				"libraryCatalog": "国家哲学社会科学文献中心",
 				"pages": "103-105",
 				"publicationTitle": "时代教育",
-				"url": "https://www.ncpssd.org/Literature/articleinfo?id=SDJY2023035035&type=journalArticle&typename=%E4%B8%AD%E6%96%87%E6%9C%9F%E5%88%8A%E6%96%87%E7%AB%A0&nav=0+&barcodenum=",
+				"url": "https://www.ncpssd.cn/Literature/articleinfo?id=SDJY2023035035&type=journalArticle&typename=%E4%B8%AD%E6%96%87%E6%9C%9F%E5%88%8A%E6%96%87%E7%AB%A0&nav=0+&barcodenum=",
 				"attachments": [],
 				"tags": [
 					{
@@ -416,7 +427,7 @@ var testCases = [
 				"language": "en-US",
 				"libraryCatalog": "国家哲学社会科学文献中心",
 				"pages": "4294-4299",
-				"url": "https://www.ncpssd.org/Literature/articleinfo?id=CASS1039961165&type=eJournalArticle&typename=%E5%A4%96%E6%96%87%E6%9C%9F%E5%88%8A%E6%96%87%E7%AB%A0&nav=0+&barcodenum=",
+				"url": "https://www.ncpssd.cn/Literature/articleinfo?id=CASS1039961165&type=eJournalArticle&typename=%E5%A4%96%E6%96%87%E6%9C%9F%E5%88%8A%E6%96%87%E7%AB%A0&nav=0+&barcodenum=",
 				"volume": "12",
 				"attachments": [],
 				"tags": [
@@ -460,7 +471,7 @@ var testCases = [
 				"libraryCatalog": "国家哲学社会科学文献中心",
 				"pages": "144-157",
 				"publicationTitle": "法学教育研究",
-				"url": "https://www.ncpssd.org/Literature/articleinfo?id=FXJYYJ2023001009&type=collectionsArticle&typename=%E9%9B%86%E5%88%8A%E6%96%87%E7%AB%A0&nav=0+&barcodenum=",
+				"url": "https://www.ncpssd.cn/Literature/articleinfo?id=FXJYYJ2023001009&type=collectionsArticle&typename=%E9%9B%86%E5%88%8A%E6%96%87%E7%AB%A0&nav=0+&barcodenum=",
 				"volume": "40",
 				"attachments": [],
 				"tags": [
@@ -501,12 +512,51 @@ var testCases = [
 					}
 				],
 				"edition": "繪本",
-				"extra": "classify: 子\nremark: 版心：樂闲馆本；浙江民俗畫 \nbarcode: 70050810\nType: classic",
+				"extra": "Type: classic\nclassify: 子\nremark: 版心：樂闲馆本；浙江民俗畫 \nbarcode: 70050810",
 				"libraryCatalog": "国家哲学社会科学文献中心",
 				"publisher": "樂闲馆",
-				"url": "https://www.ncpssd.org/Literature/articleinfo?id=GJ10017&type=Ancient&typename=%E5%8F%A4%E7%B1%8D&nav=0+&barcodenum=70050810",
+				"url": "https://www.ncpssd.cn/Literature/articleinfo?id=GJ10017&type=Ancient&typename=%E5%8F%A4%E7%B1%8D&nav=0+&barcodenum=70050810",
 				"attachments": [],
 				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.ncpssd.cn/Literature/articleinfo?id=PRP1192499916434309120&type=journalArticle&datatype=journalArticle&typename=%E4%B8%AD%E6%96%87%E6%9C%9F%E5%88%8A%E6%96%87%E7%AB%A0&synUpdateType=2&nav=0&barcodenum=&pageUrl=https%253A%252F%252Fwww.ncpssd.cn%252FLiterature%252Farticlelist%253FsType%253D0%2526search%253DKElLVEU9IuaWh%252BWMluiHquS%252FoSIgT1IgSUtQWVRFPSLmlofljJboh6rkv6EiICBPUiBJS1NUPSLmlofljJboh6rkv6EiIE9SIElLRVQ9IuaWh%252BWMluiHquS%252FoSIgT1IgSUtTRT0i5paH5YyW6Ieq5L%252BhIik%253D%2526searchname%253D6aKY5ZCNL%252BWFs%252BmUruivjT0i5paH5YyW6Ieq5L%252BhIg%253D%253D%2526nav%253D0%2526ajaxKeys%253D5paH5YyW6Ieq5L%252Bh",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "新中国成立以来中国共产党榜样文化叙事的特色与经验",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "艾丹",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2024-01-04",
+				"ISSN": "1673-3851",
+				"abstractNote": "榜样因其真实、生动、形象的特点，具有强大的说服力和感染力。中国共产党榜样文化建设对社会主义核心价值观的培育与践行以及对外弘扬中国价值、彰显中国力量、讲好中国故事等具有不可替代的价值。新中国成立以来，中国共产党榜样文化叙事呈现出鲜明的中国特色，积累了宝贵的工作经验：榜样选树标准突显人民性和时代性的价值取向；榜样典型构建彰显代表性和先进性的双重特质；榜样人物奖励注重规范化和制度化的运作机制；榜样文化传播体现传承性与创新性的融合发展。该研究拓宽了榜样文化的研究视域，有助于深入推进社会主义文化强国建设。",
+				"language": "zh-CN",
+				"libraryCatalog": "国家哲学社会科学文献中心",
+				"pages": "52-58",
+				"publicationTitle": "浙江理工大学学报：社会科学版",
+				"url": "https://www.ncpssd.cn/Literature/articleinfo?id=PRP1192499916434309120&type=journalArticle&typename=%E4%B8%AD%E6%96%87%E6%9C%9F%E5%88%8A%E6%96%87%E7%AB%A0&nav=0+&barcodenum=",
+				"attachments": [
+					{
+						"mimeType": "application/pdf",
+						"title": "Full Text PDF"
+					}
+				],
+				"tags": [
+					{
+						"tag": "中国共产党 榜样文化 英雄模范 主流意识形态 精神谱系 社会主义核心价值观 文化自信"
+					}
+				],
 				"notes": [],
 				"seeAlso": []
 			}
