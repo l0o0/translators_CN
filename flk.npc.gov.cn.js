@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-02 10:30:43"
+	"lastUpdated": "2024-02-11 04:18:12"
 }
 
 /*
@@ -38,9 +38,7 @@
 
 function detectWeb(doc, url) {
 	if (/\/detail\d?\.html\?|xf\/html/.test(url)) {
-		return text(doc, '#xlwj') == '司法解释'
-			? 'report'
-			: 'statute';
+		return 'statute';
 	}
 	else if (getSearchResults(doc, true)) {
 		return 'multiple';
@@ -97,24 +95,16 @@ async function scrapeAPI(url) {
 	});
 	json = json.result;
 	Z.debug(json);
-	var newItem = new Z.Item(json.level == '司法解释' ? 'report' : 'statute');
+	var newItem = new Z.Item('statute');
 	newItem.title = json.title;
 	if (newItem.title.startsWith('中华人民共和国')) {
 		newItem.shortTitle = newItem.title.substring(7);
 	}
-	switch (newItem.itemType) {
-		case 'statute': {
-			newItem.dateEnacted = ZU.strToISO(json.publish);
-			if (json.level.includes('法规')) {
-				extra.add('Type', 'regulation', true);
-			}
-			extra.add('appyDate', ZU.strToISO(json.expiry));
-			break;
-		}
-		case 'report':
-			newItem.date = ZU.strToISO(json.publish);
-			break;
+	newItem.dateEnacted = ZU.strToISO(json.publish);
+	if (json.level.includes('法规')) {
+		extra.add('Type', 'regulation', true);
 	}
+	extra.add('appyDate', ZU.strToISO(json.expiry));
 	newItem.rights = '版权所有 © 全国人大常委会办公厅';
 	newItem.language = 'zh-CN';
 	newItem.url = url;
@@ -280,8 +270,8 @@ var testCases = [
 		"url": "https://flk.npc.gov.cn/detail2.html?MmM5MGU1YmE2NWM2OGNmNzAxNjdmMjlkMGU2MDRlYzQ%3D",
 		"items": [
 			{
-				"itemType": "report",
-				"title": "最高人民法院关于适用《中华人民共和国行政诉讼法》的解释",
+				"itemType": "statute",
+				"nameOfAct": "最高人民法院关于适用《中华人民共和国行政诉讼法》的解释",
 				"creators": [
 					{
 						"firstName": "",
@@ -290,9 +280,9 @@ var testCases = [
 						"fieldMode": 1
 					}
 				],
-				"date": "2018-02-06",
+				"dateEnacted": "2018-02-06",
+				"extra": "appyDate: 2018-02-08",
 				"language": "zh-CN",
-				"libraryCatalog": "flk.npc.gov.cn",
 				"rights": "版权所有 © 全国人大常委会办公厅",
 				"url": "https://flk.npc.gov.cn/detail2.html?MmM5MGU1YmE2NWM2OGNmNzAxNjdmMjlkMGU2MDRlYzQ%3D",
 				"attachments": [
