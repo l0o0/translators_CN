@@ -205,7 +205,7 @@ class Labels {
 					? document.createElement('div')
 					: '';
 		}
-		let pattern = new RegExp(label);
+		let pattern = new RegExp(label, 'i');
 		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
 		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
 		return keyValPair
