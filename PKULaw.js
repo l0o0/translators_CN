@@ -2,14 +2,14 @@
 	"translatorID": "27aeafae-3e7c-4ba1-ba93-04727a2922c5",
 	"label": "PKULaw",
 	"creator": "Zeping Lee",
-	"target": "^https?://www\\.pkulaw\\.com/",
+	"target": "^https?://((www|law)\\.)?pkulaw\\.com/",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-04 14:35:15"
+	"lastUpdated": "2024-02-11 03:58:53"
 }
 
 /*
@@ -37,21 +37,22 @@
 
 function detectWeb(doc, url) {
 	if (/\/\w+\/\w+/.test(url)) {
-		let curMenu = attr(doc, '#curMenu', 'value');
-		let dbId = attr(doc, '#DbId', 'value');
-		if (curMenu == 'law') {
-			if (dbId == 'protocol') {
-				return 'report';
-			}
+		let currentMenu = attr(doc, '#curMenu', 'value');
+		let databaseID = attr(doc, '#DbId', 'value');
+		// 草案及其说明采用report，详见https://github.com/l0o0/translators_CN/pull/134#issuecomment-1296059381
+		if (['protocol'].includes(databaseID)) {
+			return 'report';
+		}
+		else if (['law', 'china'].includes(currentMenu)) {
 			return 'statute';
 		}
-		else if (curMenu == 'english' && dbId == 'en_law') {
+		else if (currentMenu == 'english' && databaseID == 'en_law') {
 			return 'statute';
 		}
-		else if (curMenu == 'case') {
+		else if (currentMenu == 'case') {
 			return 'case';
 		}
-		else if (curMenu == 'journal') return 'journalArticle';
+		else if (currentMenu == 'journal') return 'journalArticle';
 	}
 	else if (getSearchResults(doc, true)) {
 		return 'multiple';
@@ -90,21 +91,24 @@ async function doWeb(doc, url) {
 async function scrape(doc, url = doc.location.href) {
 	var newItem = new Z.Item(detectWeb(doc, url));
 	newItem.extra = '';
-	const labels = new Labels(doc, '.fields li > .box');
+	let currentMenu = attr(doc, '#curMenu', 'value');
+	let databaseID = attr(doc, '#DbId', 'value');
+	const labels = url.includes('law.pkulaw')
+		? new Labels(doc, '.fields li')
+		: new Labels(doc, '.fields li > .box');
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	// Zotero 要求用于 CSL 的额外字段信息填在 `Extra` 的最前面，所以分开存储
 	let extraFields = {};
 	let extraContents = {};
 	let matches = text(doc, '.info').match(/[[【](.+)[】\]]\s*([0-9A-Z.()]+)/);
 	extraContents[matches[1]] = matches[2];
-	const dbId = attr(doc, '#DbId', 'value');
-	Z.debug(dbId);
+	Z.debug(databaseID);
 	extraFields.Type = {
 		lar: 'regulation',
 		eagn: 'treaty'
-	}[dbId];
+	}[databaseID];
 	let title = pureText(doc.querySelector('h2.title'));
-	if (attr(doc, '#curMenu', 'value') == 'english') {
+	if (currentMenu == 'english') {
 		newItem.language = 'en-US';
 		extraFields['original-title'] = text(doc, 'a > h2.title').replace(/\(/g, '（').replace(/\)/g, '）');
 	}
@@ -125,7 +129,7 @@ async function scrape(doc, url = doc.location.href) {
 		title = title.replace(/\(/g, '（').replace(/\)/g, '）');
 	}
 	newItem.libraryCatalog = '北大法宝';
-	newItem.url = url.replace(/[?#].*/, '');
+	newItem.url = tryMatch(url, /^.+?html/);
 	switch (newItem.itemType) {
 		case 'statute': {
 			newItem.nameOfAct = title;
@@ -157,8 +161,9 @@ async function scrape(doc, url = doc.location.href) {
 		case 'report':
 			newItem.title = title;
 			newItem.date = labels.getWith('公布日期').replace(/\./g, '-');
-			labels.getWith(['制定机关', '发布部门', 'IssuingAuthority'], true).querySelectorAll('a:first-child').forEach(element => newItem.creators.push(processName(element.textContent))
-			);
+			labels.getWith(['制定机关', '发布部门', 'IssuingAuthority'], true).querySelectorAll('a:first-child').forEach((element) => {
+				newItem.creators.push(processName(element.textContent));
+			});
 			extraFields['event-title'] = tryMatch(text(doc, '#divFullText'), /第.*?届.*?第.*?次.*?会议/);
 			break;
 		case 'case': {
@@ -186,9 +191,12 @@ async function scrape(doc, url = doc.location.href) {
 			else if (!title.endsWith('裁决书')) {
 				extraFields.Genre = '民事判决书';
 			}
-			labels.getWith('发布部门', true).querySelectorAll('span').forEach(element => newItem.creators.push(processName(element.textContent))
-			);
-			labels.getWith('权责关键词', true).querySelectorAll('a').forEach(element => newItem.tags.push(element.textContent));
+			labels.getWith('发布部门', true).querySelectorAll('span').forEach((element) => {
+				newItem.creators.push(processName(element.textContent));
+			});
+			labels.getWith('权责关键词', true).querySelectorAll('a').forEach((element) => {
+				newItem.tags.push(element.textContent);
+			});
 			break;
 		}
 		case 'journalArticle':
@@ -198,19 +206,22 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.issue = labels.getWith('期号');
 			newItem.pages = labels.getWith('页码');
 			newItem.date = labels.getWith('期刊年份');
-			labels.getWith('作者', true).querySelectorAll('a').forEach(element => newItem.creators.push(processName(element.textContent))
-			);
-			labels.getWith('关键词', true).querySelectorAll('a').forEach(element => newItem.tags.push(element.textContent)
-			);
-			break;
-		default:
+			labels.getWith('作者', true).querySelectorAll('a').forEach((element) => {
+				newItem.creators.push(processName(element.textContent));
+			});
+			labels.getWith('关键词', true).querySelectorAll('a').forEach((element) => {
+				newItem.tags.push(element.textContent);
+			});
 			break;
 	}
-	extraFields = Object.assign(extraFields, extraContents);
 	newItem.extra = Object.entries(extraFields)
 		.filter(entry => entry[1])
 		.map(entry => `${entry[0]}: ${entry[1]}`)
-		.join('\n');
+		.join('\n')
+		+ Object.entries(extraContents)
+			.filter(entry => entry[1])
+			.map(entry => `${entry[0]}: ${entry[1]}`)
+			.join('\n');
 	newItem.attachments.push({
 		title: 'Snapshot',
 		document: doc
@@ -285,7 +296,7 @@ function tryMatch(string, pattern, index = 0) {
 var testCases = [
 	{
 		"type": "web",
-		"url": "https://www.pkulaw.com/chl/3ae7651e2659029abdfb.html",
+		"url": "https://law.pkulaw.com/chinalaw/3ae7651e2659029abdfb.html",
 		"items": [
 			{
 				"itemType": "statute",
@@ -303,7 +314,7 @@ var testCases = [
 				"language": "zh-CN",
 				"publicLawNumber": "中华人民共和国主席令第80号",
 				"shortTitle": "刑法修正案（十）",
-				"url": "https://www.pkulaw.com/chl/3ae7651e2659029abdfb.html",
+				"url": "https://law.pkulaw.com/chinalaw/3ae7651e2659029abdfb.html",
 				"attachments": [
 					{
 						"title": "Snapshot",
@@ -318,7 +329,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://www.pkulaw.com/chl/e54c465cca59c137bdfb.html",
+		"url": "https://pkulaw.com/chl/e54c465cca59c137bdfb.html",
 		"items": [
 			{
 				"itemType": "statute",
@@ -332,11 +343,11 @@ var testCases = [
 					}
 				],
 				"dateEnacted": "2005-10-27",
-				"extra": "Edition: 2005年修订\n法宝引证码: CLI.1.60597",
+				"extra": "Edition: 2005年修订法宝引证码: CLI.1.60597",
 				"language": "zh-CN",
 				"publicLawNumber": "中华人民共和国主席令第42号",
 				"shortTitle": "公司法",
-				"url": "https://www.pkulaw.com/chl/e54c465cca59c137bdfb.html",
+				"url": "https://pkulaw.com/chl/e54c465cca59c137bdfb.html",
 				"attachments": [
 					{
 						"title": "Snapshot",
