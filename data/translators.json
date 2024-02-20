@@ -19,9 +19,33 @@
         "label": "全国报刊索引",
         "lastUpdated": "2023-12-15 18:58:08"
     },
+    "CNKI CHKD.js": {
+        "label": "中国医院知识总库",
+        "lastUpdated": "2024-02-08 15:30:54"
+    },
+    "CNKI Industry.js": {
+        "label": "中国知网行业知识服务平台",
+        "lastUpdated": "2024-01-31 16:26:32"
+    },
+    "CNKI RefWorks.js": {
+        "label": "中国知网RefWorks导出格式",
+        "lastUpdated": "2024-02-07 12:35:49"
+    },
+    "CNKI Refer.js": {
+        "label": "中国知网Endote导出格式",
+        "lastUpdated": "2024-02-08 13:58:51"
+    },
+    "CNKI Scholar.js": {
+        "label": "中国知网外文总库",
+        "lastUpdated": "2024-02-08 12:05:58"
+    },
+    "CNKI thinker.js": {
+        "label": "中国知网心可图书馆",
+        "lastUpdated": "2024-01-28 16:03:07"
+    },
     "CNKI.js": {
         "label": "中国知网",
-        "lastUpdated": "2024-02-06 12:41:35"
+        "lastUpdated": "2024-02-20 23:05:03"
     },
     "China Judgements Online.js": {
         "label": "中国裁判文书网",
