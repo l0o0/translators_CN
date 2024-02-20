@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-09 08:49:08"
+	"lastUpdated": "2024-02-20 23:05:03"
 }
 
 /*
@@ -231,7 +231,7 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug("---------------- CNKI 2024-02-09 15:00:42 ------------------");
+	Z.debug("---------------- CNKI 2024-02-21 07:05:01 ------------------");
 	let ids = new ID(doc, url);
 	Z.debug('detect ids:');
 	Z.debug(ids);
@@ -356,7 +356,7 @@ function getSearchResults(doc, url, checkOnly) {
 		{
 			isMatch: /.*/i.test(url),
 			row: 'table.result-table-list tbody tr',
-			a: 'td.name > a',
+			a: 'td.name a',
 			cite: 'td.quote',
 			download: 'td.download'
 		}
@@ -441,8 +441,8 @@ async function scrapeMulti(items) {
 	for (let key in items) {
 		let itemKey = JSON.parse(key);
 		try {
-		// During debugging, may manually throw an error to guide the program to run inward
-		// throw new Error('debug');
+			// During debugging, may manually throw an error to guide the program to run inward
+			// throw new Error('debug');
 			let doc = await requestDocument(itemKey.url);
 			// CAPTCHA
 			if (doc.querySelector('#verify_pic')) {
@@ -779,7 +779,7 @@ async function scrapeDoc(doc, itemKey) {
 	/* tags */
 	let tags = [
 		Array.from(doc.querySelectorAll('.keywords > a')).map(element => ZU.trimInternal(element.textContent).replace(/[，；,;]$/, '')),
-		labels.getWith(['关键词', 'keywords']).split(/[;，；]\s*/)
+		labels.getWith(['关键词', '關鍵詞', 'keywords']).split(/[;，；]\s*/)
 	].find(arr => arr.length);
 	if (tags) newItem.tags = tags;
 
@@ -790,7 +790,7 @@ async function scrapeDoc(doc, itemKey) {
 			newItem.publicationTitle = tryMatch(pubInfo, /^(.+?)\./, 1).replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
 			newItem.volume = tryMatch(pubInfo, /0*([1-9]\d*)\(/, 1);
 			newItem.issue = tryMatch(pubInfo, /\([A-Z]?0*([1-9]\d*)\)/, 1);
-			newItem.pages = labels.getWith(['页码', 'Page$']);
+			newItem.pages = labels.getWith(['页码', '頁碼', 'Page$']);
 			newItem.date = tryMatch(pubInfo, /\.\s?(\d{4})/, 1);
 			break;
 		}
@@ -809,57 +809,57 @@ async function scrapeDoc(doc, itemKey) {
 				}[ids.dbcode];
 			let pubInfo = labels.getWith('出版信息');
 			newItem.date = ZU.strToISO(pubInfo);
-			newItem.numPages = labels.getWith(['页数', 'Page']);
-			labels.getWith(['导师', 'Tutor']).split(/[;，；]\s*/).forEach((supervisor) => {
+			newItem.numPages = labels.getWith(['页数', '頁數', 'Page']);
+			labels.getWith(['导师', '導師', 'Tutor']).split(/[;，；]\s*/).forEach((supervisor) => {
 				newItem.creators.push(cleanName(ZU.trimInternal(supervisor), 'translator'));
 			});
-			extra.add('major', labels.getWith(['学科专业', 'Retraction']));
+			extra.add('major', labels.getWith(['学科专业', '學科專業', 'Retraction']));
 			break;
 		}
 		case 'conferencePaper': {
 			newItem.abstractNote = labels.getWith(['摘要', 'Abstract']).replace(/^[〈⟨<＜]正[＞>⟩〉]/, '');
-			newItem.date = ZU.strToISO(labels.getWith(['会议时间', 'ConferenceTime']));
+			newItem.date = ZU.strToISO(labels.getWith(['会议时间', '會議時間', 'ConferenceTime']));
 			newItem.proceedingsTitle = attr(doc, '.top-tip > span:first-child', 'title');
-			newItem.conferenceName = labels.getWith(['会议名称', 'ConferenceName']);
-			newItem.place = labels.getWith(['会议地点', 'ConferencePlace']);
-			newItem.pages = labels.getWith(['页码', 'Page$']);
+			newItem.conferenceName = labels.getWith(['会议名称', '會議名稱', 'ConferenceName']);
+			newItem.place = labels.getWith(['会议地点', '會議地點', 'ConferencePlace']);
+			newItem.pages = labels.getWith(['页码', '頁碼', 'Page$']);
 			break;
 		}
 		case 'newspaperArticle':
 			newItem.abstractNote = text(doc, '.abstract-text');
 			newItem.publicationTitle = text(doc, '.top-tip > a');
-			newItem.date = ZU.strToISO(labels.getWith(['报纸日期', 'NewspaperDate']));
-			newItem.pages = labels.getWith(['版号', 'EditionCode']);
+			newItem.date = ZU.strToISO(labels.getWith(['报纸日期', '報紙日期', 'NewspaperDate']));
+			newItem.pages = labels.getWith(['版号', '版號', 'EditionCode']);
 			break;
 		case 'bookSection':
 			newItem.bookTitle = text(doc, '.book-info .book-tit');
 			newItem.date = tryMatch(labels.getWith(['来源年鉴', 'SourceYearbook']), /\d{4}/);
-			newItem.pages = labels.getWith(['页码', 'Page$']);
-			newItem.creators = labels.getWith(['责任说明', 'Statementofresponsibility'])
+			newItem.pages = labels.getWith(['页码', '頁碼', 'Page$']);
+			newItem.creators = labels.getWith(['责任说明', '責任說明', 'Statementofresponsibility'])
 				.replace(/\s*([主]?编|Editor)$/, '')
 				.split(/[,;，；]/)
 				.map(creator => cleanName(creator, 'author'));
 			break;
 		case 'report':
-			newItem.abstractNote = labels.getWith('成果简介');
+			newItem.abstractNote = labels.getWith(['成果简介', '成果簡介']);
 			newItem.creators = labels.getWith('成果完成人').split(/[,;，；]/).map(creator => cleanName(creator, 'author'));
-			newItem.date = labels.getWith('入库时间');
-			newItem.institution = labels.getWith('第一完成单位');
-			extra.add('achievementType', labels.getWith('成果类别'));
+			newItem.date = labels.getWith(['入库时间', '入庫時間']);
+			newItem.institution = labels.getWith(['第一完成单位', '第一完成單位']);
+			extra.add('achievementType', labels.getWith(['成果类别', '成果類別']));
 			extra.add('level', labels.getWith('成果水平'));
-			extra.add('evaluation', labels.getWith('评价形式'));
+			extra.add('evaluation', labels.getWith(['评价形式', '評價形式']));
 			break;
 		case 'standard':
-			newItem.number = labels.getWith(['标准号', 'StandardNo']);
+			newItem.number = labels.getWith(['标准号', '標準號', 'StandardNo']);
 			if (newItem.number.startsWith('GB')) {
 				newItem.number = newItem.number.replace('-', '——');
 				newItem.title = newItem.title.replace(/([\u4e00-\u9fff]) ([\u4e00-\u9fff])/, '$1　$2');
 			}
 			newItem.status = text(doc, 'h1 > .type');
-			newItem.date = labels.getWith(['发布日期', 'IssuanceDate']);
-			newItem.numPages = labels.getWith(['总页数', 'TotalPages']);
+			newItem.date = labels.getWith(['发布日期', '發佈日期', 'IssuanceDate']);
+			newItem.numPages = labels.getWith(['总页数', '總頁數', 'TotalPages']);
 			extra.add('original-title', text(doc, 'h1 > span'));
-			newItem.creators = labels.getWith(['标准技术委员会', '归口单位', 'StandardTechnicalCommittee'])
+			newItem.creators = labels.getWith(['标准技术委员会', '归口单位', '技術標準委員會', '歸口單位', 'StandardTechnicalCommittee'])
 				.split(/[;，；、]/)
 				.map(creator => ({
 					firstName: '',
@@ -867,27 +867,27 @@ async function scrapeDoc(doc, itemKey) {
 					creatorType: 'author',
 					fieldMode: 1
 				}));
-			extra.add('applyDate', labels.getWith('实施日期'), true);
+			extra.add('applyDate', labels.getWith(['实施日期', '實施日期']), true);
 			break;
 		case 'patent':
-			newItem.patentNumber = labels.getWith(['申请公布号', 'PublicationNo']);
-			newItem.applicationNumber = labels.getWith(['申请\\(专利\\)号', 'ApplicationNumber']);
+			newItem.patentNumber = labels.getWith(['申请公布号', '申請公佈號', 'PublicationNo']);
+			newItem.applicationNumber = labels.getWith(['申请\\(专利\\)号', '申請\\(專利\\)號', 'ApplicationNumber']);
 			newItem.place = newItem.country = patentCountry(newItem.patentNumber || newItem.applicationNumber);
-			newItem.filingDate = labels.getWith(['申请日', 'ApplicationDate']);
-			newItem.issueDate = labels.getWith(['授权公告日', 'IssuanceDate']);
+			newItem.filingDate = labels.getWith(['申请日', '申請日', 'ApplicationDate']);
+			newItem.issueDate = labels.getWith(['授权公告日', '授權公告日', 'IssuanceDate']);
 			newItem.rights = text(doc, '.claim > h5 + div');
-			extra.add('Genre', labels.getWith('专利类型'), true);
-			labels.getWith(['发明人', 'Inventor'])
+			extra.add('Genre', labels.getWith(['专利类型', '專利類型']), true);
+			labels.getWith(['发明人', '發明人', 'Inventor'])
 				.split(/[;，；]\s*/)
 				.forEach((inventor) => {
 					newItem.creators.push(cleanName(ZU.trimInternal(inventor), 'inventor'));
 				});
 			break;
 		case 'videoRecording':
-			newItem.abstractNote = labels.getWith('视频简介').replace(/\s*更多还原$/, '');
-			newItem.runningTime = labels.getWith('时长');
-			newItem.date = ZU.strToISO(labels.getWith('发布时间'));
-			extra.add('organizer', labels.getWith('主办单位'), true);
+			newItem.abstractNote = labels.getWith(['视频简介', '視頻簡介']).replace(/\s*更多还原$/, '');
+			newItem.runningTime = labels.getWith(['时长', '時長']);
+			newItem.date = ZU.strToISO(labels.getWith(['发布时间', '發佈時間']));
+			extra.add('organizer', labels.getWith(['主办单位', '主辦單位']), true);
 			doc.querySelectorAll('h3:first-of-type > span').forEach((element) => {
 				newItem.creators.push(cleanName(ZU.trimInternal(element.textContent), 'author'));
 			});
@@ -909,9 +909,9 @@ async function scrapeDoc(doc, itemKey) {
 
 	/* extra */
 	extra.add('foundation', labels.getWith('基金'));
-	extra.add('download', labels.getWith(['下载', 'Download']) || itemKey.download);
-	extra.add('album', labels.getWith(['专辑', 'Series']));
-	extra.add('CLC', labels.getWith(['分类号', 'ClassificationCode']));
+	extra.add('download', labels.getWith(['下载', '下載', 'Download']) || itemKey.download);
+	extra.add('album', labels.getWith(['专辑', '專輯', 'Series']));
+	extra.add('CLC', labels.getWith(['分类号', '分類號', 'ClassificationCode']));
 	extra.add('CNKICite', itemKey.cite || attr(doc, '#paramcitingtimes', 'value') || text(doc, '#citations+span').substring(1, -1));
 	await addPubDetail(newItem, ids, doc);
 	newItem.extra = extra.toString();
@@ -969,7 +969,7 @@ async function parseRefer(referText, doc, url, itemKey) {
 			if (item.university) {
 				item.university = item.university.replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
 			}
-			extra.add('major', labels.getWith(['学科专业', 'Retraction']));
+			extra.add('major', labels.getWith(['学科专业', '學科專業', 'Retraction']));
 			break;
 		case 'conferencePaper': {
 			if (item.abstractNote) {
@@ -980,30 +980,30 @@ async function parseRefer(referText, doc, url, itemKey) {
 		}
 		case 'newspaperArticle':
 			item.abstractNote = text(doc, '.abstract-text');
-			item.tags = labels.getWith('关键词').split(/[;，；]/);
+			item.tags = labels.getWith(['关键词', '關鍵詞', 'keywords']).split(/[;，；]\s*/);
 			break;
 
 		/* yearbook */
 		case 'bookSection': {
 			item.bookTitle = text(doc, '.book-tit');
-			item.creators = labels.getWith(['责任说明', 'Statementofresponsibility'])
-			.replace(/\s*([主]?编|Editor)$/, '')
-			.split(/[,;，；]/)
-			.map(creator => cleanName(creator, 'author'));
+			item.creators = labels.getWith(['责任说明', '責任說明', 'Statementofresponsibility'])
+				.replace(/\s*([主]?编|Editor)$/, '')
+				.split(/[,;，；]/)
+				.map(creator => cleanName(creator, 'author'));
 			break;
 		}
 		case 'report':
 			item.creators = labels.getWith('成果完成人').split(/[,;，；]/).map(creator => cleanName(creator, 'author'));
-			item.date = labels.getWith('入库时间');
-			item.institution = labels.getWith('第一完成单位');
-			extra.add('achievementType', labels.getWith('成果类别'), true);
+			item.date = labels.getWith(['入库时间', '入庫時間']);
+			item.institution = labels.getWith(['第一完成单位', '第一完成單位']);
+			extra.add('achievementType', labels.getWith(['成果类别', '成果類別']));
 			extra.add('level', labels.getWith('成果水平'));
-			extra.add('evaluation', labels.getWith('评价形式'));
+			extra.add('evaluation', labels.getWith(['评价形式', '評價形式']));
 			break;
 		case 'standard':
-			extra.add('original-title', text(doc, 'h1 > span'), true);
+			extra.add('original-title', text(doc, 'h1 > span'));
 			item.status = text(doc, '.type');
-			item.creators = labels.getWith(['标准技术委员会', '归口单位', 'StandardTechnicalCommittee'])
+			item.creators = labels.getWith(['标准技术委员会', '归口单位', '技術標準委員會', '歸口單位', 'StandardTechnicalCommittee'])
 				.split(/[;，；、]/)
 				.map(creator => ({
 					firstName: '',
@@ -1011,21 +1011,21 @@ async function parseRefer(referText, doc, url, itemKey) {
 					creatorType: 'author',
 					fieldMode: 1
 				}));
-			extra.add('applyDate', labels.getWith('实施日期'), true);
+			extra.add('applyDate', labels.getWith(['实施日期', '實施日期']), true);
 			break;
 		case 'patent':
 			// item.place = labels.getWith('地址');
-			item.filingDate = labels.getWith(['申请日', 'ApplicationDate']);
-			item.applicationNumber = labels.getWith(['申请\\(专利\\)号', 'ApplicationNumber']);
-			item.issueDate = labels.getWith(['授权公告日', 'IssuanceDate']);
+			item.filingDate = labels.getWith(['申请日', '申請日', 'ApplicationDate']);
+			item.applicationNumber = labels.getWith(['申请\\(专利\\)号', '申請\\(專利\\)號', 'ApplicationNumber']);
+			item.issueDate = labels.getWith(['授权公告日', '授權公告日', 'IssuanceDate']);
 			item.rights = text(doc, '.claim > h5 + div');
 			break;
 	}
 	item.language = ids.toLanguage();
 	extra.add('foundation', labels.getWith('基金'));
-	extra.add('download', labels.getWith('下载') || itemKey.download);
-	extra.add('album', labels.getWith('专辑'));
-	extra.add('CLC', labels.getWith('分类号'));
+	extra.add('download', labels.getWith(['下载', '下載', 'Download']) || itemKey.download);
+	extra.add('album', labels.getWith(['专辑', '專輯', 'Series']));
+	extra.add('CLC', labels.getWith(['分类号', '分類號', 'ClassificationCode']));
 	extra.add('CNKICite', itemKey.cite || attr(doc, '#paramcitingtimes', 'value') || text(doc, '#citations+span').substring(1, -1));
 	await addPubDetail(item, ids, doc);
 	item.extra = extra.toString(item.extra);
@@ -1149,29 +1149,44 @@ async function addPubDetail(item, ids, doc) {
 		}
 		switch (item.itemType) {
 			case 'journalArticle': {
-				let url = doc.querySelector('.top-tip > :first-child > a').href;
+				let url = inMainland
+					? doc.querySelector('.top-tip > :first-child > a').href
+					: attr(doc, '.top-tip > :first-child > a', 'onclick').replace(
+						/^.+\('(.+?)',\s*'(.+?)'\).*$/,
+						doc.querySelector('.logo > a, a.cnki-logo').href + 'KNavi/JournalDetail?pcode=$1&pykm=$2'
+					);
+				Z.debug(url);
 				pubDoc = await requestDocument(url);
 				break;
 			}
 			case 'conferencePaper': {
-				let url = doc.querySelector('.top-tip > :first-child > a').href;
-				let id = attr(
-					await requestDocument(
-						'https://navi.cnki.net/knavi/conferences/proceedings/catalog'
-						// “论文集”code
-						+ `?lwjcode=${tryMatch(url, /\/proceedings\/(\w+)\//, 1)}`
-						// “会议”code
-						+ `&hycode=${tryMatch(url, /conferences\/(\w+)\//, 1)}`
-						+ `&pIdx=0`
-					),
-					'li[id]',
-					'id'
-				);
-				pubDoc = await requestDocument(
-					'https://navi.cnki.net/knavi/conferences/baseinfo'
-					+ `?lwjcode=${id}`
-					+ '&pIdx=0'
-				);
+				let url = '';
+				if (inMainland) {
+					url = doc.querySelector('.top-tip > :first-child > a').href;
+					let id = attr(
+						await requestDocument(
+							'https://navi.cnki.net/knavi/conferences/proceedings/catalog'
+							// “论文集”code
+							+ `?lwjcode=${tryMatch(url, /\/proceedings\/(\w+)\//, 1)}`
+							// “会议”code
+							+ `&hycode=${tryMatch(url, /conferences\/(\w+)\//, 1)}`
+							+ `&pIdx=0`
+						),
+						'li[id]',
+						'id'
+					);
+					url = 'https://navi.cnki.net/knavi/conferences/baseinfo'
+						+ `?lwjcode=${id}`
+						+ '&pIdx=0';
+				}
+				else {
+					url = attr(doc, '.top-tip > :first-child > a', 'onclick').replace(
+						/^.+\('(.+?)',\s*'(.+?)'\).*$/,
+						doc.querySelector('.logo > a, a.cnki-logo').href + 'knavi/DpaperDetail/CreateDPaperBaseInfo?pcode=$1&lwjcode=$2&pIdx=0'
+					);
+				}
+				Z.debug(url);
+				pubDoc = await requestDocument(url);
 				break;
 			}
 			case 'bookSection': {
@@ -1214,7 +1229,7 @@ async function addPubDetail(item, ids, doc) {
 						? result
 						: '';
 				}
-				let pattern = new RegExp(label);
+				let pattern = new RegExp(label, 'i');
 				let keyValPair = this.innerData.find(arr => pattern.test(arr[0]));
 				return keyValPair
 					? ZU.trimInternal(keyValPair[1])
@@ -1234,8 +1249,8 @@ async function addPubDetail(item, ids, doc) {
 			}
 			case 'conferencePaper':
 				item.publisher = container.getWith('出版单位');
-				item.date = ZU.strToISO(container.getWith('出版时间'));
-				container.getWith('编者').split('、').forEach(creator => item.creators.push({
+				item.date = ZU.strToISO(container.getWith(['出版时间', '出版日期', 'PublishingDate']));
+				container.getWith(['编者', '編者', 'Editor']).split('、').forEach(creator => item.creators.push({
 					firstName: '',
 					lastName: creator.replace(/\(.*?\)$/, ''),
 					creatorType: 'editor',
@@ -1394,8 +1409,9 @@ var testCases = [
 					}
 				],
 				"date": "2020",
+				"ISSN": "0258-4646",
 				"abstractNote": "目的利用生物信息学方法探索2型糖尿病发病的相关基因,并研究这些基因与阿尔茨海默病的关系。方法基因表达汇编(GEO)数据库下载GSE85192、GSE95849、GSE97760、GSE85426数据集,获得健康人和2型糖尿病患者外周血的差异基因,利用加权基因共表达网络(WGCNA)分析差异基因和临床性状的关系。使用DAVID数据库分析与2型糖尿病有关的差异基因的功能与相关通路,筛选关键蛋白。根据结果将Toll样受体4 (TLR4)作为关键基因,利用基因集富集分析(GSEA)分析GSE97760中与高表达TLR4基因相关的信号通路。通过GSE85426验证TLR4的表达量。结果富集分析显示,差异基因主要参与的生物学过程包括炎症反应、Toll样受体(TLR)信号通路、趋化因子产生的正向调节等。差异基因主要参与的信号通路有嘧啶代谢通路、TLR信号通路等。ILF2、TLR4、POLR2G、MMP9为2型糖尿病的关键基因。GSEA显示,TLR4上调可通过影响嘧啶代谢及TLR信号通路而导致2型糖尿病及阿尔茨海默病的发生。TLR4在阿尔茨海默病外周血中高表达。结论 ILF2、TLR4、POLR2G、MMP9为2型糖尿病发病的关键基因,TLR4基因上调与2型糖尿病、阿尔茨海默病发生有关。",
-				"extra": "album: 医药卫生科技\nCLC: R587.2;R749.16",
+				"extra": "original-container-title: Journal of China Medical University\ndownload: 397\nalbum: 医药卫生科技\nCLC: R587.2;R749.16\nCNKICite: 3\nCIF: 1.156\nAIF: 0.890",
 				"issue": "12",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
@@ -1424,6 +1440,137 @@ var testCases = [
 					},
 					{
 						"tag": "阿尔茨海默病"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://tra.oversea.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFD&dbname=CJFD2012&filename=QHXB201211002&uniplatform=OVERSEA&v=mHFRnExWYa4LFz1M_R-EDbznu38HtcptZz-0EYf-ysFH9PFH41FafXUWtfsSr6o7",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "互聯網藥品可信交易環境中主體資質審核備案模式",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "于瀟",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "劉義",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "柴躍廷",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "孫宏波",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2012",
+				"ISSN": "1000-0054",
+				"abstractNote": "經濟全球化和新一輪產業升級為電子商務服務產業發展帶來了新的機遇和挑戰。無法全程、及時、有效監管電子商務市場的主體及其相關行為是電子商務發展過程中面臨的主要問題。尤其對于互聯網藥品市場,電子商務主體資質的審核備案是營造電子商務可信交易環境的一項重要工作。該文通過系統網絡結構分析的方法描述了公共審核備案服務模式和分立審核備案模式的基本原理;建立了兩種模式下的總體交易費用模型,分析了公共模式比分立模式節約總體交易費用的充要條件,以及推廣該公共模式的必要條件。研究發現:市場規模越大、集成成本越小,公共模式越容易推廣。應用案例分析驗證了模型,證實了公共審核備案服務模式節約了總體交易費用的結論。",
+				"extra": "original-container-title: Journal of Tsinghua University(Science and Technology)\ndownload: 593\nalbum: 理工C(機電航空交通水利建筑能源); 醫藥衛生科技; 經濟與管理科學\nCLC: R95;F724.6\nCNKICite: 7\nCIF: 3.010\nAIF: 1.884",
+				"issue": "11",
+				"language": "zh-CN",
+				"libraryCatalog": "CNKI",
+				"pages": "1518-1523",
+				"publicationTitle": "清華大學學報（自然科學版）",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFD&dbname=CJFD2012&filename=qhxb201211002",
+				"volume": "52",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					}
+				],
+				"tags": [
+					{
+						"tag": "互聯網藥品交易"
+					},
+					{
+						"tag": "交易主體"
+					},
+					{
+						"tag": "可信交易環境"
+					},
+					{
+						"tag": "資質審核備案"
+					},
+					{
+						"tag": "電子商務"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://cnki.net/KCMS/detail/detail.aspx?dbcode=CPFD&dbname=CPFDLAST2017&filename=ZGPX201612002005&uniplatform=OVERSEA&v=wsSg9cXy6pQW_7zGbUyb2yxqQmW7T_GRYnF8Oqi5Eh1a2V96_8YUJdYPGMwq80tTlFps8uiX4AU%3d",
+		"items": [
+			{
+				"itemType": "conferencePaper",
+				"title": "大型铁路运输企业职工教育培训体系的构建与实施——以北京铁路局为例",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "任娜",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "中国职工教育和职业培训协会秘书处",
+						"creatorType": "editor",
+						"fieldMode": 1
+					}
+				],
+				"date": "2016-12",
+				"abstractNote": "北京铁路局是以铁路客货运输为主的特大型国有企业,是全国铁路网的中枢。全局共有职工19.1万人,管内铁路营业里程全长6246公里,其中高速铁路营业里程为1143.3公里。近年来,北京铁路局始终坚持\"主要行车工种做实、高技能人才做精、工班长队伍做强\"工作主线,积极构建并实施由教育培训规范、教育培训组织管理、实训基地及现代化设施、专兼职教育培训师资、",
+				"extra": "download: 71\nalbum: (H) Education ＆ Social Sciences\nCLC: G726\nCNKICite: 0",
+				"language": "zh-CN",
+				"libraryCatalog": "CNKI",
+				"pages": "8",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CPFD&dbname=CPFDLAST2017&filename=zgpx201612002005",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					}
+				],
+				"tags": [
+					{
+						"tag": "教育培训体系"
+					},
+					{
+						"tag": "教育培训激励"
+					},
+					{
+						"tag": "构建与实施"
+					},
+					{
+						"tag": "职工教育培训"
+					},
+					{
+						"tag": "铁路局"
+					},
+					{
+						"tag": "铁路运输企业"
 					}
 				],
 				"notes": [],
