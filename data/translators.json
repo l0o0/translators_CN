@@ -111,10 +111,6 @@
         "label": "国家哲学社会科学文献中心",
         "lastUpdated": "2024-02-10 13:18:05"
     },
-    "Nlc.cn.js": {
-        "label": "国图-中国标准在线服务网",
-        "lastUpdated": "2020-12-28 03:38:46"
-    },
     "PKULaw.js": {
         "label": "北大法宝",
         "lastUpdated": "2024-02-21 08:47:40"
@@ -178,6 +174,10 @@
     "Spc.org.cn.js": {
         "label": "中国标准在线服务网",
         "lastUpdated": "2024-01-03 07:22:12"
+    },
+    "Standard Full-text Database - NLC.js": {
+        "label": "国家图书馆标准全文数据库",
+        "lastUpdated": "2024-01-16 16:33:47"
     },
     "SuperLib.js": {
         "label": "全国图书馆联盟",
