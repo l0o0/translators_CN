@@ -2,14 +2,14 @@
 	"translatorID": "5c95b67b-41c5-4f55-b71a-48d5d7183063",
 	"label": "CNKI",
 	"creator": "Aurimas Vinckevicius, Xingzhong Lin, jiaojiaodubai",
-	"target": "https?://.*?cnki\\.net/(kns8?s?|kcms2?|KNavi|KX?Reader)",
+	"target": "https?://.*?(cnki\\.net)?/(kns8?s?|kcms2?|KNavi|KX?Reader)",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 150,
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-21 10:51:22"
+	"lastUpdated": "2024-02-21 11:35:17"
 }
 
 /*
