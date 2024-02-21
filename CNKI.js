@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-20 23:05:03"
+	"lastUpdated": "2024-02-21 10:51:22"
 }
 
 /*
@@ -811,7 +811,7 @@ async function scrapeDoc(doc, itemKey) {
 			newItem.date = ZU.strToISO(pubInfo);
 			newItem.numPages = labels.getWith(['页数', '頁數', 'Page']);
 			labels.getWith(['导师', '導師', 'Tutor']).split(/[;，；]\s*/).forEach((supervisor) => {
-				newItem.creators.push(cleanName(ZU.trimInternal(supervisor), 'translator'));
+				newItem.creators.push(cleanName(ZU.trimInternal(supervisor), 'contributor'));
 			});
 			extra.add('major', labels.getWith(['学科专业', '學科專業', 'Retraction']));
 			break;
