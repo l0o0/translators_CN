@@ -35,6 +35,7 @@ jobs:
         git status
         echo ${{ env.counts }}
         git add data/translators.json
+        git add data/data.json
         git commit -m 'update translator metadata'
         git push
     - uses: wearerequired/git-mirror-action@master #开源actions包
