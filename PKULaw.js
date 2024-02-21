@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-11 03:58:53"
+	"lastUpdated": "2024-02-21 08:47:40"
 }
 
 /*
@@ -63,7 +63,7 @@ function detectWeb(doc, url) {
 function getSearchResults(doc, checkOnly) {
 	var items = {};
 	var found = false;
-	var rows = doc.querySelectorAll('.item h4 > a');
+	var rows = doc.querySelectorAll('.item h4 > a,li h4 > a');
 	for (let row of rows) {
 		let href = row.href;
 		let title = ZU.trimInternal(row.textContent);
