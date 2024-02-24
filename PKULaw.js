@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-21 08:47:40"
+	"lastUpdated": "2024-02-24 11:19:15"
 }
 
 /*
@@ -90,27 +90,21 @@ async function doWeb(doc, url) {
 
 async function scrape(doc, url = doc.location.href) {
 	var newItem = new Z.Item(detectWeb(doc, url));
-	newItem.extra = '';
 	let currentMenu = attr(doc, '#curMenu', 'value');
 	let databaseID = attr(doc, '#DbId', 'value');
 	const labels = url.includes('law.pkulaw')
 		? new Labels(doc, '.fields li')
 		: new Labels(doc, '.fields li > .box');
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
-	// Zotero 要求用于 CSL 的额外字段信息填在 `Extra` 的最前面，所以分开存储
-	let extraFields = {};
-	let extraContents = {};
+	let extra = new Extra();
 	let matches = text(doc, '.info').match(/[[【](.+)[】\]]\s*([0-9A-Z.()]+)/);
-	extraContents[matches[1]] = matches[2];
+	extra.set(matches[1], matches[2]);
 	Z.debug(databaseID);
-	extraFields.Type = {
-		lar: 'regulation',
-		eagn: 'treaty'
-	}[databaseID];
+	extra.set('Type', { lar: 'regulation', eagn: 'treaty' }[databaseID], true);
 	let title = pureText(doc.querySelector('h2.title'));
 	if (currentMenu == 'english') {
 		newItem.language = 'en-US';
-		extraFields['original-title'] = text(doc, 'a > h2.title').replace(/\(/g, '（').replace(/\)/g, '）');
+		extra.set('original-title', text(doc, 'a > h2.title').replace(/\(/g, '（').replace(/\)/g, '）'), true);
 	}
 	else {
 		newItem.language = 'zh-CN';
@@ -120,10 +114,10 @@ async function scrape(doc, url = doc.location.href) {
 			if (edition.match(/^\d+/)) {
 				title = matched[1];
 				// 中华人民共和国公司法(2005修订)
-				extraFields.Edition = edition.replace(/^(\d+)年?\s*(.*)/, '$1年$2');
+				extra.set('Edition', edition.replace(/^(\d+)年?\s*(.*)/, '$1年$2'), true);
 			}
 		}
-		if (extraFields.Type != 'treaty') {
+		if (extra.get('Type') != 'treaty') {
 			newItem.shortTitle = title.replace(/^中华人民共和国/, '').replace(/\(/g, '（').replace(/\)/g, '）');
 		}
 		title = title.replace(/\(/g, '（').replace(/\)/g, '）');
@@ -143,13 +137,14 @@ async function scrape(doc, url = doc.location.href) {
 			// newItem.section = 条文序号;
 			// newItem.history = 历史;
 			if (labels.getWith('时效性') == '失效') {
-				extraFields.Status = '已废止';
+				extra.set('Status', '已废止', true);
 			}
 			let rank = labels.getWith(['效力位阶', 'LevelofAuthority']);
 			if (!/(法律)|(Law)/i.test(rank)) {
-				extraFields.Type = extraFields.Type || 'regulation';
+				extra.set('Type', extra.get('Type') || 'regulation', true);
 			}
-			else if (['有关法律问题和重大问题的决定', '党内法规制度'].includes(rank)) {
+			if (['有关法律问题和重大问题的决定', '党内法规制度'].includes(rank)) {
+				Z.debug(rank);
 				newItem.session = tryMatch(text(doc, '#divFullText'), /(中国共产党)?第.*?届.*?第.*?次.*?会议/);
 			}
 			labels.getWith(['制定机关', '发布部门', 'IssuingAuthority'], true)
@@ -164,16 +159,16 @@ async function scrape(doc, url = doc.location.href) {
 			labels.getWith(['制定机关', '发布部门', 'IssuingAuthority'], true).querySelectorAll('a:first-child').forEach((element) => {
 				newItem.creators.push(processName(element.textContent));
 			});
-			extraFields['event-title'] = tryMatch(text(doc, '#divFullText'), /第.*?届.*?第.*?次.*?会议/);
+			extra.set('event-title', tryMatch(text(doc, '#divFullText'), /第.*?届.*?第.*?次.*?会议/), true);
 			break;
 		case 'case': {
 			if (title.startsWith('指导案例')) {
 				title = title.replace(/.*?：/, '');
-				extraFields.Series = '最高人民法院指导案例';
-				extraFields['Series Number'] = tryMatch(labels.getWith('案例编号'), /(\d+)/, 1);
+				extra.set('Series', '最高人民法院指导案例', true);
+				extra.set('Series Number', tryMatch(labels.getWith('案例编号'), /(\d+)/, 1), true);
 			}
 			newItem.caseName = title;
-			newItem.court = labels.getWith(['裁决机构', '审理法院']);
+			newItem.court = text(labels.getWith(['裁决机构', '审理法院'], true), 'a[href*="Court="]');
 			newItem.dateDecided = labels.getWith(['裁决日期', '审结日期']).replace(/\./g, '-');
 			newItem.docketNumber = labels.getWith('案号').replace(/\(/g, '（').replace(/\)/g, '）');
 			let source = labels.getWith('来源');
@@ -181,15 +176,15 @@ async function scrape(doc, url = doc.location.href) {
 			// "reporterVolume": "报告系统卷次";
 			// "firstPage": "起始页";
 			// "history": "历史";
-			extraFields['available-date'] = labels.getWith('发布日期').replace(/\./g, '-') || tryMatch(source, /(\d+)\s*年/, 1);
-			extraFields.Issue = tryMatch(source, /年第\s*(\d+)\s*期/, 1);
-			extraFields.Genre = labels.getWith('文书类型');
+			extra.set('available-date', labels.getWith('发布日期').replace(/\./g, '-') || tryMatch(source, /(\d+)\s*年/, 1), true);
+			extra.set('Issue', tryMatch(source, /年第\s*(\d+)\s*期/, 1), true);
+			extra.set('Genre', labels.getWith('文书类型'), true);
 			let caseType = ['民事', '刑事', '行政'].find(type => labels.getWith('案由').startsWith(type));
 			if (caseType) {
-				extraFields.Genre = caseType + extraFields.Genre;
+				extra.set('Genre', caseType + extra.get('Genre'), true);
 			}
 			else if (!title.endsWith('裁决书')) {
-				extraFields.Genre = '民事判决书';
+				extra.set('Genre', '民事判决书', true);
 			}
 			labels.getWith('发布部门', true).querySelectorAll('span').forEach((element) => {
 				newItem.creators.push(processName(element.textContent));
@@ -214,14 +209,7 @@ async function scrape(doc, url = doc.location.href) {
 			});
 			break;
 	}
-	newItem.extra = Object.entries(extraFields)
-		.filter(entry => entry[1])
-		.map(entry => `${entry[0]}: ${entry[1]}`)
-		.join('\n')
-		+ Object.entries(extraContents)
-			.filter(entry => entry[1])
-			.map(entry => `${entry[0]}: ${entry[1]}`)
-			.join('\n');
+	newItem.extra = extra.toString();
 	newItem.attachments.push({
 		title: 'Snapshot',
 		document: doc
@@ -262,6 +250,42 @@ class Labels {
 		return keyValPair
 			? ZU.trimInternal(keyValPair[1].innerText)
 			: '';
+	}
+}
+
+class Extra {
+	constructor() {
+		this.fields = [];
+	}
+
+	push(key, val, csl = false) {
+		this.fields.push({ key: key, val: val, csl: csl });
+	}
+
+	set(key, val, csl = false) {
+		let target = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		if (target) {
+			target.val = val;
+		}
+		else {
+			this.push(key, val, csl);
+		}
+	}
+
+	get(key) {
+		let result = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		return result
+			? result.val
+			: undefined;
+	}
+	
+	toString(history = '') {
+		this.fields = this.fields.filter(obj => obj.val);
+		return [
+			this.fields.filter(obj => obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n'),
+			history,
+			this.fields.filter(obj => !obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n')
+		].filter(obj => obj).join('\n');
 	}
 }
 
@@ -343,7 +367,7 @@ var testCases = [
 					}
 				],
 				"dateEnacted": "2005-10-27",
-				"extra": "Edition: 2005年修订法宝引证码: CLI.1.60597",
+				"extra": "Edition: 2005年修订\n法宝引证码: CLI.1.60597",
 				"language": "zh-CN",
 				"publicLawNumber": "中华人民共和国主席令第42号",
 				"shortTitle": "公司法",
@@ -763,7 +787,7 @@ var testCases = [
 		"items": [
 			{
 				"itemType": "case",
-				"caseName": "***诉***政府信息公开答复案",
+				"caseName": "陆红霞诉南通市发展和改革委员会政府信息公开答复案",
 				"creators": [],
 				"dateDecided": "2015-07-06",
 				"court": "江苏省南通市中级人民法院",
@@ -820,7 +844,7 @@ var testCases = [
 		"items": [
 			{
 				"itemType": "case",
-				"caseName": "***与***合作勘查合同纠纷上诉案",
+				"caseName": "榆林市凯奇莱能源投资有限公司与西安地质矿产勘查开发院合作勘查合同纠纷上诉案",
 				"creators": [],
 				"dateDecided": "2017-12-16",
 				"court": "最高人民法院",
