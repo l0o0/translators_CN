@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-15 13:22:16"
+	"lastUpdated": "2024-02-24 11:31:40"
 }
 
 /*
@@ -60,13 +60,25 @@ async function doWeb(doc, url) {
 	newItem.url = metas.get('og:url');
 	[...new Set([text(doc, '#js_name'), metas.get('og:article:author')])].forEach((creator) => {
 		creator = ZU.cleanAuthor(creator, 'author');
-		if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+		if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
 			creator.lastName = creator.firstName + creator.lastName;
 			creator.firstName = '';
 			creator.fieldMode = 1;
 		}
 		newItem.creators.push(creator);
 	});
+
+	/* 删除这行启用note记录全文
+	let note = doc.body.querySelector("#js_content");
+	if (note) {
+		note = `<h1>${newItem.title}</h1>`
+			+ note.innerHTML
+				.trim()
+				.replace(/\"/g, "'")
+				.replace(/<img .*?src='(.*?)'.*?>/g, "<img src='$1'\/>");
+		newItem.notes.push(note);
+	}
+	删除这行启用note记录全文 */
 	newItem.attachments.push({
 		url: url,
 		title: 'Snapshot',
