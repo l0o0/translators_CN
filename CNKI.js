@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-21 11:35:17"
+	"lastUpdated": "2024-02-26 07:47:12"
 }
 
 /*
@@ -231,7 +231,7 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug("---------------- CNKI 2024-02-21 07:05:01 ------------------");
+	Z.debug("---------------- CNKI 2024-02-26 15:47:10 ------------------");
 	let ids = new ID(doc, url);
 	Z.debug('detect ids:');
 	Z.debug(ids);
@@ -588,7 +588,7 @@ async function scrapeWithGetExport(doc, ids, itemKey) {
 
 	// e.g. https://ras.cdutcm.lib4s.com:7080/s/net/cnki/kns/G.https/dm/API/GetExport?uniplatform=NZKPT
 	let postUrl = inMainland
-		? `${/https?.*https?/.test(ids.url) ? tryMatch(ids.url, /https?.*https?/) : 'https://kns.cnki.net'}/dm/API/GetExport?uniplatform=${exports.platform}`
+		? `https://kns.cnki.net/dm/API/GetExport?uniplatform=${exports.platform}`
 		: `${doc.querySelector('.logo > a, a.cnki-logo').href}/kns8/manage/APIGetExport`;
 	// "1": row's sequence in search result page, defualt 1; "0": index of page in search result pages, defualt 0.
 	let postData = `filename=${ids.dbname}!${ids.filename}!${ids.toItemtype() == 'bookSection' ? 'ALMANAC_LM' : '1!0'}`
@@ -649,6 +649,10 @@ async function scrapeWithShowExport(itemKeys, doc = document.createElement('div'
 	// During debugging, may manually throw an error to guide the program to run inward
 	// throw new Error('debug');
 
+	let postUrl = inMainland
+		? 'https://kns.cnki.net/dm8/api/ShowExport'
+		: `${doc.querySelector('.logo > a, a.cnki-logo').href}/kns/manage/ShowExport`;
+	Z.debug(postUrl);
 	let postData = `FileName=${fileNames.join(',')}`
 		+ '&DisplayMode=EndNote'
 		+ '&OrderParam=0'
@@ -657,10 +661,6 @@ async function scrapeWithShowExport(itemKeys, doc = document.createElement('div'
 		+ `${inMainland ? `&PageIndex=1&PageSize=20&language=CHS&uniplatform=${exports.platform}` : ''}`
 		+ `&random=${Math.random()}`;
 	Z.debug(postData);
-	let postUrl = inMainland
-		? 'https://kns.cnki.net/dm8/api/ShowExport'
-		: `${doc.querySelector('.logo > a, a.cnki-logo').href}/kns/manage/ShowExport`;
-	Z.debug(postUrl);
 	let refer = inMainland
 		? 'https://kns.cnki.net/dm8/manage/export.html?'
 		: `${doc.querySelector('.logo > a, a.cnki-logo').href}/manage/export.html?displaymode=EndNote`;
@@ -750,6 +750,7 @@ async function scrapeDoc(doc, itemKey) {
 	if (!creators.length && doc.querySelector('h3 > span:only-child')) {
 		creators = ZU.trimInternal(doc.querySelector('h3 > span:only-child').textContent)
 			.replace(/\(.+?\)$/, '')
+			.replace(/([\u4e00-\u9fff]),\s?([\u4e00-\u9fff])/g, '$1；$2')
 			.split(/[;，；]/)
 			.filter(string => !(new RegExp([
 				'institute',
@@ -786,7 +787,7 @@ async function scrapeDoc(doc, itemKey) {
 	/* specific Fields */
 	switch (newItem.itemType) {
 		case 'journalArticle': {
-			let pubInfo = text(doc, '.top-tip');
+			let pubInfo = innerText(doc, '.top-tip');
 			newItem.publicationTitle = tryMatch(pubInfo, /^(.+?)\./, 1).replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
 			newItem.volume = tryMatch(pubInfo, /0*([1-9]\d*)\(/, 1);
 			newItem.issue = tryMatch(pubInfo, /\([A-Z]?0*([1-9]\d*)\)/, 1);
