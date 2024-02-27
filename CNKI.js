@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-26 07:47:12"
+	"lastUpdated": "2024-02-27 11:51:56"
 }
 
 /*
@@ -231,7 +231,7 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug("---------------- CNKI 2024-02-26 15:47:10 ------------------");
+	Z.debug("---------------- CNKI 2024-02-27 19:51:53 ------------------");
 	let ids = new ID(doc, url);
 	Z.debug('detect ids:');
 	Z.debug(ids);
@@ -789,7 +789,7 @@ async function scrapeDoc(doc, itemKey) {
 		case 'journalArticle': {
 			let pubInfo = innerText(doc, '.top-tip');
 			newItem.publicationTitle = tryMatch(pubInfo, /^(.+?)\./, 1).replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
-			newItem.volume = tryMatch(pubInfo, /0*([1-9]\d*)\(/, 1);
+			newItem.volume = tryMatch(pubInfo, /,\s?0*([1-9]\d*)\(/, 1);
 			newItem.issue = tryMatch(pubInfo, /\([A-Z]?0*([1-9]\d*)\)/, 1);
 			newItem.pages = labels.getWith(['页码', '頁碼', 'Page$']);
 			newItem.date = tryMatch(pubInfo, /\.\s?(\d{4})/, 1);
