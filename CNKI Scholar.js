@@ -2,14 +2,14 @@
 	"translatorID": "b9b97a32-a8aa-4688-bd81-491bec21b1de",
 	"label": "CNKI Scholar",
 	"creator": "jiaojiaodubai",
-	"target": "^https?://(scholar\\.cnki\\.net|kns\\.cnki\\.net/kcms2?/article)",
+	"target": "^https?://scholar\\.cnki\\.net",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 150,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-08 12:05:58"
+	"lastUpdated": "2024-03-01 18:41:50"
 }
 
 /*
@@ -44,7 +44,7 @@ var typeMap = {
 };
 
 function detectWeb(doc, _url) {
-	let typeKey = text(doc, '#journal-summarize > span:first-of-type, .top-tip-scholar > span:first-child');
+	let typeKey = text(doc, '#journal-summarize > span:first-of-type');
 	Z.debug(typeKey);
 	if (typeMap[typeKey.toLowerCase()] == 'book') {
 		return doc.querySelector('#doc-chapters')
@@ -158,11 +158,12 @@ async function scrapeSearch(doc) {
 async function scrapeDoc(doc, url = doc.location.href) {
 	let labels = new Labels(doc, exports.selectors.labels);
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
+	let extra = new Extra();
 	let doi = text(doc, exports.selectors.DOI) || labels.getWith('DOI');
 	let isbn = labels.getWith('ISBN');
 	Z.debug(`DOI: ${doi}`);
 	Z.debug(`ISBN: ${isbn}`);
-	var newItem = new Z.Item(detectWeb(doc, url));
+	var newItem = new Z.Item(typeMap[exports.typeKey.toLowerCase()] || detectWeb(doc, url));
 	let title = doc.querySelector(exports.selectors.title).cloneNode(true);
 	if (title.querySelector(':not(sup):not(sub)')) {
 		title.removeChild(title.querySelector(':not(sup):not(sub)'));
@@ -207,8 +208,8 @@ async function scrapeDoc(doc, url = doc.location.href) {
 				}[labels.getWith('学位类型')];
 				newItem.university = tryMatch(pubInfo, /^[\w ]+/);
 				newItem.place = tryMatch(pubInfo, /\(([\w, ]+)\)$/, 1);
-				extra.add('major', labels.getWith('专业'));
-				extra.add('subject', labels.getWith('学科主题'));
+				extra.set('major', labels.getWith('专业'));
+				extra.set('subject', labels.getWith('学科主题'));
 				newItem.creators.push(ZU.cleanAuthor(labels.getWith('作者'), 'author'));
 				break;
 			}
@@ -222,7 +223,7 @@ async function scrapeDoc(doc, url = doc.location.href) {
 		switch (newItem.itemType) {
 			case 'book':
 				newItem.creators = [];
-				patchBook(newItem, doc);
+				patchBook(newItem, extra, doc);
 				newItem.numPages = labels.getWith('页数');
 				break;
 
@@ -236,7 +237,7 @@ async function scrapeDoc(doc, url = doc.location.href) {
 					bookTitle.removeChild(bookTitle.querySelector(':not(sup):not(sub)'));
 				}
 				newItem.bookTitle = ZU.trimInternal(bookTitle.innerHTML);
-				patchBook(newItem, bookDoc);
+				patchBook(newItem, extra, bookDoc);
 				break;
 			}
 		}
@@ -245,7 +246,7 @@ async function scrapeDoc(doc, url = doc.location.href) {
 	newItem.complete();
 }
 
-function patchBook(bookItem, doc) {
+function patchBook(bookItem, extra, doc) {
 	let labels = new Labels(doc, '[id*="doc-about"] .infoBox-item');
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	bookItem.abstractNote = labels.getWith(['摘要', 'Abstract']);
@@ -254,8 +255,8 @@ function patchBook(bookItem, doc) {
 	let pubInfo = text(doc, exports.selectors.pubInfo);
 	bookItem.date = tryMatch(pubInfo, /(?:\.\s)?(\d{4})(?:\.\s)?/, 1);
 	bookItem.ISBN = labels.getWith('ISBN');
-	extra.add('subject', labels.getWith('学科分类'));
-	extra.add('CLC', labels.getWith(['中图分类号', 'CLC']));
+	extra.set('subject', labels.getWith('学科分类'));
+	extra.set('CLC', labels.getWith(['中图分类号', 'CLC']));
 	doc.querySelectorAll(exports.selectors.creators).forEach((element) => {
 		element = ZU.trimInternal(element.textContent).replace(/\s*;$/, '');
 		bookItem.creators.push(ZU.cleanAuthor(element, 'author'));
@@ -306,26 +307,45 @@ function tryMatch(string, pattern, index = 0) {
 		: '';
 }
 
-const extra = {
-	clsFields: [],
-	elseFields: [],
-	add: function (key, value, cls = false) {
-		if (value && cls) {
-			this.clsFields.push([key, value]);
-		}
-		else if (value) {
-			this.elseFields.push([key, value]);
-		}
-	},
-	toString: function () {
-		return [...this.clsFields, ...this.elseFields]
-			.map(entry => `${entry[0]}: ${entry[1]}`)
-			.join('\n');
+class Extra {
+	constructor() {
+		this.fields = [];
 	}
-};
+
+	push(key, val, csl = false) {
+		this.fields.push({ key: key, val: val, csl: csl });
+	}
+
+	set(key, val, csl = false) {
+		let target = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		if (target) {
+			target.val = val;
+		}
+		else {
+			this.push(key, val, csl);
+		}
+	}
+
+	get(key) {
+		let result = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		return result
+			? result.val
+			: undefined;
+	}
+
+	toString(history = '') {
+		this.fields = this.fields.filter(obj => obj.val);
+		return [
+			this.fields.filter(obj => obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n'),
+			history,
+			this.fields.filter(obj => !obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n')
+		].filter(obj => obj).join('\n');
+	}
+}
 
 var exports = {
 	scrape: scrape,
+	typeKey: '',
 	selectors: selectors
 };
 

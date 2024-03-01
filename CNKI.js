@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-27 11:51:56"
+	"lastUpdated": "2024-03-01 18:43:36"
 }
 
 /*
@@ -502,6 +502,7 @@ async function scrape(doc, itemKey = { url: '', cite: '', cookieName: '', downlo
 		});
 		let cs = await translator.getTranslatorObject();
 		cs.selectors = exports.csSelectors;
+		cs.typeKey = text(doc, '.top-tip-scholar > span:first-child');
 		await cs.scrape(doc, url);
 	}
 	else if (ids.toItemtype() == 'videoRecording') {
@@ -718,6 +719,7 @@ async function scrapeDoc(doc, itemKey) {
 	}
 	var newItem = new Zotero.Item(ids.toItemtype());
 	let labels = new LabelsX(doc, 'div.doc div[class^="row"], li.top-space, .total-inform > span');
+	let extra = new Extra();
 	Z.debug(labels.innerData.map(element => [element[0], ZU.trimInternal(element[1].textContent)]));
 
 	richTextTitle(newItem, doc);
@@ -728,7 +730,7 @@ async function scrapeDoc(doc, itemKey) {
 		newItem.DOI = doi;
 	}
 	else {
-		extra.add('DOI', doi, true);
+		extra.set('DOI', doi, true);
 	}
 
 	/* URL */
@@ -790,7 +792,7 @@ async function scrapeDoc(doc, itemKey) {
 			let pubInfo = innerText(doc, '.top-tip');
 			newItem.publicationTitle = tryMatch(pubInfo, /^(.+?)\./, 1).replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
 			newItem.volume = tryMatch(pubInfo, /,\s?0*([1-9]\d*)\(/, 1);
-			newItem.issue = tryMatch(pubInfo, /\([A-Z]?0*([1-9]\d*)\)/, 1);
+			newItem.issue = tryMatch(pubInfo, /\(([A-Z]?\d*)\)/i, 1).replace(/0*(\d+)/, '$1');
 			newItem.pages = labels.getWith(['页码', '頁碼', 'Page$']);
 			newItem.date = tryMatch(pubInfo, /\.\s?(\d{4})/, 1);
 			break;
@@ -814,7 +816,7 @@ async function scrapeDoc(doc, itemKey) {
 			labels.getWith(['导师', '導師', 'Tutor']).split(/[;，；]\s*/).forEach((supervisor) => {
 				newItem.creators.push(cleanName(ZU.trimInternal(supervisor), 'contributor'));
 			});
-			extra.add('major', labels.getWith(['学科专业', '學科專業', 'Retraction']));
+			extra.set('major', labels.getWith(['学科专业', '學科專業', 'Retraction']));
 			break;
 		}
 		case 'conferencePaper': {
@@ -846,9 +848,9 @@ async function scrapeDoc(doc, itemKey) {
 			newItem.creators = labels.getWith('成果完成人').split(/[,;，；]/).map(creator => cleanName(creator, 'author'));
 			newItem.date = labels.getWith(['入库时间', '入庫時間']);
 			newItem.institution = labels.getWith(['第一完成单位', '第一完成單位']);
-			extra.add('achievementType', labels.getWith(['成果类别', '成果類別']));
-			extra.add('level', labels.getWith('成果水平'));
-			extra.add('evaluation', labels.getWith(['评价形式', '評價形式']));
+			extra.set('achievementType', labels.getWith(['成果类别', '成果類別']));
+			extra.set('level', labels.getWith('成果水平'));
+			extra.set('evaluation', labels.getWith(['评价形式', '評價形式']));
 			break;
 		case 'standard':
 			newItem.number = labels.getWith(['标准号', '標準號', 'StandardNo']);
@@ -859,7 +861,7 @@ async function scrapeDoc(doc, itemKey) {
 			newItem.status = text(doc, 'h1 > .type');
 			newItem.date = labels.getWith(['发布日期', '發佈日期', 'IssuanceDate']);
 			newItem.numPages = labels.getWith(['总页数', '總頁數', 'TotalPages']);
-			extra.add('original-title', text(doc, 'h1 > span'));
+			extra.set('original-title', text(doc, 'h1 > span'));
 			newItem.creators = labels.getWith(['标准技术委员会', '归口单位', '技術標準委員會', '歸口單位', 'StandardTechnicalCommittee'])
 				.split(/[;，；、]/)
 				.map(creator => ({
@@ -868,7 +870,7 @@ async function scrapeDoc(doc, itemKey) {
 					creatorType: 'author',
 					fieldMode: 1
 				}));
-			extra.add('applyDate', labels.getWith(['实施日期', '實施日期']), true);
+			extra.set('applyDate', labels.getWith(['实施日期', '實施日期']), true);
 			break;
 		case 'patent':
 			newItem.patentNumber = labels.getWith(['申请公布号', '申請公佈號', 'PublicationNo']);
@@ -877,7 +879,7 @@ async function scrapeDoc(doc, itemKey) {
 			newItem.filingDate = labels.getWith(['申请日', '申請日', 'ApplicationDate']);
 			newItem.issueDate = labels.getWith(['授权公告日', '授權公告日', 'IssuanceDate']);
 			newItem.rights = text(doc, '.claim > h5 + div');
-			extra.add('Genre', labels.getWith(['专利类型', '專利類型']), true);
+			extra.set('Genre', labels.getWith(['专利类型', '專利類型']), true);
 			labels.getWith(['发明人', '發明人', 'Inventor'])
 				.split(/[;，；]\s*/)
 				.forEach((inventor) => {
@@ -888,7 +890,7 @@ async function scrapeDoc(doc, itemKey) {
 			newItem.abstractNote = labels.getWith(['视频简介', '視頻簡介']).replace(/\s*更多还原$/, '');
 			newItem.runningTime = labels.getWith(['时长', '時長']);
 			newItem.date = ZU.strToISO(labels.getWith(['发布时间', '發佈時間']));
-			extra.add('organizer', labels.getWith(['主办单位', '主辦單位']), true);
+			extra.set('organizer', labels.getWith(['主办单位', '主辦單位']), true);
 			doc.querySelectorAll('h3:first-of-type > span').forEach((element) => {
 				newItem.creators.push(cleanName(ZU.trimInternal(element.textContent), 'author'));
 			});
@@ -904,21 +906,23 @@ async function scrapeDoc(doc, itemKey) {
 
 	/* date, advance online */
 	if (doc.querySelector('.icon-shoufa')) {
-		extra.add('Status', 'advance online publication');
+		extra.set('Status', 'advance online publication');
 		newItem.date = ZU.strToISO(text(doc, '.head-time'));
 	}
 
 	/* extra */
-	extra.add('foundation', labels.getWith('基金'));
-	extra.add('download', labels.getWith(['下载', '下載', 'Download']) || itemKey.download);
-	extra.add('album', labels.getWith(['专辑', '專輯', 'Series']));
-	extra.add('CLC', labels.getWith(['分类号', '分類號', 'ClassificationCode']));
-	extra.add('CNKICite', itemKey.cite || attr(doc, '#paramcitingtimes', 'value') || text(doc, '#citations+span').substring(1, -1));
-	await addPubDetail(newItem, ids, doc);
+	extra.set('foundation', labels.getWith('基金'));
+	extra.set('download', labels.getWith(['下载', '下載', 'Download']) || itemKey.download);
+	extra.set('album', labels.getWith(['专辑', '專輯', 'Series']));
+	extra.set('CLC', labels.getWith(['分类号', '分類號', 'ClassificationCode']));
+	extra.set('CNKICite', itemKey.cite || attr(doc, '#paramcitingtimes', 'value') || text(doc, '#citations+span').substring(1, -1));
+	extra.set('dbcode', ids.dbcode);
+	extra.set('dbname', ids.dbname);
+	extra.set('filename', ids.filename);
+	await addPubDetail(newItem, extra, ids, doc);
 	newItem.extra = extra.toString();
 	addAttachments(newItem, doc, url, itemKey);
 	newItem.complete();
-	extra.reset();
 }
 
 /**
@@ -934,6 +938,7 @@ async function parseRefer(referText, doc, url, itemKey) {
 	let labels = new LabelsX(doc, 'div.doc div[class^="row"], li.top-space, .total-inform > span');
 	Z.debug('get labels:');
 	Z.debug(labels.innerData.map(element => [element[0], ZU.trimInternal(element[1].textContent)]));
+	let extra = new Extra();
 	let ids = new ID(doc, url);
 	let translator = Zotero.loadTranslator('import');
 	// CNKI Refer
@@ -962,7 +967,7 @@ async function parseRefer(referText, doc, url, itemKey) {
 				item.publicationTitle = item.publicationTitle.replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
 			}
 			if (doc.querySelector('.icon-shoufa')) {
-				extra.add('Status', 'advance online publication');
+				extra.set('Status', 'advance online publication');
 				item.date = ZU.strToISO(text(doc, '.head-time'));
 			}
 			break;
@@ -970,7 +975,7 @@ async function parseRefer(referText, doc, url, itemKey) {
 			if (item.university) {
 				item.university = item.university.replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
 			}
-			extra.add('major', labels.getWith(['学科专业', '學科專業', 'Retraction']));
+			extra.set('major', labels.getWith(['学科专业', '學科專業', 'Retraction']));
 			break;
 		case 'conferencePaper': {
 			if (item.abstractNote) {
@@ -997,12 +1002,12 @@ async function parseRefer(referText, doc, url, itemKey) {
 			item.creators = labels.getWith('成果完成人').split(/[,;，；]/).map(creator => cleanName(creator, 'author'));
 			item.date = labels.getWith(['入库时间', '入庫時間']);
 			item.institution = labels.getWith(['第一完成单位', '第一完成單位']);
-			extra.add('achievementType', labels.getWith(['成果类别', '成果類別']));
-			extra.add('level', labels.getWith('成果水平'));
-			extra.add('evaluation', labels.getWith(['评价形式', '評價形式']));
+			extra.set('achievementType', labels.getWith(['成果类别', '成果類別']));
+			extra.set('level', labels.getWith('成果水平'));
+			extra.set('evaluation', labels.getWith(['评价形式', '評價形式']));
 			break;
 		case 'standard':
-			extra.add('original-title', text(doc, 'h1 > span'));
+			extra.set('original-title', text(doc, 'h1 > span'));
 			item.status = text(doc, '.type');
 			item.creators = labels.getWith(['标准技术委员会', '归口单位', '技術標準委員會', '歸口單位', 'StandardTechnicalCommittee'])
 				.split(/[;，；、]/)
@@ -1012,7 +1017,7 @@ async function parseRefer(referText, doc, url, itemKey) {
 					creatorType: 'author',
 					fieldMode: 1
 				}));
-			extra.add('applyDate', labels.getWith(['实施日期', '實施日期']), true);
+			extra.set('applyDate', labels.getWith(['实施日期', '實施日期']), true);
 			break;
 		case 'patent':
 			// item.place = labels.getWith('地址');
@@ -1023,16 +1028,18 @@ async function parseRefer(referText, doc, url, itemKey) {
 			break;
 	}
 	item.language = ids.toLanguage();
-	extra.add('foundation', labels.getWith('基金'));
-	extra.add('download', labels.getWith(['下载', '下載', 'Download']) || itemKey.download);
-	extra.add('album', labels.getWith(['专辑', '專輯', 'Series']));
-	extra.add('CLC', labels.getWith(['分类号', '分類號', 'ClassificationCode']));
-	extra.add('CNKICite', itemKey.cite || attr(doc, '#paramcitingtimes', 'value') || text(doc, '#citations+span').substring(1, -1));
-	await addPubDetail(item, ids, doc);
+	extra.set('foundation', labels.getWith('基金'));
+	extra.set('download', labels.getWith(['下载', '下載', 'Download']) || itemKey.download);
+	extra.set('album', labels.getWith(['专辑', '專輯', 'Series']));
+	extra.set('CLC', labels.getWith(['分类号', '分類號', 'ClassificationCode']));
+	extra.set('CNKICite', itemKey.cite || attr(doc, '#paramcitingtimes', 'value') || text(doc, '#citations+span').substring(1, -1));
+	extra.set('dbcode', ids.dbcode);
+	extra.set('dbname', ids.dbname);
+	extra.set('filename', ids.filename);
+	await addPubDetail(item, extra, ids, doc);
 	item.extra = extra.toString(item.extra);
 	addAttachments(item, doc, url, itemKey);
 	item.complete();
-	extra.reset();
 }
 
 /*********
@@ -1091,33 +1098,41 @@ class LabelsX {
 	}
 }
 
-const extra = {
-	clsFields: [],
-	elseFields: [],
-	add: function (key, value, cls = false) {
-		if (value && cls) {
-			this.clsFields.push([key, value]);
-		}
-		else if (value) {
-			this.elseFields.push([key, value]);
-		}
-	},
-	toString: function (original) {
-		return original
-			? [
-				...this.clsFields.map(entry => `${entry[0]}: ${entry[1]}`),
-				original.replace(/^\n|\n$/g, ''),
-				...this.elseFields.map(entry => `${entry[0]}: ${entry[1]}`)
-			].join('\n')
-			: [...this.clsFields, ...this.elseFields]
-				.map(entry => `${entry[0]}: ${entry[1]}`)
-				.join('\n');
-	},
-	reset: function () {
-		this.clsFields = [];
-		this.elseFields = [];
+class Extra {
+	constructor() {
+		this.fields = [];
 	}
-};
+
+	push(key, val, csl = false) {
+		this.fields.push({ key: key, val: val, csl: csl });
+	}
+
+	set(key, val, csl = false) {
+		let target = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		if (target) {
+			target.val = val;
+		}
+		else {
+			this.push(key, val, csl);
+		}
+	}
+
+	get(key) {
+		let result = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		return result
+			? result.val
+			: '';
+	}
+
+	toString(history = '') {
+		this.fields = this.fields.filter(obj => obj.val);
+		return [
+			this.fields.filter(obj => obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n'),
+			history,
+			this.fields.filter(obj => !obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n')
+		].filter(obj => obj).join('\n');
+	}
+}
 
 function richTextTitle(item, doc) {
 	let title = doc.querySelector('.wx-tit > h1');
@@ -1142,7 +1157,7 @@ function cleanName(string, creatorType) {
 		: ZU.cleanAuthor(ZU.capitalizeName(string), creatorType);
 }
 
-async function addPubDetail(item, ids, doc) {
+async function addPubDetail(item, extra, ids, doc) {
 	let pubDoc = {};
 	try {
 		if (!['journalArticle', 'conferencePaper', 'bookSection'].includes(item.itemType)) {
@@ -1239,13 +1254,13 @@ async function addPubDetail(item, ids, doc) {
 		};
 		Z.debug('publication details:');
 		Z.debug(container);
-		extra.add('original-container-title', container.originalContainerTitle, true);
+		extra.set('original-container-title', container.originalContainerTitle, true);
 		switch (item.itemType) {
 			case 'journalArticle': {
 				item.ISSN = container.getWith('ISSN');
-				extra.add('publicationTag', Array.from(pubDoc.querySelectorAll('.journalType2 > span')).map(element => ZU.trimInternal(element.textContent)).join(', '));
-				extra.add('CIF', text(pubDoc, '#evaluateInfo span:not([title])', 0));
-				extra.add('AIF', text(pubDoc, '#evaluateInfo span:not([title])', 1));
+				extra.set('publicationTag', Array.from(pubDoc.querySelectorAll('.journalType2 > span')).map(element => ZU.trimInternal(element.textContent)).join(', '));
+				extra.set('CIF', text(pubDoc, '#evaluateInfo span:not([title])', 0));
+				extra.set('AIF', text(pubDoc, '#evaluateInfo span:not([title])', 1));
 				break;
 			}
 			case 'conferencePaper':
@@ -1257,7 +1272,7 @@ async function addPubDetail(item, ids, doc) {
 					creatorType: 'editor',
 					fieldMode: 1
 				}));
-				// extra.add('organizer', container.getWith('主办单位'), true);
+				// extra.set('organizer', container.getWith('主办单位'), true);
 				break;
 			case 'bookSection': {
 				item.ISBN = container.getWith('ISBN');
@@ -1580,6 +1595,129 @@ var testCases = [
 		]
 	},
 	{
+		"type": "web",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=UeijT_GnegCGVXOQlhOpSPEw2k2ZPKi4acW5KCvfKej0zITknmIIPE8j1janIJ5J1XwS_G_uyb1toYfYhT_f_B6CqzGHxIgAXrC5JOSkWp14jSk5qlF_q37uTUtRjU3X0_ozQi9KABOVUWg1-Ms8horQPm3hjGhDvzaRQKRaDU9z5NK19ZpSJMWvXsL1Ndsw&uniplatform=NZKPT&language=CHS",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "A sustainable strategy for generating highly stable human skin equivalents based on fish collagen",
+				"creators": [
+					{
+						"creatorType": "author",
+						"firstName": "Shi Hua",
+						"lastName": "Tan"
+					},
+					{
+						"creatorType": "author",
+						"firstName": "Shaoqiong",
+						"lastName": "Liu"
+					},
+					{
+						"creatorType": "author",
+						"firstName": "Swee Hin",
+						"lastName": "Teoh"
+					},
+					{
+						"creatorType": "author",
+						"firstName": "Carine",
+						"lastName": "Bonnard"
+					},
+					{
+						"creatorType": "author",
+						"firstName": "David",
+						"lastName": "Leavesley"
+					},
+					{
+						"creatorType": "author",
+						"firstName": "Kun",
+						"lastName": "Liang"
+					}
+				],
+				"date": "2024-04",
+				"DOI": "10.1016/j.bioadv.2024.213780",
+				"ISSN": "27729508",
+				"abstractNote": "Tissue engineered skin equivalents are increasingly recognized as potential alternatives to traditional skin models such as human ex vivo skin or animal skin models. However, most of the currently investigated human skin equivalents (HSEs) are constructed using mammalian collagen which can be expensive and difficult to extract. Fish skin is a waste product produced by fish processing industries and identified as a cost-efficient and sustainable source of type I collagen. In this work, we describ...",
+				"journalAbbreviation": "Biomaterials Advances",
+				"language": "en-US",
+				"libraryCatalog": "DOI.org (Crossref)",
+				"pages": "213780",
+				"publicationTitle": "Biomaterials Advances",
+				"url": "https://linkinghub.elsevier.com/retrieve/pii/S2772950824000232",
+				"volume": "158",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [
+					{
+						"tag": "3D skin model"
+					},
+					{
+						"tag": "ATR-FTIR"
+					},
+					{
+						"tag": "BC"
+					},
+					{
+						"tag": "CD"
+					},
+					{
+						"tag": "DSC"
+					},
+					{
+						"tag": "FBC"
+					},
+					{
+						"tag": "FC"
+					},
+					{
+						"tag": "FFC"
+					},
+					{
+						"tag": "H&E"
+					},
+					{
+						"tag": "HDF(s)"
+					},
+					{
+						"tag": "HEK(s)"
+					},
+					{
+						"tag": "HSE(s)"
+					},
+					{
+						"tag": "Human skin equivalent"
+					},
+					{
+						"tag": "Hydrogel scaffold"
+					},
+					{
+						"tag": "IHC"
+					},
+					{
+						"tag": "MTT"
+					},
+					{
+						"tag": "SDS-PAGE"
+					},
+					{
+						"tag": "SEM"
+					},
+					{
+						"tag": "TEER"
+					},
+					{
+						"tag": "Td"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
 		"type": "search",
 		"input": {
 			"DOI": "10.13374/j.issn2095-9389.2022.11.11.005"
@@ -1786,7 +1924,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=uzDkwlsKYf9BZoHFj8V9e5DSaQWis9u9zD8PDbaS-uIVdNSZroSfUcfwzIFIS6KuZvEBQYTLjBmBq54_yq6UinqVYk8ErVKeN8surZl67KHpJRcIuKRbwi2nZGrzKJNjQUo3XJqIWl06683lRyO9IbXUGTHhwUmu&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=UeijT_GnegCWYo-XhPF1Nqd_7-cM-vylcQChhyBnzcN75R9VP2TeeRsjbe0BF5jLIWfnD4UcjkvJ4y9Se0YUEIdL2Kc5lqp5AlAYc-mwABWs3lJH23nfLNcEg0k5UvqAbIqz7vgLW2R8XVFyCvoiz5V2wNtm4XQs&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "journalArticle",
@@ -1821,13 +1959,13 @@ var testCases = [
 				"DOI": "10.13287/j.1001-9332.2000.0212",
 				"ISSN": "1001-9332",
 				"abstractNote": "分别对 30 0mmol·L-1NaCl和 10 0mmol·L-1Na2 CO3 盐碱胁迫下的羊草苗进行以不同方式施加Ca2 +、ABA和H3PO4 等缓解胁迫处理 .结果表明 ,外施Ca2 +、ABA和H3PO4 明显缓解了盐碱对羊草生长的抑制作用 .叶面喷施效果好于根部处理 ;施用Ca(NO3) 2 效果好于施用CaCl2 效果 ;混合施用CaCl2 和ABA的效果比单独施用ABA或CaCl2 的效果好 .",
-				"extra": "original-container-title: Chinese Journal of Applied Ecology\nfoundation: 国家自然科学基金资助项目!(39670 0 83) .；\nalbum: 基础科学;农业科技\nCLC: Q945\nCNKICite: 82\npublicationTag: 北大核心, CA, JST, Pж(AJ), CSCD, WJCI\nCIF: 4.949\nAIF: 3.435",
+				"extra": "original-container-title: Chinese Journal of Applied Ecology\nfoundation: 国家自然科学基金资助项目!(39670 0 83) .；\ndownload: 463\nalbum: 基础科学;农业科技\nCLC: Q945\nCNKICite: 82\ndbcode: CJFQ\ndbname: CJFD2000\nfilename: YYSB200006019\npublicationTag: 北大核心, CA, JST, Pж(AJ), CSCD, WJCI\nCIF: 4.949\nAIF: 3.435",
 				"issue": "6",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "889-892",
 				"publicationTitle": "应用生态学报",
-				"url": "https://doi.org/10.13287/j.1001-9332.2000.0212",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFQ&dbname=CJFD2000&filename=YYSB200006019",
 				"attachments": [
 					{
 						"title": "Full Text PDF",
