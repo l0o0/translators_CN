@@ -8,7 +8,7 @@
 	"priority": 99,
 	"inRepository": true,
 	"translatorType": 1,
-	"lastUpdated": "2024-02-08 13:58:51"
+	"lastUpdated": "2024-03-03 13:58:51"
 }
 
 /*
@@ -122,8 +122,8 @@ async function doImport() {
 			case 'thesis':
 				item.numPages = item.pages;
 				delete item.pages;
-				item.university = item.publicationTitle;
-				delete item.publicationTitle;
+				item.university = item.publisher;
+				delete item.publisher;
 				if (item.type) {
 					item.thesisType = `${item.type}学位论文`;
 					delete item.type;
