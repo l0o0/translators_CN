@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-03-01 18:43:36"
+	"lastUpdated": "2024-03-04 08:50:55"
 }
 
 /*
@@ -231,7 +231,7 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug("---------------- CNKI 2024-02-27 19:51:53 ------------------");
+	Z.debug("---------------- CNKI 2024-03-04 16:50:38 ------------------");
 	let ids = new ID(doc, url);
 	Z.debug('detect ids:');
 	Z.debug(ids);
@@ -773,7 +773,7 @@ async function scrapeDoc(doc, itemKey) {
 			.map(string => string.replace(/[\d\s,~-]*$/, ''));
 	}
 	if (!creators.length && doc.querySelectorAll('h3 > span').length) {
-		creators = Array.from(doc.querySelectorAll('h3 > span')).map(string => ZU.trimInternal(string.replace(/[\d\s,;，；~-]*$/, '')));
+		creators = Array.from(doc.querySelectorAll('h3 > span')).map(element => ZU.trimInternal(element.textContent).replace(/[\d\s,;，；~-]*$/, ''));
 	}
 	creators.forEach((string) => {
 		newItem.creators.push(cleanName(string, 'author'));
