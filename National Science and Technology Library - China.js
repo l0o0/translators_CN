@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-05 12:41:33"
+	"lastUpdated": "2024-03-08 12:41:33"
 }
 
 /*
@@ -201,7 +201,7 @@ async function scrapeMulti(ids) {
 		referUrl,
 		{
 			headers: {
-				refer: 'https://www.nstl.gov.cn/export_preview.html?exporttype=exportItemsId'
+				Referer: 'https://www.nstl.gov.cn/export_preview.html?exporttype=exportItemsId'
 			}
 		});
 	Z.debug(referText);

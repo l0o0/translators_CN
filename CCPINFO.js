@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-10 09:49:44"
+	"lastUpdated": "2024-03-08 09:49:44"
 }
 
 /*
@@ -77,7 +77,7 @@ async function processISBN(isbn) {
 				+ `&isbn=${isbn}`
 				+ '&sm=&publishedClassification=&offset=1&sort=&order=&ids=&minprice=&maxprice=&languages=&cip=&hasEbook=false&pubyear=&authorsure=&publishersure=&cipsearch=',
 			headers: {
-				Refer: `https://book.cppinfo.cn/So/Home/QHSearch?isbn=${isbn}`
+				Referer: `https://book.cppinfo.cn/So/Home/QHSearch?isbn=${isbn}`
 			}
 		}
 	);

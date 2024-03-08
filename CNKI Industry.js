@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-31 16:26:32"
+	"lastUpdated": "2024-03-08 16:26:32"
 }
 
 /*
@@ -137,7 +137,7 @@ async function scrape(doc, url = doc.location.href) {
 		let referText = await requestText('https://inds.cnki.net/kus/viewSave/save/', {
 			method: 'POST',
 			headers: {
-				Refer: url
+				Referer: url
 			},
 			body: postBody
 		});

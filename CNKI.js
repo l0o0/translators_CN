@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-03-04 08:50:55"
+	"lastUpdated": "2024-03-08 08:50:55"
 }
 
 /*
@@ -1224,7 +1224,7 @@ async function addPubDetail(item, extra, ids, doc) {
 				pubDoc = await requestDocument('https://navi.cnki.net/knavi/yearbookDetail/GetBaseInfo', {
 					method: 'POST',
 					body: `pcode=${ids.dbcode}&bh=${id}`,
-					headers: { Refer: url }
+					headers: { Referer: url }
 				});
 			}
 		}
