@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-03 11:28:39"
+	"lastUpdated": "2024-03-08 10:16:06"
 }
 
 /*
@@ -39,9 +39,9 @@
 function detectWeb(doc, url) {
 	// avoid https://www.gov.cn/zhengce/jiedu/
 	if (/\/zhengce\/.*content_\d+\.htm/.test(url)) {
-		return text(doc, '.BreadcrumbNav').includes('解读')
-			? 'webpage'
-			: 'statute';
+		return doc.querySelector('[class*="pctoubukuang"]')
+			? 'statute'
+			: 'webpage';
 	}
 	else if (/\/gongbao\/.*content_\d+\.htm/.test(url)) {
 		return 'journalArticle';
@@ -555,5 +555,4 @@ var testCases = [
 		"items": "multiple"
 	}
 ]
-
 /** END TEST CASES **/
