@@ -2,14 +2,14 @@
 	"translatorID": "3ab06b2e-5cfa-4561-9770-4f76710a32ab",
 	"label": "Publications Data Center - China",
 	"creator": "jiaojiaodubai23",
-	"target": "^https?://pdc\\.capub\\.cn/search\\.html",
+	"target": "^https?://m?pdc\\.capub\\.cn/search\\.html",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-02 05:18:16"
+	"lastUpdated": "2024-03-17 18:01:32"
 }
 
 /*
