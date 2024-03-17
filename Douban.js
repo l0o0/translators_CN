@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-03-17 15:30:44"
+	"lastUpdated": "2024-03-17 16:02:11"
 }
 
 /*
@@ -43,7 +43,7 @@ const typeMap = {
 };
 
 function detectWeb(doc, url) {
-	Z.debug('---------- Douban 2024-01-24 18:14:47 ----------');
+	Z.debug('---------- Douban 2024-03-17 23:59:52 ----------');
 	let typeKey = Object.keys(typeMap).find(key => new RegExp(`${key}/\\d+/`).test(url));
 	if (typeKey) {
 		return typeMap[typeKey];
@@ -57,10 +57,13 @@ function detectWeb(doc, url) {
 function getSearchResults(doc, checkOnly) {
 	var items = {};
 	var found = false;
-	// h2见于read.douban.com/ebook
-	// td > .pl2见于music.douban.com/top250
-	var rows = Array.from(doc.querySelectorAll('.title > a, h2 > a, td > .pl2 > a, a.album-title')).filter(row => Object.keys(typeMap).some(key => new RegExp(`${key}/\\d+/`).test(row.href))
-	);
+	// .title > a, h2 > a: read.douban.com/ebook
+	// td > .pl2: music.douban.com/top250
+	// .explore li > a:first-child: https://movie.douban.com/tv/
+	var rows = Array.from(doc.querySelectorAll('.title > a, h2 > a, td > .pl2 > a, a.album-titl, .explore li > a:first-child'))
+		.filter((row) => {
+			return [...Object.keys(typeMap), 'uri=/tv', 'uri=/movie'].some(key => new RegExp(`${key}/\\d+`).test(row.href));
+		});
 	for (let row of rows) {
 		let href = row.href;
 		let title = ZU.trimInternal(row.textContent);
@@ -920,6 +923,16 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.douban.com/doulist/176513/",
+		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://movie.douban.com/tv/",
+		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://movie.douban.com/explore",
 		"items": "multiple"
 	}
 ]
