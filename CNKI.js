@@ -1141,7 +1141,7 @@ function richTextTitle(item, doc) {
 		while (title.querySelector(':not(sup):not(sub)')) {
 			title.removeChild(title.querySelector(':not(sup):not(sub)'));
 		}
-		item.title = title.innerHTML;
+		item.title = title.innerHTML.replace(/<(sup|sub|i|b)[^>]+>/g, '<$1>');
 	}
 }
 
