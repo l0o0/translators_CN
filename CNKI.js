@@ -1138,10 +1138,12 @@ function richTextTitle(item, doc) {
 	let title = doc.querySelector('.wx-tit > h1');
 	if (title) {
 		title = title.cloneNode(true);
-		while (title.querySelector(':not(sup):not(sub)')) {
-			title.removeChild(title.querySelector(':not(sup):not(sub)'));
+		while (title.querySelector(':not(sup):not(sub):not(i):not(b)')) {
+			title.removeChild(title.querySelector(':not(sup):not(sub):not(i):not(b)'));
 		}
-		item.title = title.innerHTML.replace(/<(sup|sub|i|b)[^>]+>/g, '<$1>');
+		item.title = title.innerHTML
+			.replace(/<(sup|sub|i|b)[^>]+>/g, '<$1>')
+			.replace(/<(sup|sub|i|b)><\/(sup|sub|i|b)>/g, '');
 	}
 }
 
