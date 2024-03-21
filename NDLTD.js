@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-03-18 06:05:50"
+	"lastUpdated": "2024-03-21 06:39:21"
 }
 
 /*
@@ -36,8 +36,8 @@
 */
 
 
-function detectWeb(doc, url) {
-	if (/id="[^&#]+?"/.test(decodeURI(url))) {
+function detectWeb(doc, _url) {
+	if (doc.querySelector('input#fe_text1')) {
 		return 'thesis';
 	}
 	else if (getSearchResults(doc, true)) {
@@ -397,5 +397,4 @@ var testCases = [
 		]
 	}
 ]
-
 /** END TEST CASES **/
