@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-03-08 12:41:33"
+	"lastUpdated": "2024-03-21 08:48:12"
 }
 
 /*
@@ -47,12 +47,12 @@ const pageTypeMap = {
 };
 
 function detectWeb(doc, _url) {
-	let serverContent = doc.querySelector('.section');
+	Z.debug('---------- NSTL 2024-03-21 16:42:34 ----------');
+	let serverContent = doc.querySelector('.serverleftcont, .searchResult-lists-midd-con');
 	if (serverContent) {
 		Z.monitorDOMChanges(serverContent, { childList: true, subtree: true });
 	}
-	let zhType = Object.keys(pageTypeMap).find(key => new RegExp(`${key}`).test(text(doc, '#title > span.frontLabel'))
-	);
+	let zhType = Object.keys(pageTypeMap).find(key => new RegExp(`${key}`).test(text(doc, '#title > span.frontLabel')));
 	if (zhType) {
 		return pageTypeMap[zhType];
 	}
