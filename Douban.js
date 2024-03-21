@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-03-18 06:35:07"
+	"lastUpdated": "2024-03-21 05:40:28"
 }
 
 /*
@@ -96,7 +96,7 @@ async function scrape(doc, url = doc.location.href) {
 	// .article-meta for read
 	var labels = isRead
 		? new Labels(doc, '.article-meta > p')
-		: new TextLabels(doc, '#info');
+		: new TextLabels(doc, '#info', /.+?:/);
 	Z.debug(isRead ? labels.innerData.map(arr => [arr[0], arr[1].innerText]) : labels.innerData);
 	var title = ZU.trimInternal(text(doc, 'h1'));
 	switch (newItem.itemType) {
@@ -131,12 +131,12 @@ async function scrape(doc, url = doc.location.href) {
 			let authors = isRead
 				? Array.from(labels.getWith('作者', true).querySelectorAll('.author-item'))
 					.map(creator => processName(ZU.trimInternal(creator.textContent), 'author'))
-				: labels.getWith('作者').split(' / ')
+				: labels.getWith('作者').split(/\s?\/\s?/)
 					.map(creator => processName(creator, 'author'));
 			let translators = isRead
 				? Array.from(labels.getWith('译者', true).querySelectorAll('.author-item'))
 					.map(translator => processName(ZU.trimInternal(translator.textContent), 'translator'))
-				: labels.getWith('译者').split(' / ')
+				: labels.getWith('译者').split(/\s?\/\s?/)
 					.map(translator => processName(translator, 'translator'));
 			creators = [...authors, ...translators];
 			// 仅在read中有效
@@ -252,18 +252,26 @@ async function scrape(doc, url = doc.location.href) {
 }
 
 class TextLabels {
-	constructor(doc, selector) {
+	constructor(doc, selector, label) {
+		this.innerData = [];
+		let arr = text(doc, selector)
+			.replace(/^\s*/gm, '')
+			.replace(/\n+/g, '\n')
+			.split('\n');
+		for (let i = 0; i < arr.length; i++) {
+			if (i > 0 && !label.test(arr[i])) {
+				this.innerData.push(this.innerData.pop() + arr[i]);
+			}
+			else {
+				this.innerData.push(arr[i]);
+			}
+		}
+		Z.debug(this.innerData);
 		// innerText在详情页表现良好，但在多条目表现欠佳，故统一使用经过处理的text
-		this.innerData = text(doc, selector)
-			.replace(/^[\s\n]*/gm, '')
-			.replace(/:\n/g, ': ')
-			.replace(/\n\/\n/g, ' / ')
-			// https://book.douban.com/subject/1291204/
-			.replace(/\n([^】\]:：]+?\n)/g, ' $1')
-			.split('\n')
+		this.innerData = this.innerData
 			.map(keyVal => [
-				tryMatch(keyVal, /^[[【]?([\s\S]+?)[】\]:：]\s*[\s\S]+$/, 1).replace(/\s/g, ''),
-				tryMatch(keyVal, /^[[【]?[\s\S]+?[】\]:：]\s*([\s\S]+)$/, 1)
+				tryMatch(keyVal, new RegExp(`^${label.source}`)).replace(/\s/g, ''),
+				tryMatch(keyVal, new RegExp(`^${label.source}(.+)`), 1)
 			]);
 	}
 
@@ -366,6 +374,7 @@ function processName(fullName, defaultType) {
 	var creatorType, country, original;
 	// 当多个人名折叠时，最后一个人名可能带有“更多”。
 	fullName = fullName.replace(/更多\.\.\.$/, '');
+	Z.debug(fullName);
 	// https://book.douban.com/subject/35152294/
 	country = tryMatch(fullName, /^[[(（【［](.+?)国?[］】）)\]]/, 1);
 	fullName = fullName.replace(/^[[(（【［](.+?)国?[］】）)\]]/, '');
