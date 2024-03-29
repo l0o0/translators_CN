@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-03-08 08:50:55"
+	"lastUpdated": "2024-03-29 14:54:31"
 }
 
 /*
@@ -231,7 +231,7 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug("---------------- CNKI 2024-03-04 16:50:38 ------------------");
+	Z.debug("---------------- CNKI 2024-03-29 22:55:56 ------------------");
 	let ids = new ID(doc, url);
 	Z.debug('detect ids:');
 	Z.debug(ids);
@@ -975,6 +975,7 @@ async function parseRefer(referText, doc, url, itemKey) {
 			if (item.university) {
 				item.university = item.university.replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
 			}
+			newItem.numPages = labels.getWith(['页数', '頁數', 'Page']);
 			extra.set('major', labels.getWith(['学科专业', '學科專業', 'Retraction']));
 			break;
 		case 'conferencePaper': {
@@ -1163,7 +1164,7 @@ async function addPubDetail(item, extra, ids, doc) {
 	let pubDoc = {};
 	try {
 		if (!['journalArticle', 'conferencePaper', 'bookSection'].includes(item.itemType)) {
-			throw new Error('No publication information needs to be added');
+			return;
 		}
 		switch (item.itemType) {
 			case 'journalArticle': {
@@ -2085,7 +2086,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=uzDkwlsKYf8RksoW4AL9geg_BCoE9UKW2U2eNOVWLpw8NH_71NAkc3cfYzfRQA2Wmr3I4d771CS_ByK90nGB_4n6__eTQ6rtjj3q-qzPeW6Id5WN2ndrHzopVdcnN1QxYe5d3UXNSJpi0NQl5ehEcyVdbf0l3ARZdkJqtmwEY_o=&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=7P8mTOHD94GbtCjr2OlhsdTDhp0oqekmn5oDlwkiAbkDEfku4PWQLmlTLlN5g-Y1hg-Fya_BKR2TcmUs0KABpmROoDiLhWEqPDAQLTZiFtMXwHcA7swp0LZ1r1k-EQFT6ToHWm4ICu6BSMDgjgoaGqpukbv0FazfpBtp_4iOMWU=&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "thesis",
@@ -2111,10 +2112,11 @@ var testCases = [
 					}
 				],
 				"date": "2017",
-				"abstractNote": "黄瓜(Cucumis sativus L.)是我国最大的保护地栽培蔬菜作物,也是植物性别发育和维管束运输研究的重要模式植物。黄瓜基因组序列图谱已经构建完成,并且在此基础上又完成了全基因组SSR标记开发和涵盖330万个变异位点变异组图谱,成为黄瓜功能基因研究的重要平台和工具,相关转录组研究也有很多报道,不过共表达网络研究还是空白。本实验以温室型黄瓜9930为研究对象,选取10个不同组织,进行转录组测序,获得10份转录组原始数据。在对原始数据去除接头与低质量读段后,将高质量读段用Tophat2回贴到已经发表的栽培黄瓜基因组序列上。用Cufflinks对回贴后的数据计算FPKM值,获得10份组织的24274基因的表达量数据。计算结果中的回贴率比较理想,不过有些基因的表达量过低。为了防止表达量低的基因对结果的影响,将10份组织中表达量最大小于5的基因去除,得到16924个基因,进行下一步分析。共表达网络的构建过程是将上步获得的表达量数据,利用R语言中WGCNA(weighted gene co-expression network analysis)包构建共表达网络。结果得到的共表达网络包括1134个模块。这些模块中的基因表达模式类似,可以认为是共表达关系。不过结果中一些模块内基因间相关性同其他模块相比比较低,在分析过程中,将模块中基因相关性平均值低于0.9的模块都去除,最终得到839个模块,一共11,844个基因。共表达的基因因其表达模式类似而聚在一起,这些基因可能与10份组织存在特异性关联。为了计算模块与组织间的相关性,首先要对每个模块进行主成分分析(principle component analysis,PCA),获得特征基因(module eigengene,ME),特征基因可以表示这个模块所有基因共有的表达趋势。通过计算特征基因与组织间的相关性,从而挑选出组织特异性模块,这些模块一共有323个。利用topGO功能富集分析的结果表明这些特异性模块所富集的功能与组织相关。共表达基因在染色体上的物理位置经常是成簇分布的。按照基因间隔小于25kb为标准。分别对839个模块进行分析,结果发现在71个模块中共有220个cluster,这些cluster 一般有2～5个基因,cluster中的基因在功能上也表现出一定的联系。共表达基因可能受到相同的转录调控,这些基因在启动子前2kb可能会存在有相同的motif以供反式作用元...",
-				"extra": "major: 生物化学与分子生物学\nalbum: 基础科学;农业科技\nCLC: S642.2;Q943.2\nCNKICite: 1",
+				"abstractNote": "黄瓜(Cucumis sativus L.)是我国最大的保护地栽培蔬菜作物,也是植物性别发育和维管束运输研究的重要模式植物。黄瓜基因组序列图谱已经构建完成,并且在此基础上又完成了全基因组SSR标记开发和涵盖330万个变异位点变异组图谱,成为黄瓜功能基因研究的重要平台和工具,相关转录组研究也有很多报道,不过共表达网络研究还是空白。本实验以温室型黄瓜9930为研究对象,选取10个不同组织,进行转录组测序,获得10份转录组原始数据。在对原始数据去除接头与低质量读段后,将高质量读段用Tophat2回贴到已经发表的栽培黄瓜基因组序列上。用Cufflinks对回贴后的数据计算FPKM值,获得10份组织的24274基因的表达量数据。计算结果中的回贴率比较理想,不过有些基因的表达量过低。为了防止表达量低的基因对结果的影响,将10份组织中表达量最大小于5的基因去除,得到16924个基因,进行下一步分析。共表达网络的构建过程是将上步获得的表达量数据,利用R语言中WGCNA(weighted gene co-expression network analysis)包构建共表达网络。结果得到的共表达网络包括1134个模块。这些模块中的基因表达模式类似,可以认为是共表达关系。不过结果中一些模块内基因间相关性同其他模块相比比较低,在分析过程中,将模块中基因相关性平均值低于0.9的模块都去除,最终得到839个模块,一共11,844个基因。共表达的基因因其表达模式类似而聚在一起,这些基因可能与10份组织存在特异性关联。为了计算模块与组织间的相关性,首先要对每个模块进行主成分分析(principle component analysis,PCA),获得特征基因(module eigengene,ME),特征基因可以表示这个模块所有基因共有的表达趋势。通过计算特征基因与组织间的相关性,从而挑选出组织特异性模块,这些模块一共有323个。利用topGO功能富集分析的结果表明这些特异性模块所富集的功能与组织相关。共表达基因在染色体上的物理位置经常是成簇分布的。按照基因间隔小于25kb为标准。分别对839个模块进行分析,结果发现在71个模块中共有220个cluster,这些cluster 一般有2～5个基因,cluster中的基因在功能上也表现出一定的联系。共表达基因可能受到相同的转录调控,这些基因在启动子前2kb可能会存在有相同的motif以供反式作用元件的结合起到调控作用。对839个模块中的基因,提取启动子前2kb的序列,上传到PLACE网站进行motif分析。显著性分析的结果表明一共有367个motif存在富集,其中6个motif已经证实在黄瓜属植物中发挥作用。最后结合已经发表的黄瓜苦味生物合成途径研究,找到了 3个模块,已经找到的11个基因中,有10个基因在这4个模块中。这些模块的功能富集也显示与苦味合成相关,同时这些参与合成的基因在染色体上也成簇分布。本论文所描述的方法结合了转录组测序与网络分析方法,发现了黄瓜中的共表达基因模块,为黄瓜基因的共表达分析提供了非常重要的研究基础和数据支持。",
+				"extra": "major: 生物化学与分子生物学\ndownload: 302\nalbum: 基础科学;农业科技\nCLC: S642.2;Q943.2\nCNKICite: 1\ndbcode: CMFD\ndbname: CMFD201701\nfilename: 1017045605.nh",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
+				"numPages": "69",
 				"thesisType": "硕士学位论文",
 				"university": "南京农业大学",
 				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CMFD&dbname=CMFD201701&filename=1017045605.nh",
@@ -2145,7 +2147,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=uzDkwlsKYf-NNttKQAVStjIxA9HcBauTMl8GLhBkF-Hi6lN65C_BqUe3CZX3V9O7e9mXvgPVTbZndoCIN5UCQ7Hjnntc_yKJAmuNdtG-Gh0s6hVSxl0kpj-g_DKo88CnSw3nZh1vLVgIJumnYUIl6KIxF3ptDl8q&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=7P8mTOHD94EiCw5D0Qu5i12FsRUBLMzLwVsSdygu4i0e44tLDImTMVwGiTzXH6_cS1Fm-c2LHcdyjP-Rm23yohtVVPZVahPqkHofZrl6WPy8NpTSmCr2wE3z46RtJr1IRmfTkMpNeiWP9RUuv2yuCjSDG1FfTjDV&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "thesis",
@@ -2165,10 +2167,11 @@ var testCases = [
 					}
 				],
 				"date": "2012",
-				"abstractNote": "随着微电子集成技术和组装技术的快速发展，电子元器件和逻辑电路的体积越来越小，而工作频率急剧增加，半导体的环境温度向高温方向变化，为保证电子元器件长时间可靠地正常工作，及时散热能力就成为其使用寿命长短的制约因素。高导热聚合物基复合材料在微电子、航空、航天、军事装备、电机电器等诸多制造业及高科技领域发挥着重要的作用。所以研制综合性能优异的高导热聚合物基复合材料成为了目前研究热点。本论文分别以氧化铝（Al<sub>2</sub>O<sub>3</sub>）、石墨烯和氮化硼（BN）纳米片为导热填料，以环氧树脂和聚偏氟乙烯（PVDF）为基体，制备了新型的高导热聚合物基复合材料。首先，采用两步法将超支化聚芳酰胺接枝到纳米Al<sub>2</sub>O<sub>3</sub>粒子表面：纳米颗粒先进行硅烷偶联剂处理引入氨基基团，在改性后的纳米粒子上接枝超支化聚合物；再利用X射线衍射、傅立叶红外光谱、核磁共振氢谱和热失重等方法对纳米Al<sub>2</sub>O<sub>3</sub>粒子的表面改性进行表征；然后分别将未改性的纳米Al<sub>2</sub>O<sub>3</sub>粒子、硅烷接枝的纳米Al<sub>2</sub>O<sub>3</sub>粒子（Al<sub>2</sub>O<sub>3</sub>-APS）和超支化聚芳酰胺接枝的纳米Al<sub>2</sub>O<sub>3</sub>粒子（Al<sub>2</sub>O<sub>3</sub>-HBP）与环氧树脂复合，并对三种复合材料的热性能和介电性能进行比较研究。结果表明：（1）从SEM、TEM和动态光散射的实验结果表明，三种纳米颗粒相比之下，Al<sub>2</sub>O<sub>3</sub>-HBP纳米粒子在有机溶剂乙醇和环氧树脂中显示出最好的分散性。（2）三种复合材料的导热系数都是随着纳米颗粒含量的增加而增大；在添加相同含量的纳米颗粒时，其导热系数遵循着如下的规律：环氧树脂/Al<sub>2</sub>O<sub>3</sub>-HBP复合材料>环氧树脂/Al<sub>2</sub>O<sub>3</sub>-APS复合材料>环氧树脂/Al<sub>2</sub>O<sub>3</sub>复合材料。而且从DSC、TGA和DMA的实验结果可以得出，与未改性Al<sub>2</sub>O<sub>3</sub>和Al<sub>2</sub>O<s...",
-				"extra": "major: 材料学\nfoundation: 国家自然基金；\nalbum: 工程科技Ⅰ辑\nCLC: TB332\nCNKICite: 195",
+				"abstractNote": "随着微电子集成技术和组装技术的快速发展，电子元器件和逻辑电路的体积越来越小，而工作频率急剧增加，半导体的环境温度向高温方向变化，为保证电子元器件长时间可靠地正常工作，及时散热能力就成为其使用寿命长短的制约因素。高导热聚合物基复合材料在微电子、航空、航天、军事装备、电机电器等诸多制造业及高科技领域发挥着重要的作用。所以研制综合性能优异的高导热聚合物基复合材料成为了目前研究热点。本论文分别以氧化铝(Al2O3)、石墨烯和氮化硼(BN)纳米片为导热填料，以环氧树脂和聚偏氟乙烯(PVDF)为基体，制备了新型的高导热聚合物基复合材料。 首先，采用两步法将超支化聚芳酰胺接枝到纳米Al2O3粒子表面：纳米颗粒先进行硅烷偶联剂处理引入氨基基团，在改性后的纳米粒子上接枝超支化聚合物；再利用X射线衍射、傅立叶红外光谱、核磁共振氢谱和热失重等方法对纳米Al2O3粒子的表面改性进行表征；然后分别将未改性的纳米Al2O3粒子、硅烷接枝的纳米Al2O3粒子(Al2O3-APS)和超支化聚芳酰胺接枝的纳米Al2O3粒子(Al2O3-HBP)与环氧树脂复合，并对三种复合材料的热性能和介电性能进行比较研究。结果表明：(1)从SEM、TEM和动态光散射的实验结果表明，三种纳米颗粒相比之下，Al2O3-HBP纳米粒子在有机溶剂乙醇和环氧树脂中显示出最好的分散性。(2)三种复合材料的导热系数都是随着纳米颗粒含量的增加而增大；在添加相同含量的纳米颗粒时，其导热系数遵循着如下的规律：环氧树脂/Al2O3-HBP复合材料>环氧树脂/Al2O3-APS复合材料>环氧树脂/Al2O3复合材料。而且从DSC、TGA和DMA的实验结果可以得出，与未改性Al2O3和Al2O3-APS纳米颗粒相比，添加Al2O3-HBP纳米颗粒能很好提高复合材料的耐热性。(3)对三种复合材料的介电性能(体积电阻率、介电常数、介电损耗和击穿强度)的研究比较发现，环氧树脂/Al2O3-HBP复合材料显示出优异的综合介电性能。 其次，采用改进的Hummers法和超声剥离法制备氧化石墨烯，再使用热还原的方法制备石墨烯。系统地研究了石墨烯含量对PVDF复合材料的导热、热稳定和介电性能的影响，阐述了其石墨烯提高PVDF复合材料的导热性能的机理；最后还研究了低石墨烯掺量下对PVDF复合材料热稳定、动态热力学、结晶行为、透光率和表面接触角等性能的影响。结果表明：(1)从SEM和TEM可以得出，通过溶剂共混方法使石墨烯能均匀地分散在PVDF基体中。(2)在PVDF基体中引入石墨烯可以使其复合材料的介电性能、导热性能和热稳定性能都有大幅度的提高。实验结果显示PVDF复合材料的逾渗阀值为4.5wt%。当石墨烯含量为0.5wt%时，PVDF复合材料的导热系数为纯PVDF的2倍；当含量为10wt%时，其导热系数达到了0.58W/m K，并对其导热系数提高的内在机理进行了合理地解释。(3)通过研究在低石墨烯掺量下，PVDF复合材料也具有高的热稳定、优良的动态热力学等性能；同时石墨烯对PVDF复合材料的结晶形态、光学性能和表面特性也会有较大的影响。石墨烯优异的性质为我们开发高性能的复合材料提供了新思路。 最后，采用简单的超声离心的方法制备得到BN纳米片，再分别用共价键和非共价键方式对BN纳米片的进行表面官能团化。对BN纳米片与环氧树脂基体间的相互作用设计了三种不同界面相互作用强度。分别为：(1)强界面相互作用：将BN纳米片上接枝超支化聚芳酰胺(BN-HBP)。BN-HBP纳米片表面带有大量的氨基基团与环氧树脂中的环氧基团在固化过程中形成共价键，共价键的形成使得纳米片与环氧树脂间产生强相互作用。(2)中等强度界面相互作用：用十八胺分子修饰BN纳米片(BN-ODA)，由于十八胺的氨基端基是富电子充当Lewis酸，而BN纳米片中B原子是缺电子充当Lewis碱。通过Lewis酸碱的非共价键的相互作用ODA分子可以很好地吸附在BN纳米片表面。经修饰后的BN纳米片表面的十八胺长链分子在环氧树脂固化过程中会与环氧分子发生分子缠结而产生一个比化学键结合而稍弱一些的界面相互作用。(3)弱界面相互作用：为了比较研究，制备了直接添加BN纳米片的环氧复合材料，由于BN纳米片与环氧树脂间既没有物理缠结又没有化学键的相互作用，所以BN纳米片与环氧树脂间表现为弱的界面相互作用。系统地研究纳米片与环氧树脂基体间的不同相互作用对复合材料微观结构、热性能和介电性能影响，重点阐述了不同强度界面相互作用对复合材料的导热性能的影响规律。结果表明：(1)从SEM和TEM的实验结果表明，BN-ODA和BN-HBP纳米片因为分别与环氧树脂之间有物理缠结和化学交联的强界面相互作用，使其具有良好的分散性和相容性。(2)在添加5wt%时,三种复合材料的导热系数遵循着如下的规律：环氧树脂/BN-HBP复合材料>环氧树脂/BN-ODA复合材料>环氧树脂/BN复合材料。而且从DSC、TGA和DMA的实验结果可以得出，添加经表面改性BN-ODA和BN-HBP纳米片的复合材料具有优异的耐热性。(3)在介电性能方面，三种复合材料由于添加不同的纳米片，从实验结果看，除复合材料的体积电阻率外，其它性能比如介电常数、介电损耗和击穿强度都是随着纳米片与环氧树脂之间的界面相互作用强度成正比的，界面相互作用越强，其值越高。",
+				"extra": "major: 材料学\nfoundation: 国家自然基金；\ndownload: 15288\nalbum: 工程科技Ⅰ辑\nCLC: TB332\nCNKICite: 197\ndbcode: CDFD\ndbname: CDFD1214\nfilename: 1012034749.nh",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
+				"numPages": "148",
 				"thesisType": "博士学位论文",
 				"university": "上海交通大学",
 				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CDFD&dbname=CDFD1214&filename=1012034749.nh",
@@ -2698,6 +2701,6 @@ var testCases = [
 				"seeAlso": []
 			}
 		]
-	}
+	}	
 ]
 /** END TEST CASES **/
