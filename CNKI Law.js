@@ -251,6 +251,7 @@ function fixItem(item, extra, doc, url) {
 class LabelsX {
 	constructor(doc, selector) {
 		this.innerData = [];
+		this.emptyElement = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
 			// avoid nesting
 			.filter(element => !element.querySelector(selector))
@@ -259,7 +260,7 @@ class LabelsX {
 			.forEach((element) => {
 				let elementCopy = element.cloneNode(true);
 				// avoid empty text
-				while (!elementCopy.firstChild.textContent.replace(/\s/g, '')) {
+				while (/^\s*$/.test(elementCopy.firstChild.textContent)) {
 					// Z.debug(elementCopy.firstChild.textContent);
 					elementCopy.removeChild(elementCopy.firstChild);
 					// Z.debug(elementCopy.firstChild.textContent);
@@ -270,8 +271,8 @@ class LabelsX {
 				}
 				else {
 					let text = ZU.trimInternal(elementCopy.textContent);
-					let key = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]/).replace(/\s/g, '');
-					elementCopy.textContent = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]\s*(.+)/, 1);
+					let key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elementCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
 					this.innerData.push([key, elementCopy]);
 				}
 			});
@@ -279,24 +280,26 @@ class LabelsX {
 
 	getWith(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element))
-				.filter(element => element);
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			let results = label
+				.map(aLabel => this.getWith(aLabel, element));
+			let keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElement
 					: '';
 		}
-		let pattern = new RegExp(label);
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].textContent)
-			: '';
+		let pattern = new RegExp(label, 'i');
+		let keyVal = this.innerData.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElement
+				: '';
 	}
 }
 

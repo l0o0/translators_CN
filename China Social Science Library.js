@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-09 17:18:22"
+	"lastUpdated": "2024-04-01 08:04:40"
 }
 
 /*
@@ -224,6 +224,7 @@ function scrapeBook(doc, url = doc.location.href) {
 class LabelsX {
 	constructor(doc, selector) {
 		this.innerData = [];
+		this.emptyElement = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
 			// avoid nesting
 			.filter(element => !element.querySelector(selector))
@@ -232,7 +233,7 @@ class LabelsX {
 			.forEach((element) => {
 				let elementCopy = element.cloneNode(true);
 				// avoid empty text
-				while (!elementCopy.firstChild.textContent.replace(/\s/g, '')) {
+				while (/^\s*$/.test(elementCopy.firstChild.textContent)) {
 					// Z.debug(elementCopy.firstChild.textContent);
 					elementCopy.removeChild(elementCopy.firstChild);
 					// Z.debug(elementCopy.firstChild.textContent);
@@ -243,8 +244,8 @@ class LabelsX {
 				}
 				else {
 					let text = ZU.trimInternal(elementCopy.textContent);
-					let key = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]/).replace(/\s/g, '');
-					elementCopy.textContent = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]\s*(.+)/, 1);
+					let key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elementCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
 					this.innerData.push([key, elementCopy]);
 				}
 			});
@@ -252,24 +253,26 @@ class LabelsX {
 
 	getWith(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element))
-				.filter(element => element);
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			let results = label
+				.map(aLabel => this.getWith(aLabel, element));
+			let keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElement
 					: '';
 		}
-		let pattern = new RegExp(label);
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].textContent)
-			: '';
+		let pattern = new RegExp(label, 'i');
+		let keyVal = this.innerData.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElement
+				: '';
 	}
 }
 
@@ -345,7 +348,7 @@ var testCases = [
 				"date": "2023-07",
 				"ISBN": "9787522722177",
 				"abstractNote": "本书聚焦锚定建设农业强国目标，在新发展阶段推进全面深化农村改革的整体思路、重点难点、战略路径和主要突破口。全书由总报告和专题报告组成。总报告为年度报告的核心和精华，全面深入论述在农业强国建设目标引领下，新发展阶段如何推进全面深化农村改革。专题报告分为综合篇、经济篇、社会篇和生态环境篇四大板块。综合篇内容包括坚持与完善农村基本经营制度的对策与路径、深化和推进农村土地制度改革、完善涉农财政资金使用制度、健全城乡融合发展体制机制。经济篇包括农业强国建设的制度保障、深化国有农场体制改革、建立和完善农业高水平开放与支持保护制度、农业保险改革进展、资本进入乡村振兴的体制与机制改革。社会篇包括健全农民稳定增收长效机制、深化农村社会保障制度改革、建立常态化相对贫困治理机制、数字乡村建设中的改革问题。生态环境篇包括农作物生产生态补偿机制、生态农产品价值实现机制、和美乡村建设的长效管护机制、农业农村减排降碳的制度安排。",
-				"extra": "original-title: China's Rural Development Report（2023） Deepening Overall Rural Reform in the New Stage of Development\ncite: 3\nCLC: 经济>农业经济>中国农业经济\nprice: ¥105.6",
+				"extra": "original-title: China's Rural Development Report（2023） Deepening Overall Rural Reform in the New Stage of Development\nCLC: 经济>农业经济>中国农业经济\nprice: ¥105.6",
 				"language": "zh-CN",
 				"libraryCatalog": "中国社会科学文库",
 				"numPages": "466",
@@ -368,57 +371,6 @@ var testCases = [
 				"notes": [
 					"<h1>作者简介</h1>魏后凯 魏后凯 经济学博士，第十三、十四届全国人大代表、农业与农村委员会委员，中国社会科学院农村发展研究所所长、二级研究员、博士生导师，享受国务院特殊津贴专家。兼任中国社会科学院城乡发展一体化智库常务副理事长，中国农村发展学会和中国林牧渔业经济学会会长，国务院学位委员会农林经济管理学科评议组成员，中央农办、农业农村部乡村振兴专家咨询委员会委员。获第三届全国创新争先奖状，入选国家哲学社会科学领军人才和文化名家暨“四个一批”人才。主要研究领域：区域经济、城镇化、农业农村发展。 Wei Houkai, doctor of economics, director, researcher and doctoral supervisor of the Institute of Rural Development, the Chinese Academy of Social Sciences. Main research ﬁelds are regional economics and development economics. 杜志雄 杜志雄 日本东京大学农学博士，第十四届全国政协委员、农业和农村委员会委员，中国社会科学院农村发展研究所党委书记、副所长、二级研究员、博士生导师，享受国务院特殊津贴专家。兼任中国社会科学院城乡发展一体化智库副理事长、农业农村部农村社会事业专家委员会委员、中国农业经济学会副会长、中国县镇经济交流促进会会长和第四届国家食物与营养咨询委员会委员等。获得文化名家暨“四个一批”人才及国家“万人计划”哲学社会科学领军人才称号。主要研究领域：中国农业农村现代化理论与政策。 Du Zhixiong, doctor of agriculture at Tokyo University, researcher and doctoral supervisor at the Chinese Academy of Social Sciences. Main research ﬁelds are rural non-agricultural economy, China's modern agricultural development, etc. 檀学文 檀学文 经济学博士，中国社会科学院农村发展研究所贫困与福祉研究室主任、研究员、博士生导师。兼任中国社会科学院贫困问题研究中心秘书长、中国国外农业经济研究会副会长。主要研究领域：贫困与福祉、农民工与城市化、农业可持续发展。 于法稳于法稳 管理学博士，中国社会科学院农村发展研究所生态经济研究室主任、二级研究员、博士生导师。兼任中国社会科学院生态环境经济研究中心主任、中国生态经济学学会副理事长兼秘书长、《中国生态农业学报》《生态经济》副主编。主要研究领域：生态经济理论与方法、资源管理、农村生态治理、农业可持续发展等。 崔红志崔红志 管理学博士，中国社会科学院农村发展研究所农村组织与制度研究室主任、研究员、博士生导师。主要研究领域：农村社会保障、农村组织与制度。",
 					"<h1>中国农村发展报告.2023：新发展阶段全面深化农村改革 -  目录</h1>编委会\n主报告\n综合篇\n经济篇\n社会篇\n生态环境篇"
-				],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://www.sklib.cn/booklib/bookPreview?SiteID=122&ID=10970860",
-		"items": [
-			{
-				"itemType": "book",
-				"title": "马克思主义与21世纪史学编纂",
-				"creators": [
-					{
-						"firstName": "",
-						"lastName": "克里斯·威克姆",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "段愿",
-						"creatorType": "translator",
-						"fieldMode": 1
-					}
-				],
-				"date": "2019-04",
-				"ISBN": "9787300269146",
-				"abstractNote": "英国马克思主义历史学派是新史学的重要代表，以独特的史学魅力长期屹立于国际史坛。在历史研究过程中，该学派密切关注普通民众，开创了“自下向上看历史”的历史研究方法，提倡从经济、政治、文化等方面总体考察与研究某一历史事件和历史人物，主张用“总体史观”研究历史。其研究方法和模式，被世界史学界广泛研究与运用。2007年，牛津大学出版社以“英国国家学术院第9期专刊”的形式出版了《马克思主义与21世纪史学编纂》，书中收录了8位当代英国马克思主义历史学派代表人物的重要学术论文。这8位学者对当前史学研究的状况，以及马克思主义理论在其中发挥的作用等方面做了深入阐释。所有观点都基于一项基本共识——1989年以后，很多人声称马克思主义历史理论已经过时，但历史并未终结，在对各个时期的历史做出解释时，马克思主义历史理论提供了许多缜密的研究方法。",
-				"extra": "CLC: 马克思主义、列宁主义、毛泽东思想、邓小平理论>马克思主义、列宁主义、毛泽东思想、邓小平理论的学习和研究>著作汇编的学习和研究>专题汇编\nprice: ¥35.4\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"克里斯·威克姆\",\"creatorType\":\"author\",\"country\":\"美\",\"original\":\"Chris Wickham\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"段愿\",\"creatorType\":\"translator\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1}]\noriginal-author: Chris Wickham",
-				"language": "zh-CN",
-				"libraryCatalog": "中国社会科学文库",
-				"numPages": "204",
-				"place": "北京",
-				"publisher": "中国人民大学出版社",
-				"series": "国家出版基金项目",
-				"url": "https://www.sklib.cn/booklib/bookPreview?SiteID=122&ID=10970860",
-				"attachments": [],
-				"tags": [
-					{
-						"tag": "21世纪"
-					},
-					{
-						"tag": "史学"
-					},
-					{
-						"tag": "马克思主义"
-					}
-				],
-				"notes": [
-					"<h1>作者简介</h1>（美）克里斯·威克姆(Chris Wickham)克里斯·威克姆（Chris Wickham），1977—2005年在英国伯明翰大学 (the University of Birmingham)任教。目前是牛津大学中世纪史的“齐契利教授”(Chichele Professor)、英国国家学术院院士。研究领域主要涉及中世纪意大利的社会历史,以及后期罗马和中世纪早期欧洲的社会与经济史比较研究。主要成果包括 《中世纪早期的意大利》(Early Medieval Italy,1981)、《山 脉 和 城 市》(The Mountains and the City,1988)、《土地和权力》(Land and Power,1994)、《12世纪托斯卡纳的法院与冲突》(Courts and Conflict in Twelfth-century Tuscany,2002)、《构建中世纪早期》(Framing the Early Middle Ages,2005)。 段愿段愿，1986年4月出生于浙江杭州。现为浙江省社会科学院（省地方志办公室）助理研究员，兼任浙江省地方志学会理事。撰有《<路易•波拿巴的雾月十八日>的史学贡献及对地方当代史的启迪》等多篇论文，作品分别入选浙江省及全国马克思主义研究相关学术研讨会并获奖。"
 				],
 				"seeAlso": []
 			}
@@ -532,6 +484,9 @@ var testCases = [
 						"tag": "中国社会科学院"
 					},
 					{
+						"tag": "中部地区"
+					},
+					{
 						"tag": "少数民族"
 					},
 					{
@@ -541,13 +496,16 @@ var testCases = [
 						"tag": "改革开放"
 					},
 					{
+						"tag": "沿海地区"
+					},
+					{
 						"tag": "现代中国"
 					},
 					{
 						"tag": "现代化"
 					},
 					{
-						"tag": "研究中国"
+						"tag": "社会科学"
 					},
 					{
 						"tag": "经济发展"
@@ -572,5 +530,4 @@ var testCases = [
 		"items": "multiple"
 	}
 ]
-
 /** END TEST CASES **/

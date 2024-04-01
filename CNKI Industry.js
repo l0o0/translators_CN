@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-03-08 16:26:32"
+	"lastUpdated": "2024-04-01 08:11:26"
 }
 
 /*
@@ -221,10 +221,10 @@ async function scrape(doc, url = doc.location.href) {
 		newItem.complete();
 	}
 }
-
 class LabelsX {
 	constructor(doc, selector) {
 		this.innerData = [];
+		this.emptyElement = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
 			// avoid nesting
 			.filter(element => !element.querySelector(selector))
@@ -233,7 +233,7 @@ class LabelsX {
 			.forEach((element) => {
 				let elementCopy = element.cloneNode(true);
 				// avoid empty text
-				while (!elementCopy.firstChild.textContent.replace(/\s/g, '')) {
+				while (/^\s*$/.test(elementCopy.firstChild.textContent)) {
 					// Z.debug(elementCopy.firstChild.textContent);
 					elementCopy.removeChild(elementCopy.firstChild);
 					// Z.debug(elementCopy.firstChild.textContent);
@@ -244,8 +244,8 @@ class LabelsX {
 				}
 				else {
 					let text = ZU.trimInternal(elementCopy.textContent);
-					let key = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]/).replace(/\s/g, '');
-					elementCopy.textContent = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]\s*(.+)/, 1);
+					let key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elementCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
 					this.innerData.push([key, elementCopy]);
 				}
 			});
@@ -253,24 +253,26 @@ class LabelsX {
 
 	getWith(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element))
-				.filter(element => element);
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			let results = label
+				.map(aLabel => this.getWith(aLabel, element));
+			let keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElement
 					: '';
 		}
-		let pattern = new RegExp(label);
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].textContent)
-			: '';
+		let pattern = new RegExp(label, 'i');
+		let keyVal = this.innerData.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElement
+				: '';
 	}
 }
 
@@ -316,9 +318,7 @@ const extra = {
 
 function procesAttachment(item, doc) {
 	let cajLink = doc.querySelector('.cajDNew > a');
-	Z.debug(`cajLink: ${cajLink}`);
 	let pdfLink = doc.querySelector('.pdfD> a');
-	Z.debug(`pdfLink: ${pdfLink}`);
 	if (pdfLink) {
 		item.attachments.push({
 			url: pdfLink.href,
@@ -705,6 +705,7 @@ var testCases = [
 						"creatorType": "author"
 					}
 				],
+				"DOI": "10.2322/TASTJ.8.TO_4_25",
 				"abstractNote": "The Japan Aerospace Exploration Agency (JAXA) will make the world's first solar power sail craft demonstration of photon propulsion and thin film solar power generation during its interplanetary cruise by IKAROS (Interplanetary Kite-craft Accelerated by Radiation Of the Sun). The spacecraft deploys and spans a membrane of 20 meters in diameter taking the advantage of the spin centrifugal force. The spacecraft weighs approximately 310kg, launched together with the agency's Venus Climate Orbiter, AKATSUKI in May 2010. This will be the first actual solar sail flying an interplanetary voyage. 更多还原 AbstractFilter('ChDivSummary_YWZY','ChDivSummaryMore_YWZY','ChDivSummaryReset_YWZY');",
 				"libraryCatalog": "CNKI Industry",
 				"publicationTitle": "TRANSACTIONS OF THE JAPAN SOCIETY FOR AERONAUTICAL AND SPACE SCIENCES, AEROSPACE TECHNOLOGY JAPAN",

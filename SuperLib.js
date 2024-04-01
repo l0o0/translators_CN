@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-14 05:39:05"
+	"lastUpdated": "2024-04-01 08:47:02"
 }
 
 /*
@@ -90,6 +90,7 @@ async function scrape(doc, url = doc.location.href) {
 	Z.debug(doc.body.innerText);
 	const labels = new LabelsX(doc, '.content > ul:first-child > li, .tubox dd');
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
+	let extra = new Extra();
 	var newItem = new Zotero.Item(detectWeb(doc, url));
 	newItem.extra = '';
 	newItem.title = text(doc, 'h1, .tutilte');
@@ -111,38 +112,37 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.date = ZU.strToISO(tryMatch(pubInfo, /[\d.]*$/));
 			newItem.numPages = labels.getWith('形态项');
 			newItem.ISBN = labels.getWith('ISBN号');
-			newItem.extra += addExtra('CLC', labels.getWith('中图分类法'));
-			newItem.extra += addExtra('price', labels.getWith('定价'));
+			extra.set('CLC', labels.getWith('中图分类法'));
+			extra.set('price', labels.getWith('定价'));
 			let creators = [];
-			labels.getWith('作者').replace(/(\w)，(\w)/g, '$1, $2').split('；')
-.forEach((group) => {
-	let creatorType = /译/.test(group)
-		? 'translator'
-		: 'author';
-	group.split('，').forEach((creator) => {
-		Z.debug(creator);
-		creator = creator.replace(/[等翻译主副参编著作]*$/, '');
-		let country = tryMatch(creator, /^（(.+?)）/, 1);
-		Z.debug(country);
-		creator = creator.replace(/^（.*?）/, '');
-		let original = tryMatch(creator, /（(.+?)）$/, 1);
-		creator = creator.replace(/（.*?）$/, '');
-		Z.debug(original);
-		Z.debug(creator);
-		creator = ZU.cleanAuthor(creator, creatorType);
-		creator.country = country;
-		creator.original = original;
-		if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
-			creator.lastName = creator.firstName + creator.lastName;
-			creator.firstName = '';
-			creator.fieldMode = 1;
-		}
-		creators.push(creator);
-	});
-});
-			newItem.extra += addExtra('creatorsExt', JSON.stringify(creators));
+			labels.getWith('作者').replace(/(\w)，(\w)/g, '$1, $2')
+				.split('；')
+				.forEach((group) => {
+					let creatorType = /译$/.test(group)
+						? 'translator'
+						: 'author';
+					group.split('，').forEach((creator) => {
+						Z.debug(creator);
+						creator = creator.replace(/[等翻译主副参编著作]*$/, '');
+						let country = tryMatch(creator, /^（(.+?)）/, 1);
+						Z.debug(country);
+						creator = creator.replace(/^（.*?）/, '');
+						let original = tryMatch(creator, /（(.+?)）$/, 1);
+						creator = creator.replace(/（.*?）$/, '');
+						Z.debug(original);
+						Z.debug(creator);
+						creator = cleanAuthor(creator, creatorType);
+						creator.country = country;
+						creator.original = original;
+						creators.push(creator);
+					});
+				});
+			if (creators.some(creator => creator.country || creator.original)) {
+				extra.set('creatorsExt', JSON.stringify(creators));
+			}
 			creators.forEach((creator) => {
 				delete creator.country;
+				extra.push('origianl-author', creator.original, true);
 				delete creator.original;
 				newItem.creators.push(creator);
 			});
@@ -154,17 +154,17 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.issue = tryMatch(labels.getWith('期号'), /0*([1-9]\d*)/, 1);
 			// newItem.pages = 页码;
 			newItem.date = labels.getWith('出版日期');
-			newItem.extra += addExtra('original-title', labels.getWith('外文题名'));
-			newItem.extra += addExtra('fund', labels.getWith('基金项目'));
-			newItem.extra += addExtra('if', labels.getWith('影响因子'));
-			labels.getWith('作者', true).querySelectorAll('a').forEach(element => newItem.creators.push(ZU.cleanAuthor(element.textContent, 'author')));
+			extra.set('original-title', labels.getWith('外文题名'), true);
+			extra.set('fund', labels.getWith('基金项目'));
+			extra.set('if', labels.getWith('影响因子'));
+			labels.getWith('作者', true).querySelectorAll('a').forEach(element => newItem.creators.push(cleanAuthor(element.textContent, 'author')));
 			labels.getWith('关键词', true).querySelectorAll('a').forEach(element => newItem.tags.push(element.textContent));
 			break;
 		case 'newspaperArticle':
 			newItem.publicationTitle = labels.getWith('来源');
 			newItem.date = ZU.strToISO(labels.getWith('日期'));
 			newItem.paegs = tryMatch(labels.getWith('版次'), /0*([1-9]\d*)/, 1);
-			labels.getWith('作者', true).querySelectorAll('a').forEach(element => newItem.creators.push(ZU.cleanAuthor(element.textContent, 'author')));
+			labels.getWith('作者', true).querySelectorAll('a').forEach(element => newItem.creators.push(cleanAuthor(element.textContent, 'author')));
 			// 报纸语言皆为中文，使用空格分割不会造成意外
 			labels.getWith('关键词').split(' ').forEach(tag => newItem.tags.push(tag));
 			break;
@@ -172,14 +172,14 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.thesisType = `${labels.getWith('学位名称')}学位论文`;
 			newItem.university = labels.getWith('学位授予单位');
 			newItem.date = labels.getWith('学位年度');
-			newItem.creators.push(ZU.cleanAuthor(labels.getWith('作者'), 'author'));
-			labels.getWith('导师').split('，').forEach(creator => newItem.creators.push(ZU.cleanAuthor(creator, 'contributor')));
+			newItem.creators.push(cleanAuthor(labels.getWith('作者'), 'author'));
+			labels.getWith('导师').split('，').forEach(creator => newItem.creators.push(cleanAuthor(creator, 'contributor')));
 			break;
 		case 'conferencePaper':
 			newItem.date = labels.getWith('日期');
 			newItem.proceedingsTitle = labels.getWith('会议录名称');
 			newItem.conferenceName = labels.getWith('会议名称');
-			labels.getWith('作者', true).querySelectorAll('a').forEach(element => newItem.creators.push(ZU.cleanAuthor(element.textContent, 'author')));
+			labels.getWith('作者', true).querySelectorAll('a').forEach(element => newItem.creators.push(cleanAuthor(element.textContent, 'author')));
 			labels.getWith('关键词', true).querySelectorAll('a').forEach(element => newItem.tags.push(element.textContent));
 			break;
 		case 'patent': {
@@ -200,19 +200,19 @@ async function scrape(doc, url = doc.location.href) {
 				newItem.issueDate = tabel.getNext('法律状态公告日');
 				newItem.legalStatus = tabel.getNext('法律状态');
 			}
-			newItem.extra += addExtra('Genre', labels.getWith('专利类型'));
-			labels.getWith('发明人').split('，').forEach(creator => newItem.creators.push(ZU.cleanAuthor(creator, 'inventor')));
+			extra.set('Genre', labels.getWith('专利类型'), true);
+			labels.getWith('发明人').split('，').forEach(creator => newItem.creators.push(cleanAuthor(creator, 'inventor')));
 			break;
 		}
 		case 'standard':
 			newItem.number = labels.getWith('标准号').replace('-', '—');
-			newItem.extra += addExtra('original-title', labels.getWith('标准英文名'));
-			newItem.extra += addExtra('IPC', labels.getWith('IPC分类号'));
-			newItem.extra += addExtra('ICS', labels.getWith('ICS分类号'));
-			newItem.extra += addExtra('reference', labels.getWith('引用标准'));
-			newItem.extra += addExtra('drafting-committee', labels.getWith('起草单位'));
-			newItem.extra += addExtra('replacement', labels.getWith('替代情况'));
-			newItem.extra += addExtra('CCS', labels.getWith('中标分类号'));
+			extra.set('original-title', labels.getWith('标准英文名'), true);
+			extra.set('IPC', labels.getWith('IPC分类号'));
+			extra.set('ICS', labels.getWith('ICS分类号'));
+			extra.set('reference', labels.getWith('引用标准'));
+			extra.set('draftingCommittee', labels.getWith('起草单位'));
+			extra.set('replacement', labels.getWith('替代情况'));
+			extra.set('CCS', labels.getWith('中标分类号'));
 			break;
 		default:
 			break;
@@ -224,6 +224,7 @@ async function scrape(doc, url = doc.location.href) {
 class LabelsX {
 	constructor(doc, selector) {
 		this.innerData = [];
+		this.emptyElement = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
 			// avoid nesting
 			.filter(element => !element.querySelector(selector))
@@ -232,7 +233,7 @@ class LabelsX {
 			.forEach((element) => {
 				let elementCopy = element.cloneNode(true);
 				// avoid empty text
-				while (!elementCopy.firstChild.textContent.replace(/\s/g, '')) {
+				while (/^\s*$/.test(elementCopy.firstChild.textContent)) {
 					// Z.debug(elementCopy.firstChild.textContent);
 					elementCopy.removeChild(elementCopy.firstChild);
 					// Z.debug(elementCopy.firstChild.textContent);
@@ -243,8 +244,8 @@ class LabelsX {
 				}
 				else {
 					let text = ZU.trimInternal(elementCopy.textContent);
-					let key = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]/).replace(/\s/g, '');
-					elementCopy.textContent = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]\s*(.+)/, 1);
+					let key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elementCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
 					this.innerData.push([key, elementCopy]);
 				}
 			});
@@ -252,24 +253,62 @@ class LabelsX {
 
 	getWith(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element))
-				.filter(element => element);
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			let results = label
+				.map(aLabel => this.getWith(aLabel, element));
+			let keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElement
 					: '';
 		}
 		let pattern = new RegExp(label, 'i');
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].textContent)
-			: '';
+		let keyVal = this.innerData.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElement
+				: '';
+	}
+}
+
+class Extra {
+	constructor() {
+		this.fields = [];
+	}
+
+	push(key, val, csl = false) {
+		this.fields.push({ key: key, val: val, csl: csl });
+	}
+
+	set(key, val, csl = false) {
+		let target = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		if (target) {
+			target.val = val;
+		}
+		else {
+			this.push(key, val, csl);
+		}
+	}
+
+	get(key) {
+		let result = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		return result
+			? result.val
+			: undefined;
+	}
+
+	toString(history = '') {
+		this.fields = this.fields.filter(obj => obj.val);
+		return [
+			this.fields.filter(obj => obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n'),
+			history,
+			this.fields.filter(obj => !obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n')
+		].filter(obj => obj).join('\n');
 	}
 }
 
@@ -281,10 +320,14 @@ function tryMatch(string, pattern, index = 0) {
 		: '';
 }
 
-function addExtra(key, value) {
-	return value
-		? `${key}: ${value}\n`
-		: '';
+function cleanAuthor(creator, creatorType = 'author') {
+	creator = ZU.cleanAuthor(creator, creatorType);
+	if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
+		creator.lastName = creator.firstName + creator.lastName;
+		creator.firstName = '';
+		creator.fieldMode = 1;
+	}
+	return creator;
 }
 
 /** BEGIN TEST CASES **/
@@ -300,17 +343,18 @@ var testCases = [
 					{
 						"firstName": "",
 						"lastName": "顾云婧",
-						"creatorType": "author"
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "朱平",
-						"creatorType": "author"
+						"creatorType": "author",
+						"fieldMode": 1
 					}
 				],
 				"date": "2020",
 				"abstractNote": "卵巢癌是一种早期诊断率低而致死率较高的恶性肿瘤,对其预后标志物的鉴定和生存率的预测仍是生存分析的重要任务。利用卵巢癌预后相关基因构建基因共表达网络,鉴定预后生物标志物并进行生存率的预测。首先,对TCGA(The cancer genome atlas)数据库下载的卵巢癌基因表达数据实施单因素回归分析,利用得到的747个预后相关基因构建卵巢癌预后加权基因共表达网络。其次,考虑网络的生物学意义,利用蛋白质相互作用(Protein-protein interaction, PPI)数据对共表达网络中的模块重新加权,并根据网络中基因的拓扑重要性对基因进行排序。最后,运用Cox比例风险回归对网络中的重要基因构建卵巢癌预后模型,鉴定了3个预后生物标志物。生存分析结果显示,这3个标志物能够显著区分不同预后的患者,较好地预测卵巢癌患者的预后情况。  隐藏更多",
-				"extra": "original-title: Research on gene co-expression network and prognostic biomarkers of ovarian cancer\nfund: 国家自然科学基金项目(No.11271163)\nif: 1.6145(2022)",
 				"issue": "5",
 				"libraryCatalog": "SuperLib",
 				"publicationTitle": "生物学杂志",
@@ -425,7 +469,6 @@ var testCases = [
 				"date": "2015-03",
 				"ISBN": "9787560997186",
 				"abstractNote": "内容提要:\n本书以基因工程的研究步骤及实际操作中的需要为主线，共分12章，包括基因工程的基本概念、基因工程基本技术原理、基因工程的工具酶和克隆载体、目的基因的克隆、外源基因的原核表达系统等。",
-				"extra": "price: 52.00\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"郑振宇\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"王秀利\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"刘丹梅\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"宋运贤\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"陈国梁\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"邵燕\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"胡沂淮\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"阚劲松\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"韩凤桐\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"孙新城\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"李宏\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"张锐\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"王彦芹\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1}]",
 				"libraryCatalog": "SuperLib",
 				"numPages": "375",
 				"place": "武汉",
@@ -468,7 +511,6 @@ var testCases = [
 				"date": "1992-02",
 				"ISBN": "9787533707538",
 				"abstractNote": "内容提要:\n著者原题无汉译名:按字母顺序罗列1700多个常见错误、正误例句、英语与美语的差异、语法术语要领等,大多错误取自剑桥第一证书考试答卷。",
-				"extra": "price: 7.35 8.90\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"希顿\",\"creatorType\":\"author\",\"country\":\"英\",\"original\":\"Heaton, J.B.\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"特顿\",\"creatorType\":\"author\",\"country\":\"英\",\"original\":\"Turton, N.D.\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"吴骅\",\"creatorType\":\"translator\",\"country\":\"\",\"original\":\"\",\"fieldMode\":1}]",
 				"libraryCatalog": "SuperLib",
 				"numPages": "476",
 				"place": "合肥",
@@ -491,17 +533,20 @@ var testCases = [
 					{
 						"firstName": "",
 						"lastName": "冯倩",
-						"creatorType": "author"
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "秦燕香",
-						"creatorType": "author"
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "张晓茹",
-						"creatorType": "author"
+						"creatorType": "author",
+						"fieldMode": 1
 					}
 				],
 				"date": "2022-06-13",
@@ -536,17 +581,20 @@ var testCases = [
 					{
 						"firstName": "",
 						"lastName": "鲁志强",
-						"creatorType": "author"
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "石云",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "吕斌",
-						"creatorType": "contributor"
+						"creatorType": "contributor",
+						"fieldMode": 1
 					}
 				],
 				"date": "2013",
@@ -573,27 +621,32 @@ var testCases = [
 					{
 						"firstName": "",
 						"lastName": "吴池",
-						"creatorType": "author"
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "弓鑫",
-						"creatorType": "author"
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "张新宇",
-						"creatorType": "author"
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "张建朝",
-						"creatorType": "author"
+						"creatorType": "author",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "常晓娟",
-						"creatorType": "author"
+						"creatorType": "author",
+						"fieldMode": 1
 					}
 				],
 				"date": "2022",
@@ -633,12 +686,14 @@ var testCases = [
 					{
 						"firstName": "",
 						"lastName": "马燕",
-						"creatorType": "inventor"
+						"creatorType": "inventor",
+						"fieldMode": 1
 					},
 					{
 						"firstName": "",
 						"lastName": "金心茹",
-						"creatorType": "inventor"
+						"creatorType": "inventor",
+						"fieldMode": 1
 					}
 				],
 				"issueDate": "2023.10.03",
@@ -662,7 +717,6 @@ var testCases = [
 				"itemType": "standard",
 				"title": "生态环境档案著录细则",
 				"creators": [],
-				"extra": "original-title: Description detailed regulations for ecological and environmental archives\nICS: 01.040.13\ndrafting-committee: 苏州大学\nreplacement: 替代HJ/T 9-1995",
 				"libraryCatalog": "SuperLib",
 				"number": "HJ 9—2022",
 				"url": "http://book.ucdrs.superlib.net/views/specific/2929/StdDetail.jsp?dxid=320151546977&d=F3BF82FD19585130C75082812F38D5C9&sw=+%E8%91%97%E5%BD%95",
@@ -688,7 +742,6 @@ var testCases = [
 					}
 				],
 				"abstractNote": "In their comprehensive new introduction to phonetics, Ball and Rahilly offer a detailed explanation of the process of speech production, from the anatomical initiation of sounds and their modification in the larynx, through to the final articulation of vowels and consonants in the oral and nasal tracts.This textbook is one of the few to give a balanced account of segmental and suprasegmental aspects of speech, showing clearly that the communication chain is incomplete without accurate production of both individual speech sounds(segmental features)and aspects such as stress and intonation(suprasegmental features).Throughout the book the authors provide advice on transcription, primarily using the International Phonetic Alphabet(IPA).Students are expertly guided from basic attempts to record speech sounds on paper, to more refined accounts of phonetic detail in speech.The authors go on to explain acoustic phonetics in a manner accessible both to new students in phonetics, and to those who wish to advance their knowledge of key pursuits in the area, including the sound spectrograph.They describe how speech waves can be measured, as well as considering how they are heard and decoded by listeners, discussing both physiological and neurological aspects of hearing and examining the methods of psychoacoustic experimentation.A range of instrumentation for studying speech production is also presented.The next link is acoustic phonetics, the study of speech transmission.Here the authors introduce the basic concepts of sound acoustics and the instrumentation used to analyse the characteristics of speech waves.Finally, the chain is completed by examining auditory phonetics, and providing a fascinating psychoacoustic experimentation, used to determine what parts of the speech signal are most crucial for listener understanding.The book concludes with a comprehensive survey and description of modern phonetic instrumentation, from the sound spectrograph to magnetic resonance imaging(MRI)",
-				"extra": "creatorsExt: [{\"firstName\":\"Martin J. Ball; Joan\",\"lastName\":\"Rahilly\",\"creatorType\":\"author\",\"country\":\"\",\"original\":\"\"}]",
 				"libraryCatalog": "SuperLib",
 				"shortTitle": "Phonetics",
 				"url": "http://eng.ucdrs.superlib.net/views/specific/2929/FBookDetail.jsp?dxNumber=164030712467&d=AF328D3CD1401FE9489CF56D78387CFE#ctop",

@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-03-21 06:39:21"
+	"lastUpdated": "2024-04-01 08:16:59"
 }
 
 /*
@@ -133,6 +133,7 @@ async function scrape(doc) {
 class LabelsX {
 	constructor(doc, selector) {
 		this.innerData = [];
+		this.emptyElement = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
 			// avoid nesting
 			.filter(element => !element.querySelector(selector))
@@ -141,7 +142,7 @@ class LabelsX {
 			.forEach((element) => {
 				let elementCopy = element.cloneNode(true);
 				// avoid empty text
-				while (!elementCopy.firstChild.textContent.replace(/\s/g, '')) {
+				while (/^\s*$/.test(elementCopy.firstChild.textContent)) {
 					// Z.debug(elementCopy.firstChild.textContent);
 					elementCopy.removeChild(elementCopy.firstChild);
 					// Z.debug(elementCopy.firstChild.textContent);
@@ -152,8 +153,8 @@ class LabelsX {
 				}
 				else {
 					let text = ZU.trimInternal(elementCopy.textContent);
-					let key = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]/).replace(/\s/g, '');
-					elementCopy.textContent = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]\s*(.+)/, 1);
+					let key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elementCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
 					this.innerData.push([key, elementCopy]);
 				}
 			});
@@ -161,24 +162,26 @@ class LabelsX {
 
 	getWith(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element))
-				.filter(element => element);
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			let results = label
+				.map(aLabel => this.getWith(aLabel, element));
+			let keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElement
 					: '';
 		}
 		let pattern = new RegExp(label, 'i');
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].textContent)
-			: '';
+		let keyVal = this.innerData.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElement
+				: '';
 	}
 }
 
@@ -240,6 +243,7 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://ndltd.ncl.edu.tw/cgi-bin/gs32/gsweb.cgi?o=dnclcdr&s=id=%22078NTU02022007%22.&searchmode=basic",
+		"defer": true,
 		"items": [
 			{
 				"itemType": "thesis",
@@ -260,7 +264,7 @@ var testCases = [
 				],
 				"date": "1990",
 				"abstractNote": "本文分析1987年6 月24-25 日梅雨鋒面南下伴隨的中尺度天氣特征,重要的結果包括:\n1.鋒面通過福建省武夷山與臺灣省中央山脈造成兩次斷裂, 且鋒面在各區的移動速度\n顯著不同.\n2.鋒面南下在武夷山東側造成一明顯類似冷空氣堤現象(cold-air damming)。\n3.西南氣流受鋒面與地形共同運作影響，在海峽兩岸形成顯著不同結構造成比地區的\n降水具有明顯的區域性特質。\n4.帶狀對流多至臺灣北部時，位於雷達東北的對流消散，西南則繼續發展，且此帶狀\n對流降水具有相當的區域性。\n由中尺度天氣特征的分析，結合綜觀環境條件，發現即使對流處於500 mb槽后不利上\n升運動的環境條件下，仍可在較深厚的西南氣流里發展，再從中層由北方乾空氣平流\n而來所造成的潛在不穩定層得到能量、配合高層的輻散風場，而發展為強烈的中尺度\n對流系統。",
-				"extra": "original-author: Lin,Ging-Cai\noriginal-author: Zhou,Zhong-Dao\ncitation: 0\nview: 112\nrating: \ndownload0\nfavorite0\nmajor: 大氣科學學\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"林清財\",\"creatorType\":\"author\",\"fieldMode\":1,\"original\":\"Lin,Ging-Cai\"},{\"firstName\":\"\",\"lastName\":\"周仲島\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"original\":\"Zhou,Zhong-Dao\"}]",
+				"extra": "original-author: Lin,Ging-Cai\noriginal-author: Zhou,Zhong-Dao\ncitation: 0\nview: 145\nrating: \ndownload0\nfavorite0\nmajor: 大氣科學學\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"林清財\",\"creatorType\":\"author\",\"fieldMode\":1,\"original\":\"Lin,Ging-Cai\"},{\"firstName\":\"\",\"lastName\":\"周仲島\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"original\":\"Zhou,Zhong-Dao\"}]",
 				"language": "zh-TW",
 				"libraryCatalog": "臺灣博碩士論文知識加值系統",
 				"numPages": "71",
