@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-29 11:32:00"
+	"lastUpdated": "2024-04-01 05:42:11"
 }
 
 /*
@@ -164,8 +164,8 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.date = ZU.strToISO(labels.getWith('发布日期'));
 			extra.set('applyDate', labels.getWith('实施日期'));
 			newItem.numPages = tryMatch(labels.getWith('页码'), /\d+/);
-			extra.set('CSC', labels.getWith('中国标准分类号'));
-			extra.set('ISC', labels.getWith('国际标准分类号'));
+			extra.set('CCS', labels.getWith('中国标准分类号'));
+			extra.set('ICS', labels.getWith('国际标准分类号'));
 			break;
 		case 'patent':
 			newItem.patentNumber = labels.getWith('公开号').split(';')[0];
