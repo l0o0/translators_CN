@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-03-29 14:54:31"
+	"lastUpdated": "2024-04-01 07:50:20"
 }
 
 /*
@@ -975,7 +975,7 @@ async function parseRefer(referText, doc, url, itemKey) {
 			if (item.university) {
 				item.university = item.university.replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
 			}
-			newItem.numPages = labels.getWith(['页数', '頁數', 'Page']);
+			item.numPages = labels.getWith(['页数', '頁數', 'Page']);
 			extra.set('major', labels.getWith(['学科专业', '學科專業', 'Retraction']));
 			break;
 		case 'conferencePaper': {
@@ -1050,6 +1050,7 @@ async function parseRefer(referText, doc, url, itemKey) {
 class LabelsX {
 	constructor(doc, selector) {
 		this.innerData = [];
+		this.emptyElement = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
 			// avoid nesting
 			.filter(element => !element.querySelector(selector))
@@ -1058,7 +1059,7 @@ class LabelsX {
 			.forEach((element) => {
 				let elementCopy = element.cloneNode(true);
 				// avoid empty text
-				while (!elementCopy.firstChild.textContent.replace(/\s/g, '')) {
+				while (/^\s*$/.test(elementCopy.firstChild.textContent)) {
 					// Z.debug(elementCopy.firstChild.textContent);
 					elementCopy.removeChild(elementCopy.firstChild);
 					// Z.debug(elementCopy.firstChild.textContent);
@@ -1069,8 +1070,8 @@ class LabelsX {
 				}
 				else {
 					let text = ZU.trimInternal(elementCopy.textContent);
-					let key = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]/).replace(/\s/g, '');
-					elementCopy.textContent = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]\s*(.+)/, 1);
+					let key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elementCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
 					this.innerData.push([key, elementCopy]);
 				}
 			});
@@ -1078,24 +1079,26 @@ class LabelsX {
 
 	getWith(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element))
-				.filter(element => element);
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			let results = label
+				.map(aLabel => this.getWith(aLabel, element));
+			let keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElement
 					: '';
 		}
 		let pattern = new RegExp(label, 'i');
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].textContent)
-			: '';
+		let keyVal = this.innerData.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElement
+				: '';
 	}
 }
 
@@ -1430,7 +1433,7 @@ var testCases = [
 				"date": "2020",
 				"ISSN": "0258-4646",
 				"abstractNote": "目的利用生物信息学方法探索2型糖尿病发病的相关基因,并研究这些基因与阿尔茨海默病的关系。方法基因表达汇编(GEO)数据库下载GSE85192、GSE95849、GSE97760、GSE85426数据集,获得健康人和2型糖尿病患者外周血的差异基因,利用加权基因共表达网络(WGCNA)分析差异基因和临床性状的关系。使用DAVID数据库分析与2型糖尿病有关的差异基因的功能与相关通路,筛选关键蛋白。根据结果将Toll样受体4 (TLR4)作为关键基因,利用基因集富集分析(GSEA)分析GSE97760中与高表达TLR4基因相关的信号通路。通过GSE85426验证TLR4的表达量。结果富集分析显示,差异基因主要参与的生物学过程包括炎症反应、Toll样受体(TLR)信号通路、趋化因子产生的正向调节等。差异基因主要参与的信号通路有嘧啶代谢通路、TLR信号通路等。ILF2、TLR4、POLR2G、MMP9为2型糖尿病的关键基因。GSEA显示,TLR4上调可通过影响嘧啶代谢及TLR信号通路而导致2型糖尿病及阿尔茨海默病的发生。TLR4在阿尔茨海默病外周血中高表达。结论 ILF2、TLR4、POLR2G、MMP9为2型糖尿病发病的关键基因,TLR4基因上调与2型糖尿病、阿尔茨海默病发生有关。",
-				"extra": "original-container-title: Journal of China Medical University\ndownload: 397\nalbum: 医药卫生科技\nCLC: R587.2;R749.16\nCNKICite: 3\nCIF: 1.156\nAIF: 0.890",
+				"extra": "original-container-title: Journal of China Medical University\ndownload: 400\nalbum: 医药卫生科技\nCLC: R587.2;R749.16\nCNKICite: 3\ndbcode: CJFD\ndbname: CJFDLAST2020\nfilename: zgyk202012011\nCIF: 1.156\nAIF: 0.890",
 				"issue": "12",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
@@ -1502,7 +1505,7 @@ var testCases = [
 				"date": "2012",
 				"ISSN": "1000-0054",
 				"abstractNote": "經濟全球化和新一輪產業升級為電子商務服務產業發展帶來了新的機遇和挑戰。無法全程、及時、有效監管電子商務市場的主體及其相關行為是電子商務發展過程中面臨的主要問題。尤其對于互聯網藥品市場,電子商務主體資質的審核備案是營造電子商務可信交易環境的一項重要工作。該文通過系統網絡結構分析的方法描述了公共審核備案服務模式和分立審核備案模式的基本原理;建立了兩種模式下的總體交易費用模型,分析了公共模式比分立模式節約總體交易費用的充要條件,以及推廣該公共模式的必要條件。研究發現:市場規模越大、集成成本越小,公共模式越容易推廣。應用案例分析驗證了模型,證實了公共審核備案服務模式節約了總體交易費用的結論。",
-				"extra": "original-container-title: Journal of Tsinghua University(Science and Technology)\ndownload: 593\nalbum: 理工C(機電航空交通水利建筑能源); 醫藥衛生科技; 經濟與管理科學\nCLC: R95;F724.6\nCNKICite: 7\nCIF: 3.010\nAIF: 1.884",
+				"extra": "original-container-title: Journal of Tsinghua University(Science and Technology)\ndownload: 601\nalbum: 理工C(機電航空交通水利建筑能源); 醫藥衛生科技; 經濟與管理科學\nCLC: R95;F724.6\nCNKICite: 7\ndbcode: CJFD\ndbname: CJFD2012\nfilename: qhxb201211002\nCIF: 3.010\nAIF: 1.884",
 				"issue": "11",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
@@ -1561,7 +1564,7 @@ var testCases = [
 				],
 				"date": "2016-12",
 				"abstractNote": "北京铁路局是以铁路客货运输为主的特大型国有企业,是全国铁路网的中枢。全局共有职工19.1万人,管内铁路营业里程全长6246公里,其中高速铁路营业里程为1143.3公里。近年来,北京铁路局始终坚持\"主要行车工种做实、高技能人才做精、工班长队伍做强\"工作主线,积极构建并实施由教育培训规范、教育培训组织管理、实训基地及现代化设施、专兼职教育培训师资、",
-				"extra": "download: 71\nalbum: (H) Education ＆ Social Sciences\nCLC: G726\nCNKICite: 0",
+				"extra": "download: 79\nalbum: (H) Education ＆ Social Sciences\nCLC: G726\nCNKICite: 0\ndbcode: CPFD\ndbname: CPFDLAST2017\nfilename: zgpx201612002005",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "8",
@@ -1771,13 +1774,13 @@ var testCases = [
 				"DOI": "10.13374/j.issn2095-9389.2022.11.11.005",
 				"ISSN": "2095-9389",
 				"abstractNote": "生物质属于可再生资源，在我国含量丰富，生物质材料炭化后的产物在储能、吸附等领域得到了广泛应用.研究生物质材料的炭化过程，有利于生物质炭的有效利用.总结了生物质材料炭化过程中，生物质的种类和炭化条件（包括炭化温度、预处理等）对炭化产物中碳的结构、形态、性质的影响，期望为生物质炭化产物的有效利用提供理论基础.同时总结了在催化剂作用下，利用生物质材料炭化来制备碳纳米管，并分析了生物质材料中木质素和纤维素等组分对碳纳米管制备的影响.在此基础上，展望了生物质材料在含碳耐火材料中的应用前景，以期为制备低成本和高性能的新型含碳耐火材料提供思路.",
-				"extra": "original-container-title: Chinese Journal of Engineering\nfoundation: 国家自然科学基金资助项目（51872266,52172031）；\nalbum: 工程科技Ⅰ辑;工程科技Ⅱ辑\nCLC: TB383.1;TQ175.7;TK6\nCNKICite: 0\npublicationTag: 北大核心, JST, Pж(AJ), EI, CSCD, WJCI\nCIF: 3.295\nAIF: 2.29",
+				"extra": "original-container-title: Chinese Journal of Engineering\nfoundation: 国家自然科学基金资助项目（51872266,52172031）；\ndownload: 831\nalbum: 工程科技Ⅰ辑;工程科技Ⅱ辑\nCLC: TB383.1;TQ175.7;TK6\nCNKICite: 0\ndbcode: CJFQ\ndbname: CJFDLAST2023\nfilename: BJKD202312004\npublicationTag: 北大核心, JST, Pж(AJ), EI, CSCD, WJCI\nCIF: 3.295\nAIF: 2.29",
 				"issue": "12",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "2026-2036",
 				"publicationTitle": "工程科学学报",
-				"url": "https://kns.cnki.net/kcms/detail/10.1297.TF.20231007.1516.001.html",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFQ&dbname=CJFDLAST2023&filename=BJKD202312004",
 				"volume": "45",
 				"attachments": [
 					{
@@ -1888,12 +1891,12 @@ var testCases = [
 				"DOI": "10.13801/j.cnki.fhclxb.20240008.002",
 				"ISSN": "1000-3851",
 				"abstractNote": "四环素类抗生素因具有高效、低毒、广谱抑菌性等优点而被广泛使用，但随着抗生素的滥用致使大量的耐药菌出现，使四环素类抗生素的药用价值逐渐降低。超小粒径的纳米Ag虽可使细菌甚至耐药菌失活，但单独使用毒性较强，且易团聚。为此，本研究利用Ag的d轨道为满电子结构，可与供电子基团配位的原理，设计了核壳型介孔Fe<sub>3</sub>O<sub>4</sub>@SiO<sub>2</sub>@mTiO<sub>2</sub>@Ag-四环素（FSmTA-T）复合材料用以解决抗生素耐药和纳米Ag团聚、强毒性问题。研究结果显示，制备的复合材料中纳米Ag量子点的粒径约为2.84 nm，可与四环素环3中的羰基键合，同时，相比四环素，复合材料对大肠杆菌，金黄色葡萄球菌，耐四环素沙门氏菌和白色念珠菌均具有较高的抑菌活性，并可有效破坏细菌细胞壁而使其死亡，且对哺乳细胞的毒性降低为原来的1/3。因此，其优越的抑菌活性可应用于污水处理领域。",
-				"extra": "original-container-title: Acta Materiae Compositae Sinica\nStatus: advance online publication\nfoundation: 秦巴生物资源与生态环境国家重点实验室科研基金(SXS-2105)； 陕西省教育厅项目（22JK-0317）； 陕西省自然科学基金(2023-JC-QN-0162； 2023-YBSF-334)； 陕西理工大学基础研究基金(SLGKYXM2208)；\nalbum: 工程科技Ⅰ辑\nCLC: X703;TB332\nCNKICite: 0\npublicationTag: 北大核心, CA, JST, Pж(AJ), EI, CSCD, WJCI, 卓越期刊\nCIF: 2.595\nAIF: 1.788",
+				"extra": "original-container-title: Acta Materiae Compositae Sinica\nStatus: advance online publication\nfoundation: 秦巴生物资源与生态环境国家重点实验室科研基金(SXS-2105)； 陕西省教育厅项目（22JK-0317）； 陕西省自然科学基金(2023-JC-QN-0162； 2023-YBSF-334)； 陕西理工大学基础研究基金(SLGKYXM2208)；\ndownload: 139\nalbum: 工程科技Ⅰ辑\nCLC: X703;TB332\nCNKICite: 0\ndbcode: CAPJ\ndbname: CAPJLAST\nfilename: FUHE20240104001\npublicationTag: 北大核心, CA, JST, Pж(AJ), EI, CSCD, WJCI, 卓越期刊\nCIF: 2.595\nAIF: 1.788",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "1-14",
 				"publicationTitle": "复合材料学报",
-				"url": "https://kns.cnki.net/kcms/detail/11.1801.TB.20240108.1328.004.html",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CAPJ&dbname=CAPJLAST&filename=FUHE20240104001",
 				"attachments": [
 					{
 						"title": "Full Text PDF",
@@ -1927,7 +1930,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=UeijT_GnegCWYo-XhPF1Nqd_7-cM-vylcQChhyBnzcN75R9VP2TeeRsjbe0BF5jLIWfnD4UcjkvJ4y9Se0YUEIdL2Kc5lqp5AlAYc-mwABWs3lJH23nfLNcEg0k5UvqAbIqz7vgLW2R8XVFyCvoiz5V2wNtm4XQs&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHiJfPd1-3LeRj-WKnQqUbImgyRoJSUXvw06sJxr4HxTgaTY5RlyN-OIqHx_mNjyHY2VSmZdnwR_XQmg3dzHFGkmtgUtIEiBUrxSubRrXN75GIPXIWiptn0-uKS1IS2Mx6f-oEZwMAlkBF_QAa_Waa_8&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "journalArticle",
@@ -1962,7 +1965,7 @@ var testCases = [
 				"DOI": "10.13287/j.1001-9332.2000.0212",
 				"ISSN": "1001-9332",
 				"abstractNote": "分别对 30 0mmol·L-1NaCl和 10 0mmol·L-1Na2 CO3 盐碱胁迫下的羊草苗进行以不同方式施加Ca2 +、ABA和H3PO4 等缓解胁迫处理 .结果表明 ,外施Ca2 +、ABA和H3PO4 明显缓解了盐碱对羊草生长的抑制作用 .叶面喷施效果好于根部处理 ;施用Ca(NO3) 2 效果好于施用CaCl2 效果 ;混合施用CaCl2 和ABA的效果比单独施用ABA或CaCl2 的效果好 .",
-				"extra": "original-container-title: Chinese Journal of Applied Ecology\nfoundation: 国家自然科学基金资助项目!(39670 0 83) .；\ndownload: 463\nalbum: 基础科学;农业科技\nCLC: Q945\nCNKICite: 82\ndbcode: CJFQ\ndbname: CJFD2000\nfilename: YYSB200006019\npublicationTag: 北大核心, CA, JST, Pж(AJ), CSCD, WJCI\nCIF: 4.949\nAIF: 3.435",
+				"extra": "original-container-title: Chinese Journal of Applied Ecology\nfoundation: 国家自然科学基金资助项目!(39670 0 83) .；\ndownload: 464\nalbum: 基础科学;农业科技\nCLC: Q945\nCNKICite: 82\ndbcode: CJFQ\ndbname: CJFD2000\nfilename: YYSB200006019\npublicationTag: 北大核心, CA, JST, Pж(AJ), CSCD, WJCI\nCIF: 4.949\nAIF: 3.435",
 				"issue": "6",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
@@ -2005,7 +2008,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=uzDkwlsKYf-yROtn-nqW06AMCpslsZRhpV0g1I1G1L-TcukJ5xIPtupW1q8uH4tysNdexywvukQJmg66V4_rUyAJ5yW0_YRgYNphtzcQ8itDJWrMy9X6YXoOOBvSCIj_3ofoErYg4s1atZmULBOWG1re9os5zXMN&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHgNsCevk3J33XvFPtx4G2gHTHYt4nWyQPuSN3_N3h_fu53F2pTHv8KUe5Wlo50Obu55zdIOJf7H4SG2wnx53Wv3yOAhaQaxkASpXlrfjF25yXShFh2WJ7ktvHWYBM8y9mS0AIe2X4fRmtNieFe2na0Y&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "journalArticle",
@@ -2052,13 +2055,13 @@ var testCases = [
 				"DOI": "10.13207/j.cnki.jnwafu.2024.07.011",
 				"ISSN": "1671-9387",
 				"abstractNote": "【目的】对黄瓜胚性愈伤组织的诱导保存和再生进行研究,为黄瓜高频率遗传转化奠定基础。【方法】以欧洲温室型黄瓜自交系14-1子叶节为外植体,在MS培养基上附加1.5 mg/L 2,4-D,进行25 d的胚性愈伤组织诱导培养后,取胚性愈伤组织在添加30,60,90,100,110,120,130,140和150 g/L蔗糖及1.5 mg/L 2,4-D的MS培养基进行继代培养,每30 d继代1次,观察胚性愈伤组织的褐变情况及胚性分化能力,并用电子天平在超净工作台中记录胚性愈伤组织质量的变化。继代培养60 d后,将保存的胚性愈伤组织和体细胞胚移至含1.5 mg/L 2,4-D的MS培养基上,待出现体细胞胚后移至MS培养基进行萌发,观察再生小植株的生长情况。【结果】将欧洲温室型黄瓜自交系14-1的子叶节,接种到附加1.5 mg/L 2,4-D的MS培养基上进行诱导培养后,子叶节一端的愈伤组织集中聚集于下胚轴处,之后有黄色胚性愈伤组织产生。在继代培养过程中,当培养基中添加的蔗糖为60～150 g/L时,胚性愈伤组织能保持胚性愈伤状态达60 d。之后将继代培养60 d后的胚性愈伤组织转接至附加1.5 mg/L 2,4-D的MS培养基上,在蔗糖质量浓度为60 g/L条件下保存的胚性愈伤组织可诱导出正常胚状体,且能形成健康小植株。【结论】由黄瓜子叶节诱导出的胚性愈伤组织可在MS+60 g/L蔗糖的培养基上保存达60 d,之后能正常萌发形成胚状体,进而形成正常小植株。",
-				"extra": "original-container-title: Journal of Northwest A & F University(Natural Science Edition)\nStatus: advance online publication\nfoundation: 国家自然科学基金项目(32072562； 32272748；\nalbum: 农业科技\nCLC: S642.2\nCNKICite: 0\npublicationTag: 北大核心, JST, Pж(AJ), CSCD, WJCI\nCIF: 2.343\nAIF: 1.657",
+				"extra": "original-container-title: Journal of Northwest A & F University(Natural Science Edition)\nStatus: advance online publication\nfoundation: 国家自然科学基金项目(32072562； 32272748；\ndownload: 288\nalbum: 农业科技\nCLC: S642.2\nCNKICite: 0\ndbcode: CAPJ\ndbname: CAPJLAST\nfilename: XBNY20240104006\npublicationTag: 北大核心, JST, Pж(AJ), CSCD, WJCI\nCIF: 2.343\nAIF: 1.657",
 				"issue": "7",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "1-7",
 				"publicationTitle": "西北农林科技大学学报（自然科学版）",
-				"url": "https://kns.cnki.net/kcms/detail/61.1390.S.20240104.0946.006.html",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CAPJ&dbname=CAPJLAST&filename=XBNY20240104006",
 				"attachments": [
 					{
 						"title": "Full Text PDF",
@@ -2086,7 +2089,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=7P8mTOHD94GbtCjr2OlhsdTDhp0oqekmn5oDlwkiAbkDEfku4PWQLmlTLlN5g-Y1hg-Fya_BKR2TcmUs0KABpmROoDiLhWEqPDAQLTZiFtMXwHcA7swp0LZ1r1k-EQFT6ToHWm4ICu6BSMDgjgoaGqpukbv0FazfpBtp_4iOMWU=&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHhgV8yB3UWCXBZSBjUeApZd4K3N5dRJVSbZlmbo38Lrk1lUwAovAfa5rwr2WAlNqwvutlPMuaClCxE89Iga_HukBRLqp0RnX_MKe0_kRMOMxK84JO7y1DFyEf7kUcmug_4YvOl6cr7rCqDP6Qbasa8lyF3mUOqMHhw=&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "thesis",
@@ -2112,7 +2115,7 @@ var testCases = [
 					}
 				],
 				"date": "2017",
-				"abstractNote": "黄瓜(Cucumis sativus L.)是我国最大的保护地栽培蔬菜作物,也是植物性别发育和维管束运输研究的重要模式植物。黄瓜基因组序列图谱已经构建完成,并且在此基础上又完成了全基因组SSR标记开发和涵盖330万个变异位点变异组图谱,成为黄瓜功能基因研究的重要平台和工具,相关转录组研究也有很多报道,不过共表达网络研究还是空白。本实验以温室型黄瓜9930为研究对象,选取10个不同组织,进行转录组测序,获得10份转录组原始数据。在对原始数据去除接头与低质量读段后,将高质量读段用Tophat2回贴到已经发表的栽培黄瓜基因组序列上。用Cufflinks对回贴后的数据计算FPKM值,获得10份组织的24274基因的表达量数据。计算结果中的回贴率比较理想,不过有些基因的表达量过低。为了防止表达量低的基因对结果的影响,将10份组织中表达量最大小于5的基因去除,得到16924个基因,进行下一步分析。共表达网络的构建过程是将上步获得的表达量数据,利用R语言中WGCNA(weighted gene co-expression network analysis)包构建共表达网络。结果得到的共表达网络包括1134个模块。这些模块中的基因表达模式类似,可以认为是共表达关系。不过结果中一些模块内基因间相关性同其他模块相比比较低,在分析过程中,将模块中基因相关性平均值低于0.9的模块都去除,最终得到839个模块,一共11,844个基因。共表达的基因因其表达模式类似而聚在一起,这些基因可能与10份组织存在特异性关联。为了计算模块与组织间的相关性,首先要对每个模块进行主成分分析(principle component analysis,PCA),获得特征基因(module eigengene,ME),特征基因可以表示这个模块所有基因共有的表达趋势。通过计算特征基因与组织间的相关性,从而挑选出组织特异性模块,这些模块一共有323个。利用topGO功能富集分析的结果表明这些特异性模块所富集的功能与组织相关。共表达基因在染色体上的物理位置经常是成簇分布的。按照基因间隔小于25kb为标准。分别对839个模块进行分析,结果发现在71个模块中共有220个cluster,这些cluster 一般有2～5个基因,cluster中的基因在功能上也表现出一定的联系。共表达基因可能受到相同的转录调控,这些基因在启动子前2kb可能会存在有相同的motif以供反式作用元件的结合起到调控作用。对839个模块中的基因,提取启动子前2kb的序列,上传到PLACE网站进行motif分析。显著性分析的结果表明一共有367个motif存在富集,其中6个motif已经证实在黄瓜属植物中发挥作用。最后结合已经发表的黄瓜苦味生物合成途径研究,找到了 3个模块,已经找到的11个基因中,有10个基因在这4个模块中。这些模块的功能富集也显示与苦味合成相关,同时这些参与合成的基因在染色体上也成簇分布。本论文所描述的方法结合了转录组测序与网络分析方法,发现了黄瓜中的共表达基因模块,为黄瓜基因的共表达分析提供了非常重要的研究基础和数据支持。",
+				"abstractNote": "黄瓜(Cucumis sativus L.)是我国最大的保护地栽培蔬菜作物,也是植物性别发育和维管束运输研究的重要模式植物。黄瓜基因组序列图谱已经构建完成,并且在此基础上又完成了全基因组SSR标记开发和涵盖330万个变异位点变异组图谱,成为黄瓜功能基因研究的重要平台和工具,相关转录组研究也有很多报道,不过共表达网络研究还是空白。本实验以温室型黄瓜9930为研究对象,选取10个不同组织,进行转录组测序,获得10份转录组原始数据。在对原始数据去除接头与低质量读段后,将高质量读段用Tophat2回贴到已经发表的栽培黄瓜基因组序列上。用Cufflinks对回贴后的数据计算FPKM值,获得10份组织的24274基因的表达量数据。计算结果中的回贴率比较理想,不过有些基因的表达量过低。为了防止表达量低的基因对结果的影响,将10份组织中表达量最大小于5的基因去除,得到16924个基因,进行下一步分析。共表达网络的构建过程是将上步获得的表达量数据,利用R语言中WGCNA(weighted gene co-expression network analysis)包构建共表达网络。结果得到的共表达网络包括1134个模块。这些模块中的基因表达模式类似,可以认为是共表达关系。不过结果中一些模块内基因间相关性同其他模块相比比较低,在分析过程中,将模块中基因相关性平均值低于0.9的模块都去除,最终得到839个模块,一共11,844个基因。共表达的基因因其表达模式类似而聚在一起,这些基因可能与10份组织存在特异性关联。为了计算模块与组织间的相关性,首先要对每个模块进行主成分分析(principle component analysis,PCA),获得特征基因(module eigengene,ME),特征基因可以表示这个模块所有基因共有的表达趋势。通过计算特征基因与组织间的相关性,从而挑选出组织特异性模块,这些模块一共有323个。利用topGO功能富集分析的结果表明这些特异性模块所富集的功能与组织相关。共表达基因在染色体上的物理位置经常是成簇分布的。按照基因间隔小于25kb为标准。分别对839个模块进行分析,结果发现在71个模块中共有220个cluster,这些cluster 一般有2～5个基因,cluster中的基因在功能上也表现出一定的联系。共表达基因可能受到相同的转录调控,这些基因在启动子前2kb可能会存在有相同的motif以供反式作用元...",
 				"extra": "major: 生物化学与分子生物学\ndownload: 302\nalbum: 基础科学;农业科技\nCLC: S642.2;Q943.2\nCNKICite: 1\ndbcode: CMFD\ndbname: CMFD201701\nfilename: 1017045605.nh",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
@@ -2147,7 +2150,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=7P8mTOHD94EiCw5D0Qu5i12FsRUBLMzLwVsSdygu4i0e44tLDImTMVwGiTzXH6_cS1Fm-c2LHcdyjP-Rm23yohtVVPZVahPqkHofZrl6WPy8NpTSmCr2wE3z46RtJr1IRmfTkMpNeiWP9RUuv2yuCjSDG1FfTjDV&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHj6Gayxo8L6fbVE09XgFLEEcf6cQsNi_FxXLO9nipcciMN3_FwQyLgo9ieYMdBGu1Xk6EqEYwRjsYZf3GvEVojk7uR6DhDX2ciH3OcSRfGpARqQ_BXkw_Mql2zaz0ybPTsvmw96vsDwsrfhocinx52z&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "thesis",
@@ -2167,8 +2170,8 @@ var testCases = [
 					}
 				],
 				"date": "2012",
-				"abstractNote": "随着微电子集成技术和组装技术的快速发展，电子元器件和逻辑电路的体积越来越小，而工作频率急剧增加，半导体的环境温度向高温方向变化，为保证电子元器件长时间可靠地正常工作，及时散热能力就成为其使用寿命长短的制约因素。高导热聚合物基复合材料在微电子、航空、航天、军事装备、电机电器等诸多制造业及高科技领域发挥着重要的作用。所以研制综合性能优异的高导热聚合物基复合材料成为了目前研究热点。本论文分别以氧化铝(Al2O3)、石墨烯和氮化硼(BN)纳米片为导热填料，以环氧树脂和聚偏氟乙烯(PVDF)为基体，制备了新型的高导热聚合物基复合材料。 首先，采用两步法将超支化聚芳酰胺接枝到纳米Al2O3粒子表面：纳米颗粒先进行硅烷偶联剂处理引入氨基基团，在改性后的纳米粒子上接枝超支化聚合物；再利用X射线衍射、傅立叶红外光谱、核磁共振氢谱和热失重等方法对纳米Al2O3粒子的表面改性进行表征；然后分别将未改性的纳米Al2O3粒子、硅烷接枝的纳米Al2O3粒子(Al2O3-APS)和超支化聚芳酰胺接枝的纳米Al2O3粒子(Al2O3-HBP)与环氧树脂复合，并对三种复合材料的热性能和介电性能进行比较研究。结果表明：(1)从SEM、TEM和动态光散射的实验结果表明，三种纳米颗粒相比之下，Al2O3-HBP纳米粒子在有机溶剂乙醇和环氧树脂中显示出最好的分散性。(2)三种复合材料的导热系数都是随着纳米颗粒含量的增加而增大；在添加相同含量的纳米颗粒时，其导热系数遵循着如下的规律：环氧树脂/Al2O3-HBP复合材料>环氧树脂/Al2O3-APS复合材料>环氧树脂/Al2O3复合材料。而且从DSC、TGA和DMA的实验结果可以得出，与未改性Al2O3和Al2O3-APS纳米颗粒相比，添加Al2O3-HBP纳米颗粒能很好提高复合材料的耐热性。(3)对三种复合材料的介电性能(体积电阻率、介电常数、介电损耗和击穿强度)的研究比较发现，环氧树脂/Al2O3-HBP复合材料显示出优异的综合介电性能。 其次，采用改进的Hummers法和超声剥离法制备氧化石墨烯，再使用热还原的方法制备石墨烯。系统地研究了石墨烯含量对PVDF复合材料的导热、热稳定和介电性能的影响，阐述了其石墨烯提高PVDF复合材料的导热性能的机理；最后还研究了低石墨烯掺量下对PVDF复合材料热稳定、动态热力学、结晶行为、透光率和表面接触角等性能的影响。结果表明：(1)从SEM和TEM可以得出，通过溶剂共混方法使石墨烯能均匀地分散在PVDF基体中。(2)在PVDF基体中引入石墨烯可以使其复合材料的介电性能、导热性能和热稳定性能都有大幅度的提高。实验结果显示PVDF复合材料的逾渗阀值为4.5wt%。当石墨烯含量为0.5wt%时，PVDF复合材料的导热系数为纯PVDF的2倍；当含量为10wt%时，其导热系数达到了0.58W/m K，并对其导热系数提高的内在机理进行了合理地解释。(3)通过研究在低石墨烯掺量下，PVDF复合材料也具有高的热稳定、优良的动态热力学等性能；同时石墨烯对PVDF复合材料的结晶形态、光学性能和表面特性也会有较大的影响。石墨烯优异的性质为我们开发高性能的复合材料提供了新思路。 最后，采用简单的超声离心的方法制备得到BN纳米片，再分别用共价键和非共价键方式对BN纳米片的进行表面官能团化。对BN纳米片与环氧树脂基体间的相互作用设计了三种不同界面相互作用强度。分别为：(1)强界面相互作用：将BN纳米片上接枝超支化聚芳酰胺(BN-HBP)。BN-HBP纳米片表面带有大量的氨基基团与环氧树脂中的环氧基团在固化过程中形成共价键，共价键的形成使得纳米片与环氧树脂间产生强相互作用。(2)中等强度界面相互作用：用十八胺分子修饰BN纳米片(BN-ODA)，由于十八胺的氨基端基是富电子充当Lewis酸，而BN纳米片中B原子是缺电子充当Lewis碱。通过Lewis酸碱的非共价键的相互作用ODA分子可以很好地吸附在BN纳米片表面。经修饰后的BN纳米片表面的十八胺长链分子在环氧树脂固化过程中会与环氧分子发生分子缠结而产生一个比化学键结合而稍弱一些的界面相互作用。(3)弱界面相互作用：为了比较研究，制备了直接添加BN纳米片的环氧复合材料，由于BN纳米片与环氧树脂间既没有物理缠结又没有化学键的相互作用，所以BN纳米片与环氧树脂间表现为弱的界面相互作用。系统地研究纳米片与环氧树脂基体间的不同相互作用对复合材料微观结构、热性能和介电性能影响，重点阐述了不同强度界面相互作用对复合材料的导热性能的影响规律。结果表明：(1)从SEM和TEM的实验结果表明，BN-ODA和BN-HBP纳米片因为分别与环氧树脂之间有物理缠结和化学交联的强界面相互作用，使其具有良好的分散性和相容性。(2)在添加5wt%时,三种复合材料的导热系数遵循着如下的规律：环氧树脂/BN-HBP复合材料>环氧树脂/BN-ODA复合材料>环氧树脂/BN复合材料。而且从DSC、TGA和DMA的实验结果可以得出，添加经表面改性BN-ODA和BN-HBP纳米片的复合材料具有优异的耐热性。(3)在介电性能方面，三种复合材料由于添加不同的纳米片，从实验结果看，除复合材料的体积电阻率外，其它性能比如介电常数、介电损耗和击穿强度都是随着纳米片与环氧树脂之间的界面相互作用强度成正比的，界面相互作用越强，其值越高。",
-				"extra": "major: 材料学\nfoundation: 国家自然基金；\ndownload: 15288\nalbum: 工程科技Ⅰ辑\nCLC: TB332\nCNKICite: 197\ndbcode: CDFD\ndbname: CDFD1214\nfilename: 1012034749.nh",
+				"abstractNote": "随着微电子集成技术和组装技术的快速发展，电子元器件和逻辑电路的体积越来越小，而工作频率急剧增加，半导体的环境温度向高温方向变化，为保证电子元器件长时间可靠地正常工作，及时散热能力就成为其使用寿命长短的制约因素。高导热聚合物基复合材料在微电子、航空、航天、军事装备、电机电器等诸多制造业及高科技领域发挥着重要的作用。所以研制综合性能优异的高导热聚合物基复合材料成为了目前研究热点。本论文分别以氧化铝（Al<sub>2</sub>O<sub>3</sub>）、石墨烯和氮化硼（BN）纳米片为导热填料，以环氧树脂和聚偏氟乙烯（PVDF）为基体，制备了新型的高导热聚合物基复合材料。首先，采用两步法将超支化聚芳酰胺接枝到纳米Al<sub>2</sub>O<sub>3</sub>粒子表面：纳米颗粒先进行硅烷偶联剂处理引入氨基基团，在改性后的纳米粒子上接枝超支化聚合物；再利用X射线衍射、傅立叶红外光谱、核磁共振氢谱和热失重等方法对纳米Al<sub>2</sub>O<sub>3</sub>粒子的表面改性进行表征；然后分别将未改性的纳米Al<sub>2</sub>O<sub>3</sub>粒子、硅烷接枝的纳米Al<sub>2</sub>O<sub>3</sub>粒子（Al<sub>2</sub>O<sub>3</sub>-APS）和超支化聚芳酰胺接枝的纳米Al<sub>2</sub>O<sub>3</sub>粒子（Al<sub>2</sub>O<sub>3</sub>-HBP）与环氧树脂复合，并对三种复合材料的热性能和介电性能进行比较研究。结果表明：（1）从SEM、TEM和动态光散射的实验结果表明，三种纳米颗粒相比之下，Al<sub>2</sub>O<sub>3</sub>-HBP纳米粒子在有机溶剂乙醇和环氧树脂中显示出最好的分散性。（2）三种复合材料的导热系数都是随着纳米颗粒含量的增加而增大；在添加相同含量的纳米颗粒时，其导热系数遵循着如下的规律：环氧树脂/Al<sub>2</sub>O<sub>3</sub>-HBP复合材料>环氧树脂/Al<sub>2</sub>O<sub>3</sub>-APS复合材料>环氧树脂/Al<sub>2</sub>O<sub>3</sub>复合材料。而且从DSC、TGA和DMA的实验结果可以得出，与未改性Al<sub>2</sub>O<sub>3</sub>和Al<sub>2</sub>O<s...",
+				"extra": "major: 材料学\nfoundation: 国家自然基金；\ndownload: 15299\nalbum: 工程科技Ⅰ辑\nCLC: TB332\nCNKICite: 197\ndbcode: CDFD\ndbname: CDFD1214\nfilename: 1012034749.nh",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"numPages": "148",
@@ -2214,7 +2217,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=uzDkwlsKYf_y_XIVP5yK-WumE6x7xBmYp70XGZOxLMHzFX_7FPAZv9F3YC8dTiVAmZrpDxZx94oZPACqSApPspZHvNgxIRwhUrKEgsgLeoNWlU9uq9gzyekbJ0Sp_RkvYS4cGQOFe64vNGTTTfx-0CqOJoA7l7_REIykkqAq6ds=&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHh5T13ZNlvftCS5W7lFLaFxrjyYI6gVOQP3L5rywG5-Di5tsOpbfZTa5CCqJefAfcM_Ayf-FEXB3lj67b9ruzE7Ps14A5QcB2pTnsLUd5fkowwl0uVTMz6cnj4o2RA_OAAxz-UyrZx6cDEOWCk81A50aEHZX0w_isQ=&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "conferencePaper",
@@ -2233,9 +2236,10 @@ var testCases = [
 						"fieldMode": 1
 					}
 				],
+				"date": "1991-09",
 				"abstractNote": "辽西区的范围从大兴安岭南缘到渤海北岸,西起燕山西段,东止辽河平原,基本上包括内蒙古的赤峰市(原昭乌达盟)、哲里木盟西半部,辽宁省西部和河北省的承德、唐山、廊坊及其邻近的北京、天津等地区。这一地区的古人类遗存自旧石器时代晚期起,就与同属东北的辽东区有着明显的不同,在后来的发展中,构成自具特色的一个考古学文化区,对我国东北部起过不可忽视的作用。以下就辽西地区新石器时代的考古学文化序列、编年、谱系及有关问题简要地谈一下自己的认识。",
 				"conferenceName": "内蒙古东部地区考古学术研讨会",
-				"extra": "organizer: 中国社会科学院考古研究所、内蒙古文物考古研究所、赤峰市文化局\nalbum: 哲学与人文科学\nCLC: K872\nCNKICite: 56",
+				"extra": "organizer: 中国社会科学院考古研究所、内蒙古文物考古研究所、赤峰市文化局\ndownload: 605\nalbum: 哲学与人文科学\nCLC: K872\nCNKICite: 56\ndbcode: CPFD\ndbname: CPFD9908\nfilename: OYDD199010001004",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "6",
@@ -2291,7 +2295,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=uzDkwlsKYf8iVVhAFZWTwdLN0FNJVy5TQxJi_MqmZP5swzlw6CZtTlgjJnxe4R8_vsQhKUd7gnXw1ryscv3N-e_R0gTUNdwtnOfIhhW2NvpeHf8cGvBA3WwASxs9GI9jPdIsMfwz01NgZEbIIIyEjkpcSBYSrulJRtyytDgfcmg=&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHjJaaUXP2deH7u_E6LIrSZ0d44EaLI0f3uWzHlCytIWirQ-FCMuNtBAfvbqDp9yvzokQinx4AbvzT3uDxBFFavqHMeUGqHrChnRn04dOgGEcnL6EjkjBxbzF_tujbFoNmdpq4qJY17KLP60V3meZEujQ2HtF9Ul4cE=&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "newspaperArticle",
@@ -2305,12 +2309,13 @@ var testCases = [
 					}
 				],
 				"date": "2023-09-21",
-				"extra": "DOI: 10.28502/n.cnki.nkjrb.2023.005521\nalbum: 基础科学\nCLC: Q343.1\nCNKICite: 0",
+				"abstractNote": "科技日报北京9月20日电 （记者刘霞）瑞典国家分子生物科学中心科学家首次分离和测序了一个已灭绝物种的RNA分子，从而重建了该灭绝物种（塔斯马尼亚虎）的皮肤和骨骼肌转录组。该项成果对复活塔斯马尼亚虎和毛猛犸象等灭绝物种，以及研究如新冠病毒等RNA病毒具有重要意义。相......",
+				"extra": "DOI: 10.28502/n.cnki.nkjrb.2023.005521\ndownload: 19\nalbum: 基础科学\nCLC: Q343.1\nCNKICite: 0\ndbcode: CCND\ndbname: CCNDLAST2023\nfilename: KJRB202309210044",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "4",
 				"publicationTitle": "科技日报",
-				"url": "https://doi.org/10.28502/n.cnki.nkjrb.2023.005521",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CCND&dbname=CCNDLAST2023&filename=KJRB202309210044",
 				"attachments": [
 					{
 						"title": "Full Text PDF",
@@ -2319,10 +2324,10 @@ var testCases = [
 				],
 				"tags": [
 					{
-						"tag": " 转录组"
+						"tag": "RNA"
 					},
 					{
-						"tag": "RNA"
+						"tag": "转录组"
 					}
 				],
 				"notes": [],
@@ -2332,7 +2337,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=uzDkwlsKYf_TNd9yZJ09Elo4AVEw6LPvwMIKAm_yw1hAQPX1sYphno5R2otxVVh9o2fVz3z3dJj7X6rSyX6r4Nb8a-dBrUj78oZKuD2vebjedhs9a2v-AHkZAduXoDya8yXnE2shy_0=&uniplatform=NZKPT",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHhYwfUOQkiiROc25goQviQYf_8e6_V0gRtSy-IOCOv-RtNJKQRSWFe_2aQ9FUrPSbZgyTHJcSQltSFIucYSN5-E8Lt2bZqQORfiheWS7osCintOXKh_V0nNfmqtUxSC3_Q=&uniplatform=NZKPT",
 		"items": [
 			{
 				"itemType": "bookSection",
@@ -2347,12 +2352,12 @@ var testCases = [
 				],
 				"ISBN": "9787514445008",
 				"bookTitle": "山西年鉴",
-				"extra": "original-container-title: SHAN XI YEARBOOK\nDOI: 10.41842/y.cnki.ysxnj.2022.000050\nCLC: Z9\nCNKICite: 0",
+				"extra": "original-container-title: SHAN XI YEARBOOK\nDOI: 10.41842/y.cnki.ysxnj.2022.000050\ndownload: 24\nCLC: Z9\nCNKICite: 0\ndbcode: CYFD\ndbname: CYFD2022\nfilename: N2022040061000062",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "6-23",
 				"publisher": "方志出版社",
-				"url": "https://doi.org/10.41842/y.cnki.ysxnj.2022.000050",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CYFD&dbname=CYFD2022&filename=N2022040061000062",
 				"attachments": [
 					{
 						"title": "Full Text PDF",
@@ -2376,7 +2381,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=uzDkwlsKYf-mhxSjwXdJa1r6F3g6p1USqRjnhmBe2YVlLuBe-AQ24yN9AYrhH7TTn7DW_awLvp9Z6IorVN6ObH7jWmN65cB6DkEwkAnML347dLrVVLFEtSs7Ehucfun3bNx6649DiEKFb9JcL9YjIw==&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHirgXoXDiPipUsry_6qazwhXD76CAFEYQF73bknVpNZIYVKvgGFkNOjQcggV_UucsN4sQAWPUq4iPYlCrFtL8pcd4mcdRyaQLwwy71gJGFhCZ_erWb3f_AMQvR8thZJNEvdh__gjbT_iA==&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "patent",
@@ -2422,7 +2427,7 @@ var testCases = [
 				"abstractNote": "本发明公开了一种不锈钢管的制造方法,具有可提高不锈钢管质量的优点。该不锈钢管的制造方法,其特征是包括下述步骤：①将不锈钢液在熔炼炉中进行熔炼；②不锈钢液熔清后进行去渣及脱氧处理；③将不锈钢液浇入旋转的离心浇铸机型筒中进行离心浇铸后在离心力作用下冷却凝固成型为不锈钢管坯料。采用离心浇铸方法制作不锈钢空心管,使得在离心力作用下,离心管坯补缩效果好,组织较致密,气体和非金属夹杂容易排出,缺陷少,有效地提高了不锈钢管的质量,且通过离心浇铸后可直接获得不锈钢空心管,金属的收得率高,且通过采用离心浇铸后,管坯在后续加工中具有工序少、成材率高的特点,尤其适合在高端钢材产品的制造上面推广使用。",
 				"applicationNumber": "CN200710201273.2",
 				"country": "中国",
-				"extra": "Genre: 发明公开\nalbum: 工程科技Ⅰ辑\nCLC: B22D13/02",
+				"extra": "Genre: 发明公开\nalbum: 工程科技Ⅰ辑\nCLC: B22D13/02\ndbcode: SCPD\ndbname: SCPD0407\nfilename: CN101091984",
 				"filingDate": "2007-08-03",
 				"language": "zh-CN",
 				"patentNumber": "CN101091984",
@@ -2447,7 +2452,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=uzDkwlsKYf_enjZARhwbK2dvJrfQNuEnWEWLWjtz-S2WYamvjf1F9F2Qg_ZDRPw5neO2OkrR375Lu34EvuUtT1GwsXPXHjwnFQQjPpOewzhopr4XM7QF-zx5KtUv9Kp9DFcyLE89oT-TK8FVyBledA==&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHisDDh3Jbev6bLKM4uZ4zdkHhUKUvu33K3UKhirS0mZ6_0I3ccNw8wZCZpNtFIu56hjZb3BAgFWF9mo2OZ6ZgiV_wB6SBonTcIav-nIFXbZzV1agS7F6sL4YtGYiK6XmR11KS0DBHQb1A==&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "standard",
@@ -2461,13 +2466,12 @@ var testCases = [
 					}
 				],
 				"date": "2019-05-10",
-				"extra": "original-title: Inspection of grain and oils—Swelling properties test of wheat flour\napplyDate: 2019-12-01\nalbum: 工程科技Ⅰ辑\nCLC: X04 食品-食品综合-基础标准与通用方法\nCNKICite: 0",
+				"extra": "applyDate: 2019-12-01\noriginal-title: Inspection of grain and oils—Swelling properties test of wheat flour\nalbum: 工程科技Ⅰ辑\nCLC: X04 食品-食品综合-基础标准与通用方法\nCNKICite: 0\ndbcode: SCSF\ndbname: SCSF\nfilename: SCSF00058274",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"numPages": "16",
 				"number": "GB/T 37510—2019",
 				"status": "现行",
-				"type": "国家标准",
 				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=SCSF&dbname=SCSF&filename=SCSF00058274",
 				"attachments": [],
 				"tags": [
@@ -2482,7 +2486,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=uzDkwlsKYf8S_dxWHN5pjJTVVD5KNyNxRG0I4RX4nEVX-UxcW9-KNwQZ7gNPzjKa4H4xUOf7So5chO__XSxhhYRPK-hSjv5vNh34UUk_s-tB_Lv29YiiWl8UBphLhAGbGWD5AV6Hje6mATEjZLFHftoTFRT64-bI&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHhIQnFHOAYBu_AWGLk-KxuOPHbIodNrllD3-G2sYVXgNLca6cAArRjysadqkuvXTnpLHgWov1Ov0nhTWE2pFTviopsk0NyAZtsRNq3bJJ83cUMRAiJpniProBQx_Wnrc2DKmM5biiR49YDIiMElHUvq&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "report",
@@ -2581,11 +2585,11 @@ var testCases = [
 				],
 				"date": "2023",
 				"abstractNote": "本项目拟通过分析材料、电堆、电解液和模块性能提升、成本控制制约因素,将关键材料性能提升与电堆结构优化设计以及系统电气、智能控制设施等的优化研究相结合,以最大限度地提升性能、降低系统成本。针对液流电池电解液活性物种溶解度不高,高、低温稳定性差,长期循环过程中容量衰减和效率降低问题,开发高浓度、高稳定性、活性电解液配方与制备工艺。在功率单元和能量单元性能优化基础上,以可靠性和系统性能优化为目标,分析指标,开发储能单元模块,以此为基础设计储能电站工程,针对工程应用开发调控和运维平台,形成示范应用及经济性分析。",
-				"extra": "Genre: 应用技术\nevaluation: 验收\nalbum: 工程科技Ⅱ辑\nCLC: TM912.9",
+				"extra": "achievementType: 应用技术\nevaluation: 验收\nalbum: 工程科技Ⅱ辑\nCLC: TM912.9\ndbcode: SNAD\ndbname: SNAD\nfilename: SNAD000002043401",
 				"institution": "山西国润储能科技有限公司",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
-				"reportType": "科技成果",
+				"reportType": "科技报告",
 				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=SNAD&dbname=SNAD&filename=SNAD000002043401",
 				"attachments": [
 					{
@@ -2617,7 +2621,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=uzDkwlsKYf9QoVo4PbMmdiDBKjfH3v-_WCApVO0RYjmPmgLtn0w8kbxGnAAWNyjc3-JhRbiFXtf6HGYwLoOBMUmdPhawbR4JXeG0cCTsyY0hTpASLdXbpc5r96eHBfMbZTsmVEjYHZ8u-WQtlP4HVA==&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHhA4oXrQG6Lpqx_vq6kcgTNS4oD2bJVzODP7EqGXfjDg5WMeS8mhDO1sk3y2zLje6VBtd3YG_W67GdiRgsXDLA4u0D1tgwJqvyykWK1VEnTor88f6t5NF_tBrPfve4_5t-rW5QQFp6-Fw==&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "videoRecording",
@@ -2638,7 +2642,7 @@ var testCases = [
 				],
 				"date": "2020-07-23",
 				"abstractNote": "【中国资本市场50人论坛携手中国知网联合出品】 议 程 贾 康 华夏新供给经济学研究院 院长 财政部原财政科学研究所所长 贺 铿 北京民营经济发展促进会会长 十一届全国人大常委、财经委员会副主任 九三学社第十二届中央委员会副主席 王广宇 华夏新供给经济学研究院 理事长 华软资本创始人、董事长 孔泾源 北京民营经济发展促进会理事长 国家发展改革委经济体制综合改革司原司长 姚余栋 大成基金副总经理 兼 首席经济学家 中国 人民银行金融研究所 前 所长 魏加宁 国务院发展研究中心宏观研究部 研究员 中国新供给经济学 50 人论坛成员 黄剑辉 华夏新供给经济学研究院 首席经济学家 中国 民生银行研究院院长 冯俏彬 华夏新供给经济学研究院学术委员会委员 ……",
-				"extra": "organizer: 中国资本市场50人论坛; 中国知网;",
+				"extra": "organizer: 中国资本市场50人论坛; 中国知网;\ndbcode: CCVD\ndbname: CCVD\nfilename: 542618070256",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"runningTime": "03:46:14",
@@ -2674,8 +2678,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=uzDkwlsKYf9rttIPnq-CMKmaInxWVbliJ0NNCiHU-dZzq5BKYZkvxCZyzIWeZI2rTTybkM-R27yhn8L-8mpitHskI_KRETsM-_aHYzYWKKAgbK8BNyjpv8xmUGVYlcCIrgDqlSv3ZUoEK1Y96dRWxsWz_8oi21Zb1PQF2AFCdwldsmXhDWyFLA==&uniplatform=NZKPT&language=CHS",
-		"detectedItemType": "journalArticle",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHiery8DXkT083oAvbAx9rgOEcigOFI2MZ_13Vw2PvRBKFn_YSqpi2fcEeJvp73BHlsXABqmXA-6JrgNRrOobwH-TLFr-W-2HLJmq-79RHQxS-bYacMxTadx9jyVX3P1Qojx90fWItiKLTJOEp94azAwKweOUqGKlPFS2Rzm8OTCSg==&uniplatform=NZKPT&language=CHS",
 		"items": [
 			{
 				"itemType": "book",
@@ -2701,6 +2704,6 @@ var testCases = [
 				"seeAlso": []
 			}
 		]
-	}	
+	}
 ]
 /** END TEST CASES **/
