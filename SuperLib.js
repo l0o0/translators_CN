@@ -218,6 +218,7 @@ async function scrape(doc, url = doc.location.href) {
 			break;
 	}
 	newItem.url = url;
+	newItem.extra = extra.toString();
 	newItem.complete();
 }
 
