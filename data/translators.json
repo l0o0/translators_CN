@@ -29,7 +29,7 @@
     },
     "CNKI Industry.js": {
         "label": "中国知网行业知识服务平台",
-        "lastUpdated": "2024-03-08 16:26:32"
+        "lastUpdated": "2024-04-01 08:11:26"
     },
     "CNKI Law.js": {
         "label": "中国法律知识资源总库",
@@ -73,7 +73,7 @@
     },
     "China Social Science Library.js": {
         "label": "中国社会科学文库",
-        "lastUpdated": "2024-01-09 17:18:22"
+        "lastUpdated": "2024-04-01 08:04:40"
     },
     "ChinaXiv.js": {
         "label": "中国科学院科技论文预发布平台",
@@ -121,7 +121,7 @@
     },
     "NDLTD.js": {
         "label": "臺灣博碩士論文知識加值系統",
-        "lastUpdated": "2024-03-21 06:39:21"
+        "lastUpdated": "2024-04-01 08:16:59"
     },
     "NTU Digital Library of Buddhist Studies.js": {
         "label": "臺大佛學數位圖書館",
@@ -173,7 +173,7 @@
     },
     "PubScholar.js": {
         "label": "PubScholar公益学术平台",
-        "lastUpdated": "2024-02-10 11:40:01"
+        "lastUpdated": "2024-04-01 08:26:42"
     },
     "Publications Data Center - China.js": {
         "label": "国家版本馆版权数据中心",
@@ -217,15 +217,15 @@
     },
     "SuperLib.js": {
         "label": "全国图书馆联盟",
-        "lastUpdated": "2024-01-14 05:39:05"
+        "lastUpdated": "2024-04-01 08:47:02"
     },
     "TOAJ.js": {
         "label": "臺灣學術期刊開放取用平台",
-        "lastUpdated": "2024-03-18 13:55:13"
+        "lastUpdated": "2024-04-01 16:49:31"
     },
     "Wanfang Data.js": {
         "label": "万方",
-        "lastUpdated": "2024-04-01 05:22:31"
+        "lastUpdated": "2024-04-01 16:49:50"
     },
     "Wanfang Med.js": {
         "label": "万方医疗",
@@ -277,6 +277,6 @@
     },
     "zhangqiaokeyan.js": {
         "label": " 掌桥科研",
-        "lastUpdated": "2024-03-06 04:06:08"
+        "lastUpdated": "2024-04-01 16:50:06"
     }
 }
