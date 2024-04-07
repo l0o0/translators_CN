@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-04-01 16:49:50"
+	"lastUpdated": "2024-04-07 02:36:54"
 }
 
 /*
@@ -106,7 +106,7 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug("--------------- WanFang Data 2024-04-01 12:23:21 ---------------");
+	Z.debug("--------------- WanFang Data 2024-04-07 10:36:53 ---------------");
 	let dynamic = doc.querySelector('.container-flex, .periodical');
 	if (dynamic) {
 		Z.monitorDOMChanges(dynamic, { childList: true });
@@ -195,7 +195,7 @@ async function scrapePage(doc, url = doc.location.href) {
 				.replace(/\b0*(\d+)/, '$1')
 				.replace(/\+/g, ',')
 				.replace(/~/g, '-');
-			newItem.DOI = ZU.cleanDOI(attr(doc, '.doiStyle > a', 'href'));
+			newItem.DOI = ZU.cleanDOI(text(doc, '.doiStyle > a'));
 			newItem.ISSN = ZU.cleanISSN(text(doc, '.periodicalDataItem'));
 			break;
 		}
