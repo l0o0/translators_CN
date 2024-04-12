@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-04-10 16:19:47"
+	"lastUpdated": "2024-04-12 18:34:48"
 }
 
 /*
@@ -229,10 +229,12 @@ async function scrape(doc, url = doc.location.href) {
 	}
 	item.language = {
 		chi: 'zh-CN',
-		eng: 'en-US',
-		日语: 'ja-JP',
 		中文: 'zh-CN',
+		eng: 'en-US',
 		英语: 'en-US',
+		jpn: 'ja-JP',
+		日语: 'ja-JP',
+		rus: 'ru-RU',
 		俄语: 'ru-RU'
 	}[labels.getWith(['正文语种', '语言'])] || typeMap[text(doc, '.weizhi > a:nth-child(2), .new_location > a:nth-last-child(2)')].language;
 	item.libraryCatalog = '掌桥科研';
