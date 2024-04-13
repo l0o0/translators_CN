@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-04-01 07:50:20"
+	"lastUpdated": "2024-04-13 13:49:45"
 }
 
 /*
@@ -231,7 +231,7 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug("---------------- CNKI 2024-03-29 22:55:56 ------------------");
+	Z.debug('---------------- CNKI 2024-04-13 21:48:08 ------------------');
 	let ids = new ID(doc, url);
 	Z.debug('detect ids:');
 	Z.debug(ids);
@@ -748,7 +748,10 @@ async function scrapeDoc(doc, itemKey) {
 	newItem.language = ids.toLanguage();
 
 	/* creators */
-	let creators = Array.from(doc.querySelectorAll('h3 > span > a[href*="/author/"]')).map(element => ZU.trimInternal(element.textContent).replace(/[\d,\s-]+$/, ''));
+	let creators = Array.from(doc.querySelectorAll('#authorpart > span > a[href*="/author/"]')).map(element => ZU.trimInternal(element.textContent).replace(/[\d,\s-]+$/, ''));
+	if (!creators.length && doc.querySelectorAll('#authorpart > span').length) {
+		creators = Array.from(doc.querySelectorAll('#authorpart > span')).map(element => ZU.trimInternal(element.textContent).replace(/[\d\s,;，；~-]*$/, ''));
+	}
 	if (!creators.length && doc.querySelector('h3 > span:only-child')) {
 		creators = ZU.trimInternal(doc.querySelector('h3 > span:only-child').textContent)
 			.replace(/\(.+?\)$/, '')
@@ -771,9 +774,6 @@ async function scrapeDoc(doc, itemKey) {
 				.join('|'), 'i')
 				.test(string)))
 			.map(string => string.replace(/[\d\s,~-]*$/, ''));
-	}
-	if (!creators.length && doc.querySelectorAll('h3 > span').length) {
-		creators = Array.from(doc.querySelectorAll('h3 > span')).map(element => ZU.trimInternal(element.textContent).replace(/[\d\s,;，；~-]*$/, ''));
 	}
 	creators.forEach((string) => {
 		newItem.creators.push(cleanName(string, 'author'));
@@ -1593,6 +1593,65 @@ var testCases = [
 					},
 					{
 						"tag": "铁路运输企业"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://oversea.cnki.net/KCMS/detail/detail.aspx?dbcode=CAPJ&dbname=CAPJLAST&filename=OELJ20240407003&uniplatform=OVERSEA&v=pjMKCMsesac_7YFl-57_GL6t6cGkC6jtRhCTJq6xTVo2jgEy4kPExsIaqC-0Ee5S",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "Extraction of weak values in the process of retrieving quantum entanglement state",
+				"creators": [
+					{
+						"firstName": "Du",
+						"lastName": "Shaojiang",
+						"creatorType": "author"
+					},
+					{
+						"firstName": "Feng",
+						"lastName": "Hairan",
+						"creatorType": "author"
+					},
+					{
+						"firstName": "Zhang",
+						"lastName": "Lu",
+						"creatorType": "author"
+					},
+					{
+						"firstName": "Yang",
+						"lastName": "Lianwu",
+						"creatorType": "author"
+					},
+					{
+						"firstName": "Peng",
+						"lastName": "Yonggang",
+						"creatorType": "author"
+					}
+				],
+				"date": "2024-04-12",
+				"ISSN": "1673-1905",
+				"abstractNote": "A reversible operation protocol is provided for a weak-measured quantum entanglement state. The evolution of weak values is studied under different parameter conditions. The weak values can be extracted from the entanglement state and the weak-measured quantum entanglement state can be revived to its initial state theoretically by weak measurement and reversibility operation respectively. We demonstrate the reversible operation protocol by taking Bell’s state as an example. The negativity is used to analyze the initial state， the weak-measured state and the reversed state in order to describe the evolution of quantum entanglement degree. Weak values is detected from the quantum entanglement state by weak measurement and the degree of the weak-measured quantum entanglement state can be revived to its initial state through reversible operation. The information of quantum entanglement state would be extracted from weak values detected in the process of the scheme.",
+				"extra": "original-container-title: Optoelectronics Letters\nStatus: advance online publication\nalbum: (A) Mathematics/ Physics/ Mechanics/ Astronomy\nCLC: O413\nCNKICite: 0\ndbcode: CJFQ\ndbname: CAPJLAST\nfilename: oelj20240407003\nCIF: 0.330\nAIF: 0.197",
+				"language": "zh-CN",
+				"libraryCatalog": "CNKI",
+				"pages": "1-6",
+				"publicationTitle": "Optoelectronics Letters",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFQ&dbname=CAPJLAST&filename=oelj20240407003",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					}
+				],
+				"tags": [
+					{
+						"tag": "Extraction of weak values in the process of retrieving quantum entanglement state"
 					}
 				],
 				"notes": [],
