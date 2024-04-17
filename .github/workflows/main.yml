@@ -12,33 +12,38 @@ jobs:
     # copy git 仓库到虚拟机上
     - name: 'Checkout codes'
       uses: actions/checkout@v3
+
+    # We're in a shallow single-branch clone, so get the origin/master HEAD if not already on master
+    # and get more history on the current branch so we can find the branch point
+    # fix fatal: ambiguous argument 'HEAD~1': unknown revision or path not in the working tree.
+    - run: git fetch origin master:master --depth=300
+
+    - name: Install Node
+      uses: actions/setup-node@v2
+      with:
+        node-version: 17
     
-    - name: Git init
-      run: |
-        git config user.name "GitHub Actions Bot"
-        git config user.email "<>"
-        git clean -f  # Remove untrack file
+    # Local via act
+    - name: Install packages for act
+      if: env.ACT == 'true'
+      run: apt update && apt install -y xvfb git rsync
+
+    - name: Install node packages
+      run: npm ci
+
     - name: Update metadata
-      id: update_metadata
       run: |
-        python metadata.py
-      
-    - name: check update
-      id: modified
-      run: |
-        
-        counts=`git status | grep "data/translators.json" | wc -l`
-        echo "counts=${counts}" >> $GITHUB_ENV
-    - name: Update and mirror
-      if: env.counts == 1
-      run: |
-        git status
-        echo ${{ env.counts }}
-        git add data/translators.json
-        git add data/data.json
-        git commit -m 'update translator metadata'
-        git push
-    - uses: wearerequired/git-mirror-action@master #开源actions包
+        node data/updateJSON.js
+
+    - name: Commit and push changes
+      uses: EndBug/add-and-commit@v9
+      with:
+          author_name: GitHub Actions Bot
+          author_email: actions@github.com
+          message: 'commit and push JSON files.'
+
+    - name: mirror
+      uses: wearerequired/git-mirror-action@master #开源actions包
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       with:
