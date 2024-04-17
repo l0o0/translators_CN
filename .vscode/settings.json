@@ -1,0 +1,6 @@
+{
+    "javascript.format.enable": false,
+    "javascript.validate.enable": false,
+    "eslint.enable": true,
+    "files.eol": "\n"
+}
