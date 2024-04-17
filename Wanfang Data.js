@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-04-07 02:36:54"
+	"lastUpdated": "2024-04-17 12:08:54"
 }
 
 /*
@@ -99,14 +99,16 @@ class ID {
 			|| attr(docOrElm, '.collection > wf-favourite', 'literature_type');
 		this.filename = tryMatch(hiddenId, new RegExp(`${Object.keys(typeMap).join('|')}_(.+)$`), 1)
 			|| attr(docOrElm, '.collection > wf-favourite', 'literature_id');
-		this.itemType = typeMap[this.dbname]?.itemType;
-		this.shortType = typeMap[this.dbname]?.short;
+		if (typeMap[this.dbname]) {
+			this.itemType = typeMap[this.dbname].itemType;
+			this.shortType = typeMap[this.dbname].short;
+		}
 		this.url = `https://d.wanfangdata.com.cn/${this.dbname}/${this.filename}`;
 	}
 }
 
 function detectWeb(doc, url) {
-	Z.debug("--------------- WanFang Data 2024-04-07 10:36:53 ---------------");
+	Z.debug("--------------- WanFang Data 2024-04-17 20:05:50 ---------------");
 	let dynamic = doc.querySelector('.container-flex, .periodical');
 	if (dynamic) {
 		Z.monitorDOMChanges(dynamic, { childList: true });
@@ -321,7 +323,9 @@ async function scrapeRow(row) {
 		if (item.language) {
 			item.language = { chi: 'zh-CN', eng: 'en-US' }[item.language] || item.language;
 		}
-		item.archiveLocation = item?.archiveLocation.replace(/\n.*$/, '');
+		if (item.archiveLocation) {
+			item.archiveLocation = item.archiveLocation.replace(/\n.*$/, '');
+		}
 		addAttachment(row, item);
 		item.complete();
 	});
