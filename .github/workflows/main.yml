@@ -16,7 +16,9 @@ jobs:
     # We're in a shallow single-branch clone, so get the origin/master HEAD if not already on master
     # and get more history on the current branch so we can find the branch point
     # fix fatal: ambiguous argument 'HEAD~1': unknown revision or path not in the working tree.
-    - run: git fetch origin master:master --depth=300
+    - run: git fetch origin master:master --depth=1
+      if: github.ref != 'refs/heads/master'
+    - run: git fetch --update-shallow --depth=100 origin $(git rev-list HEAD)
 
     - name: Install Node
       uses: actions/setup-node@v2
