@@ -8,18 +8,22 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
     - name: Checkout this repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         path: this
+        token: ${{ secrets.WORKFLOW_TOKEN }}
 
     - name: Checkout official repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: zotero/translators
         path: official
+        token: ${{ secrets.WORKFLOW_TOKEN }}
 
     - name: Copy CI related folders and files from official to this repository
       run: |
@@ -39,5 +43,3 @@ jobs:
           author_name: GitHub Actions Bot
           author_email: actions@github.com
           message: 'Sync CI with official repository'
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
