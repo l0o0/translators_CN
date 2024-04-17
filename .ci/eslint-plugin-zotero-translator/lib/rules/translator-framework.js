@@ -1,6 +1,6 @@
 'use strict';
 
-const translators = require('../translators');
+const { parsed } = require('../../processor').support;
 
 module.exports = {
 	meta: {
@@ -14,19 +14,14 @@ module.exports = {
 
 	create: function (context) {
 		return {
-			Program: function (node) {
-				const header = translators.getHeaderFromAST(node);
-				if (!header.body) return; // if there's no file header, assume it's not a translator
+			Program: function (_node) {
+				const translator = parsed(context.getFilename());
+				if (!translator || !translator.FW) return; // regular js source, or no FW present
 
-				const sourceCode = context.getSourceCode();
-				for (const comment of sourceCode.getAllComments()) {
-					if (comment.value.match(/^\s*FW LINE [0-9]+:/)) {
-						context.report({
-							loc: comment.loc,
-							message: 'uses deprecated Translator Framework'
-						});
-					}
-				}
+				context.report({
+					loc: translator.FW.loc,
+					message: 'uses deprecated Translator Framework'
+				});
 			}
 		};
 	},

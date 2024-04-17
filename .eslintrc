@@ -23,23 +23,30 @@
 			"error",
 			{
 				"argsIgnorePattern": "^_",
-				"varsIgnorePattern": "^detectWeb$|^doWeb$|^detectImport$|^doImport$|^doExport$|^detectSearch$|^doSearch$|^exports$"
+				"varsIgnorePattern": "^testCases$|^detectWeb$|^doWeb$|^detectImport$|^doImport$|^doExport$|^detectSearch$|^doSearch$|^exports$"
 			}
 		],
 
 		"no-redeclare": ["error", {"builtinGlobals": true}],
+		"linebreak-style": ["error", "unix"],
+
+		"lines-around-comment": [
+			"error",
+			{
+				"ignorePattern": "END TEST CASES"
+			}
+		],
 
 		"zotero-translator/not-executable": "error",
 		"zotero-translator/header-valid-json": "error",
-		"zotero-translator/translator-id": "error",
-		"zotero-translator/last-updated": "warn",
-		"zotero-translator/translator-type": "warn",
+		"zotero-translator/header-translator-id": "error",
+		"zotero-translator/header-last-updated": "warn",
+		"zotero-translator/header-translator-type": "warn",
 
 		"zotero-translator/no-for-each": "warn",
 		"zotero-translator/prefer-index-of": "warn",
 		"zotero-translator/robust-query-selector": "warn",
 
-		"zotero-translator/test-cases-valid-json": "error",
 		"zotero-translator/test-cases": "error",
 		"zotero-translator/translator-framework": "warn",
 
@@ -50,5 +57,6 @@
 	},
 	"plugins": [
 		"zotero-translator"
-	]
+	],
+	"processor": "zotero-translator/translator"
 }

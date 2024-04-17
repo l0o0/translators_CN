@@ -26,7 +26,7 @@ module.exports = {
 						message: node.callee.property.name === 'indexOf'
 							? "Unnecessary '.indexOf()', use '.includes()' instead"
 							: "Unnecessary '.search()', use 'RegExp#test()' instead",
-						*fix(fixer) {
+						* fix(fixer) {
 							let test = node.callee.property.name === 'indexOf'
 								? `${source.getText(node.callee.object)}.contains(${source.getText(node.arguments[0])})`
 								: `${source.getText(node.arguments[0])}.test(${source.getText(node.callee.object)})`;

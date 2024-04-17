@@ -10,6 +10,6 @@ const requireDir = require('require-dir');
 module.exports = {
 	rules: requireDir('./lib/rules'),
 	processors: {
-		'.js': require('./lib/processor'),
-	}
+		translator: require('./processor'),
+	},
 };

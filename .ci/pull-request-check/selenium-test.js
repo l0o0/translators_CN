@@ -10,6 +10,7 @@ const translatorServer = require('./translator-server');
 
 const chromeExtensionDir = path.join(__dirname, 'connectors', 'build', 'chrome');
 const KEEP_BROWSER_OPEN = 'KEEP_BROWSER_OPEN' in process.env;
+const ZOTERO_CONNECTOR_EXTENSION_ID = 'ekhagklcjbdpajgpjgmbionohlpdbjgc';
 
 async function getTranslatorsToTest() {
 	const translatorFilenames = process.argv[2].split('\n').filter(filename => filename.trim().length > 0);
@@ -97,7 +98,7 @@ var allPassed = false;
 (async function() {
 	let driver;
 	try {
-		translatorServer.serve();
+		await translatorServer.serve();
 		require('chromedriver');
 		let chrome = require('selenium-webdriver/chrome');
 		let options = new chrome.Options();
@@ -111,21 +112,9 @@ var allPassed = false;
 			.setChromeOptions(options)
 			.build();
 
-		// No API to retrieve extension ID. Hacks, sigh.
-		await driver.get("chrome://system/");
-		await driver.wait(until.elementLocated({id: 'btn-extensions-value'}), 60*1000);
-		// Chrome 89+ has the extension list expanded by default
-		try {
-			let extBtn = await driver.findElement({css: '#btn-extensions-value'});
-			await extBtn.click();
-		} catch (e) {}
-		let contentElem = await driver.findElement({css: '#content'});
-		let text = await contentElem.getText();
-		let extId = text.match(/([^\s]*) : Zotero Connector/)[1];
-
-		// We got the extension ID and test URL, let's test
+		// We got the test URL, let's test
 		const translatorsToTest = await getTranslatorsToTest();
-		let testUrl = `chrome-extension://${extId}/tools/testTranslators/testTranslators.html#translators=${translatorsToTest.join(',')}`;
+		let testUrl = `chrome-extension://${ZOTERO_CONNECTOR_EXTENSION_ID}/tools/testTranslators/testTranslators.html#translators=${translatorsToTest.join(',')}`;
 		await new Promise((resolve) => setTimeout(() => resolve(driver.get(testUrl)), 500));
 		await driver.wait(until.elementLocated({id: 'translator-tests-complete'}), 30*60*1000);
 		testResults = await driver.executeScript('return window.seleniumOutput');

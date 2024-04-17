@@ -1,0 +1,63 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  build:
+    name: Lint, Check, Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      
+      # We're in a shallow single-branch clone, so get the origin/master HEAD if not already on master
+      # and get more history on the current branch so we can find the branch point
+      - run: git fetch origin master:master --depth=1
+        if: github.ref != 'refs/heads/master'
+      - run: git fetch --update-shallow --depth=100 origin $(git rev-list HEAD)
+      
+      - name: Install Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 17
+      
+      # Local via act
+      - name: Install packages for act
+        if: env.ACT == 'true'
+        run: apt update && apt install -y xvfb git rsync
+      
+      - name: Get current connector hash
+        id: get-connector-hash
+        run: |
+          echo "::set-output name=hash::$(git ls-remote https://github.com/zotero/zotero-connectors.git refs/heads/master | awk -F '\\s+' '{print $1}')"
+        shell: bash
+      
+      - name: Cache connector code
+        id: connector-cache
+        uses: actions/cache@v2
+        with:
+          path: .ci/pull-request-check/connectors
+          key: connectors-${{ hashFiles('.ci/pull-request-check/check-pull-request.sh') }}-${{ steps.get-connector-hash.outputs.hash }}
+      
+      - name: Install node packages
+        run: npm ci
+      
+      #- name: Debugging with tmate
+      #  uses: mxschmitt/action-tmate@v3.1
+      
+      - name: Test pull request
+        if: github.event_name == 'pull_request'
+        env:
+          BROWSER_EXECUTABLE: /home/runner/work/translators/translators/.ci/pull-request-check/xvfb-run-chrome
+        run: ./check-pull-request.sh
+        working-directory: .ci/pull-request-check
+      
+      - name: Check deleted.txt
+        run: ./checkDeletedTxt.sh
+        working-directory: .ci
+        if: ${{ success() || failure() }}
+      
+      - name: Lint
+        run: ./lint.sh
+        working-directory: .ci
+        if: ${{ success() || failure() }}

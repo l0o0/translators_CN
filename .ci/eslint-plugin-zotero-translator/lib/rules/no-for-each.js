@@ -12,7 +12,7 @@ module.exports = {
 
 	create: function (context) {
 		return {
-			Program: function (node) {
+			Program: function (_node) {
 				let lineno = 0;
 				for (const line of context.getSourceCode().getText().split('\n')) {
 					lineno += 1;
@@ -20,7 +20,6 @@ module.exports = {
 					const m = line.match(/for each *\(/);
 					if (m) {
 						context.report({
-							node,
 							message: "Deprecated JavaScript 'for each' statement",
 							loc: { start: { line: lineno, column: line.indexOf(m[0]) + 1 } },
 						});

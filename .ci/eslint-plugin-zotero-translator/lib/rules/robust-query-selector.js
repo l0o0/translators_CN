@@ -21,7 +21,7 @@ module.exports = {
 					context.report({
 						node,
 						message: "Prefer #id over [id=\"id\"]",
-						*fix(fixer) {
+						* fix(fixer) {
 							yield fixer.replaceText(node.arguments[0], arg.replaceAll(idRe, "#$2"));
 						}
 					});
@@ -31,7 +31,7 @@ module.exports = {
 					context.report({
 						node,
 						message: "Prefer .class over [class=\"class\"]",
-						*fix(fixer) {
+						* fix(fixer) {
 							yield fixer.replaceText(node.arguments[0],
 								arg.replaceAll(classRe, (_, __, name) => `.${name.replaceAll(/\s+/g, '.')}`));
 						}
