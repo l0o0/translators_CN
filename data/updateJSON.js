@@ -7,7 +7,7 @@ const fs = require('fs');
 const excepts = ['BibTeX.js', 'RefWorks Tagged.js'];
 
 async function getRecentCommits(filepath, count = 3) {
-	const cmd = `git log -n ${count} --pretty=format:"{\\"author\\": \\"%an\\", \\"date\\": \\"%ci\\", \\"message\\": \\"%s\\"}" -- ${filepath}`;
+	const cmd = `git log -n ${count} --pretty=format:"{\\"author\\": \\"%an\\", \\"date\\": \\"%ci\\", \\"message\\": \\"%s\\"}" -- "${filepath}"`;
 	return new Promise((resolve, reject) => {
 		exec(cmd, (error, stdout, _stderr) => {
 			if (error) {
