@@ -73,7 +73,18 @@
       }
     ],
     "zhLabel": "百度百科",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-11 21:16:31 +0800",
+        "message": "优化摘要显示；更新测试用例"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-06 14:34:01 +0800",
+        "message": "升级内部函数；更新测试用例；通过ESLint"
+      }
+    ]
   },
   "Baidu Scholar.js": {
     "header": {
@@ -351,7 +362,23 @@
       }
     ],
     "zhLabel": "百度学术",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-04-02 00:04:25 +0800",
+        "message": "精确的类型识别；更准确的返回结果；清理重复测试用例；调整测试用例顺序；更新测试用例"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-02-11 12:38:50 +0800",
+        "message": "更新内部函数"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2023-12-29 20:33:59 +0800",
+        "message": "统一内部函数；修正标准条目一字线问题；处理换行符问题"
+      }
+    ]
   },
   "BiliBili.js": {
     "header": {
@@ -1639,7 +1666,13 @@
       }
     ],
     "zhLabel": "中国医院知识总库",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-02-08 23:41:49 +0800",
+        "message": "新增CHKD；新增CNKI Refworks；改善CNKI Refer对年鉴、报告、报纸、标准的支持，优化url显示；CNKI和Scholar暴露接口，完全支持所有条目类型，增加部分出版信息，完整的双语支持"
+      }
+    ]
   },
   "CNKI Gongjushu.js": {
     "header": {
@@ -1694,7 +1727,13 @@
       }
     ],
     "zhLabel": "中国知网工具书总库",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-03-29 20:13:08 +0800",
+        "message": "add (CNKI Gongjushu.js) 新增知网工具书总库；resolve #311"
+      }
+    ]
   },
   "CNKI Industry.js": {
     "header": {
@@ -2098,7 +2137,23 @@
       }
     ],
     "zhLabel": "中国知网行业知识服务平台",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-04-01 16:50:35 +0800",
+        "message": "升级公共API；更新部分测试用例"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-03-08 15:39:18 +0800",
+        "message": "更正typo"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-02-01 00:40:07 +0800",
+        "message": "修正一处Typo"
+      }
+    ]
   },
   "CNKI Law.js": {
     "header": {
@@ -2589,7 +2644,18 @@
       }
     ],
     "zhLabel": "中国法律知识资源总库",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-04-01 16:50:35 +0800",
+        "message": "升级公共API；更新部分测试用例"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-02-26 01:25:50 +0800",
+        "message": "add (CNKI Law.js) 新增中国法律知识资源总库"
+      }
+    ]
   },
   "CNKI RefWorks.js": {
     "header": {
@@ -3097,7 +3163,13 @@
       }
     ],
     "zhLabel": "中国知网RefWorks导出格式",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-02-08 23:41:49 +0800",
+        "message": "新增CHKD；新增CNKI Refworks；改善CNKI Refer对年鉴、报告、报纸、标准的支持，优化url显示；CNKI和Scholar暴露接口，完全支持所有条目类型，增加部分出版信息，完整的双语支持"
+      }
+    ]
   },
   "CNKI Refer.js": {
     "header": {
@@ -3406,7 +3478,23 @@
       }
     ],
     "zhLabel": "中国知网Endote导出格式",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-03-03 21:56:18 +0800",
+        "message": "修正学位论文的大学未正常解析"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-02-08 23:41:49 +0800",
+        "message": "新增CHKD；新增CNKI Refworks；改善CNKI Refer对年鉴、报告、报纸、标准的支持，优化url显示；CNKI和Scholar暴露接口，完全支持所有条目类型，增加部分出版信息，完整的双语支持"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-02-04 03:27:35 +0800",
+        "message": "优化数据清洗；增加测试用例"
+      }
+    ]
   },
   "CNKI Scholar.js": {
     "header": {
@@ -3849,7 +3937,23 @@
       }
     ],
     "zhLabel": "中国知网外文总库",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-03-02 02:47:59 +0800",
+        "message": "修复无法在CNKI主站抓取Scholar的问题；升级extra；extra中新增ids记录"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-02-08 23:41:49 +0800",
+        "message": "新增CHKD；新增CNKI Refworks；改善CNKI Refer对年鉴、报告、报纸、标准的支持，优化url显示；CNKI和Scholar暴露接口，完全支持所有条目类型，增加部分出版信息，完整的双语支持"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-02-03 00:51:08 +0800",
+        "message": "修复书籍作者名重复；支持知网主站的Scholar界面"
+      }
+    ]
   },
   "CNKI TIKS.js": {
     "header": {
@@ -4545,7 +4649,13 @@
       }
     ],
     "zhLabel": "中国知网科技创新知识服务平台",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-03-11 23:48:12 +0800",
+        "message": "add (CNKI TIKS.js) 新增知网科技创新知识服务平台"
+      }
+    ]
   },
   "CNKI thinker.js": {
     "header": {
@@ -4658,7 +4768,13 @@
       }
     ],
     "zhLabel": "中国知网心可图书馆",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-31 17:55:52 +0800",
+        "message": "新增知网子网站转换器；新增知网Endnote导入转换器"
+      }
+    ]
   },
   "CNKI.js": {
     "header": {
@@ -7061,7 +7177,23 @@
       }
     ],
     "zhLabel": "中国裁判文书网",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-02-11 12:38:50 +0800",
+        "message": "更新内部函数"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2023-12-29 20:33:59 +0800",
+        "message": "统一内部函数；修正标准条目一字线问题；处理换行符问题"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2023-12-15 14:10:23 +0800",
+        "message": "恢复Genre"
+      }
+    ]
   },
   "China Social Science Library.js": {
     "header": {
@@ -7303,7 +7435,18 @@
       }
     ],
     "zhLabel": "中国社会科学文库",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-04-01 16:50:35 +0800",
+        "message": "升级公共API；更新部分测试用例"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-10 12:10:10 +0800",
+        "message": "新增中国社会科学文库"
+      }
+    ]
   },
   "ChinaXiv.js": {
     "header": {
@@ -8956,7 +9099,23 @@
       }
     ],
     "zhLabel": "中国大百科全书",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-09 15:23:28 +0800",
+        "message": "修复未能识别英译名称"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-08 22:52:29 +0800",
+        "message": "修复姓名重复的bug"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-08 21:47:30 +0800",
+        "message": "修复特殊页面下无法抓取作者"
+      }
+    ]
   },
   "GFSOSO.js": {
     "header": {
@@ -9594,7 +9753,18 @@
       }
     ],
     "zhLabel": "抗日战争与近代中日关系文献数据平台",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-02-03 18:20:25 +0800",
+        "message": "规范馆藏字段；为“档案”追加Type；更新测试用例"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-28 18:11:19 +0800",
+        "message": "add Modern History"
+      }
+    ]
   },
   "NDLTD.js": {
     "header": {
@@ -10437,7 +10607,13 @@
       }
     ],
     "zhLabel": "臺大佛學數位圖書館",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-03-03 01:06:57 +0800",
+        "message": "add (NTU Digital Library of Buddhist Studies.js) 新增臺大佛學數位圖書館"
+      }
+    ]
   },
   "National Public Service Platform for Standards Information - China.js": {
     "header": {
@@ -10623,7 +10799,23 @@
       }
     ],
     "zhLabel": "全国标准信息公共服务平台",
-    "trends": []
+    "trends": [
+      {
+        "author": "Chi Lei",
+        "date": "2024-01-25 19:45:46 +0800",
+        "message": "Update National Public Service Platform for Standards Information - China.js"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-02 00:54:02 +0800",
+        "message": "修复内部函数bug"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2023-12-29 19:45:22 +0800",
+        "message": "统一内部函数"
+      }
+    ]
   },
   "National Science and Technology Library - China.js": {
     "header": {
@@ -10924,7 +11116,23 @@
       }
     ],
     "zhLabel": "国家科技图书文献中心",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-03-21 16:58:57 +0800",
+        "message": "fix #307"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-03-08 15:39:18 +0800",
+        "message": "更正typo"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-02-11 12:38:50 +0800",
+        "message": "更新内部函数"
+      }
+    ]
   },
   "National Science and Technology Report Service - China.js": {
     "header": {
@@ -11024,7 +11232,13 @@
       }
     ],
     "zhLabel": "国家科技报告服务系统",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-04-07 10:10:16 +0800",
+        "message": "add (National Science and Technology Report Service - China.js) 新增国家科技报告服务系统"
+      }
+    ]
   },
   "National Standards Open System - China.js": {
     "header": {
@@ -11150,7 +11364,23 @@
       }
     ],
     "zhLabel": "国家标准全文公开系统",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2023-12-29 19:41:26 +0800",
+        "message": "大幅重构；支持多条目；更新测试用例"
+      },
+      {
+        "author": "Zeping Lee",
+        "date": "2023-12-12 16:48:48 +0800",
+        "message": "fix (全国标准信息公共服务平台) 更新测试用例 (#250)"
+      },
+      {
+        "author": "Linxzh",
+        "date": "2023-07-31 17:26:21 +0800",
+        "message": "refactor: reorganized the directory structure to use Zotero Translator eslint and ci test"
+      }
+    ]
   },
   "Ncpssd.js": {
     "header": {
@@ -12394,7 +12624,14 @@
         ]
       }
     ],
-    "zhLabel": "人民日报图文数据库"
+    "zhLabel": "人民日报图文数据库",
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-19 16:16:21 +0800",
+        "message": "更名；更新元数据"
+      }
+    ]
   },
   "People's Daily Epaper.js": {
     "header": {
@@ -12538,7 +12775,14 @@
         ]
       }
     ],
-    "zhLabel": "人民日报（电子版）"
+    "zhLabel": "人民日报（电子版）",
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-19 16:16:21 +0800",
+        "message": "更名；更新元数据"
+      }
+    ]
   },
   "People's Daily Online.js": {
     "header": {
@@ -12665,7 +12909,14 @@
         "items": "multiple"
       }
     ],
-    "zhLabel": "人民网"
+    "zhLabel": "人民网",
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-19 16:16:21 +0800",
+        "message": "更名；更新元数据"
+      }
+    ]
   },
   "Pishu Data.js": {
     "header": {
@@ -12857,7 +13108,23 @@
       }
     ],
     "zhLabel": "皮书数据库",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-02-11 12:38:50 +0800",
+        "message": "更新内部函数"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2023-12-31 22:07:05 +0800",
+        "message": "统一内部函数；加入更多字段"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2023-11-29 11:43:26 +0800",
+        "message": "更新修改时间以便触发更新"
+      }
+    ]
   },
   "ProQuestCN Thesis.js": {
     "header": {
@@ -12875,7 +13142,13 @@
     },
     "testCases": [],
     "zhLabel": "ProQuest学位论文(中国)",
-    "trends": []
+    "trends": [
+      {
+        "author": "Linxzh",
+        "date": "2023-07-31 17:26:21 +0800",
+        "message": "refactor: reorganized the directory structure to use Zotero Translator eslint and ci test"
+      }
+    ]
   },
   "PubScholar.js": {
     "header": {
@@ -13411,7 +13684,23 @@
       }
     ],
     "zhLabel": "国家版本馆版权数据中心",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-03-28 17:16:56 +0800",
+        "message": "更新extra；简化部分代码；fix  #331"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-03-17 18:01:52 +0800",
+        "message": "适配带m域名"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-02 13:20:03 +0800",
+        "message": "修复字段占用；统一内部函数；增强的人名清洗；通过ESLint"
+      }
+    ]
   },
   "QStheory.js": {
     "header": {
@@ -14070,7 +14359,13 @@
       }
     ],
     "zhLabel": "科学文库",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-18 20:37:38 +0800",
+        "message": "新增 (Science Reading.js) 科学文库"
+      }
+    ]
   },
   "Sina Weibo.js": {
     "header": {
@@ -14137,7 +14432,23 @@
       }
     ],
     "zhLabel": "新浪微博",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-02-03 22:24:57 +0800",
+        "message": "修复时间显示问题，更新测试用例"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-02-03 19:47:33 +0800",
+        "message": "更改部分extra键名，记录“已编辑”的状态；更新extra"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-11 20:26:04 +0800",
+        "message": "Merge branch 'Sina' of https://github.com/jiaojiaodubai/translators_CN into Sina"
+      }
+    ]
   },
   "Soopat.js": {
     "header": {
@@ -14473,7 +14784,13 @@
       }
     ],
     "zhLabel": "国家图书馆标准全文数据库",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-17 00:45:27 +0800",
+        "message": "update Standard Full-text Database - NLC"
+      }
+    ]
   },
   "SuperLib.js": {
     "header": {
@@ -15511,7 +15828,23 @@
       }
     ],
     "zhLabel": "万方",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-04-17 20:12:55 +0800",
+        "message": "fix unexpected token"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-04-17 17:47:34 +0800",
+        "message": "fix EOL"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-04-07 10:37:29 +0800",
+        "message": "修复无法抓取DOI"
+      }
+    ]
   },
   "Wanfang Med.js": {
     "header": {
@@ -15837,7 +16170,23 @@
       }
     ],
     "zhLabel": "万方医疗",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-02-03 18:08:22 +0800",
+        "message": "更正专利号；更正专利国别；更新测试用例；统一extra中的引用数为citation；更新extra"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2023-12-28 18:49:39 +0800",
+        "message": "修复附件下载问题"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2023-12-26 19:37:37 +0800",
+        "message": "通过ESLint；修复人名重复问题"
+      }
+    ]
   },
   "WeiPu.js": {
     "header": {
@@ -17775,7 +18124,23 @@
       }
     ],
     "zhLabel": "国务院政策文件库",
-    "trends": []
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-03-08 18:18:23 +0800",
+        "message": "修复“首页 > 政策 > 中央有关文件”被识别为法律"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-02-03 19:30:45 +0800",
+        "message": "支持公报"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-06 19:04:27 +0800",
+        "message": "新增国务院政策文件库"
+      }
+    ]
   },
   "stats.gov.cn.js": {
     "header": {
