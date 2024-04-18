@@ -651,8 +651,18 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2024-01-16 20:16:46 +0800",
+        "message": "修复普通视频无法抓取tag"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2023-12-14 13:54:36 +0800",
+        "message": "更新测试用例"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2023-12-14 13:47:00 +0800",
+        "message": "fix (BiliBili.js) 通过ESLint；简化代码；更新测试用例"
       }
     ]
   },
@@ -870,8 +880,8 @@
       },
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2024-01-10 17:53:10 +0800",
+        "message": "支持ISBN检索；为可能失败的请求增加try语句；针对外文作者的改进；更新测试用例"
       }
     ]
   },
@@ -1056,8 +1066,13 @@
       },
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2024-01-07 20:46:33 +0800",
+        "message": "Lint"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2023-12-29 20:33:59 +0800",
+        "message": "统一内部函数；修正标准条目一字线问题；处理换行符问题"
       }
     ]
   },
@@ -7446,8 +7461,13 @@
       },
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2024-01-10 16:13:04 +0800",
+        "message": "修复通讯作者导致的重复；记录CSTR；优化archiveID；更新测试用例"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-09 20:21:47 +0800",
+        "message": "适配子平台 #285"
       }
     ]
   },
@@ -7604,8 +7624,13 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2023-11-29 16:08:13 +0800",
+        "message": "fix Cubox"
+      },
+      {
+        "author": "Linxzh",
+        "date": "2023-07-31 17:26:21 +0800",
+        "message": "refactor: reorganized the directory structure to use Zotero Translator eslint and ci test"
       }
     ]
   },
@@ -7681,8 +7706,13 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2023-12-16 03:39:48 +0800",
+        "message": "fix (dangdang.js) 通过ESLint；更新测试用例"
+      },
+      {
+        "author": "Linxzh",
+        "date": "2023-07-31 17:26:21 +0800",
+        "message": "refactor: reorganized the directory structure to use Zotero Translator eslint and ci test"
       }
     ]
   },
@@ -8616,8 +8646,13 @@
       },
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2024-01-13 18:23:56 +0800",
+        "message": "恢复对章节的支持"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2023-12-29 20:33:59 +0800",
+        "message": "统一内部函数；修正标准条目一字线问题；处理换行符问题"
       }
     ]
   },
@@ -8842,8 +8877,8 @@
       },
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2023-12-29 20:33:59 +0800",
+        "message": "统一内部函数；修正标准条目一字线问题；处理换行符问题"
       }
     ]
   },
@@ -8947,9 +8982,9 @@
     "zhLabel": "谷粉搜搜",
     "trends": [
       {
-        "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "author": "Linxzh",
+        "date": "2023-07-31 17:26:21 +0800",
+        "message": "refactor: reorganized the directory structure to use Zotero Translator eslint and ci test"
       }
     ]
   },
@@ -9021,9 +9056,9 @@
     "zhLabel": "京东",
     "trends": [
       {
-        "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "author": "Linxzh",
+        "date": "2023-07-31 17:26:21 +0800",
+        "message": "refactor: reorganized the directory structure to use Zotero Translator eslint and ci test"
       }
     ]
   },
@@ -9279,8 +9314,13 @@
       },
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2023-12-28 01:53:36 +0800",
+        "message": "补充注释；优化DOI字段；统一变量命名风格"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2023-12-01 16:12:16 +0800",
+        "message": "修复人名意外分割，支持更多网站"
       }
     ]
   },
@@ -11361,8 +11401,13 @@
       },
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2023-12-31 17:12:52 +0800",
+        "message": "在古籍的extra中标注classic"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2023-12-31 16:34:03 +0800",
+        "message": "修复字段占用；支持首页多条目下载；更新测试案例"
       }
     ]
   },
@@ -12283,8 +12328,13 @@
       },
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2023-12-31 18:38:32 +0800",
+        "message": "支持国际专利；纠正type字段误用；更新测试用例"
+      },
+      {
+        "author": "jiaojiaodubai23",
+        "date": "2023-10-27 00:50:10 +0800",
+        "message": "取消中文名拆分；通过ESLint检查；更新测试案例；修复place字段；精简代码"
       }
     ]
   },
@@ -13148,8 +13198,8 @@
       },
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2024-01-02 23:44:46 +0800",
+        "message": "细化姓名清洗；不匹配首页推荐文章；摘要和关键词优化"
       }
     ]
   },
@@ -13492,8 +13542,8 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2024-01-09 14:44:38 +0800",
+        "message": "新增求是网"
       }
     ]
   },
@@ -13818,8 +13868,13 @@
       },
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2024-01-02 23:58:54 +0800",
+        "message": "增前稳定性；更新测试用例；弃用无法访问的测试用例"
+      },
+      {
+        "author": "jiaojiaodubai23",
+        "date": "2023-10-24 18:18:49 +0800",
+        "message": "通过ESLint检测；更新测试案例"
       }
     ]
   },
@@ -13899,8 +13954,8 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2024-01-06 16:22:56 +0800",
+        "message": "新增中国社会科学词条库"
       }
     ]
   },
@@ -14241,9 +14296,9 @@
     "zhLabel": "Soopat专利",
     "trends": [
       {
-        "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "author": "Linxzh",
+        "date": "2023-07-31 17:26:21 +0800",
+        "message": "refactor: reorganized the directory structure to use Zotero Translator eslint and ci test"
       }
     ]
   },
@@ -14365,8 +14420,13 @@
       },
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2024-01-03 15:23:44 +0800",
+        "message": "feat (Scp.org.cn.js) 支持多条目；统一内部函数；修复一字线问题；更新测试用例"
+      },
+      {
+        "author": "Linxzh",
+        "date": "2023-07-31 17:26:21 +0800",
+        "message": "refactor: reorganized the directory structure to use Zotero Translator eslint and ci test"
       }
     ]
   },
@@ -15841,8 +15901,18 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2024-01-04 18:43:24 +0800",
+        "message": "更新内部函数；规范字段；更新测试用例"
+      },
+      {
+        "author": "l0o0",
+        "date": "2023-11-02 22:54:52 +0800",
+        "message": "fix: 在pr227的基础上，做了部分修改并添加测试示例. closes #70, closes #90, closes #173"
+      },
+      {
+        "author": "jiaojiaodubai23",
+        "date": "2023-10-24 18:28:43 +0800",
+        "message": "通过ESLint检测；移除无法测试的案例"
       }
     ]
   },
@@ -15908,8 +15978,13 @@
       },
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2024-01-15 21:23:27 +0800",
+        "message": "websiteType记为“微信公众号”以满足《法学引注手册》"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-04 18:17:36 +0800",
+        "message": "更新内部函数；增加测试用例；通过ESLint"
       }
     ]
   },
@@ -16161,8 +16236,13 @@
       },
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2024-01-18 22:41:58 +0800",
+        "message": "实现extra的CSL键在其它键前；更新测试用例"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-10 14:03:51 +0800",
+        "message": "修复期刊文章抓取不到作者；修复学位论文日期意外抓取文档元素；优化图书作者显示；更新测试用例"
       }
     ]
   },
@@ -16333,8 +16413,13 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2024-01-16 18:41:09 +0800",
+        "message": "不再记录责编"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-01-08 20:13:02 +0800",
+        "message": "新增新华网"
       }
     ]
   },
@@ -16675,8 +16760,18 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2024-01-05 23:42:56 +0800",
+        "message": "升级内部函数；通过ESLint；修复网页快照重复；更新测试用例"
+      },
+      {
+        "author": "l0o0",
+        "date": "2023-11-24 10:09:07 +0800",
+        "message": "Merge branch 'master' into master"
+      },
+      {
+        "author": "Linxzh",
+        "date": "2023-09-27 15:25:57 +0800",
+        "message": "fix(Weixin.js, Zhihu.js): 去除不必要的笔记note，现在zotero可方便的阅读网页快照, closed #213"
       }
     ]
   },
@@ -16858,8 +16953,13 @@
       },
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2023-12-29 20:33:59 +0800",
+        "message": "统一内部函数；修正标准条目一字线问题；处理换行符问题"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2023-12-28 18:58:52 +0800",
+        "message": "修正无法下载pdf的潜在bug"
       }
     ]
   },
@@ -17103,8 +17203,18 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "date": "2024-01-18 22:09:04 +0800",
+        "message": "修复university异常；优化url显示；记录CSTR；更新测试用例 #293"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2023-12-16 18:38:30 +0800",
+        "message": "fix (dpaper.js) 满足#257；通过ESLint；更新测试用例"
+      },
+      {
+        "author": "Linxzh",
+        "date": "2023-07-31 17:26:21 +0800",
+        "message": "refactor: reorganized the directory structure to use Zotero Translator eslint and ci test"
       }
     ]
   },
@@ -17763,9 +17873,9 @@
     "zhLabel": "小宇宙FM",
     "trends": [
       {
-        "author": "jiaojiaodubai",
-        "date": "2024-01-24 18:17:00 +0800",
-        "message": "修复解析JSON报错；优化电影条目的标题拆分 #300"
+        "author": "Linxzh",
+        "date": "2023-07-31 17:26:21 +0800",
+        "message": "refactor: reorganized the directory structure to use Zotero Translator eslint and ci test"
       }
     ]
   },
