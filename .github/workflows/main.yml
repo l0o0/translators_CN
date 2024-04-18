@@ -4,6 +4,9 @@ on:
     branches:
       - master
       - test
+    
+    paths:
+      - '*.js'
   workflow_dispatch:
 jobs:
   build:
@@ -12,13 +15,11 @@ jobs:
     # copy git 仓库到虚拟机上
     - name: 'Checkout codes'
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
-    # We're in a shallow single-branch clone, so get the origin/master HEAD if not already on master
-    # and get more history on the current branch so we can find the branch point
     # fix fatal: ambiguous argument 'HEAD~1': unknown revision or path not in the working tree.
-    - run: git fetch origin master:master --depth=1
-      if: github.ref != 'refs/heads/master'
-    - run: git fetch --update-shallow --depth=100 origin $(git rev-list HEAD)
+    - run: git checkout master
 
     - name: Install Node
       uses: actions/setup-node@v2
