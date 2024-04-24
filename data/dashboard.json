@@ -19039,5 +19039,40 @@
         "message": "升级公共API；更新部分测试用例"
       }
     ]
+  },
+  "CHINESE JOURNAL OF LAW.js": {
+    "header": {
+      "translatorID": "d37a0069-cbc7-4b91-8c04-3be2c3bc3e6e",
+      "label": "CHINESE JOURNAL OF LAW",
+      "creator": "jiaojiaodubai",
+      "target": "^http://www\\.faxueyanjiu\\.com",
+      "minVersion": "5.0",
+      "maxVersion": "",
+      "priority": 100,
+      "inRepository": true,
+      "translatorType": 4,
+      "browserSupport": "gcsibv",
+      "lastUpdated": "2024-04-24 09:27:29"
+    },
+    "testCases": [
+      {
+        "type": "web",
+        "url": "http://www.faxueyanjiu.com/Home/Index",
+        "items": "multiple"
+      },
+      {
+        "type": "web",
+        "url": "http://www.faxueyanjiu.com/Magazine/GetIssueContentList2/?PageSize=12&Year=2023&Issue=2",
+        "items": "multiple"
+      }
+    ],
+    "zhLabel": "法学研究",
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-04-24 17:34:05 +0800",
+        "message": "resolve #337"
+      }
+    ]
   }
 }
