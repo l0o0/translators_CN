@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-04-13 13:49:45"
+	"lastUpdated": "2024-04-27 09:23:16"
 }
 
 /*
@@ -66,7 +66,8 @@ function filterQuery(items) {
 
 async function doSearch(items) {
 	for (let doi of filterQuery(items)) {
-		let url = `https://doi.org/${encodeURIComponent(doi)}`;
+		// 仅在国内有效
+		let url = `https://link.cnki.net/doi/${encodeURIComponent(doi)}`;
 		Z.debug(`search url: ${url}`);
 		let doc = await requestDocument(url);
 		// Z.debug(doc);
@@ -231,7 +232,7 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug('---------------- CNKI 2024-04-13 21:48:08 ------------------');
+	Z.debug('---------------- CNKI 2024-04-27 17:29:54 ------------------');
 	let ids = new ID(doc, url);
 	Z.debug('detect ids:');
 	Z.debug(ids);
@@ -505,7 +506,7 @@ async function scrape(doc, itemKey = { url: '', cite: '', cookieName: '', downlo
 		cs.typeKey = text(doc, '.top-tip-scholar > span:first-child');
 		await cs.scrape(doc, url);
 	}
-	else if (ids.toItemtype() == 'videoRecording') {
+	else if (ids.toItemtype() == 'videoRecording' || /^https:\/\/oversea\.cnki\.net/i.test(url)) {
 		await scrapeDoc(doc, itemKey);
 	}
 	else if (url.includes('thinker.cnki')) {
@@ -1872,90 +1873,50 @@ var testCases = [
 	{
 		"type": "search",
 		"input": {
-			"DOI": "10.13801/j.cnki.fhclxb.20240008.002"
+			"DOI": "10.19655/j.cnki.1005-4642.2020.09.009"
 		},
 		"items": [
 			{
 				"itemType": "journalArticle",
-				"title": "Ag量子点协同四环素的抑菌及其机制研究",
+				"title": "特斯拉阀性能的仿真研究",
 				"creators": [
 					{
 						"firstName": "",
-						"lastName": "郭少波",
+						"lastName": "周润中",
 						"creatorType": "author",
 						"fieldMode": 1
 					},
 					{
 						"firstName": "",
-						"lastName": "陈惠惠",
+						"lastName": "乔宇杰",
 						"creatorType": "author",
 						"fieldMode": 1
 					},
 					{
 						"firstName": "",
-						"lastName": "刘珂",
+						"lastName": "张钰翔",
 						"creatorType": "author",
 						"fieldMode": 1
 					},
 					{
 						"firstName": "",
-						"lastName": "胡瑞玲",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "王嘉伟",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "余凡",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "刘智峰",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "史娟",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "郭婷",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "季晓晖",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "张田雷",
+						"lastName": "代珍兵",
 						"creatorType": "author",
 						"fieldMode": 1
 					}
 				],
-				"date": "2024-01-09",
-				"DOI": "10.13801/j.cnki.fhclxb.20240008.002",
-				"ISSN": "1000-3851",
-				"abstractNote": "四环素类抗生素因具有高效、低毒、广谱抑菌性等优点而被广泛使用，但随着抗生素的滥用致使大量的耐药菌出现，使四环素类抗生素的药用价值逐渐降低。超小粒径的纳米Ag虽可使细菌甚至耐药菌失活，但单独使用毒性较强，且易团聚。为此，本研究利用Ag的d轨道为满电子结构，可与供电子基团配位的原理，设计了核壳型介孔Fe<sub>3</sub>O<sub>4</sub>@SiO<sub>2</sub>@mTiO<sub>2</sub>@Ag-四环素（FSmTA-T）复合材料用以解决抗生素耐药和纳米Ag团聚、强毒性问题。研究结果显示，制备的复合材料中纳米Ag量子点的粒径约为2.84 nm，可与四环素环3中的羰基键合，同时，相比四环素，复合材料对大肠杆菌，金黄色葡萄球菌，耐四环素沙门氏菌和白色念珠菌均具有较高的抑菌活性，并可有效破坏细菌细胞壁而使其死亡，且对哺乳细胞的毒性降低为原来的1/3。因此，其优越的抑菌活性可应用于污水处理领域。",
-				"extra": "original-container-title: Acta Materiae Compositae Sinica\nStatus: advance online publication\nfoundation: 秦巴生物资源与生态环境国家重点实验室科研基金(SXS-2105)； 陕西省教育厅项目（22JK-0317）； 陕西省自然科学基金(2023-JC-QN-0162； 2023-YBSF-334)； 陕西理工大学基础研究基金(SLGKYXM2208)；\ndownload: 139\nalbum: 工程科技Ⅰ辑\nCLC: X703;TB332\nCNKICite: 0\ndbcode: CAPJ\ndbname: CAPJLAST\nfilename: FUHE20240104001\npublicationTag: 北大核心, CA, JST, Pж(AJ), EI, CSCD, WJCI, 卓越期刊\nCIF: 2.595\nAIF: 1.788",
+				"date": "2020",
+				"DOI": "10.19655/j.cnki.1005-4642.2020.09.009",
+				"ISSN": "1005-4642",
+				"abstractNote": "通过CAD软件建立几何模型,通过COMSOL软件建立数值模型并求解,与实验结果进行对比,并通过数值模拟讨论相关参量对阀门单向流通性的影响.研究结果表明:特斯拉阀门适用于低粘度高密度流体;本文所设计的特斯拉阀门在四阀门情况下dedicatee数能达到3.414;单阀门特斯拉阀的性能相较于多阀门更佳.",
+				"extra": "original-container-title: Physics Experimentation\ndownload: 1974\nalbum: 基础科学;工程科技Ⅱ辑\nCLC: TH134\nCNKICite: 13\ndbcode: CJFQ\ndbname: CJFDLAST2020\nfilename: WLSL202009009\npublicationTag: JST\nCIF: 0.755\nAIF: 0.562",
+				"issue": "9",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
-				"pages": "1-14",
-				"publicationTitle": "复合材料学报",
-				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CAPJ&dbname=CAPJLAST&filename=FUHE20240104001",
+				"pages": "44-50",
+				"publicationTitle": "物理实验",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFQ&dbname=CJFDLAST2020&filename=WLSL202009009",
+				"volume": "40",
 				"attachments": [
 					{
 						"title": "Full Text PDF",
@@ -1964,22 +1925,16 @@ var testCases = [
 				],
 				"tags": [
 					{
-						"tag": "Ag量子点"
+						"tag": "diodicity数"
 					},
 					{
-						"tag": "四环素"
+						"tag": "数值模拟"
 					},
 					{
-						"tag": "抑菌"
+						"tag": "特斯拉阀"
 					},
 					{
-						"tag": "抑菌机制"
-					},
-					{
-						"tag": "纳米复合材料"
-					},
-					{
-						"tag": "耐药"
+						"tag": "阀门性能"
 					}
 				],
 				"notes": [],
