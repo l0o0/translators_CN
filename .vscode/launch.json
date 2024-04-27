@@ -9,7 +9,7 @@
             "request": "launch",
             "name": "Lint",
             "runtimeExecutable": "npm",
-            "runtimeArgs": ["run", "lint", "--fix ${fileBasename}"],
+            "runtimeArgs": ["run", "lint", "--", "--fix", "${fileBasename}"],
             "skipFiles": [
                 "<node_internals>/**"
             ],
