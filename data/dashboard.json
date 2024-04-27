@@ -3182,7 +3182,7 @@
       "priority": 99,
       "inRepository": true,
       "translatorType": 1,
-      "lastUpdated": "2024-03-03 13:58:51"
+      "lastUpdated": "2024-04-27 08:48:33"
     },
     "testCases": [
       {
@@ -3233,6 +3233,7 @@
             "DOI": "10.13386/j.issn1002-0306.2023090315",
             "ISSN": "1002-0306",
             "abstractNote": "目的：以黄芪为原料，采用复合酶法（木瓜蛋白酶、果胶酶、纤维素酶）提取黄芪多糖（Astragalus polysaccharides， APS），并分析工艺条件对多糖提取的影响。方法：在正交实验确定复合酶比例的基础上，采用响应面法对复合酶提取APS的提取条件进行优化，得到最优工艺条件，采用pNPG法评价其α-葡萄糖苷酶抑制活性。结果：得到最佳复合酶配比为：木瓜蛋白酶17 600 U/g、果胶酶13 000 U/g、纤维素酶1 200 U/g；最佳酶解提取条件为：酶解处理时间、温度、pH值、料液比和分别为2.5 h、60 ℃、5.0和1∶35 g/mL，APS的得率最高可达23.59%±0.14%；APS对α-葡萄糖苷酶的半数抑制浓度（IC_(50)）为7.42 μg/mL。结论：复合酶提取APS的得率较单酶得率显著提高，APS对α-葡萄糖苷酶表现出较强的抑制作用。",
+            "language": "zh-CN",
             "pages": "1-15",
             "publicationTitle": "食品工业科技",
             "url": "https://link.cnki.net/doi/10.13386/j.issn1002-0306.2023090315",
@@ -3288,6 +3289,7 @@
             ],
             "date": "2014",
             "abstractNote": "车前子定义为车前（Plantago asiatica L.，又称大粒车前）或平车前（Plantagodepressa Willd.）的干燥成熟种子，是传统中医用药之一。本文以江西吉安产大粒车前子为研究对象，研究车前子多糖体内外消化过程和酵解方式，及其对肠道功能的提升作用。首先通过体外研究，建立人体胃肠道消化酵解模拟系统，研究大粒车前子多糖在口腔及胃肠道中的消化过程和在人体粪便菌群中的酵解方式；模拟和探讨大粒车前子多糖肠道功能。再利用体内实验，研究车前子多糖在小鼠体内的酵解方式及其对结肠功能指标的影响，以及物理加工方式对车前子多糖肠道生理活性的影响；与此同时分析车前子多糖对小鼠体内相关肠道生理指标及菌群的影响，最后进一步通过结肠炎小鼠模型探讨车前子多糖对模型小鼠肠道功能的作用。主要研究结论如下： 1.通过体外模拟口腔唾液，胃部和小肠消化实验研究车前子多糖的消化过程，结果发现唾液淀粉酶对车前子多糖相对分子质量没有影响，而在胃肠道消化过程中多糖受到影响。在模拟的胃、小肠消化体系中，多糖的相对分子质量发生改变，从(1,903.1±93.0) x103降低为(4.7±0.2) x103，还原糖含量从0.157±0.009mM增加为0.622±0.026mM，这表明车前子多糖相对分子质量的降低是由于糖苷键的断裂。同时，在整个模拟的消化过程中，没有检测到游离单糖，表明车前子多糖在模拟胃肠消化过程中没有产生游离单糖。这些结果能为车前子多糖的体外消化提供一些信息，并能其他多糖的消化提供参考。 2.探讨了大粒车前子多糖体外酵解及其碳水化合物对酵解发挥的作用。车前子多糖在体外由人体粪便培养物进行酵解24h。在酵解过程中，粪便培养物的pH由6.1降为5.1，总短链脂肪酸（SCFA）、乙酸、丙酸和正丁酸的含量均显著增加。车前子多糖主要由木糖，阿拉伯糖及半乳糖醛酸组成，因此在酵解过程中，木聚糖酶、阿拉伯呋喃糖酶、木糖苷酶和葡萄糖醛酸酶的活性也都增加。酵解24h后，多糖中47.2±1.6%总碳水化合物被消耗，这其中包括阿拉伯糖（消耗42.9±1.5%）、木糖（消耗53.2±1.6%）和葡萄糖醛酸（消耗76.4±1.2%）。同时，探讨了多糖中碳水化合物的消耗与SCFA的产量间的关系。研究发现，乙酸和正丁酸的增加主要是由于多糖中葡萄糖醛酸和木糖的发酵，而丙酸的增加则主要是由于阿拉伯糖和木糖的酵解。这些结果提示车前子多糖对大肠健康的...",
+            "language": "zh-CN",
             "thesisType": "博士学位论文",
             "university": "南昌大学",
             "url": "https://kns.cnki.net/kcms2/article/abstract?v=4j1cDaxzFAmdwuJtF5GSSwTOh5DKQ-XggUo-CCpRcTPMhoiSAivy3RnBKYbaqRTkr4-d_IUr08W2aLDa-BQRYeJ24AF2aHeXN6NIm5fNtC__q9M2RmhG37On8MDDm4Cr0-9hk46u0EdKeUVLUcR6qw==&uniplatform=NZKPT&language=CHS",
@@ -3351,6 +3353,7 @@
             "abstractNote": "黄芪作为传统中药,具有广泛的药用价值,有\"补药之长\"之称。国内外学者对黄芪的主要成分物质做了大量药学研究工作。本文通过查阅大量文献资料,综述黄芪的主要成分中的黄芪皂苷、多糖、黄酮、微量元素等主要成分与其在机体各个系统中的药理作用。",
             "conferenceName": "2013年中国药学大会暨第十三届中国药师周",
             "extra": "organizer: 中国药学会",
+            "language": "zh-CN",
             "pages": "5, 269-273",
             "place": "中国广西南宁",
             "url": "https://kns.cnki.net/kcms2/article/abstract?v=4j1cDaxzFAkMiAqWOVcpkQSu-qVXhwVyhTfACjn3pLUOszWG3nZTLCFArFj5jtkbXHb5JPSODn-hWuOi9Y4U-tyyQ2jmyseCnWcvIAA9YNZ0R3OrcVWIGLIrJWHAiH4lM-pZr7YS1PAOEvXXmfrUnA==&uniplatform=NZKPT&language=CHS",
@@ -3393,6 +3396,7 @@
             "issueDate": "2023-05-16",
             "abstractNote": "Provided is a font generating method including generating an intermediate code by adding attributes for METAFONT to code of an outline font, generating a font in the METAFONT by parsing the intermediate code, hierarchizing the font into a whole set representing a whole of a character and a partial set representing a part of the character, and changing a style of the font according to a relational equation representing a relationship between the whole set and the partial set.",
             "country": "美国",
+            "language": "zh-CN",
             "patentNumber": "US11651140",
             "place": "美国",
             "attachments": [],
@@ -3411,9 +3415,9 @@
             "title": "船舶及海洋工程用不锈钢复合钢板",
             "creators": [],
             "date": "2023-09-07",
+            "language": "zh-CN",
             "numPages": "12",
             "number": "GB/T 43109—2023",
-            "type": "国家标准",
             "url": "https://kns.cnki.net/kcms2/article/abstract?v=4j1cDaxzFAkUKsKELQcXk35ZPv_FR6EQU9GhJgKt5MR1sJc3EaGeSopmhS9vO3xi9S3AFOQO3Xu9nnSXHay_VmuFMZyVXGEWwfvPLpIq_bH75z4-MZuOvehDd7XuulOVmkprVcTe494=&uniplatform=NZKPT&language=CHS",
             "attachments": [],
             "tags": [
@@ -3443,6 +3447,7 @@
             ],
             "date": "2023-09-21",
             "extra": "DOI: 10.28502/n.cnki.nkjrb.2023.005521",
+            "language": "zh-CN",
             "pages": "4",
             "publicationTitle": "科技日报",
             "url": "https://doi.org/10.28502/n.cnki.nkjrb.2023.005521",
@@ -3463,6 +3468,7 @@
             "creators": [],
             "date": "1995-01-01",
             "ISBN": "7203035204",
+            "language": "zh-CN",
             "pages": "156",
             "url": "https://kns.cnki.net/kcms2/article/abstract?v=-0THPtffOh3X1yaBBkMCatOnpdIbXJHtXHguzwTx01Y6HcO47AM_4NtZTLG5xc3LMzdrpeqNtRpqXaU4SJjePUAmSn1Qn5RzEMWSZ3-X2m2Z_rZhKom6PuDEwAyQQGSUjNIdjX8RAmr4PlceakIM7Q==&uniplatform=NZKPT&language=CHS",
             "attachments": [],
@@ -3475,10 +3481,58 @@
             "seeAlso": []
           }
         ]
+      },
+      {
+        "type": "import",
+        "input": "%0 Thesis\r\n%A 潘福妮\r\n%T 中西方高校人文教育的比較研究\r\n%Y 董鋒\r\n%I 大連理工大學\r\n%9 碩士\r\n%D 2006\r\n%K 中西方高校;人文教育;比較\r\n%X 隨著上個世紀70年代中期西方大學興起人文教育的“復歸”,人文教育逐漸成為當今世界高等教育改革與發展一個熱點。中國高校在人文教育的諸多方面,尤其是在人文教育的理念和方式方法等方面已經落后,并與西方高校形成了較為明顯的差距。論文以此為切入點,闡述了中西方高校人文教育各自發展的情況,并通過相互比較,找出中西方高校人文教育中存在的共性和差異,去其糟粕,取其精華,為構建有中國特色的人文教育體系提供有益的啟示與借鑒。\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n    論文第一部分說明了研究的目的,研究的理論意義與實踐意義,介紹了論文的大致內容和文獻法、資料處理法、比較法、社會調查法等研究方法。論文第二部分對人文教育的基本理論做了一個概述,通過對人文教育的內涵、特點與價值的界定,為本研究打下理論基礎。論文第三部分也是最重要的部分,通過各種研究方法對中西方高校人文教育在教育背景、教育目標、教育內容、人文課程、教育途徑與方法進行比較,指出中國高校人文教育在這幾方面的差距,主要包括人文教育的環境不夠成熟;對人文教育目標的理解不夠明確;德育教育進行得不夠到位:人文學科課程在全部課程中所占的比重不夠,在內容設置上比較隨意,人文性與科學性結合程度不夠,人文教育與專業教育的結合程度不夠;教學方法需要改進等等。論文的最后部分是結論部分,針對上述種種不足,西方國家高校人文教育的一些做法與經驗為中國高校提供了有益的啟示,如政府出臺支持性的政策與文件;在追求個性發展的同時實現個人價值與社會價值的統一;要加強德育教育;人文課程注重民族性與國際性相結合,注重科學性與人文性相結合,同時人文課程應與其它專業相互融合;改進教學方法等。\r\n%W CNKI\r\n\r\n",
+        "items": [
+          {
+            "itemType": "thesis",
+            "title": "中西方高校人文教育的比較研究",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "潘福妮",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "董鋒",
+                "creatorType": "contributor",
+                "fieldMode": 1
+              }
+            ],
+            "date": "2006",
+            "abstractNote": "隨著上個世紀70年代中期西方大學興起人文教育的“復歸”,人文教育逐漸成為當今世界高等教育改革與發展一個熱點。中國高校在人文教育的諸多方面,尤其是在人文教育的理念和方式方法等方面已經落后,并與西方高校形成了較為明顯的差距。論文以此為切入點,闡述了中西方高校人文教育各自發展的情況,并通過相互比較,找出中西方高校人文教育中存在的共性和差異,去其糟粕,取其精華,為構建有中國特色的人文教育體系提供有益的啟示與借鑒。\n論文第一部分說明了研究的目的,研究的理論意義與實踐意義,介紹了論文的大致內容和文獻法、資料處理法、比較法、社會調查法等研究方法。論文第二部分對人文教育的基本理論做了一個概述,通過對人文教育的內涵、特點與價值的界定,為本研究打下理論基礎。論文第三部分也是最重要的部分,通過各種研究方法對中西方高校人文教育在教育背景、教育目標、教育內容、人文課程、教育途徑與方法進行比較,指出中國高校人文教育在這幾方面的差距,主要包括人文教育的環境不夠成熟;對人文教育目標的理解不夠明確;德育教育進行得不夠到位:人文學科課程在全部課程中所占的比重不夠,在內容設置上比較隨意,人文性與科學性結合程度不夠,人文教育與專業教育的結合程度不夠;教學方法需要改進等等。論文的最后部分是結論部分,針對上述種種不足,西方國家高校人文教育的一些做法與經驗為中國高校提供了有益的啟示,如政府出臺支持性的政策與文件;在追求個性發展的同時實現個人價值與社會價值的統一;要加強德育教育;人文課程注重民族性與國際性相結合,注重科學性與人文性相結合,同時人文課程應與其它專業相互融合;改進教學方法等。",
+            "language": "zh-TW",
+            "thesisType": "碩士學位論文",
+            "university": "大連理工大學",
+            "attachments": [],
+            "tags": [
+              {
+                "tag": "中西方高校"
+              },
+              {
+                "tag": "人文教育"
+              },
+              {
+                "tag": "比較"
+              }
+            ],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
       }
     ],
     "zhLabel": "中国知网Endote导出格式",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-04-27 17:32:42 +0800",
+        "message": "CNKI：修复无法抓取需要跳转的DOI；CNKI Refer：增加语言判断，修复学位论文字段的繁简错误"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2024-03-03 21:56:18 +0800",
@@ -3488,11 +3542,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-02-08 23:41:49 +0800",
         "message": "新增CHKD；新增CNKI Refworks；改善CNKI Refer对年鉴、报告、报纸、标准的支持，优化url显示；CNKI和Scholar暴露接口，完全支持所有条目类型，增加部分出版信息，完整的双语支持"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-02-04 03:27:35 +0800",
-        "message": "优化数据清洗；增加测试用例"
       }
     ]
   },
@@ -4788,7 +4837,7 @@
       "inRepository": true,
       "translatorType": 12,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-04-13 13:49:45"
+      "lastUpdated": "2024-04-27 09:23:16"
     },
     "testCases": [
       {
@@ -5266,90 +5315,50 @@
       {
         "type": "search",
         "input": {
-          "DOI": "10.13801/j.cnki.fhclxb.20240008.002"
+          "DOI": "10.19655/j.cnki.1005-4642.2020.09.009"
         },
         "items": [
           {
             "itemType": "journalArticle",
-            "title": "Ag量子点协同四环素的抑菌及其机制研究",
+            "title": "特斯拉阀性能的仿真研究",
             "creators": [
               {
                 "firstName": "",
-                "lastName": "郭少波",
+                "lastName": "周润中",
                 "creatorType": "author",
                 "fieldMode": 1
               },
               {
                 "firstName": "",
-                "lastName": "陈惠惠",
+                "lastName": "乔宇杰",
                 "creatorType": "author",
                 "fieldMode": 1
               },
               {
                 "firstName": "",
-                "lastName": "刘珂",
+                "lastName": "张钰翔",
                 "creatorType": "author",
                 "fieldMode": 1
               },
               {
                 "firstName": "",
-                "lastName": "胡瑞玲",
-                "creatorType": "author",
-                "fieldMode": 1
-              },
-              {
-                "firstName": "",
-                "lastName": "王嘉伟",
-                "creatorType": "author",
-                "fieldMode": 1
-              },
-              {
-                "firstName": "",
-                "lastName": "余凡",
-                "creatorType": "author",
-                "fieldMode": 1
-              },
-              {
-                "firstName": "",
-                "lastName": "刘智峰",
-                "creatorType": "author",
-                "fieldMode": 1
-              },
-              {
-                "firstName": "",
-                "lastName": "史娟",
-                "creatorType": "author",
-                "fieldMode": 1
-              },
-              {
-                "firstName": "",
-                "lastName": "郭婷",
-                "creatorType": "author",
-                "fieldMode": 1
-              },
-              {
-                "firstName": "",
-                "lastName": "季晓晖",
-                "creatorType": "author",
-                "fieldMode": 1
-              },
-              {
-                "firstName": "",
-                "lastName": "张田雷",
+                "lastName": "代珍兵",
                 "creatorType": "author",
                 "fieldMode": 1
               }
             ],
-            "date": "2024-01-09",
-            "DOI": "10.13801/j.cnki.fhclxb.20240008.002",
-            "ISSN": "1000-3851",
-            "abstractNote": "四环素类抗生素因具有高效、低毒、广谱抑菌性等优点而被广泛使用，但随着抗生素的滥用致使大量的耐药菌出现，使四环素类抗生素的药用价值逐渐降低。超小粒径的纳米Ag虽可使细菌甚至耐药菌失活，但单独使用毒性较强，且易团聚。为此，本研究利用Ag的d轨道为满电子结构，可与供电子基团配位的原理，设计了核壳型介孔Fe<sub>3</sub>O<sub>4</sub>@SiO<sub>2</sub>@mTiO<sub>2</sub>@Ag-四环素（FSmTA-T）复合材料用以解决抗生素耐药和纳米Ag团聚、强毒性问题。研究结果显示，制备的复合材料中纳米Ag量子点的粒径约为2.84 nm，可与四环素环3中的羰基键合，同时，相比四环素，复合材料对大肠杆菌，金黄色葡萄球菌，耐四环素沙门氏菌和白色念珠菌均具有较高的抑菌活性，并可有效破坏细菌细胞壁而使其死亡，且对哺乳细胞的毒性降低为原来的1/3。因此，其优越的抑菌活性可应用于污水处理领域。",
-            "extra": "original-container-title: Acta Materiae Compositae Sinica\nStatus: advance online publication\nfoundation: 秦巴生物资源与生态环境国家重点实验室科研基金(SXS-2105)； 陕西省教育厅项目（22JK-0317）； 陕西省自然科学基金(2023-JC-QN-0162； 2023-YBSF-334)； 陕西理工大学基础研究基金(SLGKYXM2208)；\ndownload: 139\nalbum: 工程科技Ⅰ辑\nCLC: X703;TB332\nCNKICite: 0\ndbcode: CAPJ\ndbname: CAPJLAST\nfilename: FUHE20240104001\npublicationTag: 北大核心, CA, JST, Pж(AJ), EI, CSCD, WJCI, 卓越期刊\nCIF: 2.595\nAIF: 1.788",
+            "date": "2020",
+            "DOI": "10.19655/j.cnki.1005-4642.2020.09.009",
+            "ISSN": "1005-4642",
+            "abstractNote": "通过CAD软件建立几何模型,通过COMSOL软件建立数值模型并求解,与实验结果进行对比,并通过数值模拟讨论相关参量对阀门单向流通性的影响.研究结果表明:特斯拉阀门适用于低粘度高密度流体;本文所设计的特斯拉阀门在四阀门情况下dedicatee数能达到3.414;单阀门特斯拉阀的性能相较于多阀门更佳.",
+            "extra": "original-container-title: Physics Experimentation\ndownload: 1974\nalbum: 基础科学;工程科技Ⅱ辑\nCLC: TH134\nCNKICite: 13\ndbcode: CJFQ\ndbname: CJFDLAST2020\nfilename: WLSL202009009\npublicationTag: JST\nCIF: 0.755\nAIF: 0.562",
+            "issue": "9",
             "language": "zh-CN",
             "libraryCatalog": "CNKI",
-            "pages": "1-14",
-            "publicationTitle": "复合材料学报",
-            "url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CAPJ&dbname=CAPJLAST&filename=FUHE20240104001",
+            "pages": "44-50",
+            "publicationTitle": "物理实验",
+            "url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFQ&dbname=CJFDLAST2020&filename=WLSL202009009",
+            "volume": "40",
             "attachments": [
               {
                 "title": "Full Text PDF",
@@ -5358,22 +5367,16 @@
             ],
             "tags": [
               {
-                "tag": "Ag量子点"
+                "tag": "diodicity数"
               },
               {
-                "tag": "四环素"
+                "tag": "数值模拟"
               },
               {
-                "tag": "抑菌"
+                "tag": "特斯拉阀"
               },
               {
-                "tag": "抑菌机制"
-              },
-              {
-                "tag": "纳米复合材料"
-              },
-              {
-                "tag": "耐药"
+                "tag": "阀门性能"
               }
             ],
             "notes": [],
@@ -6163,6 +6166,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-04-27 17:32:42 +0800",
+        "message": "CNKI：修复无法抓取需要跳转的DOI；CNKI Refer：增加语言判断，修复学位论文字段的繁简错误"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-04-13 22:48:00 +0800",
         "message": "优化scrapeDoc获取creator的selector和顺序；新增oversea测试用例"
       },
@@ -6170,11 +6178,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-04-01 15:53:12 +0800",
         "message": "更新公共API，更新测试用例"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-03-29 22:56:36 +0800",
-        "message": "修复学位论文缺页数"
       }
     ]
   },
