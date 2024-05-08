@@ -19077,5 +19077,29 @@
         "message": "resolve #337"
       }
     ]
+  },
+  "Pss-System.js": {
+    "header": {
+      "translatorID": "f1002463-6769-4004-948d-b14579a8c2f5",
+      "label": "Pss-System",
+      "creator": "jiaojiaodubai",
+      "target": "^https://pss-system\\.cponline\\.cnipa\\.gov\\.cn",
+      "minVersion": "5.0",
+      "maxVersion": "",
+      "priority": 100,
+      "inRepository": true,
+      "translatorType": 4,
+      "browserSupport": "gcsibv",
+      "lastUpdated": "2024-05-08 04:00:06"
+    },
+    "testCases": [],
+    "zhLabel": "国家知识产权局专利检索及分析系统",
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-05-08 12:10:09 +0800",
+        "message": "add (Pss-System.js) 新增国家知识产权局专利检索及分析系统"
+      }
+    ]
   }
 }
