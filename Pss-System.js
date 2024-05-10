@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-05-08 04:00:06"
+	"lastUpdated": "2024-05-10 02:39:15"
 }
 
 /*
@@ -37,6 +37,10 @@
 
 
 function detectWeb(doc, url) {
+	const tabs = doc.querySelector('.e-tabs');
+	if (tabs) {
+		Z.monitorDOMChanges(tabs, { childList: true, subtree: true });
+	}
 	return url.includes('/detail?') && doc.querySelector('.activeli:first-child')
 		? 'patent'
 		: false;
@@ -46,18 +50,18 @@ async function doWeb(doc, _url) {
 	const newItem = new Z.Item('patent');
 	const labels = new LabelsX(doc, '.basic-con');
 	const extra = new Extra();
-	newItem.title = ZU.capitalizeTitle(labels.getWith(['发明名称$', 'InventionTitle']));
+	newItem.title = ZU.capitalizeTitle(labels.getWith(['发明名称(（公开）)?$', 'InventionTitle', 'Nameoftheinvention\\(disclosed\\)']));
 	extra.set('original-title', labels.getWith(['发明名称（原始国）', 'InventionTitle\\(Originalcountry\\)']), true);
 	newItem.abstractNote = labels.getWith(['摘要', 'Abstract']);
 	newItem.place = newItem.country = patentCountry(labels.getWith(['申请人所在国家', "Applicant'scountry"]));
-	newItem.assignee = ZU.capitalizeName(labels.getWith(['申请（专利权）人', 'Applicant/Patentee']));
-	newItem.patentNumber = labels.getWith(['公开（公告）号', 'PublicNoticeNo']);
+	newItem.assignee = ZU.capitalizeName(labels.getWith(['申请(（专利权）)?人(（公开）)?$', 'Applicant/Patentee', 'Applicant\\(public\\)']));
+	newItem.patentNumber = labels.getWith(['公开(（公告）)?号', 'PublicNoticeNo']);
 	newItem.filingDate = ZU.strToISO(labels.getWith(['申请日', 'ApplicationDate']));
 	newItem.applicationNumber = labels.getWith(['申请号', 'ApplicationNo']);
 	newItem.priorityNumbers = labels.getWith(['优先权号', 'PriorityNo']);
-	newItem.issueDate = ZU.strToISO(labels.getWith(['公开（公告）日', 'PublicationDate']));
-	extra.set('IPC', labels.getWith('IPC'));
-	extra.set('CPC', labels.getWith('CPC'));
+	newItem.issueDate = ZU.strToISO(labels.getWith(['公开(（公告）)?日', 'PublicationDate']));
+	extra.set('IPC', labels.getWith('^IPC'));
+	extra.set('CPC', labels.getWith('^CPC'));
 	newItem.creators = labels.getWith(['发明人', 'Inventor']).split(/;\s/).map((string) => {
 		const creator = ZU.cleanAuthor(ZU.capitalizeName(string), 'inventor');
 		if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
