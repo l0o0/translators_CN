@@ -2,14 +2,14 @@
 	"translatorID": "eb876bd2-644c-458e-8d05-bf54b10176f3",
 	"label": "Wanfang Data",
 	"creator": "Ace Strong <acestrong@gmail.com>, rnicrosoft",
-	"target": "^https?://.*(d|s)(\\.|-)wanfangdata(\\.|-)com(\\.|-)cn",
+	"target": "^https?://.*(d|s)\\.wanfangdata\\.com\\.cn",
 	"minVersion": "2.0rc1",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-04-17 12:08:54"
+	"lastUpdated": "2024-05-23 04:15:55"
 }
 
 /*
@@ -108,7 +108,7 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug("--------------- WanFang Data 2024-04-17 20:05:50 ---------------");
+	Z.debug("--------------- WanFang Data 2024-05-23 12:19:10 ---------------");
 	let dynamic = doc.querySelector('.container-flex, .periodical');
 	if (dynamic) {
 		Z.monitorDOMChanges(dynamic, { childList: true });
@@ -172,9 +172,6 @@ async function scrapePage(doc, url = doc.location.href) {
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	let extra = new Extra();
 	let newItem = new Zotero.Item(ids.itemType);
-	// .detailTitleCN中可能会含Easy Scholar的标签，es方面已计划修复
-	newItem.title = text(doc, '.detailTitleCN > span:first-child') || text(doc, '.detailTitleCN');
-	extra.set('original-title', ZU.capitalizeTitle(text(doc, '.detailTitleEN')), true);
 	// span.abstractIcon.btn：摘要的详情按钮，多见于学位论文
 	// .moreFlex > span:first-child：英文信息的展开按钮
 	let clickMore = Array.from(doc.querySelectorAll('span.abstractIcon.btn, .moreFlex > span:first-child'));
@@ -182,6 +179,9 @@ async function scrapePage(doc, url = doc.location.href) {
 		let buttonText = button.getAttribute('title') || button.innerText;
 		if (!buttonText.includes('收起')) await button.click();
 	}
+	// .detailTitleCN中可能会含Easy Scholar的标签，es方面已计划修复
+	newItem.title = text(doc, '.detailTitleCN > span:first-child') || text(doc, '.detailTitleCN');
+	extra.set('original-title', ZU.capitalizeTitle(text(doc, '.detailTitleEN')), true);
 	newItem.abstractNote = ZU.trimInternal(text(doc, '.summary > .item+*'));
 	doc.querySelectorAll('.author.detailTitle span').forEach((elemant) => {
 		newItem.creators.push(cleanAuthor(elemant.innerText.replace(/[\s\d,]*$/, ''), 'author'));
@@ -237,17 +237,26 @@ async function scrapePage(doc, url = doc.location.href) {
 			extra.set('Genre', text(doc, '.patentType > .itemUrl'), true);
 			break;
 		case 'report':
-			newItem.abstractNote = text(doc, '.abstract > .itemUrl');
+			if (ids.dbname == 'cstad') {
+				newItem.abstractNote = text(doc, '.abstract > .itemUrl');
+			}
 			// 成果报告
 			newItem.reportNumber = text(doc, '.id > .itemUrl');
+			newItem.language = labels.getWith('语种') == 'eng'
+				? 'en-US'
+				: 'zh-CN';
 			newItem.reportType = {
-				nstr: '科技报告',
-				cstad: '成果报告'
+				nstr: newItem.language == 'en-US'
+					? 'Science and technology report'
+					: '科技报告',
+				cstad: newItem.language == 'en-US'
+					? 'Achievement report'
+					: '成果报告'
 			}[ids.dbname];
 			// 成果报告
 			newItem.institution = text(doc, '.organization > .itemUrl');
 			// .publishYear > .itemUrl：成果报告
-			newItem.date = text(doc, '.preparationTime > .itemUrl, .publishYear > .itemUrl');
+			newItem.date = text(doc, '.preparationTime > .itemUrl, .publishYear > .itemUrl, .approvalDate > .itemUrl');
 			newItem.archiveLocation = text(doc, '.libNum > .itemUrl');
 			extra.set('project', text(doc, '.projectName > .itemUrl'));
 			// 成果报告
@@ -291,7 +300,7 @@ async function scrapePage(doc, url = doc.location.href) {
 	}
 	newItem.url = ids.url;
 	extra.set('CLC', text(doc, '.classify > .itemUrl, .classCodeMapping > .itemUrl'));
-	doc.querySelectorAll('.keyword > .item+* > a').forEach((element) => {
+	doc.querySelectorAll('.keyword > .item+* > a, .keywordEN > .item+* > a').forEach((element) => {
 		newItem.tags.push(element.innerText);
 	});
 	addAttachment(doc, newItem);
