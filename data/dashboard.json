@@ -15284,14 +15284,14 @@
       "translatorID": "eb876bd2-644c-458e-8d05-bf54b10176f3",
       "label": "Wanfang Data",
       "creator": "Ace Strong <acestrong@gmail.com>, rnicrosoft",
-      "target": "^https?://.*(d|s)(\\.|-)wanfangdata(\\.|-)com(\\.|-)cn",
+      "target": "^https?://.*(d|s)\\.wanfangdata\\.com\\.cn",
       "minVersion": "2.0rc1",
       "maxVersion": "",
       "priority": 100,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-04-17 12:08:54"
+      "lastUpdated": "2024-05-23 04:15:55"
     },
     "testCases": [
       {
@@ -15834,6 +15834,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-05-23 12:23:29 +0800",
+        "message": "取消对VPN异形网址的支持；修复英文标题可能无法抓取；修复报告缺字段fix #342"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-04-17 20:12:55 +0800",
         "message": "fix unexpected token"
       },
@@ -15841,11 +15846,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-04-17 17:47:34 +0800",
         "message": "fix EOL"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-04-07 10:37:29 +0800",
-        "message": "修复无法抓取DOI"
       }
     ]
   },
