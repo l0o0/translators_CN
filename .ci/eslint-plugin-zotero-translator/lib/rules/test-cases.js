@@ -55,8 +55,8 @@ module.exports = {
 					});
 				}
 
-				const nodes = declaration.declarations[0].init.elements || [];
-				if (!nodes.length) {
+				const nodes = declaration.declarations[0].init.elements;
+				if (!Array.isArray(nodes)) {
 					context.report({
 						node: declaration,
 						message: 'testCases must be an array',
