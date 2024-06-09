@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-24 11:19:15"
+	"lastUpdated": "2024-06-09 14:18:17"
 }
 
 /*
@@ -35,15 +35,19 @@
 	***** END LICENSE BLOCK *****
 */
 
-function detectWeb(doc, url) {
-	if (/\/\w+\/\w+/.test(url)) {
-		let currentMenu = attr(doc, '#curMenu', 'value');
-		let databaseID = attr(doc, '#DbId', 'value');
+function detectWeb(doc, _url) {
+	const list = doc.querySelector('.grid-right > list-wrap');
+	if (list) {
+		Z.monitorDOMChanges(list, { childList: true, subtree: true });
+	}
+	let currentMenu = attr(doc, '#curMenu', 'value');
+	let databaseID = attr(doc, '#DbId', 'value');
+	if (currentMenu || databaseID) {
 		// 草案及其说明采用report，详见https://github.com/l0o0/translators_CN/pull/134#issuecomment-1296059381
 		if (['protocol'].includes(databaseID)) {
 			return 'report';
 		}
-		else if (['law', 'china'].includes(currentMenu)) {
+		else if (['law', 'china', 'xf', 'fl', 'fljs', 'xzfg', 'jianc', 'dfxfg', 'bmgz', 'dfzfgz', 'sfjs'].includes(currentMenu)) {
 			return 'statute';
 		}
 		else if (currentMenu == 'english' && databaseID == 'en_law') {
@@ -52,7 +56,10 @@ function detectWeb(doc, url) {
 		else if (currentMenu == 'case') {
 			return 'case';
 		}
-		else if (currentMenu == 'journal') return 'journalArticle';
+		else if (currentMenu == 'journal') {
+			return 'journalArticle';
+		}
+		return false;
 	}
 	else if (getSearchResults(doc, true)) {
 		return 'multiple';
@@ -63,7 +70,7 @@ function detectWeb(doc, url) {
 function getSearchResults(doc, checkOnly) {
 	var items = {};
 	var found = false;
-	var rows = doc.querySelectorAll('.item h4 > a,li h4 > a');
+	var rows = doc.querySelectorAll('.item h4 > a,li h4 > a:first-of-type');
 	for (let row of rows) {
 		let href = row.href;
 		let title = ZU.trimInternal(row.textContent);
@@ -140,7 +147,7 @@ async function scrape(doc, url = doc.location.href) {
 				extra.set('Status', '已废止', true);
 			}
 			let rank = labels.getWith(['效力位阶', 'LevelofAuthority']);
-			if (!/(法律)|(Law)/i.test(rank)) {
+			if (!/宪法|法律|Law/i.test(rank)) {
 				extra.set('Type', extra.get('Type') || 'regulation', true);
 			}
 			if (['有关法律问题和重大问题的决定', '党内法规制度'].includes(rank)) {
@@ -787,7 +794,7 @@ var testCases = [
 		"items": [
 			{
 				"itemType": "case",
-				"caseName": "陆红霞诉南通市发展和改革委员会政府信息公开答复案",
+				"caseName": "***诉***政府信息公开答复案",
 				"creators": [],
 				"dateDecided": "2015-07-06",
 				"court": "江苏省南通市中级人民法院",
@@ -844,7 +851,7 @@ var testCases = [
 		"items": [
 			{
 				"itemType": "case",
-				"caseName": "榆林市凯奇莱能源投资有限公司与西安地质矿产勘查开发院合作勘查合同纠纷上诉案",
+				"caseName": "***与***合作勘查合同纠纷上诉案",
 				"creators": [],
 				"dateDecided": "2017-12-16",
 				"court": "最高人民法院",
@@ -1053,6 +1060,76 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.pkulaw.com/",
+		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://law.pkulaw.com/xianfa/7c7e81f43957c58bbdfb.html",
+		"items": [
+			{
+				"itemType": "statute",
+				"nameOfAct": "中华人民共和国宪法",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "全国人民代表大会",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"dateEnacted": "2018-03-11",
+				"extra": "Edition: 2018年修正\n法宝引证码: CLI.1.311950",
+				"language": "zh-CN",
+				"publicLawNumber": "中华人民共和国全国人民代表大会公告第1号",
+				"shortTitle": "宪法",
+				"url": "https://law.pkulaw.com/xianfa/7c7e81f43957c58bbdfb.html",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://law.pkulaw.com/bugui/88f5f4c9b697f89bbdfb.html",
+		"items": [
+			{
+				"itemType": "statute",
+				"nameOfAct": "上市公司股东减持股份管理暂行办法",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "中国证券监督管理委员会",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"dateEnacted": "2024-05-24",
+				"extra": "Type: regulation\n法宝引证码: CLI.4.5193591",
+				"language": "zh-CN",
+				"publicLawNumber": "中国证券监督管理委员会令第224号",
+				"url": "https://law.pkulaw.com/bugui/88f5f4c9b697f89bbdfb.html",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.pkulaw.com/law/chl?keywords=%E5%9B%BD%E5%8A%A1%E9%99%A2",
 		"items": "multiple"
 	}
 ]
