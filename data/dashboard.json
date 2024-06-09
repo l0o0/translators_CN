@@ -17766,7 +17766,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-03-08 10:16:06"
+      "lastUpdated": "2024-06-09 13:38:48"
     },
     "testCases": [
       {
@@ -17918,7 +17918,7 @@
                 "fieldMode": 1
               }
             ],
-            "dateEnacted": "2019-06-28",
+            "dateEnacted": "2019-06-17",
             "language": "zh-CN",
             "publicLawNumber": "国发〔2019〕12号",
             "url": "https://www.gov.cn/zhengce/zhengceku/2019-06/28/content_5404170.htm",
@@ -18138,6 +18138,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-09 21:40:15 +0800",
+        "message": "fix  #345"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-03-08 18:18:23 +0800",
         "message": "修复“首页 > 政策 > 中央有关文件”被识别为法律"
       },
@@ -18145,11 +18150,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-02-03 19:30:45 +0800",
         "message": "支持公报"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-01-06 19:04:27 +0800",
-        "message": "新增国务院政策文件库"
       }
     ]
   },
