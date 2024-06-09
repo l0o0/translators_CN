@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-03-08 10:16:06"
+	"lastUpdated": "2024-06-09 13:38:48"
 }
 
 /*
@@ -94,7 +94,7 @@ async function scrape(doc, url = doc.location.href) {
 			// newItem.code = 法典;
 			// newItem.codeNumber = 法典编号;
 			newItem.publicLawNumber = labels.getWith('发文字号');
-			newItem.dateEnacted = labels.getWith(['发布日期', '成文日期']).replace(/\D/g, '-').replace(/-$/, '');
+			newItem.dateEnacted = labels.getWith('成文日期').replace(/\D/g, '-').replace(/-$/, '');
 			labels.getWith('主题分类').split('\\').forEach(tag => newItem.tags.push(tag));
 			labels.getWith('发文机关').split(/\s/).forEach((creator) => {
 				creator = ZU.cleanAuthor(creator, 'author');
@@ -339,7 +339,7 @@ var testCases = [
 						"fieldMode": 1
 					}
 				],
-				"dateEnacted": "2019-06-28",
+				"dateEnacted": "2019-06-17",
 				"language": "zh-CN",
 				"publicLawNumber": "国发〔2019〕12号",
 				"url": "https://www.gov.cn/zhengce/zhengceku/2019-06/28/content_5404170.htm",
