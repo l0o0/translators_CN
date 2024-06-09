@@ -12648,7 +12648,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-01-07 15:11:26"
+      "lastUpdated": "2024-06-09 13:28:34"
     },
     "testCases": [
       {
@@ -12669,6 +12669,7 @@
             "date": "2023-12-18",
             "language": "zh-CN",
             "libraryCatalog": "人民日报图文数据库",
+            "pages": "1",
             "publicationTitle": "民生周刊",
             "url": "http://paper.people.com.cn/mszk/html/2023-12/18/content_26034010.htm",
             "attachments": [
@@ -12707,6 +12708,7 @@
             "date": "2024-01-07",
             "language": "zh-CN",
             "libraryCatalog": "人民日报图文数据库",
+            "pages": "1",
             "place": "北京",
             "publicationTitle": "人民日报",
             "url": "http://paper.people.com.cn/rmrb/html/2024-01/07/nw.D110000renmrb_20240107_1-01.htm",
@@ -12762,6 +12764,7 @@
             "date": "2021-12-01",
             "language": "zh-CN",
             "libraryCatalog": "人民日报图文数据库",
+            "pages": "3",
             "publicationTitle": "新闻战线",
             "shortTitle": "融媒体时代深挖财经报道的主流价值",
             "url": "http://paper.people.com.cn/xwzx/html/2021-12/01/content_26016862.htm",
@@ -12780,6 +12783,11 @@
     ],
     "zhLabel": "人民日报（电子版）",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-06-09 21:30:20 +0800",
+        "message": "fix #348"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2024-01-19 16:16:21 +0800",
