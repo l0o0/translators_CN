@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-07 15:11:26"
+	"lastUpdated": "2024-06-09 13:28:34"
 }
 
 /*
@@ -100,7 +100,7 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.shortTitle = text(doc, '.article > h1');
 	let key = [...Object.keys(newspaperMap), ...Object.keys(journalMap)].find(key => url.includes(`/${key}/`));
 	newItem.publicationTitle = newspaperMap[key] || journalMap[key];
-	let pubInfo = text(doc, '.sec > .date');
+	let pubInfo = innerText(doc, '.sec > .date').replace(/\s/g, '');
 	newItem.place = '北京';
 	newItem.date = tryMatch(pubInfo, /(\d+)年(\d+)月(\d+)日/).replace(/(\d+)年(\d+)月(\d+)日/, '$1-$2-$3');
 	newItem.pages = tryMatch(pubInfo, /第0*([1-9]\d*)版/, 1);
@@ -164,6 +164,7 @@ var testCases = [
 				"date": "2023-12-18",
 				"language": "zh-CN",
 				"libraryCatalog": "人民日报图文数据库",
+				"pages": "1",
 				"publicationTitle": "民生周刊",
 				"url": "http://paper.people.com.cn/mszk/html/2023-12/18/content_26034010.htm",
 				"attachments": [
@@ -202,6 +203,7 @@ var testCases = [
 				"date": "2024-01-07",
 				"language": "zh-CN",
 				"libraryCatalog": "人民日报图文数据库",
+				"pages": "1",
 				"place": "北京",
 				"publicationTitle": "人民日报",
 				"url": "http://paper.people.com.cn/rmrb/html/2024-01/07/nw.D110000renmrb_20240107_1-01.htm",
@@ -257,6 +259,7 @@ var testCases = [
 				"date": "2021-12-01",
 				"language": "zh-CN",
 				"libraryCatalog": "人民日报图文数据库",
+				"pages": "3",
 				"publicationTitle": "新闻战线",
 				"shortTitle": "融媒体时代深挖财经报道的主流价值",
 				"url": "http://paper.people.com.cn/xwzx/html/2021-12/01/content_26016862.htm",
@@ -273,5 +276,4 @@ var testCases = [
 		]
 	}
 ]
-
 /** END TEST CASES **/
