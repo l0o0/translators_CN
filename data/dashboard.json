@@ -11656,7 +11656,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-02-24 11:19:15"
+      "lastUpdated": "2024-06-09 14:18:17"
     },
     "testCases": [
       {
@@ -12128,7 +12128,7 @@
         "items": [
           {
             "itemType": "case",
-            "caseName": "陆红霞诉南通市发展和改革委员会政府信息公开答复案",
+            "caseName": "***诉***政府信息公开答复案",
             "creators": [],
             "dateDecided": "2015-07-06",
             "court": "江苏省南通市中级人民法院",
@@ -12185,7 +12185,7 @@
         "items": [
           {
             "itemType": "case",
-            "caseName": "榆林市凯奇莱能源投资有限公司与西安地质矿产勘查开发院合作勘查合同纠纷上诉案",
+            "caseName": "***与***合作勘查合同纠纷上诉案",
             "creators": [],
             "dateDecided": "2017-12-16",
             "court": "最高人民法院",
@@ -12395,10 +12395,85 @@
         "type": "web",
         "url": "https://www.pkulaw.com/",
         "items": "multiple"
+      },
+      {
+        "type": "web",
+        "url": "https://law.pkulaw.com/xianfa/7c7e81f43957c58bbdfb.html",
+        "items": [
+          {
+            "itemType": "statute",
+            "nameOfAct": "中华人民共和国宪法",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "全国人民代表大会",
+                "creatorType": "author",
+                "fieldMode": 1
+              }
+            ],
+            "dateEnacted": "2018-03-11",
+            "extra": "Edition: 2018年修正\n法宝引证码: CLI.1.311950",
+            "language": "zh-CN",
+            "publicLawNumber": "中华人民共和国全国人民代表大会公告第1号",
+            "shortTitle": "宪法",
+            "url": "https://law.pkulaw.com/xianfa/7c7e81f43957c58bbdfb.html",
+            "attachments": [
+              {
+                "title": "Snapshot",
+                "mimeType": "text/html"
+              }
+            ],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://law.pkulaw.com/bugui/88f5f4c9b697f89bbdfb.html",
+        "items": [
+          {
+            "itemType": "statute",
+            "nameOfAct": "上市公司股东减持股份管理暂行办法",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "中国证券监督管理委员会",
+                "creatorType": "author",
+                "fieldMode": 1
+              }
+            ],
+            "dateEnacted": "2024-05-24",
+            "extra": "Type: regulation\n法宝引证码: CLI.4.5193591",
+            "language": "zh-CN",
+            "publicLawNumber": "中国证券监督管理委员会令第224号",
+            "url": "https://law.pkulaw.com/bugui/88f5f4c9b697f89bbdfb.html",
+            "attachments": [
+              {
+                "title": "Snapshot",
+                "mimeType": "text/html"
+              }
+            ],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://www.pkulaw.com/law/chl?keywords=%E5%9B%BD%E5%8A%A1%E9%99%A2",
+        "items": "multiple"
       }
     ],
     "zhLabel": "北大法宝",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-06-09 22:22:21 +0800",
+        "message": "fix #346"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2024-02-24 19:21:13 +0800",
@@ -12408,11 +12483,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-02-21 17:43:12 +0800",
         "message": "Merge pull request #314 from jiaojiaodubai/PKULaw"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-02-21 17:37:54 +0800",
-        "message": "支持新域名的多条目页面"
       }
     ]
   },
