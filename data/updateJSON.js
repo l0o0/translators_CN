@@ -69,9 +69,9 @@ fs.writeFileSync(
 	JSON.stringify(
 		Object.fromEntries(Object.entries(labelMap).sort((a, b) => a[0].localeCompare(b[0]))),
 		null,
-		2
+		0
 	)
 );
-fs.writeFileSync(`${repo}/data/translators.json`, JSON.stringify(updateTimeMap, null, 2));
-fs.writeFileSync(`${repo}/data/dashboard.json`, JSON.stringify(translators, null, 2));
+fs.writeFileSync(`${repo}/data/translators.json`, JSON.stringify(updateTimeMap, null, 0));
+fs.writeFileSync(`${repo}/data/dashboard.json`, JSON.stringify(translators, null, 0));
 })();
