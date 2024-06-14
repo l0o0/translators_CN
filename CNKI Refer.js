@@ -8,7 +8,7 @@
 	"priority": 99,
 	"inRepository": true,
 	"translatorType": 1,
-	"lastUpdated": "2024-04-27 08:48:33"
+	"lastUpdated": "2024-06-14 12:45:46"
 }
 
 /*
@@ -78,6 +78,9 @@ async function doImport() {
 		Z.debug(item);
 		switch (item.itemType) {
 			case 'conferencePaper':
+				if (item.abstractNote) {
+					item.abstractNote = item.abstractNote.replace(/^[〈⟨<＜]正[＞>⟩〉]/, '');
+				}
 				item.conferenceName = item.publicationTitle;
 				delete item.publicationTitle;
 				extra.set('organizer', tryMatch(record, /^%\? (.*)/m, 1), true);
@@ -90,6 +93,9 @@ async function doImport() {
 				delete item.ISBN;
 				break;
 			case 'journalArticle':
+				if (item.publicationTitle) {
+					item.publicationTitle = item.publicationTitle.replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
+				}
 				delete item.callNumber;
 				item.ISSN = item.ISBN;
 				delete item.ISBN;
@@ -126,6 +132,9 @@ async function doImport() {
 				item.numPages = item.pages;
 				delete item.pages;
 				item.university = item.publisher || item.publicationTitle;
+				if (item.university) {
+					item.university = item.university.replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
+				}
 				delete item.publisher;
 				delete item.publicationTitle;
 				if (item.type) {
@@ -173,12 +182,15 @@ async function doImport() {
 	while ((line = Zotero.read()) !== false) {
 		line = line.replace(/^\s+/, '');
 		record += '\n' + line;
+		Z.debug(line);
 		if (line == '%W CNKI') {
 			record = record
 				// If a non-empty line does not contain a tag, it is considered a continuation of the previous line.
 				.replace(/\n([^%].+?\n)/g, '$1')
 				// Sometimes, authors, contributors, or keywords have their tags, but do not wrap before the tags.
 				.replace(/([^\r\n])(%[KAYI]) /gm, '$1\n$2 ')
+				// Sometimes, tags of keywords are not following a sapace.
+				.replace(/^%K(\S)/gm, '%K $1')
 				// Sometimes, authors, contributors, or keywords may be mistakenly placed in the same tag.
 				.replace(/^%([KAYI]) .*/gm, (fuuMatch, tag) => {
 					return fuuMatch.replace(/,\s?([\u4e00-\u9fff])/g, `\n%${tag} $1`).replace(/[;，；]\s?/g, `\n%${tag} `);
