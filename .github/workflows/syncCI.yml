@@ -28,6 +28,7 @@ jobs:
     - name: Copy CI related folders and files from official to this repository
       run: |
         cd this
+        rm -rf .ci
         cp -rf ../official/.ci ./
         cp -f ../official/.github/workflows/ci.yml ./.github/workflows/ci.yml
         cp -f ../official/.eslintrc ./.eslintrc
