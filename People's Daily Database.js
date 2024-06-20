@@ -2,14 +2,14 @@
 	"translatorID": "dbc3b499-88b6-4661-88c0-c27ac57ccd59",
 	"label": "People's Daily Database",
 	"creator": "pixiandouban",
-	"target": "^https?://data.people.com.cn/rmrb",
+	"target": "^https?://data\\.people\\.com\\.cn/rmrb",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-06-20 08:08:20"
+	"lastUpdated": "2024-06-20 16:34:51"
 }
 
 /*

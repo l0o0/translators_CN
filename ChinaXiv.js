@@ -2,14 +2,14 @@
 	"translatorID": "9282aac1-9c13-4591-9c92-4da3a65ff4e5",
 	"label": "ChinaXiv",
 	"creator": "jiaojiaodubai",
-	"target": "^https?://.*chinaxiv\\.((org)|(las.ac.cn))",
+	"target": "^https?://.*chinaxiv\\.((org)|(las\\.ac\\.cn))",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-10 08:09:46"
+	"lastUpdated": "2024-06-20 16:34:51"
 }
 
 /*
@@ -37,7 +37,6 @@
 
 
 function detectWeb(doc, url) {
-	Z.debug('---------- 2024-01-10 15:24:48 ----------');
 	if (url.includes('/abs/')) {
 		return 'preprint';
 	}

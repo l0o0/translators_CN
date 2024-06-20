@@ -2,14 +2,14 @@
 	"translatorID": "f306107f-dabb-41ac-8fa2-f7f858feb11f",
 	"label": "Wenjin",
 	"creator": "Xingzhong Lin, jiaojiaodubai",
-	"target": "https?://find.nlc.cn/search",
+	"target": "https?://find\\.nlc\\.cn/search",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-18 14:39:43"
+	"lastUpdated": "2024-06-20 16:34:51"
 }
 
 /*

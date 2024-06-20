@@ -37,7 +37,6 @@
 */
 
 function detectWeb(doc, url) {
-	Z.debug('---------- Duxiu 2024-01-13 16:31:44 ----------');
 	const pageMap = {
 		'/book/base/': 'bookSection',
 		bookDetail: 'book',

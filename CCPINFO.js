@@ -88,7 +88,6 @@ async function processISBN(isbn) {
 
 
 function detectWeb(doc, url) {
-	Z.debug('---------- CCPINFO 2024-01-10 17:49:42 ----------');
 	if (new URL(url).searchParams.get('id')) {
 		return 'book';
 	}

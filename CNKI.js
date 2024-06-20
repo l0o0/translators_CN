@@ -232,7 +232,6 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug('---------------- CNKI 2024-04-27 17:29:54 ------------------');
 	let ids = new ID(doc, url);
 	Z.debug('detect ids:');
 	Z.debug(ids);

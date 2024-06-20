@@ -103,7 +103,6 @@ async function doSearch(items) {
  ******************/
 
 function detectWeb(doc, url) {
-	Z.debug('---------- Yiigle 2024-04-04 20:05:18 ----------');
 	let contents = doc.querySelector('.s_Periodical_det_con');
 	if (contents) {
 		Z.monitorDOMChanges(contents, { childList: true, subtree: true });

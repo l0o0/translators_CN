@@ -2,14 +2,14 @@
 	"translatorID": "f9b132f7-8504-4a8f-b423-b61c8dae4783",
 	"label": "BiliBili",
 	"creator": "Felix Hui, jiaojiaoduabi",
-	"target": "https?://(search|www).bilibili.com",
+	"target": "https?://(search|www)\\.bilibili\\.com",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-16 12:15:45"
+	"lastUpdated": "2024-06-20 16:34:51"
 }
 
 /*
@@ -38,7 +38,6 @@
 // API 參考: https://github.com/SocialSisterYi/bilibili-API-collect
 
 function detectWeb(doc, url) {
-	Z.debug('---------- bilibili 2023-12-14 13:23:56 ----------');
 	if (getSearchResults(doc, true)) {
 		return 'multiple';
 	}

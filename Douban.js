@@ -43,7 +43,6 @@ const typeMap = {
 };
 
 function detectWeb(doc, url) {
-	Z.debug('---------- Douban 2024-04-17 20:59:07 ----------');
 	let typeKey = Object.keys(typeMap).find(key => new RegExp(`${key}/\\d+/`).test(url));
 	if (typeKey) {
 		return typeMap[typeKey];

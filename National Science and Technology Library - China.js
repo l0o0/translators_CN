@@ -47,7 +47,6 @@ const pageTypeMap = {
 };
 
 function detectWeb(doc, _url) {
-	Z.debug('---------- NSTL 2024-03-21 16:42:34 ----------');
 	let serverContent = doc.querySelector('.serverleftcont, .searchResult-lists-midd-con');
 	if (serverContent) {
 		Z.monitorDOMChanges(serverContent, { childList: true, subtree: true });

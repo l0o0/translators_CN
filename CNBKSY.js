@@ -37,7 +37,6 @@
 
 
 function detectWeb(doc, url) {
-	Z.debug('---------- CNBKSY 2023-12-16 02:58:06 ----------');
 	let searchBox = doc.querySelector('.body_box');
 	if (searchBox) {
 		Z.monitorDOMChanges(searchBox, { childList: true, subtree: true });

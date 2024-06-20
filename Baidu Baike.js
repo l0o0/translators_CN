@@ -2,14 +2,14 @@
 	"translatorID": "867474da-38d5-48eb-90cf-64e90aeb04d3",
 	"label": "Baidu Baike",
 	"creator": "pixiandouban",
-	"target": "^https?://baike.baidu.(com|hk)",
+	"target": "^https?://baike\\.baidu\\.(com|hk)",
 	"minVersion": "2.1.9",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-11 13:15:45"
+	"lastUpdated": "2024-06-20 08:17:25"
 }
 
 /*

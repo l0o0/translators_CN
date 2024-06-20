@@ -2,14 +2,14 @@
 	"translatorID": "d611008a-850d-4860-b607-54e1ecbcc592",
 	"label": "E-Tiller",
 	"creator": "jiaojiaodubai23",
-	"target": "^https?://.*(/ch/)?.*(.aspx)?",
+	"target": "^https?://.*(/ch/)?.*(\\.aspx)?",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 200,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-06 12:50:28"
+	"lastUpdated": "2024-06-20 16:34:51"
 }
 
 /*
@@ -41,7 +41,6 @@ const paths = [
 ];
 
 function detectWeb(doc, url) {
-	Z.debug('---------- E-Tiller ----------');
 	let insite = Array.from(doc.querySelectorAll(`div[class*="foot"], div[id*="foot"]`))
 		.some(foot => (/北京勤云科技/.test(foot.textContent)));
 	Z.debug(`incite: ${insite}`);

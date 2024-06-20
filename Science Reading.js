@@ -37,7 +37,6 @@
 
 
 function detectWeb(doc, url) {
-	Z.debug('---------- Science Reading 2024-01-18 00:30:17 ----------');
 	if (url.includes('show.do?')) {
 		return 'book';
 	}
