@@ -4,14 +4,14 @@
       "translatorID": "867474da-38d5-48eb-90cf-64e90aeb04d3",
       "label": "Baidu Baike",
       "creator": "pixiandouban",
-      "target": "^https?://baike.baidu.(com|hk)",
+      "target": "^https?://baike\\.baidu\\.(com|hk)",
       "minVersion": "2.1.9",
       "maxVersion": "",
       "priority": 100,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-01-11 13:15:45"
+      "lastUpdated": "2024-06-20 08:17:25"
     },
     "testCases": [
       {
@@ -74,6 +74,11 @@
     ],
     "zhLabel": "百度百科",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2024-01-11 21:16:31 +0800",
@@ -385,14 +390,14 @@
       "translatorID": "f9b132f7-8504-4a8f-b423-b61c8dae4783",
       "label": "BiliBili",
       "creator": "Felix Hui, jiaojiaoduabi",
-      "target": "https?://(search|www).bilibili.com",
+      "target": "https?://(search|www)\\.bilibili\\.com",
       "minVersion": "3.0",
       "maxVersion": "",
       "priority": 100,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-01-16 12:15:45"
+      "lastUpdated": "2024-06-20 16:34:51"
     },
     "testCases": [
       {
@@ -678,6 +683,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-01-16 20:16:46 +0800",
         "message": "修复普通视频无法抓取tag"
       },
@@ -685,11 +695,6 @@
         "author": "jiaojiaodubai",
         "date": "2023-12-14 13:54:36 +0800",
         "message": "更新测试用例"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2023-12-14 13:47:00 +0800",
-        "message": "fix (BiliBili.js) 通过ESLint；简化代码；更新测试用例"
       }
     ]
   },
@@ -897,6 +902,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-03-08 15:39:18 +0800",
         "message": "更正typo"
       },
@@ -904,11 +914,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-02-11 12:38:50 +0800",
         "message": "更新内部函数"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-01-10 17:53:10 +0800",
-        "message": "支持ISBN检索；为可能失败的请求增加try语句；针对外文作者的改进；更新测试用例"
       }
     ]
   },
@@ -1088,6 +1093,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-02-11 12:38:50 +0800",
         "message": "更新内部函数"
       },
@@ -1095,11 +1105,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-01-07 20:46:33 +0800",
         "message": "Lint"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2023-12-29 20:33:59 +0800",
-        "message": "统一内部函数；修正标准条目一字线问题；处理换行符问题"
       }
     ]
   },
@@ -2140,6 +2145,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-04-01 16:50:35 +0800",
         "message": "升级公共API；更新部分测试用例"
       },
@@ -2147,11 +2157,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-03-08 15:39:18 +0800",
         "message": "更正typo"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-02-01 00:40:07 +0800",
-        "message": "修正一处Typo"
       }
     ]
   },
@@ -6180,6 +6185,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-06-14 20:53:39 +0800",
         "message": "update CNKI related text parser"
       },
@@ -6187,11 +6197,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-04-27 17:32:42 +0800",
         "message": "CNKI：修复无法抓取需要跳转的DOI；CNKI Refer：增加语言判断，修复学位论文字段的繁简错误"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-04-13 22:48:00 +0800",
-        "message": "优化scrapeDoc获取creator的selector和顺序；新增oversea测试用例"
       }
     ]
   },
@@ -7063,6 +7068,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-04-01 13:42:58 +0800",
         "message": "更正extra的key名称错误"
       },
@@ -7197,6 +7207,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-02-11 12:38:50 +0800",
         "message": "更新内部函数"
       },
@@ -7204,11 +7219,6 @@
         "author": "jiaojiaodubai",
         "date": "2023-12-29 20:33:59 +0800",
         "message": "统一内部函数；修正标准条目一字线问题；处理换行符问题"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2023-12-15 14:10:23 +0800",
-        "message": "恢复Genre"
       }
     ]
   },
@@ -7455,6 +7465,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-04-01 16:50:35 +0800",
         "message": "升级公共API；更新部分测试用例"
       },
@@ -7470,14 +7485,14 @@
       "translatorID": "9282aac1-9c13-4591-9c92-4da3a65ff4e5",
       "label": "ChinaXiv",
       "creator": "jiaojiaodubai",
-      "target": "^https?://.*chinaxiv\\.((org)|(las.ac.cn))",
+      "target": "^https?://.*chinaxiv\\.((org)|(las\\.ac\\.cn))",
       "minVersion": "5.0",
       "maxVersion": "",
       "priority": 100,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-01-10 08:09:46"
+      "lastUpdated": "2024-06-20 16:34:51"
     },
     "testCases": [
       {
@@ -7616,6 +7631,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-02-11 12:38:50 +0800",
         "message": "更新内部函数"
       },
@@ -7623,11 +7643,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-01-10 16:13:04 +0800",
         "message": "修复通讯作者导致的重复；记录CSTR；优化archiveID；更新测试用例"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-01-09 20:21:47 +0800",
-        "message": "适配子平台 #285"
       }
     ]
   },
@@ -7636,14 +7651,14 @@
       "translatorID": "992850d2-b68b-4a1f-8dd6-0f4fd323c6be",
       "label": "Cubox",
       "creator": "eatcosmos",
-      "target": "https://cubox.pro/my/card",
+      "target": "https://cubox\\.pro/my/card",
       "minVersion": "5.0",
       "maxVersion": "",
       "priority": 100,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2023-03-14 15:58:02"
+      "lastUpdated": "2024-06-20 16:34:51"
     },
     "testCases": [
       {
@@ -7784,6 +7799,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2023-11-29 16:08:13 +0800",
         "message": "fix Cubox"
       },
@@ -7864,6 +7884,11 @@
     ],
     "zhLabel": "当当图书",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2023-12-16 03:39:48 +0800",
@@ -8382,6 +8407,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-04-17 21:06:27 +0800",
         "message": "fix #335"
       },
@@ -8389,11 +8419,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-03-21 13:53:16 +0800",
         "message": "fix #330"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-03-18 14:36:31 +0800",
-        "message": "修复original-author记录错异常"
       }
     ]
   },
@@ -8801,6 +8826,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-02-11 12:38:50 +0800",
         "message": "更新内部函数"
       },
@@ -8808,11 +8838,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-01-13 18:23:56 +0800",
         "message": "恢复对章节的支持"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2023-12-29 20:33:59 +0800",
-        "message": "统一内部函数；修正标准条目一字线问题；处理换行符问题"
       }
     ]
   },
@@ -8821,14 +8846,14 @@
       "translatorID": "d611008a-850d-4860-b607-54e1ecbcc592",
       "label": "E-Tiller",
       "creator": "jiaojiaodubai23",
-      "target": "^https?://.*(/ch/)?.*(.aspx)?",
+      "target": "^https?://.*(/ch/)?.*(\\.aspx)?",
       "minVersion": "5.0",
       "maxVersion": "",
       "priority": 200,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-02-06 12:50:28"
+      "lastUpdated": "2024-06-20 16:34:51"
     },
     "testCases": [
       {
@@ -9027,6 +9052,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-02-09 17:13:34 +0800",
         "message": "按照官方指南更改优先级"
       },
@@ -9034,11 +9064,6 @@
         "author": "Zeping Lee",
         "date": "2024-02-06 20:55:11 +0800",
         "message": "修复网络首发日期：不再使用 available-date"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2023-12-29 20:33:59 +0800",
-        "message": "统一内部函数；修正标准条目一字线问题；处理换行符问题"
       }
     ]
   },
@@ -9047,14 +9072,14 @@
       "translatorID": "6a540908-0419-4876-b2ae-0bcc50d99b4b",
       "label": "Encyclopedia of China 3rd",
       "creator": "pixiandouban, jiaojiaoduabi",
-      "target": "^https?://www.zgbk.com",
+      "target": "^https?://www\\.zgbk\\.com",
       "minVersion": "2.1.9",
       "maxVersion": "",
       "priority": 100,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-01-09 07:22:38"
+      "lastUpdated": "2024-06-20 16:34:51"
     },
     "testCases": [
       {
@@ -9119,6 +9144,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-01-09 15:23:28 +0800",
         "message": "修复未能识别英译名称"
       },
@@ -9126,11 +9156,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-01-08 22:52:29 +0800",
         "message": "修复姓名重复的bug"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-01-08 21:47:30 +0800",
-        "message": "修复特殊页面下无法抓取作者"
       }
     ]
   },
@@ -9243,14 +9268,14 @@
       "translatorID": "69614630-f9e8-440d-9a7c-1f4fd7edf191",
       "label": "MagTech",
       "creator": "jiaojiaodubai23",
-      "target": "^https?://.*(/CN/)?.*(.shtml)?",
+      "target": "^https?://.*(/CN/)?.*(\\.shtml)?",
       "minVersion": "5.0",
       "maxVersion": "",
       "priority": 200,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2023-12-27 17:51:55"
+      "lastUpdated": "2024-06-20 16:34:51"
     },
     "testCases": [
       {
@@ -9485,6 +9510,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-02-09 17:13:34 +0800",
         "message": "按照官方指南更改优先级"
       },
@@ -9492,11 +9522,6 @@
         "author": "jiaojiaodubai",
         "date": "2023-12-28 01:53:36 +0800",
         "message": "补充注释；优化DOI字段；统一变量命名风格"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2023-12-01 16:12:16 +0800",
-        "message": "修复人名意外分割，支持更多网站"
       }
     ]
   },
@@ -9788,14 +9813,14 @@
       "translatorID": "56702e37-439e-4bd4-aee3-af0540792599",
       "label": "NDLTD",
       "creator": "jiaojiaodubai",
-      "target": "^https?://ndltd.ncl.edu.tw",
+      "target": "^https?://ndltd\\.ncl\\.edu\\.tw",
       "minVersion": "5.0",
       "maxVersion": "",
       "priority": 100,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-04-01 08:16:59"
+      "lastUpdated": "2024-06-20 16:34:51"
     },
     "testCases": [
       {
@@ -9963,6 +9988,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-04-01 16:50:35 +0800",
         "message": "升级公共API；更新部分测试用例"
       },
@@ -9970,11 +10000,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-03-21 14:41:28 +0800",
         "message": "修复条目识别错误"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-03-18 14:17:29 +0800",
-        "message": "add (NDLTD.js) 新增臺灣博預士論文知識加值系統"
       }
     ]
   },
@@ -9983,14 +10008,14 @@
       "translatorID": "bd4ef2e5-6f1f-4c5e-8638-e1fc1226bf8c",
       "label": "NTU Digital Library of Buddhist Studies",
       "creator": "jiaojiaodubai",
-      "target": "^https://buddhism.lib.ntu.edu.tw",
+      "target": "^https://buddhism\\.lib\\.ntu\\.edu\\.tw",
       "minVersion": "5.0",
       "maxVersion": "",
       "priority": 100,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-03-02 16:57:23"
+      "lastUpdated": "2024-06-20 16:34:51"
     },
     "testCases": [
       {
@@ -10627,6 +10652,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-03-03 01:06:57 +0800",
         "message": "add (NTU Digital Library of Buddhist Studies.js) 新增臺大佛學數位圖書館"
       }
@@ -10637,14 +10667,14 @@
       "translatorID": "cd01cf63-90ba-42b4-a505-74d8d14f79d6",
       "label": "National Public Service Platform for Standards Information - China",
       "creator": "Zeping Lee, rnicrosoft",
-      "target": "https?://(std\\.samr\\.gov\\.cn/)|(.bba\\.sacinfo\\.org\\.cn)",
+      "target": "https?://(std\\.samr\\.gov\\.cn/)|((h|d)bba\\.sacinfo\\.org\\.cn)",
       "minVersion": "3.0",
       "maxVersion": "",
       "priority": 100,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-01-25 19:45:20"
+      "lastUpdated": "2024-06-20 16:34:51"
     },
     "testCases": [
       {
@@ -10818,6 +10848,11 @@
     "zhLabel": "全国标准信息公共服务平台",
     "trends": [
       {
+        "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
         "author": "Chi Lei",
         "date": "2024-01-25 19:45:46 +0800",
         "message": "Update National Public Service Platform for Standards Information - China.js"
@@ -10826,11 +10861,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-01-02 00:54:02 +0800",
         "message": "修复内部函数bug"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2023-12-29 19:45:22 +0800",
-        "message": "统一内部函数"
       }
     ]
   },
@@ -11136,6 +11166,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-03-21 16:58:57 +0800",
         "message": "fix #307"
       },
@@ -11143,11 +11178,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-03-08 15:39:18 +0800",
         "message": "更正typo"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-02-11 12:38:50 +0800",
-        "message": "更新内部函数"
       }
     ]
   },
@@ -11384,6 +11414,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2023-12-29 19:41:26 +0800",
         "message": "大幅重构；支持多条目；更新测试用例"
       },
@@ -11391,11 +11426,6 @@
         "author": "Zeping Lee",
         "date": "2023-12-12 16:48:48 +0800",
         "message": "fix (全国标准信息公共服务平台) 更新测试用例 (#250)"
-      },
-      {
-        "author": "Linxzh",
-        "date": "2023-07-31 17:26:21 +0800",
-        "message": "refactor: reorganized the directory structure to use Zotero Translator eslint and ci test"
       }
     ]
   },
@@ -11643,6 +11673,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-02-10 21:19:54 +0800",
         "message": "适配.cn域名；拓展中文正则；更新extra；更新测试用例"
       },
@@ -11650,11 +11685,6 @@
         "author": "jiaojiaodubai",
         "date": "2023-12-31 17:12:52 +0800",
         "message": "在古籍的extra中标注classic"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2023-12-31 16:34:03 +0800",
-        "message": "修复字段占用；支持首页多条目下载；更新测试案例"
       }
     ]
   },
@@ -12505,14 +12535,14 @@
       "translatorID": "8276f7cf-bc43-45b5-9409-8ba2af369c60",
       "label": "PatentStar",
       "creator": "Yizhao Wan",
-      "target": "^https?://((www)|(cprs)).patentstar.com.cn",
+      "target": "^https?://((www)|(cprs))\\.patentstar\\.com\\.cn",
       "minVersion": "3.0",
       "maxVersion": "",
       "priority": 100,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2023-12-31 10:29:30"
+      "lastUpdated": "2024-06-20 16:34:51"
     },
     "testCases": [
       {
@@ -12640,6 +12670,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-02-11 12:38:50 +0800",
         "message": "更新内部函数"
       },
@@ -12647,11 +12682,6 @@
         "author": "jiaojiaodubai",
         "date": "2023-12-31 18:38:32 +0800",
         "message": "支持国际专利；纠正type字段误用；更新测试用例"
-      },
-      {
-        "author": "jiaojiaodubai23",
-        "date": "2023-10-27 00:50:10 +0800",
-        "message": "取消中文名拆分；通过ESLint检查；更新测试案例；修复place字段；精简代码"
       }
     ]
   },
@@ -12660,14 +12690,14 @@
       "translatorID": "dbc3b499-88b6-4661-88c0-c27ac57ccd59",
       "label": "People's Daily Database",
       "creator": "pixiandouban",
-      "target": "^https?://data.people.com.cn/rmrb",
+      "target": "^https?://data\\.people\\.com\\.cn/rmrb",
       "minVersion": "5.0",
       "maxVersion": "",
       "priority": 100,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-06-20 08:08:20"
+      "lastUpdated": "2024-06-20 16:34:51"
     },
     "testCases": [
       {
@@ -12748,6 +12778,11 @@
     ],
     "zhLabel": "人民日报图文数据库",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2024-06-20 16:13:37 +0800",
@@ -13822,6 +13857,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-03-28 17:16:56 +0800",
         "message": "更新extra；简化部分代码；fix  #331"
       },
@@ -13829,11 +13869,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-03-17 18:01:52 +0800",
         "message": "适配带m域名"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-01-02 13:20:03 +0800",
-        "message": "修复字段占用；统一内部函数；增强的人名清洗；通过ESLint"
       }
     ]
   },
@@ -14378,6 +14413,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-01-06 16:22:56 +0800",
         "message": "新增中国社会科学词条库"
       }
@@ -14495,6 +14535,11 @@
     ],
     "zhLabel": "科学文库",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2024-01-18 20:37:38 +0800",
@@ -14741,6 +14786,11 @@
     ],
     "zhLabel": "Soopat专利",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
       {
         "author": "Linxzh",
         "date": "2023-07-31 17:26:21 +0800",
@@ -15966,6 +16016,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-05-23 12:23:29 +0800",
         "message": "取消对VPN异形网址的支持；修复英文标题可能无法抓取；修复报告缺字段fix #342"
       },
@@ -15973,11 +16028,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-04-17 20:12:55 +0800",
         "message": "fix unexpected token"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-04-17 17:47:34 +0800",
-        "message": "fix EOL"
       }
     ]
   },
@@ -16308,6 +16358,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-02-03 18:08:22 +0800",
         "message": "更正专利号；更正专利国别；更新测试用例；统一extra中的引用数为citation；更新extra"
       },
@@ -16315,11 +16370,6 @@
         "author": "jiaojiaodubai",
         "date": "2023-12-28 18:49:39 +0800",
         "message": "修复附件下载问题"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2023-12-26 19:37:37 +0800",
-        "message": "通过ESLint；修复人名重复问题"
       }
     ]
   },
@@ -16385,6 +16435,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-01-04 18:43:24 +0800",
         "message": "更新内部函数；规范字段；更新测试用例"
       },
@@ -16392,11 +16447,6 @@
         "author": "l0o0",
         "date": "2023-11-02 22:54:52 +0800",
         "message": "fix: 在pr227的基础上，做了部分修改并添加测试示例. closes #70, closes #90, closes #173"
-      },
-      {
-        "author": "jiaojiaodubai23",
-        "date": "2023-10-24 18:28:43 +0800",
-        "message": "通过ESLint检测；移除无法测试的案例"
       }
     ]
   },
@@ -16477,14 +16527,14 @@
       "translatorID": "f306107f-dabb-41ac-8fa2-f7f858feb11f",
       "label": "Wenjin",
       "creator": "Xingzhong Lin, jiaojiaodubai",
-      "target": "https?://find.nlc.cn/search",
+      "target": "https?://find\\.nlc\\.cn/search",
       "minVersion": "3.0",
       "maxVersion": "",
       "priority": 100,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-01-18 14:39:43"
+      "lastUpdated": "2024-06-20 16:34:51"
     },
     "testCases": [
       {
@@ -16715,6 +16765,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-02-11 12:38:50 +0800",
         "message": "更新内部函数"
       },
@@ -16722,11 +16777,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-01-18 22:41:58 +0800",
         "message": "实现extra的CSL键在其它键前；更新测试用例"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-01-10 14:03:51 +0800",
-        "message": "修复期刊文章抓取不到作者；修复学位论文日期意外抓取文档元素；优化图书作者显示；更新测试用例"
       }
     ]
   },
@@ -17059,6 +17109,11 @@
     ],
     "zhLabel": "中华医学期刊全文数据库",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2024-04-05 17:24:41 +0800",
@@ -17432,6 +17487,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-02-11 12:38:50 +0800",
         "message": "更新内部函数"
       },
@@ -17439,11 +17499,6 @@
         "author": "jiaojiaodubai",
         "date": "2023-12-29 20:33:59 +0800",
         "message": "统一内部函数；修正标准条目一字线问题；处理换行符问题"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2023-12-28 18:58:52 +0800",
-        "message": "修正无法下载pdf的潜在bug"
       }
     ]
   },
@@ -17603,14 +17658,14 @@
       "translatorID": "78ba8722-6748-47f4-9976-8985d75a220c",
       "label": "dpaper",
       "creator": "with, jiaojiaodubai",
-      "target": "http://dpaper.las.ac.cn",
+      "target": "http://dpaper\\.las\\.ac\\.cn",
       "minVersion": "5.0",
       "maxVersion": "",
       "priority": 100,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-01-18 14:06:55"
+      "lastUpdated": "2024-06-20 16:34:51"
     },
     "testCases": [
       {
@@ -17687,6 +17742,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-01-18 22:09:04 +0800",
         "message": "修复university异常；优化url显示；记录CSTR；更新测试用例 #293"
       },
@@ -17694,11 +17754,6 @@
         "author": "jiaojiaodubai",
         "date": "2023-12-16 18:38:30 +0800",
         "message": "fix (dpaper.js) 满足#257；通过ESLint；更新测试用例"
-      },
-      {
-        "author": "Linxzh",
-        "date": "2023-07-31 17:26:21 +0800",
-        "message": "refactor: reorganized the directory structure to use Zotero Translator eslint and ci test"
       }
     ]
   },
