@@ -370,6 +370,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-21 12:54:49 +0800",
+        "message": "lint; replace launch.json with tasks.json"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-04-02 00:04:25 +0800",
         "message": "精确的类型识别；更准确的返回结果；清理重复测试用例；调整测试用例顺序；更新测试用例"
       },
@@ -377,11 +382,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-02-11 12:38:50 +0800",
         "message": "更新内部函数"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2023-12-29 20:33:59 +0800",
-        "message": "统一内部函数；修正标准条目一字线问题；处理换行符问题"
       }
     ]
   },
@@ -7068,6 +7068,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-21 12:54:49 +0800",
+        "message": "lint; replace launch.json with tasks.json"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
       },
@@ -7075,11 +7080,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-04-01 13:42:58 +0800",
         "message": "更正extra的key名称错误"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-02-29 19:34:33 +0800",
-        "message": "close #101"
       }
     ]
   },
@@ -17299,6 +17299,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-06-21 12:54:49 +0800",
+        "message": "lint; replace launch.json with tasks.json"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-01-05 23:42:56 +0800",
         "message": "升级内部函数；通过ESLint；修复网页快照重复；更新测试用例"
       },
@@ -17306,11 +17311,6 @@
         "author": "l0o0",
         "date": "2023-11-24 10:09:07 +0800",
         "message": "Merge branch 'master' into master"
-      },
-      {
-        "author": "Linxzh",
-        "date": "2023-09-27 15:25:57 +0800",
-        "message": "fix(Weixin.js, Zhihu.js): 去除不必要的笔记note，现在zotero可方便的阅读网页快照, closed #213"
       }
     ]
   },
