@@ -2,14 +2,14 @@
 	"translatorID": "56702e37-439e-4bd4-aee3-af0540792599",
 	"label": "NDLTD",
 	"creator": "jiaojiaodubai",
-	"target": "^https?://ndltd.ncl.edu.tw",
+	"target": "^https?://ndltd\\.ncl\\.edu\\.tw",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-04-01 08:16:59"
+	"lastUpdated": "2024-06-20 16:34:51"
 }
 
 /*

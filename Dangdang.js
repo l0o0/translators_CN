@@ -36,7 +36,6 @@
 */
 
 function detectWeb(doc, url) {
-	Z.debug('---------- dangdang 2023-12-16 03:28:34 ----------');
 	if (url.includes('product')) {
 		return 'book';
 	}

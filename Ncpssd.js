@@ -78,7 +78,6 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug('---------- NCPSSD 2024-02-10 21:01:15 ----------');
 	let ids = new ID(url);
 	Z.debug(ids);
 	if (ids.toBoolean()) {

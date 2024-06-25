@@ -2,14 +2,14 @@
 	"translatorID": "cd01cf63-90ba-42b4-a505-74d8d14f79d6",
 	"label": "National Public Service Platform for Standards Information - China",
 	"creator": "Zeping Lee, rnicrosoft",
-	"target": "https?://(std\\.samr\\.gov\\.cn/)|(.bba\\.sacinfo\\.org\\.cn)",
+	"target": "https?://(std\\.samr\\.gov\\.cn/)|((h|d)bba\\.sacinfo\\.org\\.cn)",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-25 19:45:20"
+	"lastUpdated": "2024-06-20 16:34:51"
 }
 
 /*

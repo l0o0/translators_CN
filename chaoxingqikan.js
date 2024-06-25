@@ -36,7 +36,6 @@
 */
 
 function detectWeb(doc, url) {
-	Z.debug('---------- chaoxingqikj.js 2023-12-15 01:07:54 ----------');
 	if (url.includes('/detail_')) {
 		return 'journalArticle';
 	}

@@ -2,14 +2,14 @@
 	"translatorID": "8276f7cf-bc43-45b5-9409-8ba2af369c60",
 	"label": "PatentStar",
 	"creator": "Yizhao Wan",
-	"target": "^https?://((www)|(cprs)).patentstar.com.cn",
+	"target": "^https?://((www)|(cprs))\\.patentstar\\.com\\.cn",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-31 10:29:30"
+	"lastUpdated": "2024-06-20 16:34:51"
 }
 
 /*

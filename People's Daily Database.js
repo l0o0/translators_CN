@@ -2,14 +2,14 @@
 	"translatorID": "dbc3b499-88b6-4661-88c0-c27ac57ccd59",
 	"label": "People's Daily Database",
 	"creator": "pixiandouban",
-	"target": "^https?://data.people.com.cn/rmrb",
+	"target": "^https?://data\\.people\\.com\\.cn/rmrb",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-31 11:19:42"
+	"lastUpdated": "2024-06-20 16:34:51"
 }
 
 /*
@@ -92,7 +92,7 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.language = 'zh-CN';
 	newItem.ISSN = '1672-8386';
 	newItem.url = url;
-	text(doc, 'div.author').slice(4, -1).split(/[，、\s;]+/)
+	text(doc, 'div.author').replace(/^【?本报记者 ?|】$/g, '').split(/[，、\s;]+/)
 .forEach((creator) => {
 	creator = ZU.cleanAuthor(creator, 'author');
 	creator.fieldMode = 1;
@@ -146,7 +146,41 @@ var testCases = [
 				"seeAlso": []
 			}
 		]
+	},
+	{
+		"type": "web",
+		"url": "http://data.people.com.cn/rmrb/20240620/1/24c0fd81008447179e4e53127ac959d2",
+		"items": [
+			{
+				"itemType": "newspaperArticle",
+				"title": "学党史  明党纪党纪学习教育开展以来，中国共产党历史展览馆充分发挥党史展览的教育功能——",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "李林蔚",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2024-06-20",
+				"ISSN": "1672-8386",
+				"language": "zh-CN",
+				"libraryCatalog": "People's Daily Database",
+				"pages": "1",
+				"publicationTitle": "人民日报",
+				"shortTitle": "学党史  明党纪",
+				"url": "http://data.people.com.cn/rmrb/20240620/1/24c0fd81008447179e4e53127ac959d2",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
 	}
 ]
-
 /** END TEST CASES **/

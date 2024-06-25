@@ -1,7 +1,7 @@
 {
   "Baidu Baike.js": {
     "label": "百度百科",
-    "lastUpdated": "2024-01-11 13:15:45"
+    "lastUpdated": "2024-06-20 08:17:25"
   },
   "Baidu Scholar.js": {
     "label": "百度学术",
@@ -9,7 +9,7 @@
   },
   "BiliBili.js": {
     "label": "Bilibili视频",
-    "lastUpdated": "2024-01-16 12:15:45"
+    "lastUpdated": "2024-06-20 16:34:51"
   },
   "CCPINFO.js": {
     "label": "国家出版发行信息公共服务平台",
@@ -41,11 +41,11 @@
   },
   "CNKI RefWorks.js": {
     "label": "中国知网RefWorks导出格式",
-    "lastUpdated": "2024-02-07 12:35:49"
+    "lastUpdated": "2024-06-14 12:51:45"
   },
   "CNKI Refer.js": {
     "label": "中国知网Endote导出格式",
-    "lastUpdated": "2024-04-27 08:48:33"
+    "lastUpdated": "2024-06-14 12:45:46"
   },
   "CNKI Scholar.js": {
     "label": "中国知网外文总库",
@@ -61,7 +61,7 @@
   },
   "CNKI.js": {
     "label": "中国知网",
-    "lastUpdated": "2024-04-27 09:23:16"
+    "lastUpdated": "2024-06-14 20:44:13"
   },
   "CNSDA.js": {
     "label": "中国学术调查数据资料库",
@@ -81,11 +81,11 @@
   },
   "ChinaXiv.js": {
     "label": "中国科学院科技论文预发布平台",
-    "lastUpdated": "2024-01-10 08:09:46"
+    "lastUpdated": "2024-06-20 16:34:51"
   },
   "Cubox.js": {
     "label": "Cubox",
-    "lastUpdated": "2023-03-14 15:58:02"
+    "lastUpdated": "2024-06-20 16:34:51"
   },
   "Dangdang.js": {
     "label": "当当图书",
@@ -101,11 +101,11 @@
   },
   "E-Tiller.js": {
     "label": "勤云科技",
-    "lastUpdated": "2024-02-06 12:50:28"
+    "lastUpdated": "2024-06-20 16:34:51"
   },
   "Encyclopedia of China 3rd.js": {
     "label": "中国大百科全书",
-    "lastUpdated": "2024-01-09 07:22:38"
+    "lastUpdated": "2024-06-20 16:34:51"
   },
   "GFSOSO.js": {
     "label": "谷粉搜搜",
@@ -117,7 +117,7 @@
   },
   "MagTech.js": {
     "label": "玛格泰克",
-    "lastUpdated": "2023-12-27 17:51:55"
+    "lastUpdated": "2024-06-20 16:34:51"
   },
   "Modern History.js": {
     "label": "抗日战争与近代中日关系文献数据平台",
@@ -125,15 +125,15 @@
   },
   "NDLTD.js": {
     "label": "臺灣博碩士論文知識加值系統",
-    "lastUpdated": "2024-04-01 08:16:59"
+    "lastUpdated": "2024-06-20 16:34:51"
   },
   "NTU Digital Library of Buddhist Studies.js": {
     "label": "臺大佛學數位圖書館",
-    "lastUpdated": "2024-03-02 16:57:23"
+    "lastUpdated": "2024-06-20 16:34:51"
   },
   "National Public Service Platform for Standards Information - China.js": {
     "label": "全国标准信息公共服务平台",
-    "lastUpdated": "2024-01-25 19:45:20"
+    "lastUpdated": "2024-06-20 16:34:51"
   },
   "National Science and Technology Library - China.js": {
     "label": "国家科技图书文献中心",
@@ -157,11 +157,11 @@
   },
   "PatentStar.js": {
     "label": "专利之星",
-    "lastUpdated": "2023-12-31 10:29:30"
+    "lastUpdated": "2024-06-20 16:34:51"
   },
   "People's Daily Database.js": {
     "label": "人民日报图文数据库",
-    "lastUpdated": "2023-12-31 11:19:42"
+    "lastUpdated": "2024-06-20 16:34:51"
   },
   "People's Daily Epaper.js": {
     "label": "人民日报（电子版）",
@@ -253,7 +253,7 @@
   },
   "Wenjin.js": {
     "label": "国图-文津",
-    "lastUpdated": "2024-01-18 14:39:43"
+    "lastUpdated": "2024-06-20 16:34:51"
   },
   "Xinhuanet.js": {
     "label": "新华网",
@@ -277,7 +277,7 @@
   },
   "dpaper.js": {
     "label": "中国科学院文献情报中心",
-    "lastUpdated": "2024-01-18 14:06:55"
+    "lastUpdated": "2024-06-20 16:34:51"
   },
   "flk.npc.gov.cn.js": {
     "label": "国家法律法规数据库",

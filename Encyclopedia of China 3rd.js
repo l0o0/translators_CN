@@ -2,14 +2,14 @@
 	"translatorID": "6a540908-0419-4876-b2ae-0bcc50d99b4b",
 	"label": "Encyclopedia of China 3rd",
 	"creator": "pixiandouban, jiaojiaoduabi",
-	"target": "^https?://www.zgbk.com",
+	"target": "^https?://www\\.zgbk\\.com",
 	"minVersion": "2.1.9",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-09 07:22:38"
+	"lastUpdated": "2024-06-20 16:34:51"
 }
 
 /*

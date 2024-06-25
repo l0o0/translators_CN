@@ -2,14 +2,14 @@
 	"translatorID": "992850d2-b68b-4a1f-8dd6-0f4fd323c6be",
 	"label": "Cubox",
 	"creator": "eatcosmos",
-	"target": "https://cubox.pro/my/card",
+	"target": "https://cubox\\.pro/my/card",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-03-14 15:58:02"
+	"lastUpdated": "2024-06-20 16:34:51"
 }
 
 

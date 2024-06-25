@@ -108,7 +108,6 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug("--------------- WanFang Data 2024-05-23 12:19:10 ---------------");
 	let dynamic = doc.querySelector('.container-flex, .periodical');
 	if (dynamic) {
 		Z.monitorDOMChanges(dynamic, { childList: true });

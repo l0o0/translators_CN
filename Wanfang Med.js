@@ -96,7 +96,6 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url = doc.location.href) {
-	Z.debug('--------------- WanFang Med 2024-02-03 13:45:58 ---------------');
 	let ids = new ID(doc, url);
 	let labels = new Labels(doc, '.details .table > .table-tr');
 	var newItem = new Zotero.Item(ids.itemType);

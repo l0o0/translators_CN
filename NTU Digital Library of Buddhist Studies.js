@@ -2,14 +2,14 @@
 	"translatorID": "bd4ef2e5-6f1f-4c5e-8638-e1fc1226bf8c",
 	"label": "NTU Digital Library of Buddhist Studies",
 	"creator": "jiaojiaodubai",
-	"target": "^https://buddhism.lib.ntu.edu.tw",
+	"target": "^https://buddhism\\.lib\\.ntu\\.edu\\.tw",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-03-02 16:57:23"
+	"lastUpdated": "2024-06-20 16:34:51"
 }
 
 /*

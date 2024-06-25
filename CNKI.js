@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-04-27 09:23:16"
+	"lastUpdated": "2024-06-14 20:44:13"
 }
 
 /*
@@ -232,7 +232,6 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	Z.debug('---------------- CNKI 2024-04-27 17:29:54 ------------------');
 	let ids = new ID(doc, url);
 	Z.debug('detect ids:');
 	Z.debug(ids);
@@ -964,25 +963,16 @@ async function parseRefer(referText, doc, url, itemKey) {
 	/* specific fields */
 	switch (item.itemType) {
 		case 'journalArticle':
-			if (item.publicationTitle) {
-				item.publicationTitle = item.publicationTitle.replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
-			}
 			if (doc.querySelector('.icon-shoufa')) {
 				extra.set('Status', 'advance online publication');
 				item.date = ZU.strToISO(text(doc, '.head-time'));
 			}
 			break;
 		case 'thesis':
-			if (item.university) {
-				item.university = item.university.replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
-			}
 			item.numPages = labels.getWith(['页数', '頁數', 'Page']);
 			extra.set('major', labels.getWith(['学科专业', '學科專業', 'Retraction']));
 			break;
 		case 'conferencePaper': {
-			if (item.abstractNote) {
-				item.abstractNote = item.abstractNote.replace(/^[〈⟨<＜]正[＞>⟩〉]/, '');
-			}
 			item.proceedingsTitle = attr(doc, '.top-tip > span:first-child', 'title');
 			break;
 		}

@@ -37,7 +37,6 @@
 
 
 function detectWeb(doc, url) {
-	Z.debug('---------- China Judgements Online 2023-12-15 13:29:43 ----------');
 	if (url.includes('/181107ANFZ0BXSK4/')) {
 		return 'case';
 	}

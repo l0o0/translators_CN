@@ -2,14 +2,14 @@
 	"translatorID": "69614630-f9e8-440d-9a7c-1f4fd7edf191",
 	"label": "MagTech",
 	"creator": "jiaojiaodubai23",
-	"target": "^https?://.*(/CN/)?.*(.shtml)?",
+	"target": "^https?://.*(/CN/)?.*(\\.shtml)?",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 200,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-27 17:51:55"
+	"lastUpdated": "2024-06-20 16:34:51"
 }
 
 /*

@@ -2,14 +2,14 @@
 	"translatorID": "78ba8722-6748-47f4-9976-8985d75a220c",
 	"label": "dpaper",
 	"creator": "with, jiaojiaodubai",
-	"target": "http://dpaper.las.ac.cn",
+	"target": "http://dpaper\\.las\\.ac\\.cn",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-18 14:06:55"
+	"lastUpdated": "2024-06-20 16:34:51"
 }
 
 /*
@@ -36,7 +36,6 @@
 */
 
 function detectWeb(doc) {
-	Z.debug('---------- 2024-01-18 22:06:51 ----------');
 	if (text(doc, '#education')) {
 		return "thesis";
 	}
