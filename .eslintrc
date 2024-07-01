@@ -37,6 +37,11 @@
 			}
 		],
 
+		"no-restricted-globals": ["error", {
+			"name": "document",
+			"message": "Use doc instead."
+		}],
+
 		"zotero-translator/not-executable": "error",
 		"zotero-translator/header-valid-json": "error",
 		"zotero-translator/header-translator-id": "error",
