@@ -1,21 +1,21 @@
 {
 	"translatorID": "dd9efb0b-ca1d-4634-b480-9aabc84213c0",
 	"label": "WeiPu",
-	"creator": "Xingzhong Lin",
-	"target": "^https?://(lib|qikan)\\.cqvip\\.com",
+	"creator": "Xingzhong Lin, jiaojiaodubai",
+	"target": "^https?://(lib|qikan|cstj)\\.cqvip\\.com",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-04 10:42:39"
+	"lastUpdated": "2024-06-13 11:35:01"
 }
 
 /*
 	***** BEGIN LICENSE BLOCK *****
 
-	Copyright © 2019 Xingzhong Lin, https://github.com/Zotero-CN/translators_CN
+	Copyright © 2019 Xingzhong Lin, jiaojiaodubai
 
 	This file is part of Zotero.
 
@@ -35,13 +35,6 @@
 	***** END LICENSE BLOCK *****
 */
 
-function getIDFromUrl(url) {
-	if (!url) return false;
-	let ID = url.match(/id=[\da-zA-z]+/);
-	if (!ID) return false;
-	return ID[0].substring(3);
-}
-
 function detectWeb(doc, url) {
 	if (url.includes('/Qikan/Article/Detail')) {
 		return 'journalArticle';
@@ -53,12 +46,12 @@ function detectWeb(doc, url) {
 }
 
 function getSearchResults(doc, checkOnly) {
-	var items = {};
-	var found = false;
-	var rows = doc.querySelectorAll('a[href*="/Qikan/Article/Detail?"]');
-	for (let row of rows) {
-		let href = row.href;
-		let title = ZU.trimInternal(row.textContent);
+	const items = {};
+	let found = false;
+	const rows = doc.querySelectorAll('a[href*="/Qikan/Article/Detail?"]');
+	for (const row of rows) {
+		const href = row.href;
+		const title = ZU.trimInternal(row.textContent);
 		if (!href || !title) continue;
 		if (checkOnly) return true;
 		found = true;
@@ -69,9 +62,9 @@ function getSearchResults(doc, checkOnly) {
 
 async function doWeb(doc, url) {
 	if (detectWeb(doc, url) == 'multiple') {
-		let items = await Zotero.selectItems(getSearchResults(doc, false));
+		const items = await Zotero.selectItems(getSearchResults(doc, false));
 		if (!items) return;
-		for (let url of Object.keys(items)) {
+		for (const url of Object.keys(items)) {
 			await scrape(await requestDocument(url));
 		}
 	}
@@ -80,125 +73,64 @@ async function doWeb(doc, url) {
 	}
 }
 
-const fieldMap = {
-	title: "Titles > Title > Text",
-	language: "Titles > Title > Language",
-	abstractNote: "Abstracts > Abstract > Text",
-	publicationTitle: "Periodical > Name",
-	volume: "Volum",
-	issue: "Issue",
-	pages: "Page",
-	date: "PublishDate",
-	ISSN: "Periodical > ISSN",
-};
-
-const extra = {
-	'original-title': "div.article-title > em",
-	abstractTranslation: "div.abstract > em:last-of-type > span"
-};
-
-const parser = new DOMParser();
-
-function matchCreator(creator) {
-	if (/[A-Za-z]/.test(creator)) {
-		creator = ZU.cleanAuthor(creator, 'author');
-	}
-	else {
-		creator = creator.replace(/\s/, '');
-		creator = {
-			lastName: creator,
-			creatorType: 'author',
-			fieldMode: 1
-		};
-	}
-	return creator;
-}
-
 async function scrape(doc, url = doc.location.href) {
-	var newItem = new Z.Item('journalArticle');
-	let id = getIDFromUrl(url);
+	const newItem = new Z.Item('journalArticle');
+	const extra = new Extra();
+	const id = tryMatch(url, /id=([\da-zA-z]+)/, 1);
 	Z.debug(`id: ${id}`);
-	let login = !!doc.querySelector('#Logout'); // '#user-nav>li>#Logout'
-	// var debugLog = `scraping ${url}\nlogin statue=${login}\n`;
+	const login = !!doc.querySelector('#Logout');
 	try {
+		// throw new Error('debug');
 		// 以下POST请求需要校验本地cookies,Scaffold不支持,需在浏览器调试
-		const referText = await requestText(
+		const exportPage = await requestDocument(
 			'/Qikan/Search/Export?from=Qikan_Article_ExportTilte',
 			{
 				method: 'POST',
 				body: `ids=${id}&strType=title_info&type=endnote`
 			}
 		);
-		// debugLog += `Post result is\n${referText}\n`;
-		// string -> html
-		var postResult = parser.parseFromString(referText, "text/html");
-		// debugLog += `transform result to ${typeof (postResult)}\n`;
-		// html -> string
-		postResult = postResult.querySelector('input#xmlContent').value;
-		// debugLog += `get xml:\n${postResult}\n`;
-		// string -> xml
-		postResult = parser.parseFromString(postResult, "application/xml");
-		Z.debug(postResult);
-		const data = {
-			innerData: postResult,
-			get: function (path) {
-				let result = this.innerData.querySelector(path);
-				result = result ? result.textContent : '';
-				return result ? result : '';
-			},
-			getAll: function (path) {
-				let result = this.innerData.querySelectorAll(path);
-				result = result.length ? Array.from(result).map(element => (element.textContent)) : [];
-				return result.length ? result : [];
-			}
-		};
-		for (const field in fieldMap) {
-			const path = fieldMap[field];
-			// debugLog += `in field ${field}, I get ${postResult.querySelector(path).textContent}\n`;
-			newItem[field] = data.get(path);
-		}
-		if (newItem.abstractNote) {
-			newItem.abstractNote = newItem.abstractNote.replace(/收起$/, '');
-		}
-		data.getAll('Creators > Creator > Name').forEach((element) => {
-			newItem.creators.push(matchCreator(element));
-		});
-		data.getAll('Keywords > Keyword').forEach(tag => newItem.tags.push(tag));
-		// fix language
-		if (newItem.language == 'chi') newItem.language = 'zh-CN';
+		const xmlText = attr(exportPage, 'input#xmlContent', 'value');
+		const parser = new DOMParser();
+		const xmlDoc = parser.parseFromString(xmlText, "application/xml");
+		newItem.title = text(xmlDoc, 'Titles > Title > Text');
+		newItem.abstractNote = text(xmlDoc, 'Abstracts > Abstract > Text');
+		newItem.publicationTitle = text(xmlDoc, 'Periodical > Name');
+		newItem.volume = text(xmlDoc, 'Volum');
+		newItem.issue = text(xmlDoc, 'Issue');
+		newItem.pages = text(xmlDoc, 'Page');
+		newItem.date = ZU.strToISO(text(xmlDoc, 'PublishDate'));
+		newItem.ISSN = text(xmlDoc, 'Periodical > ISSN');
+		newItem.language = text(xmlDoc, 'Language') === 'chi' ? 'zh-CN' : 'en-US';
+		xmlDoc.querySelectorAll('Creator > Name').forEach(element => newItem.creators.push(cleanAuthor(element.textContent)));
+		xmlDoc.querySelectorAll('Keyword').forEach(element => newItem.tags.push(element.textContent));
+		extra.set('CLC', text(xmlDoc, 'CLC > Code'));
 	}
 	catch (error) {
-		newItem.title = innerText(doc, 'div.article-title > h1').replace(/ 认领$/, '');
-		newItem.abstractNote = innerText(doc, 'span.abstract:nth-of-type(3) > span').replace(/收起$/, '');
-		newItem.publicationTitle = attr(doc, 'div.journal > span.from > a', 'title');
-		let pubInfo = ZU.trimInternal(innerText(doc, 'div.journal > span.from > span.vol'));
+		Z.debug(error);
+		newItem.title = text(doc, '.article-title > h1').replace(/\s*认领$/, '');
+		newItem.abstractNote = (text(doc, '.abstract:nth-of-type(3)') || text(doc, '.abstract:nth-of-type(2)'))
+			.replace(/\s*收起$/, '')
+			.replace(/&quot；/g, '"');
+		newItem.publicationTitle = attr(doc, '.journal > span.from > a', 'title');
+		const pubInfo = ZU.trimInternal(text(doc, '.journal > .from > .vol'));
 		Z.debug(pubInfo);
-		newItem.date = tryMatch(pubInfo, /(\d+)年/, 1);
-		newItem.issue = tryMatch(pubInfo, /第0*([1-9]\d*)期/, 1);
-		newItem.pages = tryMatch(pubInfo, /期([\d+,~-]*\d)/, 1).replace('+', ', ').replace('~', '-');
-		doc.querySelectorAll('div.author > span > span > a > span').forEach((element) => {
-			newItem.creators.push(matchCreator(element.innerText));
+		newItem.date = tryMatch(pubInfo, /^(\d+)年/, 1);
+		newItem.issue = tryMatch(pubInfo, /第0*(\d+)期/, 1);
+		newItem.pages = tryMatch(pubInfo, /期([\d+,~-]*)/, 1).replace(/\+/g, ', ').replace(/~/g, '-');
+		doc.querySelectorAll('.author > span:nth-child(2) > span > a').forEach((element) => {
+			newItem.creators.push(cleanAuthor(element.innerText));
 		});
-		doc.querySelectorAll('div.subject > span > a').forEach((element) => {
+		doc.querySelectorAll('.subject > span > a').forEach((element) => {
 			newItem.tags.push(ZU.trimInternal(element.innerText));
 		});
-		// newItem.debugLog = debugLog;
+		extra.set('CLC', attr(doc, '.class > span:nth-child(2)', 'title'));
 	}
-
-	newItem.extra = '';
-	for (const field in extra) {
-		const path = extra[field];
-		try {
-			newItem.extra += `${field}: ${doc.querySelector(path).innerText}\n`;
-		}
-		catch (error) {
-			Z.debug("this is an error");
-		}
-	}
-	// 修正维普镜像站中摘要内的英文引号异常
-	newItem.abstractNote = newItem.abstractNote.replace(/&quot；/g, '"');
-	newItem.url = url;
-
+	newItem.url = `https://lib.cqvip.com/Qikan/Article/Detail?id=${id}`;
+	extra.set('original-title', ZU.capitalizeTitle(text(doc, '.article-title > em')), true);
+	text(doc, '.author > em').replace(/\(.+?\)$/, '').split(/;\s?/)
+.forEach(str => extra.push(cleanAuthor(ZU.capitalizeName(str)), true));
+	extra.set('original-container-title', text(doc, '.journal > em'), true);
+	extra.set('WeiPuCite', text(doc, '.yzwx'));
 	if (login) {
 		let filestr = doc.querySelectorAll('.article-source>a')[1].getAttribute('onclick');
 		let fileid = filestr.split(/[,']/)[1];
@@ -212,8 +144,53 @@ async function scrape(doc, url = doc.location.href) {
 			}];
 		}
 	}
-	if (newItem.date) newItem.date = newItem.date.split("T")[0];
+	newItem.extra = extra.toString();
 	newItem.complete();
+}
+
+class Extra {
+	constructor() {
+		this.fields = [];
+	}
+
+	push(key, val, csl = false) {
+		this.fields.push({ key: key, val: val, csl: csl });
+	}
+
+	set(key, val, csl = false) {
+		let target = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		if (target) {
+			target.val = val;
+		}
+		else {
+			this.push(key, val, csl);
+		}
+	}
+
+	get(key) {
+		let result = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		return result
+			? result.val
+			: '';
+	}
+
+	toString(history = '') {
+		this.fields = this.fields.filter(obj => obj.val);
+		return [
+			this.fields.filter(obj => obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n'),
+			history,
+			this.fields.filter(obj => !obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n')
+		].filter(obj => obj).join('\n');
+	}
+}
+
+function cleanAuthor(name) {
+	const creator = ZU.cleanAuthor(name, 'author');
+	if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
+		creator.lastName = creator.firstName + creator.lastName;
+		creator.fieldMode = 1;
+	}
+	return creator;
 }
 
 async function getPDF(fileid, filekey) {
@@ -229,12 +206,20 @@ async function getPDF(fileid, filekey) {
 	return [fileurl, filename];
 }
 
+/**
+ * Attempts to get the part of the pattern described from the character,
+ * and returns an empty string if not match.
+ * @param {String} string
+ * @param {RegExp} pattern
+ * @param {Number} index
+ * @returns
+ */
 function tryMatch(string, pattern, index = 0) {
+	if (!string) return '';
 	let match = string.match(pattern);
-	if (match && match[index]) {
-		return match[index];
-	}
-	return '';
+	return (match && match[index])
+		? match[index]
+		: '';
 }
 
 /** BEGIN TEST CASES **/
@@ -280,6 +265,76 @@ var testCases = [
 				"seeAlso": []
 			}
 		]
+	},
+	{
+		"type": "web",
+		"url": "https://cstj.cqvip.com/Qikan/Article/Detail?id=7111313804&from=Qikan_Search_Index",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "Z世代清华大学“特奖”人研究",
+				"creators": [
+					{
+						"lastName": "周溪亭",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "吴玥",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "魏海龙",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "张宁",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2024",
+				"abstractNote": "特等奖学金作为清华大学本科生的最高荣誉,其获得者无疑是学校育人成果的典型代表。随着时代的发展,“特奖”人的特征也悄然发生了改变。文章基于茨格勒的资优行动模型,通过对3名Z世代获奖者的深度访谈,系统、动态地理解“特奖”人的大学成长过程。研究发现,“特奖”人在性格品质上表现为日常生活中的高自我要求,以及困境应对时的积极心态与强心理韧性;在行为表现上,用“实干善思”超越“听话出活”;在价值取向上,表现为共同利益取向和强烈的社会责任感。正是性格品质、行为表现与价值取向三方面的不断互动,以及个体与外部环境的相互作用,最终造就了“特奖”人的主观行动空间,具体表现为多元发展观、能力增长观和美美与共的取向。研究提出的解释框架有助于揭示高潜力拔尖创新人才的大学成长与发展过程。",
+				"extra": "original-title: A Study on the\"Special Scholarship\"Recipients of Generation Z at Tsinghua University\nabstractTranslation: As the highest honor for Tsinghua University undergraduates,the recipients of the Special Scholarship are undoubtedly typical representatives of the university's education outcomes.With the development of the times,the charac-teristics of the special scholarship recipients have changed quietly.Based on Ziegler's actiotope model of giftedness,this study conducts in-depth interviews with three recipients of\"Generation Z\"and finds that:in terms of personality traits,special scholarship recipients of\"Generation Z\"are characterized by high self-demand in daily life,positive attitude,and strong resilience in dealing with difficulties;in terms of behavioral performance,they use\"practical work and good think-ing\"to transcend\"obedience and work\";in terms of value orientation,they show the orientation of common interests and a strong sense of social responsibility.It is the continuous interaction of character quality,behavior and value orientation,as well as the interaction between the individual and the external environment,that finally creates the subjective action space of the\"special scholarship\"recipients,which is manifested in the concept of diversified development,ability growth and the orientation of beauty and commonwealth.The explanatory framework proposed by the study helps to reveal the univer-sity growth and development process of high-potential innovative talents.FEWER",
+				"issue": "2",
+				"libraryCatalog": "WeiPu",
+				"pages": "99-112",
+				"publicationTitle": "教育与教学研究",
+				"url": "https://cstj.cqvip.com/Qikan/Article/Detail?id=7111313804&from=Qikan_Search_Index",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "Z世代"
+					},
+					{
+						"tag": "价值观"
+					},
+					{
+						"tag": "清华大学"
+					},
+					{
+						"tag": "特等奖学金"
+					},
+					{
+						"tag": "高潜力拔尖创新人才"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://lib.cqvip.com/Qikan/Search/Index?from=Qikan_Article_Detail",
+		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://cstj.cqvip.com/Qikan/Search/Index?from=Qikan_Article_Detail",
+		"items": "multiple"
 	}
 ]
 /** END TEST CASES **/
