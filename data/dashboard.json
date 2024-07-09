@@ -11,7 +11,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-06-20 08:17:25"
+      "lastUpdated": "2024-07-09 14:32:38"
     },
     "testCases": [
       {
@@ -76,6 +76,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-07-09 23:03:55 +0800",
+        "message": "fix #355"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
       },
@@ -83,11 +88,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-01-11 21:16:31 +0800",
         "message": "优化摘要显示；更新测试用例"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-01-06 14:34:01 +0800",
-        "message": "升级内部函数；更新测试用例；通过ESLint"
       }
     ]
   },
