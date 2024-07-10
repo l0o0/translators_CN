@@ -2,37 +2,37 @@
 	"translatorID": "d37a0069-cbc7-4b91-8c04-3be2c3bc3e6e",
 	"label": "CHINESE JOURNAL OF LAW",
 	"creator": "jiaojiaodubai",
-	"target": "^http://www\\.faxueyanjiu\\.com",
+	"target": "^https://faxueyanjiu\\.ajcass\\.com",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-04-24 09:27:29"
+	"lastUpdated": "2024-07-09 15:13:15"
 }
 
 /*
-    ***** BEGIN LICENSE BLOCK *****
+	***** BEGIN LICENSE BLOCK *****
 
-    Copyright © 2024 jiaojiaodubai<jiaojiaodubai23@gmail.com>
+	Copyright © 2024 jiaojiaodubai<jiaojiaodubai23@gmail.com>
 
-    This file is part of Zotero.
+	This file is part of Zotero.
 
-    Zotero is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+	Zotero is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Affero General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
 
-    Zotero is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-    GNU Affero General Public License for more details.
+	Zotero is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+	GNU Affero General Public License for more details.
 
-    You should have received a copy of the GNU Affero General Public License
-    along with Zotero. If not, see <http://www.gnu.org/licenses/>.
+	You should have received a copy of the GNU Affero General Public License
+	along with Zotero. If not, see <http://www.gnu.org/licenses/>.
 
-    ***** END LICENSE BLOCK *****
+	***** END LICENSE BLOCK *****
 */
 
 
@@ -115,7 +115,7 @@ async function scrape(keyObj) {
 	newItem['original-container-title'] = 'Chinese Journal of Law';
 	newItem.volume = tryMatch(pubInfo, /\.\(0*(\d+)\)/, 1) || tryMatch(pubInfo, /,0*(\d+)/, 1);
 	newItem.issue = (tryMatch(pubInfo, /\)(.+?):/, 1) || tryMatch(pubInfo, /\((.+?)\)/, 1)).replace(/0*(\d+)/, '$1');
-	newItem.pages = tryMatch(pubInfo, /:[\d, ~+-]+/).replace(/\+/g, ', ').replace(/~/g, '-');
+	newItem.pages = tryMatch(pubInfo, /:([\d, ~+-]+)/, 1).replace(/\+/g, ', ').replace(/~/g, '-');
 	newItem.date = tryMatch(pubInfo, /^\d+/);
 	newItem.DOI = text(itemDoc, '#DOI');
 	newItem.ISSN = '1002-896X';
@@ -157,12 +157,12 @@ function tryMatch(string, pattern, index = 0) {
 var testCases = [
 	{
 		"type": "web",
-		"url": "http://www.faxueyanjiu.com/Home/Index",
+		"url": "https://faxueyanjiu.ajcass.com/Home/Index",
 		"items": "multiple"
 	},
 	{
 		"type": "web",
-		"url": "http://www.faxueyanjiu.com/Magazine/GetIssueContentList2/?PageSize=12&Year=2023&Issue=2",
+		"url": "https://faxueyanjiu.ajcass.com/Magazine/GetIssueContentList2/?PageSize=12&Year=2023&Issue=2",
 		"items": "multiple"
 	}
 ]
