@@ -4856,7 +4856,7 @@
       "inRepository": true,
       "translatorType": 12,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-06-14 20:44:13"
+      "lastUpdated": "2024-07-12 13:00:47"
     },
     "testCases": [
       {
@@ -6185,6 +6185,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-07-12 21:03:37 +0800",
+        "message": "修复大陆知网无法抓取学位论文PDF"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
       },
@@ -6192,11 +6197,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-14 20:53:39 +0800",
         "message": "update CNKI related text parser"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-04-27 17:32:42 +0800",
-        "message": "CNKI：修复无法抓取需要跳转的DOI；CNKI Refer：增加语言判断，修复学位论文字段的繁简错误"
       }
     ]
   },
