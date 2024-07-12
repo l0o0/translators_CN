@@ -1120,7 +1120,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-02-08 15:30:54"
+      "lastUpdated": "2024-07-12 13:05:37"
     },
     "testCases": [
       {
@@ -1672,6 +1672,11 @@
     ],
     "zhLabel": "中国医院知识总库",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-07-12 21:27:30 +0800",
+        "message": "向上兼容CNKI.js的改动"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2024-02-08 23:41:49 +0800",
