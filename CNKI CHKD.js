@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-08 15:30:54"
+	"lastUpdated": "2024-07-12 13:05:37"
 }
 
 /*
@@ -133,13 +133,12 @@ async function doWeb(doc, url) {
 	if (detectWeb(doc, url) == 'multiple') {
 		let items = await Zotero.selectItems(getSearchResults(doc, false));
 		if (!items) return;
-		await cnki.scrapeMulti(items);
+		await cnki.scrapeMulti(items, doc);
 	}
 	else {
 		await cnki.scrape(doc);
 	}
 }
-
 
 /** BEGIN TEST CASES **/
 var testCases = [
