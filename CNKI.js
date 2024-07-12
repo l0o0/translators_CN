@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-06-14 20:44:13"
+	"lastUpdated": "2024-07-12 13:00:47"
 }
 
 /*
@@ -425,7 +425,7 @@ async function doWeb(doc, url) {
 	if (detectWeb(doc, url) == 'multiple') {
 		let items = await Z.selectItems(getSearchResults(doc, url, false));
 		if (!items) return;
-		await scrapeMulti(items);
+		await scrapeMulti(items, doc);
 	}
 	else {
 		await scrape(doc);
@@ -437,7 +437,7 @@ async function doWeb(doc, url) {
  * if it is not possible to obtain item's document, consider using batch export API.
  * @param {Object} items, items from Zotero.selectedItems().
  */
-async function scrapeMulti(items) {
+async function scrapeMulti(items, doc) {
 	for (let key in items) {
 		let itemKey = JSON.parse(key);
 		try {
@@ -460,7 +460,7 @@ async function scrapeMulti(items) {
 				let itemKeys = Object.keys(items)
 					.map(element => JSON.parse(element))
 					.filter(element => element.cookieName);
-				await scrapeWithShowExport(itemKeys);
+				await scrapeWithShowExport(itemKeys, doc);
 				// batch export API can request all data at once.
 				break;
 			}
@@ -470,7 +470,8 @@ async function scrapeMulti(items) {
 			In these cases, CAPTCHA issue should be handled by the user.
 			*/
 			catch (erro2) {
-				let debugItem = new Z.Item('webpage');
+				Z.debug(erro2);
+				const debugItem = new Z.Item('webpage');
 				debugItem.title = `❌验证码错误！（CAPTCHA Erro!）❌`;
 				debugItem.url = itemKey.url;
 				debugItem.abstractNote
@@ -624,8 +625,7 @@ async function scrapeWithGetExport(doc, ids, itemKey) {
  * API from buulk-export button.
  * @param {*} itemKey some extra information from "multiple" page.
  */
-async function scrapeWithShowExport(itemKeys, doc = document.createElement('div')) {
-	var fileNames = itemKeys.map(key => key.cookieName);
+async function scrapeWithShowExport(itemKeys, doc) {
 	Z.debug('use API: showExport');
 
 	/*
@@ -652,9 +652,9 @@ async function scrapeWithShowExport(itemKeys, doc = document.createElement('div'
 
 	let postUrl = inMainland
 		? 'https://kns.cnki.net/dm8/api/ShowExport'
-		: `${doc.querySelector('.logo > a, a.cnki-logo').href}/kns/manage/ShowExport`;
+		: `${doc.location.protocol}//${doc.location.host}/kns/manage/ShowExport`;
 	Z.debug(postUrl);
-	let postData = `FileName=${fileNames.join(',')}`
+	let postData = `FileName=${itemKeys.map(key => key.cookieName).join(',')}`
 		+ '&DisplayMode=EndNote'
 		+ '&OrderParam=0'
 		+ '&OrderType=desc'
@@ -664,7 +664,7 @@ async function scrapeWithShowExport(itemKeys, doc = document.createElement('div'
 	Z.debug(postData);
 	let refer = inMainland
 		? 'https://kns.cnki.net/dm8/manage/export.html?'
-		: `${doc.querySelector('.logo > a, a.cnki-logo').href}/manage/export.html?displaymode=EndNote`;
+		: `${doc.location.protocol}//${doc.location.host}/manage/export.html?displaymode=EndNote`;
 	let referText = await request(
 		postUrl,
 		{
@@ -1320,7 +1320,7 @@ function addAttachments(item, doc, url, itemKey) {
 				document: doc
 			});
 		}
-		let pdfLink = strChild(doc, 'a[id^="pdfDown"]', 'href');
+		let pdfLink = strChild(doc, 'a[id^="pdfDown"],.btn-dlpdf > a', 'href');
 		Z.debug(`get PDF Link:\n${pdfLink}`);
 		let cajLink = strChild(doc, 'a#cajDown', 'href') || itemKey.downloadlink || strChild(doc, 'a[href*="bar/download"]', 'href');
 		Z.debug(`get CAJ link:\n${cajLink}`);
