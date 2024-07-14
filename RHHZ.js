@@ -1,7 +1,7 @@
 {
 	"translatorID": "3b4e0da7-d9b2-41e8-b4d3-38701241b872",
 	"label": "RHHZ",
-	"creator": "jiaojiaodubai23",
+	"creator": "jiaojiaodubai",
 	"target": "",
 	"minVersion": "5.0",
 	"maxVersion": "",
@@ -9,13 +9,13 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-02 15:55:53"
+	"lastUpdated": "2024-07-14 12:51:10"
 }
 
 /*
 	***** BEGIN LICENSE BLOCK *****
 
-	Copyright © 2022 jiaojiaodubai23@gmail.com
+	Copyright © 2024 jiaojiaodubai<jiaojiaodubai23@gmail.com>
 
 	This file is part of Zotero.
 
@@ -37,21 +37,21 @@
 
 
 function detectWeb(doc, _url) {
-	let insite = doc.querySelector('div[class*="foot"] p > a[href*="www.rhhz.net"]');
-	let itemID = doc.querySelector('meta[name="citation_id"]');
-	if (insite && itemID) {
+	const inSite = doc.querySelector('div[class^="foot"] a[href*="www.rhhz.net"]');
+	const itemID = doc.querySelector('meta[name="citation_id"]');
+	if (inSite && itemID) {
 		return 'journalArticle';
 	}
-	else if (insite && getSearchResults(doc, true)) {
+	else if (inSite && getSearchResults(doc, true)) {
 		return 'multiple';
 	}
 	return false;
 }
 
 function getSearchResults(doc, checkOnly) {
-	var items = {};
-	var found = false;
-	var rows = doc.querySelectorAll('div.article-list-title a:first-of-type');
+	const items = {};
+	let found = false;
+	const rows = doc.querySelectorAll('div.article-list-title a:first-of-type');
 	for (let row of rows) {
 		let href = row.href;
 		let title = ZU.trimInternal(row.textContent);
@@ -65,9 +65,9 @@ function getSearchResults(doc, checkOnly) {
 
 async function doWeb(doc, url) {
 	if (detectWeb(doc, url) == 'multiple') {
-		let items = await Zotero.selectItems(getSearchResults(doc, false));
+		const items = await Zotero.selectItems(getSearchResults(doc, false));
 		if (!items) return;
-		for (let url of Object.keys(items)) {
+		for (const url of Object.keys(items)) {
 			await scrape(await requestDocument(url));
 		}
 	}
@@ -76,61 +76,54 @@ async function doWeb(doc, url) {
 	}
 }
 
-function matchCreator(creator) {
-	// Z.debug(creator);
-	if (/[A-Za-z]/.test(creator)) {
-		creator = ZU.cleanAuthor(creator, 'author');
-	}
-	else {
-		creator = creator.replace(/\s/g, '');
-		creator = {
-			lastName: creator,
-			creatorType: 'author',
-			fieldMode: 1
-		};
-	}
-	return creator;
-}
-
 async function scrape(doc, url = doc.location.href) {
-	let translator = Zotero.loadTranslator('web');
-	var pdfURL = '';
-	let pdfButton = doc.querySelector('div.pdfView');
+	const translator = Zotero.loadTranslator('web');
+	let pdfURL = '';
+	// https://yizhe.dmu.edu.cn/article/doi/10.12014/j.issn.1002-0772.2024.13.01
+	const pdfButton = doc.querySelector('.pdfview a');
 	let socallURL = attr(doc, 'head > meta[name="citation_pdf_url"]', 'content');
 	if (socallURL.endsWith('.pdf')) {
 		pdfURL = socallURL;
 	}
 	else if (pdfButton) {
-		pdfURL = pdfButton.parentElement.href;
+		pdfURL = pdfButton.href;
 	}
 	else {
-		let id = attr(doc, 'head > meta[name="citation_id"]', 'content');
-		let host = (new URL(url)).host;
-		pdfURL = `${url.split('//')[0]}//${host}/article/exportPdf?id=${id}`;
+		const id = attr(doc, 'head > meta[name="citation_id"]', 'content');
+		pdfURL = `${doc.location.protol}//${doc.location.protocol}/article/exportPdf?id=${id}`;
 	}
-	Z.debug(pdfURL);
+	Z.debug(`PDF URL: ${pdfURL}`);
 	// Embedded Metadata
 	translator.setTranslator('951c027d-74ac-47d4-a107-9c3069ab7b48');
 	translator.setDocument(doc);
 	translator.setHandler('itemDone', (_obj, item) => {
-		item.creators = item.creators.map(creator => (matchCreator(creator.lastName)));
-		item.language = (item.language == 'zh') ? 'zh-CN' : 'en-US';
+		delete item.company;
+		delete item.distributor;
+		delete item.institution;
+		delete item.label;
+		delete item.publisher;
+		item.creators.forEach((creator) => {
+			if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
+				creator.fieldMode = 1;
+			}
+		});
+		item.language = item.language === 'zh' ? 'zh-CN' : 'en-US';
 		item.attachments = [
 			{
 				url: pdfURL,
-				title: "Full Text PDF",
-				mimeType: "application/pdf"
+				title: 'Full Text PDF',
+				mimeType: 'application/pdf'
 			}
 		];
 		item.attachments.push({
 			url: url,
 			document: doc,
-			title: "Snapshot",
-			mimeType: "text/html"
+			title: 'Snapshot',
+			mimeType: 'text/html'
 		});
 		item.complete();
 	});
-	let em = await translator.getTranslatorObject();
+	const em = await translator.getTranslatorObject();
 	em.itemType = 'journalArticle';
 	await em.doWeb(doc, url);
 }
@@ -146,36 +139,43 @@ var testCases = [
 				"title": "抗弯曲大模场面积少模光子晶体光纤",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "解国兴",
 						"creatorType": "author",
 						"fieldMode": 1
 					},
 					{
+						"firstName": "",
 						"lastName": "谭芳",
 						"creatorType": "author",
 						"fieldMode": 1
 					},
 					{
+						"firstName": "",
 						"lastName": "张云龙",
 						"creatorType": "author",
 						"fieldMode": 1
 					},
 					{
+						"firstName": "",
 						"lastName": "高斌豪",
 						"creatorType": "author",
 						"fieldMode": 1
 					},
 					{
+						"firstName": "",
 						"lastName": "崔顺发",
 						"creatorType": "author",
 						"fieldMode": 1
 					},
 					{
+						"firstName": "",
 						"lastName": "穆伟",
 						"creatorType": "author",
 						"fieldMode": 1
 					},
 					{
+						"firstName": "",
 						"lastName": "朱先和",
 						"creatorType": "author",
 						"fieldMode": 1
@@ -291,6 +291,93 @@ var testCases = [
 		"type": "web",
 		"url": "http://www.yndxxb.ynu.edu.cn/yndxxbzrkxb/",
 		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://www.lcgdbzz.org/cn/article/doi/10.12449/JCH240609",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "慢性乙型肝炎及肝硬化患者血清血管生成素1、2及其比值变化与HBV DNA和ALT的相关性分析",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "林明华",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "常远",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "刘芳",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "黄雁翔",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "徐航飞",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2024",
+				"DOI": "10.12449/JCH240609",
+				"ISSN": "1001-5256",
+				"abstractNote": "<sec>&nbsp; <b>目的</b> &nbsp;分析血清血管生成素（Ang）1、2及其比值变化与慢性乙型肝炎（CHB）、肝硬化患者HBV DNA和ALT的相关性。</sec><sec>&nbsp; <b>方法</b> &nbsp;选取2018年3月—2019年10月首都医科大学附属北京佑安医院收治的CHB患者99例，肝硬化患者59例，收集临床资料和血清标本；另选同期46例健康体检者作为对照组。所有患者均采用PCR法检测血清HBV DNA；采用酶联免疫吸附法检测血清Ang-1和Ang-2水平，比较各组血清Ang-1和Ang-2及Ang-1/Ang-2的差异。非正态分布的计量资料多组间比较采用Kruskal-Wallis <i>H</i>检验，进一步两两比较采用Bonferroni法；采用Spearman方法分析Ang-1、Ang-2、Ang-1/Ang-2与HBV DNA、ALT的相关性。</sec><sec>&nbsp; <b>结果</b> &nbsp;与对照组（671.0 pg/mL）相比，CHB组（479.0 pg/mL）和肝硬化组（208.4 pg/mL）Ang-1水平显著降低（<i>P</i>值均&lt;0.05）；与CHB组相比，肝硬化组Ang-1水平显著降低（<i>P</i>&lt;0.001）。与对照组（198.0 pg/mL）相比，CHB组（286.1 pg/mL）和肝硬化组（438.4 pg/mL）Ang-2水平显著升高（<i>P</i>值均&lt;0.001）；与CHB组相比，肝硬化组Ang-2水平显著升高（<i>P</i>&lt;0.001）。与对照组（3.4）相比，CHB组（1.6）和肝硬化组（0.5）Ang-1/Ang-2比值显著降低（<i>P</i>值均&lt;0.001）；与CHB组相比，肝硬化组Ang-1/Ang-2比值显著降低（<i>P</i>&lt;0.001）。Spearman分析显示，CHB组Ang-1与HBV DNA及ALT均呈负相关（<i>r</i>值分别为-0.400、-0.394，<i>P</i>值均˂0.001）；Ang-2与HBV DNA及ALT均呈正相关（<i>r</i>值分别为0.365、0.351，<i>P</i>值均˂0.001）；Ang-1/Ang-2与HBV DNA及ALT均呈负相关（<i>r</i>值分别为-0.463、-0.473，<i>P</i>值均˂0.001）；而肝硬化组Ang-1、Ang-2及Ang-1/Ang-2均与HBV DNA和ALT无相关性（<i>P</i>值均˃0.05）。</sec><sec>&nbsp; <b>结论</b> &nbsp;CHB、肝硬化患者血清Ang-1、Ang-2及Ang-1/Ang-2有显著改变，其中肝炎组Ang-1、Ang-2及Ang-1/Ang-2在一定程度上反映CHB患者肝损伤的程度。</sec>",
+				"issue": "6",
+				"journalAbbreviation": "lcgdbzz",
+				"language": "zh-CN",
+				"libraryCatalog": "www.lcgdbzz.org",
+				"pages": "1126-1129",
+				"publicationTitle": "临床肝胆病杂志",
+				"rights": "http://creativecommons.org/licenses/by/3.0/",
+				"url": "https://www.lcgdbzz.org/cn/article/doi/10.12449/JCH240609",
+				"volume": "40",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					},
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [
+					{
+						"tag": "丙氨酸转氨酶"
+					},
+					{
+						"tag": "乙型肝炎病毒"
+					},
+					{
+						"tag": "乙型肝炎， 慢性"
+					},
+					{
+						"tag": "肝硬化"
+					},
+					{
+						"tag": "血管生成素1"
+					},
+					{
+						"tag": "血管生成素2"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
 	}
 ]
 /** END TEST CASES **/
