@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-07-14 08:59:51"
+	"lastUpdated": "2024-07-19 15:35:31"
 }
 
 /*
@@ -59,10 +59,20 @@ function detectWeb(doc, url) {
 function getSearchResults(doc, checkOnly) {
 	const items = {};
 	let found = false;
-	const rows = doc.querySelectorAll('h2.ContentItem-title a,[itemprop="zhihu:question"] > a');
+	const rows = doc.querySelectorAll('.ArticleItem,.AnswerItem');
 	for (const row of rows) {
-		const href = row.href;
-		const title = ZU.trimInternal(row.textContent);
+		const titleElm = row.querySelector('.ContentItem-title a');
+		const data = row.getAttribute('data-zop');
+		let href, title;
+		if (titleElm) {
+			href = titleElm.href;
+			title = ZU.trimInternal(titleElm.textContent);
+		}
+		else if (data) {
+			const dataObj = JSON.parse(data);
+			href = attr(row, '.ContentItem-meta~[itemprop="url"]', 'content');
+			title = dataObj.title + ` - ${dataObj.authorName}的回答`;
+		}
 		if (!href || !title) continue;
 		if (checkOnly) return true;
 		found = true;
@@ -76,6 +86,7 @@ async function doWeb(doc, url) {
 		const items = await Zotero.selectItems(getSearchResults(doc, false));
 		if (!items) return;
 		for (const url of Object.keys(items)) {
+			// 需要完整的浏览器环境
 			await scrape(await requestDocument(url));
 		}
 	}
@@ -89,12 +100,12 @@ async function scrape(doc, url = doc.location.href) {
 	switch (newItem.itemType) {
 		case 'forumPost': {
 			newItem.title = innerText(doc, '.QuestionHeader-title');
+			let noteContent = doc.querySelector('div.RichContent-inner span').innerHTML;
+			noteContent = noteContent.replace(/<figure.*?<img src="(.*?)".*?<\/figure>/g, '<img src="$1"/>');
 			newItem.abstractNote = ZU.cleanTags(noteContent).slice(0, 150) + '...';
 			newItem.forumTitle = '知乎';
 			newItem.postType = '知乎回答';
 			newItem.date = ZU.strToISO(innerText(doc, 'span[data-tooltip]'));
-			let noteContent = doc.querySelector('div.RichContent-inner span').innerHTML;
-			noteContent = noteContent.replace(/<figure.*?<img src="(.*?)".*?<\/figure>/g, '<img src="$1"/>');
 			newItem.notes.push({ note: noteContent });
 			break;
 		}
@@ -250,7 +261,6 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://www.zhihu.com/search?type=content&q=Zotero",
-		"defer": true,
 		"items": "multiple"
 	},
 	{
