@@ -17232,7 +17232,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-07-14 08:59:51"
+      "lastUpdated": "2024-07-19 15:35:31"
     },
     "testCases": [
       {
@@ -17270,7 +17270,6 @@
       {
         "type": "web",
         "url": "https://www.zhihu.com/search?type=content&q=Zotero",
-        "defer": true,
         "items": "multiple"
       },
       {
@@ -17394,6 +17393,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-07-19 23:42:50 +0800",
+        "message": "fix: use variable before declare"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-07-14 17:05:37 +0800",
         "message": "fix #360; update test cases; use edited time as date; improve async loaded results; lint"
       },
@@ -17401,11 +17405,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-21 12:54:49 +0800",
         "message": "lint; replace launch.json with tasks.json"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-01-05 23:42:56 +0800",
-        "message": "升级内部函数；通过ESLint；修复网页快照重复；更新测试用例"
       }
     ]
   },
