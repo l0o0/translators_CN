@@ -1,7 +1,7 @@
 {
 	"translatorID": "8276f7cf-bc43-45b5-9409-8ba2af369c60",
 	"label": "PatentStar",
-	"creator": "Yizhao Wan",
+	"creator": "Yizhao Wan, jiaojiaodubai",
 	"target": "^https?://((www)|(cprs))\\.patentstar\\.com\\.cn",
 	"minVersion": "3.0",
 	"maxVersion": "",
@@ -9,13 +9,13 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-06-20 16:34:51"
+	"lastUpdated": "2024-07-23 14:21:25"
 }
 
 /*
 	***** BEGIN LICENSE BLOCK *****
 
-	Copyright © 2020 Yizhao Wan, https://github.com/Zotero-CN/translators_CN
+	Copyright © 2020 Yizhao Wan; 2024 jiojiaodubai
 	
 	This file is part of Zotero.
 
@@ -36,6 +36,10 @@
 */
 
 function detectWeb(doc, url) {
+	const list = doc.querySelector('#listcontainer');
+	if (list) {
+		Z.monitorDOMChanges(list, { childList: true });
+	}
 	if (url.includes('/Detail')) {
 		return 'patent';
 	}
@@ -202,12 +206,12 @@ class Labels {
 			return result
 				? result
 				: element
-					? document.createElement('div')
+					? doc.createElement('div')
 					: '';
 		}
 		let pattern = new RegExp(label, 'i');
 		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
+		if (element) return keyValPair ? keyValPair[1] : doc.createElement('div');
 		return keyValPair
 			? ZU.trimInternal(keyValPair[1].innerText)
 			: '';
