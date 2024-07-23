@@ -12539,7 +12539,7 @@
     "header": {
       "translatorID": "8276f7cf-bc43-45b5-9409-8ba2af369c60",
       "label": "PatentStar",
-      "creator": "Yizhao Wan",
+      "creator": "Yizhao Wan, jiaojiaodubai",
       "target": "^https?://((www)|(cprs))\\.patentstar\\.com\\.cn",
       "minVersion": "3.0",
       "maxVersion": "",
@@ -12547,7 +12547,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-06-20 16:34:51"
+      "lastUpdated": "2024-07-23 14:21:25"
     },
     "testCases": [
       {
@@ -12675,6 +12675,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-07-23 22:23:22 +0800",
+        "message": "feat: detect async loaded results"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
       },
@@ -12682,11 +12687,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-02-11 12:38:50 +0800",
         "message": "更新内部函数"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2023-12-31 18:38:32 +0800",
-        "message": "支持国际专利；纠正type字段误用；更新测试用例"
       }
     ]
   },
