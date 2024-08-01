@@ -113,7 +113,7 @@ module.exports = {
 						});
 					}
 					else if (testCase.type === 'search') {
-						const expected = ['DOI', 'ISBN', 'PMID', 'identifiers', 'contextObject', 'adsBibcode', 'ericNumber'];
+						const expected = ['DOI', 'ISBN', 'PMID', 'identifiers', 'contextObject', 'adsBibcode', 'ericNumber', 'openAlex'];
 						const keys = Array.isArray(testCase.input) ? testCase.input.flatMap(Object.keys) : Object.keys(testCase.input);
 
 						if (!keys.every(key => expected.includes(key))) {

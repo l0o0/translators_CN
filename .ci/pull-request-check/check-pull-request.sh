@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "::group::Setup"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ROOT_DIR="$( dirname "$DIR" )"
 
@@ -33,6 +34,7 @@ export CHROME_EXTENSION_KEY="MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDllBS5q+Z9T9t
 cd ..
 
 npm explore chromedriver -- npm run install --detect_chromedriver_version
+echo "::endgroup::"
 
 get_translators_to_check
 ./selenium-test.js "$TRANSLATORS_TO_CHECK"
