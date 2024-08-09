@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-07-12 13:00:47"
+	"lastUpdated": "2024-08-09 06:04:54"
 }
 
 /*
@@ -67,9 +67,9 @@ function filterQuery(items) {
 async function doSearch(items) {
 	for (let doi of filterQuery(items)) {
 		// 仅在国内有效
-		let url = `https://link.cnki.net/doi/${encodeURIComponent(doi)}`;
+		const url = `https://link.cnki.net/doi/${encodeURIComponent(doi)}`;
 		Z.debug(`search url: ${url}`);
-		let doc = await requestDocument(url);
+		const doc = await requestDocument(url);
 		// Z.debug(doc);
 		await doWeb(doc, url);
 	}
@@ -83,7 +83,7 @@ async function doSearch(items) {
  * A mapping table of database code to item type.
  * It may be modified when this Translator called by other translators.
  */
-var typeMap = {
+const typeMap = {
 
 	/*
 	In the following comments,
@@ -178,18 +178,18 @@ var typeMap = {
 
 // A list of databases containing only English literature for language determination.
 // It may be modified when this Translator called by other translators.
-var enDatabase = ['WWJD', 'IPFD', 'WWPD', 'WWBD', 'SOSD'];
+const enDatabase = ['WWJD', 'IPFD', 'WWPD', 'WWBD', 'SOSD'];
 
 // A list of databases that look like CNKI Scholar.
 // It may be modified when this Translator called by other translators.
-var scholarLike = ['WWJD', 'WWBD'];
+const scholarLike = ['WWJD', 'WWBD'];
 
 /**
  * A series of identifiers for item, used to request data from APIs.
  */
 class ID {
 	constructor(doc, url) {
-		let frame = {
+		const frame = {
 			dbname: {
 				selector: 'input#paramdbname',
 				pattern: /[?&](?:db|table)[nN]ame=([^&#/]*)/i
@@ -232,7 +232,7 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	let ids = new ID(doc, url);
+	const ids = new ID(doc, url);
 	Z.debug('detect ids:');
 	Z.debug(ids);
 	const multiplePattern = [
@@ -263,7 +263,7 @@ function detectWeb(doc, url) {
 	// #ModuleSearchResult for commom CNKI,
 	// #contentPanel for journal/yearbook navigation,
 	// .main_sh for old version
-	let searchResult = doc.querySelector('#ModuleSearchResult, #contentPanel, .main_sh');
+	const searchResult = doc.querySelector('#ModuleSearchResult, #contentPanel, .main_sh');
 	if (searchResult) {
 		Z.monitorDOMChanges(searchResult, { childList: true, subtree: true });
 	}
@@ -280,9 +280,9 @@ function detectWeb(doc, url) {
 }
 
 function getSearchResults(doc, url, checkOnly) {
-	var items = {};
-	var found = false;
-	let multiplePage = [
+	const items = {};
+	let found = false;
+	const multiplePage = [
 
 		/*
 		journal navigation
@@ -354,21 +354,21 @@ function getSearchResults(doc, url, checkOnly) {
 
 		/* Search page */
 		{
-			isMatch: /.*/i.test(url),
+			isMatch: true,
 			row: 'table.result-table-list tbody tr',
 			a: 'td.name a',
 			cite: 'td.quote',
 			download: 'td.download'
 		}
 	].find(page => page.isMatch);
-	var rows = doc.querySelectorAll(multiplePage.row);
+	const rows = doc.querySelectorAll(multiplePage.row);
 	if (!rows.length) return false;
 	for (let i = 0; i < rows.length; i++) {
-		let itemKey = {};
-		let header = rows[i].querySelector(multiplePage.a);
+		const itemKey = {};
+		const header = rows[i].querySelector(multiplePage.a);
 		if (!header) continue;
 		itemKey.url = header.href;
-		let title = header.getAttribute('title') || ZU.trimInternal(header.textContent);
+		const title = header.getAttribute('title') || ZU.trimInternal(header.textContent);
 		// Z.debug(`${href}\n${title}`);
 		if (!itemKey.url || !title) continue;
 		if (checkOnly) return true;
@@ -395,15 +395,15 @@ function getSearchResults(doc, url, checkOnly) {
 }
 
 // Whether user ip is in Chinese Mainland, default is true.
-var inMainland = true;
+let inMainland = true;
 
 // Platform of CNKI, default to the National Zong Ku Ping Tai(pin yin of "Total Database Platform").
 // It may be modified when this Translator called by other translators.
-var platform = 'NZKPT';
+const platform = 'NZKPT';
 
 // Css selectors for CNKI Scholar like page, to change the default behavior of CNKI Scholar translator.
 // It may be modified when this Translator called by other translators.
-var csSelectors = {
+const csSelectors = {
 	labels: '.brief h3, .row-scholar',
 	title: '.h1-scholar',
 	abstractNote: '#ChDivSummary',
@@ -438,8 +438,8 @@ async function doWeb(doc, url) {
  * @param {Object} items, items from Zotero.selectedItems().
  */
 async function scrapeMulti(items, doc) {
-	for (let key in items) {
-		let itemKey = JSON.parse(key);
+	for (const key in items) {
+		const itemKey = JSON.parse(key);
 		try {
 			// During debugging, may manually throw an error to guide the program to run inward
 			// throw new Error('debug');
@@ -457,7 +457,7 @@ async function scrapeMulti(items, doc) {
 				if (!Object.keys(items).some(itemKey => JSON.parse(itemKey).cookieName)) {
 					throw new Error('This page is not suitable for using batch export API');
 				}
-				let itemKeys = Object.keys(items)
+				const itemKeys = Object.keys(items)
 					.map(element => JSON.parse(element))
 					.filter(element => element.cookieName);
 				await scrapeWithShowExport(itemKeys, doc);
@@ -485,8 +485,8 @@ async function scrapeMulti(items, doc) {
 }
 
 async function scrape(doc, itemKey = { url: '', cite: '', cookieName: '', downloadlink: '' }) {
-	let url = doc.location.href;
-	let ids = new ID(doc, url);
+	const url = doc.location.href;
+	const ids = new ID(doc, url);
 	Z.debug('scrape single item with ids:');
 	Z.debug(ids);
 	if (exports.scholarLike.includes(ids.dbcode)) {
@@ -501,7 +501,7 @@ async function scrape(doc, itemKey = { url: '', cite: '', cookieName: '', downlo
 			});
 			item.complete();
 		});
-		let cs = await translator.getTranslatorObject();
+		const cs = await translator.getTranslatorObject();
 		cs.selectors = exports.csSelectors;
 		cs.typeKey = text(doc, '.top-tip-scholar > span:first-child');
 		await cs.scrape(doc, url);
@@ -589,11 +589,11 @@ async function scrapeWithGetExport(doc, ids, itemKey) {
 	// throw new Error('debug');
 
 	// e.g. https://ras.cdutcm.lib4s.com:7080/s/net/cnki/kns/G.https/dm/API/GetExport?uniplatform=NZKPT
-	let postUrl = inMainland
+	const postUrl = inMainland
 		? `https://kns.cnki.net/dm/API/GetExport?uniplatform=${exports.platform}`
 		: `${doc.querySelector('.logo > a, a.cnki-logo').href}/kns8/manage/APIGetExport`;
 	// "1": row's sequence in search result page, defualt 1; "0": index of page in search result pages, defualt 0.
-	let postData = `filename=${ids.dbname}!${ids.filename}!${ids.toItemtype() == 'bookSection' ? 'ALMANAC_LM' : '1!0'}`
+	const postData = `filename=${ids.dbname}!${ids.filename}!${ids.toItemtype() == 'bookSection' ? 'ALMANAC_LM' : '1!0'}`
 		+ `${inMainland ? `&uniplatform=${exports.platform}` : ''}`
 		// Although there are two data formats that are redundant,
 		// it can make the request more "ordinary" to server.
@@ -650,11 +650,11 @@ async function scrapeWithShowExport(itemKeys, doc) {
 	// During debugging, may manually throw an error to guide the program to run inward
 	// throw new Error('debug');
 
-	let postUrl = inMainland
+	const postUrl = inMainland
 		? 'https://kns.cnki.net/dm8/api/ShowExport'
 		: `${doc.location.protocol}//${doc.location.host}/kns/manage/ShowExport`;
 	Z.debug(postUrl);
-	let postData = `FileName=${itemKeys.map(key => key.cookieName).join(',')}`
+	const postData = `FileName=${itemKeys.map(key => key.cookieName).join(',')}`
 		+ '&DisplayMode=EndNote'
 		+ '&OrderParam=0'
 		+ '&OrderType=desc'
@@ -662,7 +662,7 @@ async function scrapeWithShowExport(itemKeys, doc) {
 		+ `${inMainland ? `&PageIndex=1&PageSize=20&language=CHS&uniplatform=${exports.platform}` : ''}`
 		+ `&random=${Math.random()}`;
 	Z.debug(postData);
-	let refer = inMainland
+	const refer = inMainland
 		? 'https://kns.cnki.net/dm8/manage/export.html?'
 		: `${doc.location.protocol}//${doc.location.host}/manage/export.html?displaymode=EndNote`;
 	let referText = await request(
@@ -707,25 +707,17 @@ async function scrapeWithShowExport(itemKeys, doc) {
 async function scrapeDoc(doc, itemKey) {
 	Z.debug('scraping from document...');
 
-	let url = doc.location.href;
-	let ids = new ID(doc, url);
-	let more = doc.querySelector('#ChDivSummaryMore');
-	if (more && /更多|More/.test(more.textContent)) {
-		let observer = new MutationObserver(() => {
-			observer.disconnect();
-		});
-		observer.observe(doc.body, { childList: true, subtree: true });
-		more.click();
-	}
-	var newItem = new Zotero.Item(ids.toItemtype());
-	let labels = new LabelsX(doc, 'div.doc div[class^="row"], li.top-space, .total-inform > span');
-	let extra = new Extra();
+	const url = doc.location.href;
+	const ids = new ID(doc, url);
+	const newItem = new Zotero.Item(ids.toItemtype());
+	const labels = new LabelsX(doc, 'div.doc div[class^="row"], li.top-space, .total-inform > span');
+	const extra = new Extra();
 	Z.debug(labels.innerData.map(element => [element[0], ZU.trimInternal(element[1].textContent)]));
 
 	richTextTitle(newItem, doc);
-	newItem.abstractNote = labels.getWith(['摘要', 'Abstract']).replace(/\s*(更多还原|Reset)$/, '');
+	newItem.abstractNote = attr(doc, '#abstract_text', 'value');
 
-	let doi = labels.getWith('DOI');
+	const doi = labels.getWith('DOI');
 	if (ZU.fieldIsValidForType('DOI', newItem.itemType)) {
 		newItem.DOI = doi;
 	}
@@ -780,7 +772,7 @@ async function scrapeDoc(doc, itemKey) {
 	});
 
 	/* tags */
-	let tags = [
+	const tags = [
 		Array.from(doc.querySelectorAll('.keywords > a')).map(element => ZU.trimInternal(element.textContent).replace(/[，；,;]$/, '')),
 		labels.getWith(['关键词', '關鍵詞', 'keywords']).split(/[;，；]\s*/)
 	].find(arr => arr.length);
@@ -789,7 +781,7 @@ async function scrapeDoc(doc, itemKey) {
 	/* specific Fields */
 	switch (newItem.itemType) {
 		case 'journalArticle': {
-			let pubInfo = innerText(doc, '.top-tip');
+			const pubInfo = ZU.trimInternal(innerText(doc, '.top-tip'));
 			newItem.publicationTitle = tryMatch(pubInfo, /^(.+?)\./, 1).replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
 			newItem.volume = tryMatch(pubInfo, /,\s?0*([1-9]\d*)\(/, 1);
 			newItem.issue = tryMatch(pubInfo, /\(([A-Z]?\d*)\)/i, 1).replace(/0*(\d+)/, '$1');
@@ -810,7 +802,7 @@ async function scrapeDoc(doc, itemKey) {
 					CDFD: 'Doctoral dissertation',
 					CDMH: 'Master thesis'
 				}[ids.dbcode];
-			let pubInfo = labels.getWith('出版信息');
+			const pubInfo = labels.getWith('出版信息');
 			newItem.date = ZU.strToISO(pubInfo);
 			newItem.numPages = labels.getWith(['页数', '頁數', 'Page']);
 			labels.getWith(['导师', '導師', 'Tutor']).split(/[;，；]\s*/).forEach((supervisor) => {
@@ -935,12 +927,12 @@ async function scrapeDoc(doc, itemKey) {
 async function parseRefer(referText, doc, url, itemKey) {
 	let item = {};
 
-	let labels = new LabelsX(doc, 'div.doc div[class^="row"], li.top-space, .total-inform > span');
+	const labels = new LabelsX(doc, 'div.doc div[class^="row"], li.top-space, .total-inform > span');
 	Z.debug('get labels:');
 	Z.debug(labels.innerData.map(element => [element[0], ZU.trimInternal(element[1].textContent)]));
-	let extra = new Extra();
-	let ids = new ID(doc, url);
-	let translator = Zotero.loadTranslator('import');
+	const extra = new Extra();
+	const ids = new ID(doc, url);
+	const translator = Zotero.loadTranslator('import');
 	// CNKI Refer
 	translator.setTranslator('7b6b135a-ed39-4d90-8e38-65516671c5bc');
 	translator.setString(referText.replace(/<br>/g, '\n'));
@@ -1016,7 +1008,7 @@ async function parseRefer(referText, doc, url, itemKey) {
 			item.filingDate = labels.getWith(['申请日', '申請日', 'ApplicationDate']);
 			item.applicationNumber = labels.getWith(['申请\\(专利\\)号', '申請\\(專利\\)號', 'ApplicationNumber']);
 			item.issueDate = labels.getWith(['授权公告日', '授權公告日', 'IssuanceDate']);
-			item.rights = text(doc, '.claim > h5 + div');
+			item.rights = text(doc, '.claim > h5+div');
 			break;
 	}
 	item.language = ids.toLanguage();
@@ -1048,7 +1040,7 @@ class LabelsX {
 			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
+				const elementCopy = element.cloneNode(true);
 				// avoid empty text
 				while (/^\s*$/.test(elementCopy.firstChild.textContent)) {
 					// Z.debug(elementCopy.firstChild.textContent);
@@ -1056,12 +1048,12 @@ class LabelsX {
 					// Z.debug(elementCopy.firstChild.textContent);
 				}
 				if (elementCopy.childNodes.length > 1) {
-					let key = elementCopy.removeChild(elementCopy.firstChild).textContent.replace(/\s/g, '');
+					const key = elementCopy.removeChild(elementCopy.firstChild).textContent.replace(/\s/g, '');
 					this.innerData.push([key, elementCopy]);
 				}
 				else {
-					let text = ZU.trimInternal(elementCopy.textContent);
-					let key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					const text = ZU.trimInternal(elementCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
 					elementCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
 					this.innerData.push([key, elementCopy]);
 				}
@@ -1070,9 +1062,9 @@ class LabelsX {
 
 	getWith(label, element = false) {
 		if (Array.isArray(label)) {
-			let results = label
+			const results = label
 				.map(aLabel => this.getWith(aLabel, element));
-			let keyVal = element
+			const keyVal = element
 				? results.find(element => !/^\s*$/.test(element.textContent))
 				: results.find(string => string);
 			return keyVal
@@ -1081,8 +1073,8 @@ class LabelsX {
 					? this.emptyElement
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyVal = this.innerData.find(arr => pattern.test(arr[0]));
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.innerData.find(arr => pattern.test(arr[0]));
 		return keyVal
 			? element
 				? keyVal[1]
@@ -1103,7 +1095,7 @@ class Extra {
 	}
 
 	set(key, val, csl = false) {
-		let target = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		const target = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
 		if (target) {
 			target.val = val;
 		}
@@ -1113,7 +1105,7 @@ class Extra {
 	}
 
 	get(key) {
-		let result = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		const result = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
 		return result
 			? result.val
 			: '';
@@ -1155,14 +1147,14 @@ function cleanName(string, creatorType) {
 }
 
 async function addPubDetail(item, extra, ids, doc) {
-	let pubDoc = {};
+	let pubDoc;
 	try {
 		if (!['journalArticle', 'conferencePaper', 'bookSection'].includes(item.itemType)) {
 			return;
 		}
 		switch (item.itemType) {
 			case 'journalArticle': {
-				let url = inMainland
+				const url = inMainland
 					? doc.querySelector('.top-tip > :first-child > a').href
 					: attr(doc, '.top-tip > :first-child > a', 'onclick').replace(
 						/^.+\('(.+?)',\s*'(.+?)'\).*$/,
@@ -1203,7 +1195,7 @@ async function addPubDetail(item, extra, ids, doc) {
 				break;
 			}
 			case 'bookSection': {
-				let url = doc.querySelector('.book-info a[href*="/issues/"], .container a[href*="/issues/"]').href;
+				const url = doc.querySelector('.book-info a[href*="/issues/"], .container a[href*="/issues/"]').href;
 				Z.debug(url);
 				let id = attr(await requestDocument(url), '#hidYearbookBH', 'value');
 				Z.debug(id);
@@ -1228,7 +1220,7 @@ async function addPubDetail(item, extra, ids, doc) {
 		if (!pubDoc) {
 			throw new Error('Failed to obtain publication document.');
 		}
-		let container = {
+		const container = {
 			originalContainerTitle: ZU.capitalizeTitle(text(pubDoc, '.infobox > h3 > p')),
 			innerData: Array.from(pubDoc.querySelectorAll('.listbox li p'))
 				.map(element => [tryMatch(ZU.trimInternal(element.textContent), /^[[【]?[\s\S]+?[】\]:：]/).replace(/\s/g, ''), attr(element, 'span', 'title') || text(element, 'span')])
@@ -1320,9 +1312,9 @@ function addAttachments(item, doc, url, itemKey) {
 				document: doc
 			});
 		}
-		let pdfLink = strChild(doc, 'a[id^="pdfDown"],.btn-dlpdf > a', 'href');
+		const pdfLink = strChild(doc, 'a[id^="pdfDown"],.btn-dlpdf > a', 'href');
 		Z.debug(`get PDF Link:\n${pdfLink}`);
-		let cajLink = strChild(doc, 'a#cajDown', 'href') || itemKey.downloadlink || strChild(doc, 'a[href*="bar/download"]', 'href');
+		const cajLink = strChild(doc, 'a#cajDown', 'href') || itemKey.downloadlink || strChild(doc, 'a[href*="bar/download"]', 'href');
 		Z.debug(`get CAJ link:\n${cajLink}`);
 		if (keepPDF && pdfLink) {
 			item.attachments.push({
@@ -1351,7 +1343,7 @@ function addAttachments(item, doc, url, itemKey) {
  * @returns
  */
 function strChild(docOrElem, selector, key, index) {
-	let element = index
+	const element = index
 		? docOrElem.querySelector(selector)
 		: docOrElem.querySelectorAll(selector).item(index);
 	return (element && element[key])
@@ -1370,7 +1362,7 @@ function strChild(docOrElem, selector, key, index) {
  */
 function tryMatch(string, pattern, index = 0) {
 	if (!string) return '';
-	let match = string.match(pattern);
+	const match = string.match(pattern);
 	return (match && match[index])
 		? match[index]
 		: '';
