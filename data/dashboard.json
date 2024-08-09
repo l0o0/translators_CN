@@ -4861,7 +4861,7 @@
       "inRepository": true,
       "translatorType": 12,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-07-12 13:00:47"
+      "lastUpdated": "2024-08-09 06:04:54"
     },
     "testCases": [
       {
@@ -6190,6 +6190,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-09 14:13:31 +0800",
+        "message": "修复某些VPN版本中无法抓取date；严格的变量声明；优化摘要抓取"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-07-12 21:03:37 +0800",
         "message": "修复大陆知网无法抓取学位论文PDF"
       },
@@ -6197,11 +6202,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-06-14 20:53:39 +0800",
-        "message": "update CNKI related text parser"
       }
     ]
   },
