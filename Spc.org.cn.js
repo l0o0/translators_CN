@@ -78,31 +78,31 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.extra = '';
 	const labels = new Labels(doc, '.detailedinfo-content-collapse > li');
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
-	newItem.title = labels.getWith('标准名称');
+	newItem.title = labels.get('标准名称');
 	newItem.abstractNote = text(doc, '.detailedinfo-text');
-	newItem.number = labels.getWith('标准号').replace('-', '—');
-	newItem.status = labels.getWith('标准状态');
-	newItem.date = labels.getWith('发布日期');
+	newItem.number = labels.get('标准号').replace('-', '—');
+	newItem.status = labels.get('标准状态');
+	newItem.date = labels.get('发布日期');
 	newItem.url = url;
-	newItem.numPages = labels.getWith('页数');
+	newItem.numPages = labels.get('页数');
 	newItem.language = {
 		中文简体: 'zh-CN'
-	}[labels.getWith('出版语种')];
+	}[labels.get('出版语种')];
 	newItem.libraryCatalog = '中国标准在线服务网';
-	newItem.extra += addExtra('original-title', labels.getWith('英文名称'));
-	newItem.extra += addExtra('applyDate', labels.getWith('实施日期'));
-	newItem.extra += addExtra('ICS', labels.getWith('标准ICS号'));
-	newItem.extra += addExtra('CCS', labels.getWith('中标分类号'));
-	newItem.extra += addExtra('draftsman', labels.getWith('起草人'));
-	newItem.extra += addExtra('drafting-committee', labels.getWith('起草单位'));
-	newItem.extra += addExtra('presenter', labels.getWith('提出部门'));
-	newItem.extra += addExtra('substitute-for', labels.getWith('替代以下标准'));
-	newItem.extra += addExtra('substitute-by', labels.getWith('被以下标准替代'));
-	newItem.extra += addExtra('reference', labels.getWith('引用标准'));
-	newItem.extra += addExtra('adopted', labels.getWith('采用标准'));
+	newItem.extra += addExtra('original-title', labels.get('英文名称'));
+	newItem.extra += addExtra('applyDate', labels.get('实施日期'));
+	newItem.extra += addExtra('ICS', labels.get('标准ICS号'));
+	newItem.extra += addExtra('CCS', labels.get('中标分类号'));
+	newItem.extra += addExtra('draftsman', labels.get('起草人'));
+	newItem.extra += addExtra('drafting-committee', labels.get('起草单位'));
+	newItem.extra += addExtra('presenter', labels.get('提出部门'));
+	newItem.extra += addExtra('substitute-for', labels.get('替代以下标准'));
+	newItem.extra += addExtra('substitute-by', labels.get('被以下标准替代'));
+	newItem.extra += addExtra('reference', labels.get('引用标准'));
+	newItem.extra += addExtra('adopted', labels.get('采用标准'));
 	newItem.creators.push({
 		firstName: '',
-		lastName: labels.getWith('归口单位').replace(/\(.*\)$/, ''),
+		lastName: labels.get('归口单位').replace(/\(.*\)$/, ''),
 		creatorType: 'author',
 		fieldMode: 1
 	});
@@ -111,38 +111,65 @@ async function scrape(doc, url = doc.location.href) {
 
 class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
-			.filter(element => element.firstElementChild)
+			// avoid nesting
 			.filter(element => !element.querySelector(selector))
+			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
-				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
-				this.innerData.push([key, elementCopy]);
+				const elmCopy = element.cloneNode(true);
+				// avoid empty text
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
+					// Z.debug(elementCopy.firstChild.textContent);
+					elmCopy.removeChild(elmCopy.firstChild);
+					// Z.debug(elementCopy.firstChild.textContent);
+				}
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
+				}
+				else {
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
+				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element));
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].innerText)
-			: '';
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElm
+				: '';
 	}
+}
+
+function tryMatch(string, pattern, index = 0) {
+	if (!string) return '';
+	const match = string.match(pattern);
+	return (match && match[index])
+		? match[index]
+		: '';
 }
 
 function addExtra(key, value) {

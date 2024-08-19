@@ -85,40 +85,40 @@ async function scrape(doc, url = doc.location.href) {
 	info = info.find(element => element.includes('#makeCitation')).match(/var .*? = ".*"/g);
 	info.forEach((string) => {
 		let key = tryMatch(string, /var (.+) = ".*"/, 1);
-		let element = document.createElement('div');
+		let element = doc.createElement('div');
 		element.innerHTML = tryMatch(string, /var .+ = "(.*)"/, 1);
-		labels.innerData.push([key, element]);
+		labels.data.push([key, element]);
 	});
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	newItem.abstractNote = ZU.trimInternal(text(doc, 'div.summaryCon')).replace(/<*$/, '');
-	labels.getWith('author').split(',').forEach(creator => newItem.creators.push(processName(creator, 'author'))
+	labels.get('author').split(',').forEach(creator => newItem.creators.push(processName(creator, 'author'))
 	);
 	switch (newItem.itemType) {
 		case 'book':
-			newItem.title = labels.getWith('书名');
-			newItem.ISBN = labels.getWith('ISBN');
-			labels.getWith('关键词', true).querySelectorAll('a').forEach(element => newItem.tags.push(element.innerText));
-			newItem.extra += addExtra('original-title', labels.getWith('英文名'));
+			newItem.title = labels.get('书名');
+			newItem.ISBN = labels.get('ISBN');
+			labels.get('关键词', true).querySelectorAll('a').forEach(element => newItem.tags.push(element.innerText));
+			newItem.extra += addExtra('original-title', labels.get('英文名'));
 			break;
 		case 'bookSection':
 			newItem.title = text(doc, '.title');
-			newItem.bookTitle = labels.getWith('pertainbook');
-			newItem.series = labels.getWith('所属丛书').replace(/\s*订阅$/, '');
-			newItem.pages = labels.getWith('ebookNumber');
-			newItem.extra += addExtra('words', labels.getWith('报告字数'));
-			newItem.extra += addExtra('numpages', labels.getWith('报告页数'));
-			newItem.extra += addExtra('views', labels.getWith('浏览人数'));
-			newItem.extra += addExtra('downloads', labels.getWith('下载次数'));
+			newItem.bookTitle = labels.get('pertainbook');
+			newItem.series = labels.get('所属丛书').replace(/\s*订阅$/, '');
+			newItem.pages = labels.get('ebookNumber');
+			newItem.extra += addExtra('words', labels.get('报告字数'));
+			newItem.extra += addExtra('numpages', labels.get('报告页数'));
+			newItem.extra += addExtra('views', labels.get('浏览人数'));
+			newItem.extra += addExtra('downloads', labels.get('下载次数'));
 			doc.querySelectorAll('.d-keyword a').forEach(element => newItem.tags.push(element.innerText));
-			labels.getWith('bookauthor').split(',').forEach(creator => newItem.creators.push(processName(creator, 'bookAuthor'))
+			labels.get('bookauthor').split(',').forEach(creator => newItem.creators.push(processName(creator, 'bookAuthor'))
 			);
 			break;
 		default:
 			break;
 	}
-	newItem.place = labels.getWith('province');
-	newItem.publisher = labels.getWith('publishname');
-	newItem.date = labels.getWith('publishdate');
+	newItem.place = labels.get('province');
+	newItem.publisher = labels.get('publishname');
+	newItem.date = labels.get('publishdate');
 	newItem.attachments.push({
 		tittle: 'Snapshot',
 		document: doc,
@@ -129,53 +129,56 @@ async function scrape(doc, url = doc.location.href) {
 
 class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
 			// avoid nesting
 			.filter(element => !element.querySelector(selector))
 			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
+				const elmCopy = element.cloneNode(true);
 				// avoid empty text
-				while (!elementCopy.firstChild.textContent.replace(/\s/g, '')) {
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
 					// Z.debug(elementCopy.firstChild.textContent);
-					elementCopy.removeChild(elementCopy.firstChild);
+					elmCopy.removeChild(elmCopy.firstChild);
 					// Z.debug(elementCopy.firstChild.textContent);
 				}
-				if (elementCopy.childNodes.length > 1) {
-					let key = elementCopy.removeChild(elementCopy.firstChild).textContent.replace(/\s/g, '');
-					this.innerData.push([key, elementCopy]);
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
 				}
 				else {
-					let text = ZU.trimInternal(elementCopy.textContent);
-					let key = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]/).replace(/\s/g, '');
-					elementCopy.textContent = tryMatch(text, /^[[【]?[\s\S]+?[】\]:：]\s*(.+)/, 1);
-					this.innerData.push([key, elementCopy]);
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
 				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element))
-				.filter(element => element);
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].textContent)
-			: '';
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElm
+				: '';
 	}
 }
 

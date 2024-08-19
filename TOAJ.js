@@ -76,11 +76,11 @@ async function doWeb(doc, url) {
 
 async function scrape(doc, url = doc.location.href) {
 	let newItem = new Z.Item('journalArticle');
-	let labels = new LabelsX(doc, '.article-field__outer > div');
+	let labels = new Labels(doc, '.article-field__outer > div');
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	let extra = new Extra();
 	newItem.title = text(doc, '.main-title');
-	newItem.abstractNote = labels.getWith('中文摘要');
+	newItem.abstractNote = labels.get('中文摘要');
 	extra.set('original-title', ZU.capitalizeTitle(text(doc, '.sub-title')), true);
 	try {
 		let pubDoc = await requestDocument(attr(doc, '[x-data="content"] > div:first-child > a', 'href'));
@@ -98,7 +98,7 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.url = url;
 	newItem.libraryCatalog = '臺灣學術期刊開放取用平台';
 	let creators = [];
-	labels.getWith('作者', true).querySelectorAll('div.gap-1').forEach((element) => {
+	labels.get('作者', true).querySelectorAll('div.gap-1').forEach((element) => {
 		let creator = text(element, 'div:first-child');
 		creators.push({
 			firstName: '',
@@ -124,62 +124,62 @@ async function scrape(doc, url = doc.location.href) {
 			mimeType: 'application/pdf'
 		});
 	}
-	newItem.tags = `${labels.getWith('中文關鍵字')}；${labels.getWith('英文關鍵字')}`.split(/[;；]\s*/);
+	newItem.tags = `${labels.get('中文關鍵字')}；${labels.get('英文關鍵字')}`.split(/[;；]\s*/);
 	newItem.extra = extra.toString();
 	newItem.complete();
 }
 
-class LabelsX {
+class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
-		this.emptyElement = doc.createElement('div');
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
 			// avoid nesting
 			.filter(element => !element.querySelector(selector))
 			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
+				const elmCopy = element.cloneNode(true);
 				// avoid empty text
-				while (/^\s*$/.test(elementCopy.firstChild.textContent)) {
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
 					// Z.debug(elementCopy.firstChild.textContent);
-					elementCopy.removeChild(elementCopy.firstChild);
+					elmCopy.removeChild(elmCopy.firstChild);
 					// Z.debug(elementCopy.firstChild.textContent);
 				}
-				if (elementCopy.childNodes.length > 1) {
-					let key = elementCopy.removeChild(elementCopy.firstChild).textContent.replace(/\s/g, '');
-					this.innerData.push([key, elementCopy]);
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
 				}
 				else {
-					let text = ZU.trimInternal(elementCopy.textContent);
-					let key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
-					elementCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
-					this.innerData.push([key, elementCopy]);
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
 				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let results = label
-				.map(aLabel => this.getWith(aLabel, element));
-			let keyVal = element
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
 				? results.find(element => !/^\s*$/.test(element.textContent))
 				: results.find(string => string);
 			return keyVal
 				? keyVal
 				: element
-					? this.emptyElement
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyVal = this.innerData.find(arr => pattern.test(arr[0]));
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
 		return keyVal
 			? element
 				? keyVal[1]
 				: ZU.trimInternal(keyVal[1].textContent)
 			: element
-				? this.emptyElement
+				? this.emptyElm
 				: '';
 	}
 }

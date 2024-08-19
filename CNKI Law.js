@@ -111,7 +111,7 @@ async function scrapeAPI(doc, url = doc.location.href) {
 	Z.debug(`dbname: ${dbname}`);
 	let filename = tryMatch(url, /filename=([^&#/]+)/i, 1);
 	Z.debug(`filename: ${filename}`);
-	let labels = new LabelsX(doc, '[class*="summary"] > p, [class*="summary"] > ul > li');
+	let labels = new Labels(doc, '[class*="summary"] > p, [class*="summary"] > ul > li');
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	let extra = new Extra();
 	let referDoc = await requestDocument(
@@ -152,9 +152,9 @@ async function scrapeAPI(doc, url = doc.location.href) {
 		let referText = referDoc.querySelector('.mainTable tbody > tr > td').innerHTML.replace(/<br>/g, '\n');
 		let caseItem = new Z.Item('case');
 		caseItem.caseName = text(doc, '#title > h1');
-		caseItem.abstractNote = labels.getWith('本案争议焦点');
+		caseItem.abstractNote = labels.get('本案争议焦点');
 		caseItem.court = tryMatch(referText, /^%S (.*)/m, 1);
-		caseItem.dateDecided = labels.getWith('审理年度');
+		caseItem.dateDecided = labels.get('审理年度');
 		caseItem.url = 'https://lawnew.cnki.net/kcms/detail/detail.aspx?'
 			+ `dbcode=${tryMatch(url, /dbcode=([^&#/]+)/i, 1)}`
 			+ `&dbname=${tryMatch(url, /dbname=([^&#/]+)/i, 1)}`
@@ -180,11 +180,11 @@ async function scrapeAPI(doc, url = doc.location.href) {
 					extra.set('original-container-title', text(doc, 'a[onclick*="getKns"]', 1));
 					break;
 				case 'conferencePaper':
-					item.proceedingsTitle = labels.getWith('会议录名称');
-					extra.set('organizer', labels.getWith('机构').replace(/；$/, ''));
+					item.proceedingsTitle = labels.get('会议录名称');
+					extra.set('organizer', labels.get('机构').replace(/；$/, ''));
 					break;
 				case 'newspaperArticle':
-					item.abstractNote = labels.getWith('正文快照');
+					item.abstractNote = labels.get('正文快照');
 					break;
 			}
 			fixItem(item, extra, doc, url);
@@ -196,7 +196,7 @@ async function scrapeAPI(doc, url = doc.location.href) {
 }
 
 async function scrapeDoc(doc, url = doc.location.href) {
-	let labels = new LabelsX(doc, '[class*="summary"] > p, .summary > div > p');
+	let labels = new Labels(doc, '[class*="summary"] > p, .summary > div > p');
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	let extra = new Extra();
 	var newItem = new Z.Item(detectWeb(doc, url));
@@ -204,16 +204,16 @@ async function scrapeDoc(doc, url = doc.location.href) {
 	if (title.startsWith('中华人民共和国')) {
 		newItem.shortTitle = title.substring(7);
 	}
-	newItem.abstractNote = labels.getWith('正文快照');
+	newItem.abstractNote = labels.get('正文快照');
 	switch (newItem.itemType) {
 		case 'statute': {
 			newItem.nameOfAct = title;
-			newItem.publicLawNumber = labels.getWith('发文字号');
-			newItem.dateEnacted = labels.getWith('发布日期');
-			if (labels.getWith('时效性') == '已失效') {
+			newItem.publicLawNumber = labels.get('发文字号');
+			newItem.dateEnacted = labels.get('发布日期');
+			if (labels.get('时效性') == '已失效') {
 				extra.set('Status', '已废止', true);
 			}
-			let rank = labels.getWith('效力级别');
+			let rank = labels.get('效力级别');
 			if (!rank.includes('法律')) {
 				extra.set('Type', extra.get('Type') || 'regulation', true);
 			}
@@ -229,13 +229,13 @@ async function scrapeDoc(doc, url = doc.location.href) {
 
 function fixItem(item, extra, doc, url) {
 	item.language = 'zh-CN';
-	let labels = new LabelsX(doc, '[class*="summary"] > p, .summary > div > p');
+	let labels = new Labels(doc, '[class*="summary"] > p, .summary > div > p');
 	item.url = 'https://lawnew.cnki.net/kcms/detail/detail.aspx?'
 		+ `dbcode=${tryMatch(url, /dbcode=([^&#/]+)/i, 1)}`
 		+ `&dbname=${tryMatch(url, /dbname=([^&#/]+)/i, 1)}`
 		+ `&filename=${tryMatch(url, /filename=([^&#/]+)/i, 1)}`;
-	extra.set('applyDate', labels.getWith('实施日期'));
-	extra.set('download', labels.getWith('下载频次'));
+	extra.set('applyDate', labels.get('实施日期'));
+	extra.set('download', labels.get('下载频次'));
 	extra.set('CNKICite', text(doc, '#rc3').slice(1, -1));
 	let attachLink = doc.querySelector('[class*="pdf"] > a') || doc.querySelector('[class*="caj"] > a') || doc.querySelector('[class*="whole"] > a');
 	if (attachLink) {
@@ -248,57 +248,57 @@ function fixItem(item, extra, doc, url) {
 	}
 }
 
-class LabelsX {
+class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
-		this.emptyElement = doc.createElement('div');
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
 			// avoid nesting
 			.filter(element => !element.querySelector(selector))
 			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
+				const elmCopy = element.cloneNode(true);
 				// avoid empty text
-				while (/^\s*$/.test(elementCopy.firstChild.textContent)) {
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
 					// Z.debug(elementCopy.firstChild.textContent);
-					elementCopy.removeChild(elementCopy.firstChild);
+					elmCopy.removeChild(elmCopy.firstChild);
 					// Z.debug(elementCopy.firstChild.textContent);
 				}
-				if (elementCopy.childNodes.length > 1) {
-					let key = elementCopy.removeChild(elementCopy.firstChild).textContent.replace(/\s/g, '');
-					this.innerData.push([key, elementCopy]);
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
 				}
 				else {
-					let text = ZU.trimInternal(elementCopy.textContent);
-					let key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
-					elementCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
-					this.innerData.push([key, elementCopy]);
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
 				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let results = label
-				.map(aLabel => this.getWith(aLabel, element));
-			let keyVal = element
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
 				? results.find(element => !/^\s*$/.test(element.textContent))
 				: results.find(string => string);
 			return keyVal
 				? keyVal
 				: element
-					? this.emptyElement
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyVal = this.innerData.find(arr => pattern.test(arr[0]));
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
 		return keyVal
 			? element
 				? keyVal[1]
 				: ZU.trimInternal(keyVal[1].textContent)
 			: element
-				? this.emptyElement
+				? this.emptyElm
 				: '';
 	}
 }

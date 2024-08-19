@@ -88,7 +88,7 @@ async function doWeb(doc, url) {
 
 async function scrape(doc, url = doc.location.href) {
 	Z.debug(doc.body.innerText);
-	const labels = new LabelsX(doc, '.content > ul:first-child > li, .tubox dd');
+	const labels = new Labels(doc, '.content > ul:first-child > li, .tubox dd');
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	let extra = new Extra();
 	var newItem = new Zotero.Item(detectWeb(doc, url));
@@ -98,11 +98,11 @@ async function scrape(doc, url = doc.location.href) {
 	// .tu_content 见于图书
 	// #more 见于学位论文
 	// div[id^="content"]见于专利
-	newItem.abstractNote = innerText(doc, '#zymore, .tu_content, #more, div[id^="content"]').replace(/^【摘 要】/, '') || labels.getWith('简介');
+	newItem.abstractNote = innerText(doc, '#zymore, .tu_content, #more, div[id^="content"]').replace(/^【摘 要】/, '') || labels.get('简介');
 	switch (newItem.itemType) {
 		case 'book': {
-			let pubInfo = labels.getWith('出版项');
-			newItem.series = labels.getWith('丛书名');
+			let pubInfo = labels.get('出版项');
+			newItem.series = labels.get('丛书名');
 			// newItem.seriesNumber = 系列编号;
 			// newItem.volume = 卷次;
 			// newItem.numberOfVolumes = 总卷数;
@@ -110,12 +110,12 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.place = tryMatch(pubInfo, /(.+)：/, 1);
 			newItem.publisher = tryMatch(pubInfo, /：\s*(.+)，\s*/);
 			newItem.date = ZU.strToISO(tryMatch(pubInfo, /[\d.]*$/));
-			newItem.numPages = labels.getWith('形态项');
-			newItem.ISBN = labels.getWith('ISBN号');
-			extra.set('CLC', labels.getWith('中图分类法'));
-			extra.set('price', labels.getWith('定价'));
+			newItem.numPages = labels.get('形态项');
+			newItem.ISBN = labels.get('ISBN号');
+			extra.set('CLC', labels.get('中图分类法'));
+			extra.set('price', labels.get('定价'));
 			let creators = [];
-			labels.getWith('作者').replace(/(\w)，(\w)/g, '$1, $2')
+			labels.get('作者').replace(/(\w)，(\w)/g, '$1, $2')
 				.split('；')
 				.forEach((group) => {
 					let creatorType = /译$/.test(group)
@@ -149,42 +149,42 @@ async function scrape(doc, url = doc.location.href) {
 			break;
 		}
 		case 'journalArticle':
-			newItem.publicationTitle = labels.getWith('刊名');
+			newItem.publicationTitle = labels.get('刊名');
 			// newItem.volume = 卷次;
-			newItem.issue = tryMatch(labels.getWith('期号'), /0*([1-9]\d*)/, 1);
+			newItem.issue = tryMatch(labels.get('期号'), /0*([1-9]\d*)/, 1);
 			// newItem.pages = 页码;
-			newItem.date = labels.getWith('出版日期');
-			extra.set('original-title', labels.getWith('外文题名'), true);
-			extra.set('fund', labels.getWith('基金项目'));
-			extra.set('if', labels.getWith('影响因子'));
-			labels.getWith('作者', true).querySelectorAll('a').forEach(element => newItem.creators.push(cleanAuthor(element.textContent, 'author')));
-			labels.getWith('关键词', true).querySelectorAll('a').forEach(element => newItem.tags.push(element.textContent));
+			newItem.date = labels.get('出版日期');
+			extra.set('original-title', labels.get('外文题名'), true);
+			extra.set('fund', labels.get('基金项目'));
+			extra.set('if', labels.get('影响因子'));
+			labels.get('作者', true).querySelectorAll('a').forEach(element => newItem.creators.push(cleanAuthor(element.textContent, 'author')));
+			labels.get('关键词', true).querySelectorAll('a').forEach(element => newItem.tags.push(element.textContent));
 			break;
 		case 'newspaperArticle':
-			newItem.publicationTitle = labels.getWith('来源');
-			newItem.date = ZU.strToISO(labels.getWith('日期'));
-			newItem.paegs = tryMatch(labels.getWith('版次'), /0*([1-9]\d*)/, 1);
-			labels.getWith('作者', true).querySelectorAll('a').forEach(element => newItem.creators.push(cleanAuthor(element.textContent, 'author')));
+			newItem.publicationTitle = labels.get('来源');
+			newItem.date = ZU.strToISO(labels.get('日期'));
+			newItem.paegs = tryMatch(labels.get('版次'), /0*([1-9]\d*)/, 1);
+			labels.get('作者', true).querySelectorAll('a').forEach(element => newItem.creators.push(cleanAuthor(element.textContent, 'author')));
 			// 报纸语言皆为中文，使用空格分割不会造成意外
-			labels.getWith('关键词').split(' ').forEach(tag => newItem.tags.push(tag));
+			labels.get('关键词').split(' ').forEach(tag => newItem.tags.push(tag));
 			break;
 		case 'thesis':
-			newItem.thesisType = `${labels.getWith('学位名称')}学位论文`;
-			newItem.university = labels.getWith('学位授予单位');
-			newItem.date = labels.getWith('学位年度');
-			newItem.creators.push(cleanAuthor(labels.getWith('作者'), 'author'));
-			labels.getWith('导师').split('，').forEach(creator => newItem.creators.push(cleanAuthor(creator, 'contributor')));
+			newItem.thesisType = `${labels.get('学位名称')}学位论文`;
+			newItem.university = labels.get('学位授予单位');
+			newItem.date = labels.get('学位年度');
+			newItem.creators.push(cleanAuthor(labels.get('作者'), 'author'));
+			labels.get('导师').split('，').forEach(creator => newItem.creators.push(cleanAuthor(creator, 'contributor')));
 			break;
 		case 'conferencePaper':
-			newItem.date = labels.getWith('日期');
-			newItem.proceedingsTitle = labels.getWith('会议录名称');
-			newItem.conferenceName = labels.getWith('会议名称');
-			labels.getWith('作者', true).querySelectorAll('a').forEach(element => newItem.creators.push(cleanAuthor(element.textContent, 'author')));
-			labels.getWith('关键词', true).querySelectorAll('a').forEach(element => newItem.tags.push(element.textContent));
+			newItem.date = labels.get('日期');
+			newItem.proceedingsTitle = labels.get('会议录名称');
+			newItem.conferenceName = labels.get('会议名称');
+			labels.get('作者', true).querySelectorAll('a').forEach(element => newItem.creators.push(cleanAuthor(element.textContent, 'author')));
+			labels.get('关键词', true).querySelectorAll('a').forEach(element => newItem.tags.push(element.textContent));
 			break;
 		case 'patent': {
-			newItem.filingDate = ZU.strToISO(labels.getWith('申请日期'));
-			newItem.applicationNumber = labels.getWith('申请号');
+			newItem.filingDate = ZU.strToISO(labels.get('申请日期'));
+			newItem.applicationNumber = labels.get('申请号');
 			let patentDetail = attr(doc, 'li > a[href*="pat.hnipo"]', 'href');
 			if (newItem.itemType == 'patent' && patentDetail) {
 				let detailDoc = await requestDocument(patentDetail);
@@ -200,19 +200,19 @@ async function scrape(doc, url = doc.location.href) {
 				newItem.issueDate = tabel.getNext('法律状态公告日');
 				newItem.legalStatus = tabel.getNext('法律状态');
 			}
-			extra.set('Genre', labels.getWith('专利类型'), true);
-			labels.getWith('发明人').split('，').forEach(creator => newItem.creators.push(cleanAuthor(creator, 'inventor')));
+			extra.set('Genre', labels.get('专利类型'), true);
+			labels.get('发明人').split('，').forEach(creator => newItem.creators.push(cleanAuthor(creator, 'inventor')));
 			break;
 		}
 		case 'standard':
-			newItem.number = labels.getWith('标准号').replace('-', '—');
-			extra.set('original-title', labels.getWith('标准英文名'), true);
-			extra.set('IPC', labels.getWith('IPC分类号'));
-			extra.set('ICS', labels.getWith('ICS分类号'));
-			extra.set('reference', labels.getWith('引用标准'));
-			extra.set('draftingCommittee', labels.getWith('起草单位'));
-			extra.set('replacement', labels.getWith('替代情况'));
-			extra.set('CCS', labels.getWith('中标分类号'));
+			newItem.number = labels.get('标准号').replace('-', '—');
+			extra.set('original-title', labels.get('标准英文名'), true);
+			extra.set('IPC', labels.get('IPC分类号'));
+			extra.set('ICS', labels.get('ICS分类号'));
+			extra.set('reference', labels.get('引用标准'));
+			extra.set('draftingCommittee', labels.get('起草单位'));
+			extra.set('replacement', labels.get('替代情况'));
+			extra.set('CCS', labels.get('中标分类号'));
 			break;
 		default:
 			break;
@@ -222,57 +222,57 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.complete();
 }
 
-class LabelsX {
+class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
-		this.emptyElement = doc.createElement('div');
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
 			// avoid nesting
 			.filter(element => !element.querySelector(selector))
 			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
+				const elmCopy = element.cloneNode(true);
 				// avoid empty text
-				while (/^\s*$/.test(elementCopy.firstChild.textContent)) {
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
 					// Z.debug(elementCopy.firstChild.textContent);
-					elementCopy.removeChild(elementCopy.firstChild);
+					elmCopy.removeChild(elmCopy.firstChild);
 					// Z.debug(elementCopy.firstChild.textContent);
 				}
-				if (elementCopy.childNodes.length > 1) {
-					let key = elementCopy.removeChild(elementCopy.firstChild).textContent.replace(/\s/g, '');
-					this.innerData.push([key, elementCopy]);
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
 				}
 				else {
-					let text = ZU.trimInternal(elementCopy.textContent);
-					let key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
-					elementCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
-					this.innerData.push([key, elementCopy]);
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
 				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let results = label
-				.map(aLabel => this.getWith(aLabel, element));
-			let keyVal = element
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
 				? results.find(element => !/^\s*$/.test(element.textContent))
 				: results.find(string => string);
 			return keyVal
 				? keyVal
 				: element
-					? this.emptyElement
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyVal = this.innerData.find(arr => pattern.test(arr[0]));
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
 		return keyVal
 			? element
 				? keyVal[1]
 				: ZU.trimInternal(keyVal[1].textContent)
 			: element
-				? this.emptyElement
+				? this.emptyElm
 				: '';
 	}
 }

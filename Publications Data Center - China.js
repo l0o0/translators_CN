@@ -209,7 +209,7 @@ const fieldMap = {
 };
 
 async function scrapeSingle(doc, url = doc.location.href) {
-	let labels = new CellLabels(doc, 'tr > td');
+	let labels = new Cells(doc, 'tr > td');
 	let newItem = new Z.Item('book');
 	let extra = new Extra();
 	addFileds(newItem, extra, labels, 'labels');
@@ -217,14 +217,14 @@ async function scrapeSingle(doc, url = doc.location.href) {
 	if (new URL(url.replace('#', '')).searchParams.get('type').includes('ele')) {
 		extra.set('medium', 'CD', true);
 	}
-	processCreators(newItem, extra, labels.getWith(['作者', '著作权人', '其他著作者']));
+	processCreators(newItem, extra, labels.get(['作者', '著作权人', '其他著作者']));
 	newItem.extra = extra.toString();
 	newItem.attachments.push({
 		url: url,
 		title: 'Snapshot',
 		mimeType: 'text/html'
 	});
-	newItem.tags = labels.getWith('主题词').split(/\s?[;,，；－]\s?/g);
+	newItem.tags = labels.get('主题词').split(/\s?[;,，；－]\s?/g);
 	newItem.complete();
 }
 
@@ -247,7 +247,7 @@ async function scrapeMulti(postData) {
 	let plainText = aescbc.utf8.fromBytes(aescbc.pkcs7.strip(cbc.decrypt(ciphertext)));
 	const jsonData = {
 		innerData: JSON.parse(plainText),
-		getWith: function (keys) {
+		get: function (keys) {
 			for (let key of keys) {
 				let result = this.innerData[key];
 				if (result && (result != '**')) {
@@ -262,14 +262,14 @@ async function scrapeMulti(postData) {
 	let extra = new Extra();
 	addFileds(newItem, extra, jsonData, 'keys');
 	
-	let subBookName = jsonData.getWith(['subbookname']);
+	let subBookName = jsonData.get(['subbookname']);
 	if (subBookName) {
 		newItem.shortTitle = newItem.title;
 		newItem.title = `${newItem.title}（${subBookName}）`;
 	}
 	let url = `https://pdc.capub.cn/search.html#/detail?id=${postData.id}&from=1&type=${postData.type}`;
 	newItem.url = url;
-	processCreators(newItem, extra, jsonData.getWith(['firstauthor', 'copyrightor', 'authorother']));
+	processCreators(newItem, extra, jsonData.get(['firstauthor', 'copyrightor', 'authorother']));
 	if (postData.type.includes('ele')) {
 		extra.set('medium', 'CD', true);
 	}
@@ -278,38 +278,39 @@ async function scrapeMulti(postData) {
 		title: 'Snapshot',
 		mimeType: 'text/html'
 	});
-	newItem.tags = jsonData.getWith('keyword').split(/\s?[;,，；－]\s?/g);
+	newItem.tags = jsonData.get('keyword').split(/\s?[;,，；－]\s?/g);
 	newItem.extra = extra.toString();
 	newItem.complete();
 }
 
-class CellLabels {
+class Cells {
 	constructor(doc, selector) {
-		this.innerData = [];
-		let cells = Array.from(doc.querySelectorAll(selector)).filter(element => !element.querySelector(selector));
+		this.emptyElm = doc.createElement('div');
+		this.data = [];
+		const cells = Array.from(doc.querySelectorAll(selector)).filter(element => !element.querySelector(selector));
 		let i = 0;
 		while (cells[i + 1]) {
-			this.innerData.push([cells[i].textContent.replace(/\s*/g, ''), cells[i + 1]]);
+			this.data.push([cells[i].textContent.replace(/\s*/g, ''), cells[i + 1]]);
 			i += 2;
 		}
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
 			let result = label
-				.map(aLabel => this.getWith(aLabel, element));
+				.map(aLabel => this.get(aLabel, element));
 			result = element
 				? result.find(element => element.childNodes.length)
 				: result.find(element => element);
 			return result
 				? result
 				: element
-					? document.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label);
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
+		const pattern = new RegExp(label);
+		const keyValPair = this.data.find(element => pattern.test(element[0]));
+		if (element) return keyValPair ? keyValPair[1] : this.emptyElm;
 		return keyValPair
 			? ZU.trimInternal(keyValPair[1].innerText)
 			: '';
@@ -1114,6 +1115,6 @@ var testCases = [
 				"seeAlso": []
 			}
 		]
-	}	
+	}
 ]
 /** END TEST CASES **/

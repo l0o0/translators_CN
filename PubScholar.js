@@ -69,7 +69,7 @@ async function doWeb(doc, url) {
 	let citeAs = text(doc, '.QuoteListItem__content').replace(/\.$/, '').split('.');
 	citeAs = citeAs[citeAs.length - 1];
 	Z.debug(citeAs);
-	var labels = new LabelsX(doc, '[class$="Analytics__item"]');
+	var labels = new Labels(doc, '[class$="Analytics__item"]');
 	var newItem = new Z.Item(detectWeb(doc, url));
 	newItem.title = text(doc, 'span[class$="__titleText"]');
 	newItem.language = /[\u4e00-\u9fff]/.test(newItem.title)
@@ -79,23 +79,24 @@ async function doWeb(doc, url) {
 		newItem.abstractNote = text(doc, '[class*="abstracts"]').replace(/\s*收起$/, '');
 	});
 	await clickMore(doc.querySelector('AuthorInfo__extra'), () => { });
+	const extra = new Extra();
 	switch (newItem.itemType) {
 		case 'journalArticle': {
-			let labels = new LabelsX(doc, '.JournalContent__meta');
+			let labels = new Labels(doc, '.JournalContent__meta');
 			newItem.date = tryMatch(citeAs, /\d{4}/, 0);
 			newItem.pages = tryMatch(citeAs, /:([\d+-]*)$/, 1);
 			newItem.publicationTitle = ZU.capitalizeTitle(text(doc, '.JournalContent__title'));
 			newItem.volume = tryMatch(citeAs, /\d{4},\s?(\d*)\(?/, 1);
 			newItem.issue = tryMatch(citeAs, /\((\d*)\)/, 1);
-			newItem.ISSN = labels.getWith('ISSN');
+			newItem.ISSN = labels.get('ISSN');
 			doc.querySelectorAll('.AuthorInfo__nameText > span').forEach((element) => {
 				newItem.creators.push(cleanName(ZU.trimInternal(element.textContent), 'author'));
 			});
-			extra.add('IF', labels.getWith('影响因子'));
+			extra.set('IF', labels.get('影响因子'));
 			break;
 		}
 		case 'thesis': {
-			let labels = new LabelsX(doc, '.ArticleInfo__sourceTitle > span:not([class$="comma"])');
+			let labels = new Labels(doc, '.ArticleInfo__sourceTitle > span:not([class$="comma"])');
 			newItem.thesisType = newItem.language == 'zh-CN'
 				? /硕士/.test(text(doc, '.AuthorInfo__nameText.is-disabled'))
 					? '硕士学位论文'
@@ -103,8 +104,8 @@ async function doWeb(doc, url) {
 				: /Doctor/i.test(text(doc, '.AuthorInfo__nameText.is-disabled'))
 					? 'Doctoral dissertation'
 					: 'Master thesis';
-			newItem.university = labels.getWith('授予单位');
-			newItem.date = labels.getWith('授予时间');
+			newItem.university = labels.get('授予单位');
+			newItem.date = labels.get('授予时间');
 			newItem.creators.push(cleanName(text(doc, '.AuthorInfo__name:not(.AuthorInfo__name--light)  > .AuthorInfo__nameText'), 'author'));
 			text(doc, '.AuthorInfo__name.AuthorInfo__name--light > span > .AuthorInfo__nameText').split(/[;，；、]/).forEach((string) => {
 				newItem.creators.push(cleanName(string, 'contributor'));
@@ -116,25 +117,25 @@ async function doWeb(doc, url) {
 			newItem.date = text(doc, '.ArticleInfo__sourceTitle > span:last-child');
 			break;
 		case 'patent': {
-			let labels = new LabelsX(doc, '.AuthorInfo__content');
+			let labels = new Labels(doc, '.AuthorInfo__content');
 			newItem.abstractNote = text(doc, '.FullAbstracts');
 			newItem.filingDate = next(doc, 'span[class$="__label"]', '申请日');
 			newItem.applicationNumber = next(doc, 'span[class$="__label"]', '申请号');
 			newItem.issueDate = next(doc, 'span[class$="__label"]', '公开日');
 			newItem.rights = text(doc, '.FullTextContent', 1);
-			labels.getWith('发明人', true).querySelectorAll('span.AuthorInfo__nameText').forEach((element) => {
+			labels.get('发明人', true).querySelectorAll('span.AuthorInfo__nameText').forEach((element) => {
 				newItem.creators.push(cleanName(ZU.trimInternal(element.textContent), 'inventor'));
 			});
-			extra.add('Genre', text(doc, '.ArticleInfo__titleLabel').slice(1, -1), true);
+			extra.set('Genre', text(doc, '.ArticleInfo__titleLabel').slice(1, -1), true);
 			break;
 		}
 		case 'book': {
-			let labels = new LabelsX(doc, '.AuthorInfo > div, .ArticleInfo__source > span');
+			let labels = new Labels(doc, '.AuthorInfo > div, .ArticleInfo__source > span');
 			newItem.date = citeAs;
-			newItem.publisher = labels.getWith('出版社');
-			newItem.ISBN = labels.getWith('ISBN');
-			extra.add('subject', labels.getWith('学科分类'));
-			labels.getWith('作者').split(/[;，；、]/).forEach((creator) => {
+			newItem.publisher = labels.get('出版社');
+			newItem.ISBN = labels.get('ISBN');
+			extra.set('subject', labels.get('学科分类'));
+			labels.get('作者').split(/[;，；、]/).forEach((creator) => {
 				let creatorType = /译$/.test(creator)
 					? 'translator'
 					: 'author';
@@ -146,109 +147,117 @@ async function doWeb(doc, url) {
 	doc.querySelectorAll('div[class$="__keywords"] > [class$="__keyword"]').forEach((element) => {
 		newItem.tags.push(ZU.trimInternal(element.textContent));
 	});
-	extra.add('view', labels.getWith('浏览'));
-	extra.add('download', labels.getWith('下载'));
-	extra.add('like', labels.getWith('推荐'));
+	extra.set('view', labels.get('浏览'));
+	extra.set('download', labels.get('下载'));
+	extra.set('like', labels.get('推荐'));
 	if (url) newItem.url = url;
 	newItem.extra = extra.toString();
 	newItem.complete();
 }
 
 
-class LabelsX {
+class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
-		this.emptyElement = doc.createElement('div');
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
 			// avoid nesting
 			.filter(element => !element.querySelector(selector))
 			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
+				const elmCopy = element.cloneNode(true);
 				// avoid empty text
-				while (/^\s*$/.test(elementCopy.firstChild.textContent)) {
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
 					// Z.debug(elementCopy.firstChild.textContent);
-					elementCopy.removeChild(elementCopy.firstChild);
+					elmCopy.removeChild(elmCopy.firstChild);
 					// Z.debug(elementCopy.firstChild.textContent);
 				}
-				if (elementCopy.childNodes.length > 1) {
-					let key = elementCopy.removeChild(elementCopy.firstChild).textContent.replace(/\s/g, '');
-					this.innerData.push([key, elementCopy]);
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
 				}
 				else {
-					let text = ZU.trimInternal(elementCopy.textContent);
-					let key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
-					elementCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
-					this.innerData.push([key, elementCopy]);
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
 				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let results = label
-				.map(aLabel => this.getWith(aLabel, element));
-			let keyVal = element
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
 				? results.find(element => !/^\s*$/.test(element.textContent))
 				: results.find(string => string);
 			return keyVal
 				? keyVal
 				: element
-					? this.emptyElement
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyVal = this.innerData.find(arr => pattern.test(arr[0]));
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
 		return keyVal
 			? element
 				? keyVal[1]
 				: ZU.trimInternal(keyVal[1].textContent)
 			: element
-				? this.emptyElement
+				? this.emptyElm
 				: '';
 	}
 }
 
-function next(node, selector, string, element = false) {
+function next(node, selector, string) {
 	try {
 		let nextElement = Array.from(node.querySelectorAll(selector)).find(
 			element => new RegExp(string).test(element.innerText)
 		).nextElementSibling;
-		return element
-			? nextElement
-			: ZU.trimInternal(nextElement.innerText);
+		return ZU.trimInternal(nextElement.innerText);
 	}
 	catch (error) {
-		return element
-			? document.createElement('div')
-			: '';
+		return '';
 	}
 }
 
-const extra = {
-	clsFields: [],
-	elseFields: [],
-	add: function (key, value, cls = false) {
-		if (value && cls) {
-			this.clsFields.push([key, value]);
-		}
-		else if (value) {
-			this.elseFields.push([key, value]);
-		}
-	},
-	toString: function (original) {
-		return original
-			? [
-				...this.clsFields.map(entry => `${entry[0]}: ${entry[1]}`),
-				original.replace(/^\n|\n$/g, ''),
-				...this.elseFields.map(entry => `${entry[0]}: ${entry[1]}`)
-			].join('\n')
-			: [...this.clsFields, ...this.elseFields]
-				.map(entry => `${entry[0]}: ${entry[1]}`)
-				.join('\n');
+class Extra {
+	constructor() {
+		this.fields = [];
 	}
-};
+
+	push(key, val, csl = false) {
+		this.fields.push({ key: key, val: val, csl: csl });
+	}
+
+	set(key, val, csl = false) {
+		let target = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		if (target) {
+			target.val = val;
+		}
+		else {
+			this.push(key, val, csl);
+		}
+	}
+
+	get(key) {
+		let result = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		return result
+			? result.val
+			: undefined;
+	}
+
+	toString(history = '') {
+		this.fields = this.fields.filter(obj => obj.val);
+		return [
+			this.fields.filter(obj => obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n'),
+			history,
+			this.fields.filter(obj => !obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n')
+		].filter(obj => obj).join('\n');
+	}
+}
 
 async function clickMore(button, callback) {
 	if (button) {

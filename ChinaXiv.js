@@ -106,8 +106,8 @@ async function scrape(doc, url = doc.location.href) {
 		newItem.extra = '';
 		let labels = new Labels(doc, '.bd li, .bd > p');
 		newItem.title = text(doc, 'div.hd > h1');
-		newItem.abstractNote = labels.getWith('摘要:');
-		let creators = Array.from(labels.getWith('^作者', true).querySelectorAll('a'));
+		newItem.abstractNote = labels.get('摘要:');
+		let creators = Array.from(labels.get('^作者', true).querySelectorAll('a'));
 		creators.forEach((creator) => {
 			newItem.creators.push(ZU.cleanAuthor(ZU.trimInternal(creator.textContent), 'author'));
 		});
@@ -115,7 +115,7 @@ async function scrape(doc, url = doc.location.href) {
 		tags.forEach((tag) => {
 			newItem.tags.push(tag.textContent);
 		});
-		newItem.date = labels.getWith('提交时间');
+		newItem.date = labels.get('提交时间');
 		newItem.DOI = attr(doc, '.bd li > a[href*="dx.doi.org"]', 'href');
 		newItem = Object.assign(newItem, fixItem(newItem, doc, url));
 		newItem.complete();
@@ -135,7 +135,7 @@ function fixItem(item, doc, url) {
 	item.archiveID = `ChinaXiv: ${url.match(/\/abs\/[\d.]+/)[0].substring(5)}`;
 	item.url = url;
 	item.extra += addExtra('original-title', text(doc, 'div.hd > p'));
-	item.extra += addExtra('original-abstract', labels.getWith('Abstract'));
+	item.extra += addExtra('original-abstract', labels.get('Abstract'));
 	item.extra += addExtra('CSTR', text(doc, '.bd li > a[href*="www.cstr.cn"]').slice(5));
 	item.creators.forEach((creator) => {
 		if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
@@ -158,37 +158,56 @@ function fixItem(item, doc, url) {
 /* Util */
 class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
-			.filter(element => element.firstElementChild)
+			// avoid nesting
 			.filter(element => !element.querySelector(selector))
+			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
-				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
-				this.innerData.push([key, elementCopy]);
+				const elmCopy = element.cloneNode(true);
+				// avoid empty text
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
+					// Z.debug(elementCopy.firstChild.textContent);
+					elmCopy.removeChild(elmCopy.firstChild);
+					// Z.debug(elementCopy.firstChild.textContent);
+				}
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
+				}
+				else {
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
+				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element));
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].innerText)
-			: '';
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElm
+				: '';
 	}
 }
 
@@ -208,6 +227,14 @@ function getValuesFromBib(bibText, label) {
 function addExtra(key, value) {
 	return value
 		? `${key}: ${value}\n`
+		: '';
+}
+
+function tryMatch(string, pattern, index = 0) {
+	if (!string) return '';
+	const match = string.match(pattern);
+	return (match && match[index])
+		? match[index]
 		: '';
 }
 

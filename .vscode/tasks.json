@@ -6,11 +6,9 @@
         {
             "label": "lint current JS file",
             "type": "shell",
-            "command": "npm",
+            "command": "npx",
             "args": [
-                "run",
-                "lint",
-                "--",
+                "eslint",
                 "--fix",
                 // see https://github.com/microsoft/vscode/issues/31722
                 {

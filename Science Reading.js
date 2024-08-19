@@ -86,25 +86,25 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.extra = '';
 	newItem.title = text(doc, '.book_detail_title');
 	newItem.abstractNote = text(doc, '#introduction-body');
-	newItem.series = labels.getWith('丛书');
+	newItem.series = labels.get('丛书');
 	// newItem.seriesNumber = 系列编号;
 	// newItem.volume = 卷次;
 	// newItem.numberOfVolumes = 总卷数;
-	newItem.edition = labels.getWith('版次');
+	newItem.edition = labels.get('版次');
 	newItem.place = '北京';
 	newItem.publisher = '科学出版社';
-	newItem.date = labels.getWith('出版日期');
+	newItem.date = labels.get('出版日期');
 	// newItem.numPages = 总页数;
 	newItem.language = 'zh-CN';
-	newItem.ISBN = labels.getWith('ISBN');
+	newItem.ISBN = labels.get('ISBN');
 	// newItem.shortTitle = 短标题;
 	newItem.url = tryMatch(url, /^.+id=\w+/);
 	newItem.libraryCatalog = '科学文库';
-	extra.add('CLC', labels.getWith('中图分类号'));
-	extra.add('subject', labels.getWith('学科分类'));
-	extra.add('remark', labels.getWith(['备注', '附注信息']));
+	extra.add('CLC', labels.get('中图分类号'));
+	extra.add('subject', labels.get('学科分类'));
+	extra.add('remark', labels.get(['备注', '附注信息']));
 	let creators = [];
-	labels.getWith('作者').split('；').forEach((group) => {
+	labels.get('作者').split('；').forEach((group) => {
 		let creatorType = /翻?译/.test(group)
 			? 'translator'
 			: 'author';
@@ -150,37 +150,56 @@ async function scrape(doc, url = doc.location.href) {
 
 class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
-			.filter(element => element.firstElementChild)
+			// avoid nesting
 			.filter(element => !element.querySelector(selector))
+			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
-				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
-				this.innerData.push([key, elementCopy]);
+				const elmCopy = element.cloneNode(true);
+				// avoid empty text
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
+					// Z.debug(elementCopy.firstChild.textContent);
+					elmCopy.removeChild(elmCopy.firstChild);
+					// Z.debug(elementCopy.firstChild.textContent);
+				}
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
+				}
+				else {
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
+				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element));
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label);
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].innerText)
-			: '';
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElm
+				: '';
 	}
 }
 

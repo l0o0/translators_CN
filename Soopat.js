@@ -36,16 +36,16 @@
 */
 
 var fieldsMap = {
-	"摘要": "abstractNote",
-	"申请人": "place",
-	"地址": "address",
-	"国省代码": "country",
-	"Applicant": "Applicant",
-	"Inventor": "Inventor",
-	"主分类号": "主分类号",
-	"分类号": "分类号",
-	"Abstract": "Abstract"
-}
+	摘要: "abstractNote",
+	申请人: "place",
+	地址: "address",
+	国省代码: "country",
+	Applicant: "Applicant",
+	Inventor: "Inventor",
+	主分类号: "主分类号",
+	分类号: "分类号",
+	Abstract: "Abstract"
+};
 
 function addCreators(names) {
 	return names.split(" ").reduce((a, b) => {
@@ -54,7 +54,7 @@ function addCreators(names) {
 			creatorType: "inventor"
 		});
 		return a;
-	}, [])
+	}, []);
 }
 
 function detectWeb(doc, url) {
@@ -71,7 +71,7 @@ function detectWeb(doc, url) {
 async function scrape(doc, url, loginStatus) {
 	var newItem = new Zotero.Item("patent");
 	newItem.url = url;
-	var detailtitle, title, appNo, appDate, ab, legalStatus
+	var detailtitle, title, appNo, appDate, ab, legalStatus;
 	if (url.includes("pro.soopat.com")) { // Soopat Pro
 		detailtitle = ZU.xpath(doc, "//div[@class='detailtitle']")[0];
 		// Z.debug(doc.querySelector("table").innerText);
@@ -92,7 +92,7 @@ async function scrape(doc, url, loginStatus) {
 			switch (key) {
 				case "发明(设计)人":
 					newItem.creators = addCreators(content);
-					break
+					break;
 				default:
 					newItem[fieldsMap[key]] = content;
 			}
@@ -111,7 +111,8 @@ async function scrape(doc, url, loginStatus) {
 			mimeType: "application/pdf",
 			url: authRow[0].href
 		});
-	} else {  // Free user
+	}
+	else { // Free user
 		detailtitle = ZU.xpath(doc, "//span[@class='detailtitle']")[0];
 		title = innerText(detailtitle, "h1").split(/\s/)[0];
 		appNo = innerText(detailtitle, "strong").split(/[：\s]/);
@@ -161,8 +162,11 @@ async function doWeb(doc, url) {
 			Z.debug(urls[0]);
 			await Promise.all(
 				urls.map(
-					url => {requestDocument(url).then(doc => scrape(doc, url, loginStatus))})
-		);}
+					(url) => {
+						requestDocument(url).then(doc => scrape(doc, url, loginStatus));
+					})
+			);
+		}
 	}
 	else {
 		await scrape(doc, url, loginStatus);
@@ -196,7 +200,8 @@ function detectLogin(doc) {
 	var loginHeader = ZU.xpath(doc, "//a[contains(@href, 'ogout')]")[0];
 	if (loginHeader) {
 		return true;
-	} else {
+	}
+	else {
 		return false;
 	}
 }
@@ -350,9 +355,9 @@ var testCases = [
 				],
 				"tags": [],
 				"notes": [],
-				"seeAlso": []
+				seeAlso: []
 			}
 		]
 	}
-]
+];
 /** END TEST CASES **/

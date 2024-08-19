@@ -116,8 +116,8 @@ var selectors = {
 async function scrapeSearch(doc) {
 	let labels = new Labels(doc, exports.selectors.labels);
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
-	let doi = text(doc, exports.selectors.DOI) || labels.getWith('DOI');
-	let isbn = labels.getWith('ISBN');
+	let doi = text(doc, exports.selectors.DOI) || labels.get('DOI');
+	let isbn = labels.get('ISBN');
 	Z.debug(`DOI: ${doi}`);
 	Z.debug(`ISBN: ${isbn}`);
 	// throw new Error('debug');
@@ -159,8 +159,8 @@ async function scrapeDoc(doc, url = doc.location.href) {
 	let labels = new Labels(doc, exports.selectors.labels);
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	let extra = new Extra();
-	let doi = text(doc, exports.selectors.DOI) || labels.getWith('DOI');
-	let isbn = labels.getWith('ISBN');
+	let doi = text(doc, exports.selectors.DOI) || labels.get('DOI');
+	let isbn = labels.get('ISBN');
 	Z.debug(`DOI: ${doi}`);
 	Z.debug(`ISBN: ${isbn}`);
 	var newItem = new Z.Item(typeMap[exports.typeKey.toLowerCase()] || detectWeb(doc, url));
@@ -171,7 +171,7 @@ async function scrapeDoc(doc, url = doc.location.href) {
 	newItem.title = ZU.trimInternal(title.innerHTML);
 	newItem.DOI = doi;
 	newItem.url = url;
-	if (/^en|英语/i.test(labels.getWith(['语种', 'Language']))) {
+	if (/^en|英语/i.test(labels.get(['语种', 'Language']))) {
 		newItem.language = 'en-US';
 	}
 	doc.querySelectorAll(exports.selectors.creators).forEach((element) => {
@@ -191,26 +191,26 @@ async function scrapeDoc(doc, url = doc.location.href) {
 			case 'conferencePaper':
 			case 'journalArticle': {
 				let pubInfo = text(doc, exports.selectors.pubInfo);
-				newItem.publicationTitle = text(doc, exports.selectors.publicationTitle) || labels.getWith('journals?$');
-				newItem.volume = tryMatch(pubInfo, /Volume 0*([1-9]\d*)/, 1) || labels.getWith('volume');
-				newItem.issue = tryMatch(pubInfo, /Issue 0*([1-9]\d*)/, 1) || labels.getWith('issue');
-				newItem.pages = tryMatch(pubInfo, /PP ([\d+, ~-]*)/, 1) || labels.getWith('pages');
-				newItem.date = tryMatch(pubInfo, /(?:\.\s)?(\d{4})(?:\.\s)?/, 1) || labels.getWith('year|date');
+				newItem.publicationTitle = text(doc, exports.selectors.publicationTitle) || labels.get('journals?$');
+				newItem.volume = tryMatch(pubInfo, /Volume 0*([1-9]\d*)/, 1) || labels.get('volume');
+				newItem.issue = tryMatch(pubInfo, /Issue 0*([1-9]\d*)/, 1) || labels.get('issue');
+				newItem.pages = tryMatch(pubInfo, /PP ([\d+, ~-]*)/, 1) || labels.get('pages');
+				newItem.date = tryMatch(pubInfo, /(?:\.\s)?(\d{4})(?:\.\s)?/, 1) || labels.get('year|date');
 				break;
 			}
 
 			/* thesis is only available on scholar.cnki.net */
 			case 'thesis': {
-				let pubInfo = labels.getWith('学位授予');
+				let pubInfo = labels.get('学位授予');
 				newItem.thesisType = {
 					Doctor: 'Doctoral dissertation',
 					Master: 'Master thesis'
-				}[labels.getWith('学位类型')];
+				}[labels.get('学位类型')];
 				newItem.university = tryMatch(pubInfo, /^[\w ]+/);
 				newItem.place = tryMatch(pubInfo, /\(([\w, ]+)\)$/, 1);
-				extra.set('major', labels.getWith('专业'));
-				extra.set('subject', labels.getWith('学科主题'));
-				newItem.creators.push(ZU.cleanAuthor(labels.getWith('作者'), 'author'));
+				extra.set('major', labels.get('专业'));
+				extra.set('subject', labels.get('学科主题'));
+				newItem.creators.push(ZU.cleanAuthor(labels.get('作者'), 'author'));
 				break;
 			}
 		}
@@ -224,7 +224,7 @@ async function scrapeDoc(doc, url = doc.location.href) {
 			case 'book':
 				newItem.creators = [];
 				patchBook(newItem, extra, doc);
-				newItem.numPages = labels.getWith('页数');
+				newItem.numPages = labels.get('页数');
 				break;
 
 			/* book section is only available on scholar.cnki.net */
@@ -249,14 +249,14 @@ async function scrapeDoc(doc, url = doc.location.href) {
 function patchBook(bookItem, extra, doc) {
 	let labels = new Labels(doc, '[id*="doc-about"] .infoBox-item');
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
-	bookItem.abstractNote = labels.getWith(['摘要', 'Abstract']);
-	bookItem.series = labels.getWith('书系');
+	bookItem.abstractNote = labels.get(['摘要', 'Abstract']);
+	bookItem.series = labels.get('书系');
 	bookItem.publisher = text(doc, exports.selectors.publisher);
 	let pubInfo = text(doc, exports.selectors.pubInfo);
 	bookItem.date = tryMatch(pubInfo, /(?:\.\s)?(\d{4})(?:\.\s)?/, 1);
-	bookItem.ISBN = labels.getWith('ISBN');
-	extra.set('subject', labels.getWith('学科分类'));
-	extra.set('CLC', labels.getWith(['中图分类号', 'CLC']));
+	bookItem.ISBN = labels.get('ISBN');
+	extra.set('subject', labels.get('学科分类'));
+	extra.set('CLC', labels.get(['中图分类号', 'CLC']));
 	doc.querySelectorAll(exports.selectors.creators).forEach((element) => {
 		element = ZU.trimInternal(element.textContent).replace(/\s*;$/, '');
 		bookItem.creators.push(ZU.cleanAuthor(element, 'author'));
@@ -265,37 +265,56 @@ function patchBook(bookItem, extra, doc) {
 
 class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
-			.filter(element => element.firstElementChild)
+			// avoid nesting
 			.filter(element => !element.querySelector(selector))
+			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
-				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
-				this.innerData.push([key, elementCopy]);
+				const elmCopy = element.cloneNode(true);
+				// avoid empty text
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
+					// Z.debug(elementCopy.firstChild.textContent);
+					elmCopy.removeChild(elmCopy.firstChild);
+					// Z.debug(elementCopy.firstChild.textContent);
+				}
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
+				}
+				else {
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
+				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element));
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].innerText)
-			: '';
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElm
+				: '';
 	}
 }
 

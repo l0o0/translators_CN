@@ -76,28 +76,28 @@ async function doWeb(doc, url) {
 
 async function scrape(doc, url = doc.location.href) {
 	var newItem = new Z.Item('standard');
-	let labels = new CellLabels(doc.querySelector('.basic-info'), 'dl > .basicInfo-item');
-	Z.debug(labels.innerData.map(arr => [arr[0], arr[1].innerText]));
+	let labels = new Cells(doc.querySelector('.basic-info'), 'dl > .basicInfo-item');
+	Z.debug(labels.data.map(arr => [arr[0], arr[1].innerText]));
 	newItem.title = url.includes('/gj/')
 		? text(doc, '.page-header+p')
 		// 有时会在标题处塞进来一些额外的元素（如附件）
 		: text(doc, '.page-header > h4').split('\n')[0];
 	newItem.extra = '';
-	newItem.number = labels.getWith('标准号').replace('-', '—');
+	newItem.number = labels.get('标准号').replace('-', '—');
 	newItem.type = text(doc, '.label-info');
 	newItem.status = text(doc, '.label-primary');
-	newItem.date = labels.getWith(['发布日期', '实施日期']);
+	newItem.date = labels.get(['发布日期', '实施日期']);
 	newItem.url = url;
-	newItem.language = /en/i.test(labels.getWith('标准语言'))
+	newItem.language = /en/i.test(labels.get('标准语言'))
 		? 'en-US'
 		: 'zh-CN';
 	newItem.libraryCatalog = '全国标准信息公共服务平台';
-	newItem.extra += addExtra('applyDate', labels.getWith('实施日期'));
-	newItem.extra += addExtra('substitute', labels.getWith('代替标准').replace(/-/g, '—'));
-	newItem.extra += addExtra('CCS', labels.getWith('中国标准分类号'));
-	newItem.extra += addExtra('ICS', labels.getWith('国际标准分类号'));
-	newItem.extra += addExtra('industry', labels.getWith('行业分类'));
-	labels.getWith(['归口单位', '归口部门', '技术归口', '标准发布组织']).split('、').forEach((creator) => {
+	newItem.extra += addExtra('applyDate', labels.get('实施日期'));
+	newItem.extra += addExtra('substitute', labels.get('代替标准').replace(/-/g, '—'));
+	newItem.extra += addExtra('CCS', labels.get('中国标准分类号'));
+	newItem.extra += addExtra('ICS', labels.get('国际标准分类号'));
+	newItem.extra += addExtra('industry', labels.get('行业分类'));
+	labels.get(['归口单位', '归口部门', '技术归口', '标准发布组织']).split('、').forEach((creator) => {
 		newItem.creators.push({
 			lastName: creator,
 			creatorType: 'author',
@@ -119,33 +119,34 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.complete();
 }
 
-class CellLabels {
+class Cells {
 	constructor(doc, selector) {
-		this.innerData = [];
-		let cells = Array.from(doc.querySelectorAll(selector)).filter(element => !element.querySelector(selector));
+		this.emptyElm = doc.createElement('div');
+		this.data = [];
+		const cells = Array.from(doc.querySelectorAll(selector)).filter(element => !element.querySelector(selector));
 		let i = 0;
 		while (cells[i + 1]) {
-			this.innerData.push([cells[i].textContent.replace(/\s*/g, ''), cells[i + 1]]);
+			this.data.push([cells[i].textContent.replace(/\s*/g, ''), cells[i + 1]]);
 			i += 2;
 		}
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
 			let result = label
-				.map(aLabel => this.getWith(aLabel, element));
+				.map(aLabel => this.get(aLabel, element));
 			result = element
 				? result.find(element => element.childNodes.length)
 				: result.find(element => element);
 			return result
 				? result
 				: element
-					? document.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label);
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
+		const pattern = new RegExp(label);
+		const keyValPair = this.data.find(element => pattern.test(element[0]));
+		if (element) return keyValPair ? keyValPair[1] : this.emptyElm;
 		return keyValPair
 			? ZU.trimInternal(keyValPair[1].innerText)
 			: '';

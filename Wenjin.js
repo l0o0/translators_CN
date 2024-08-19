@@ -103,28 +103,28 @@ async function scrape(doc, url = doc.location.href) {
 	const labels = new Labels(doc, '.book_item');
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	newItem.title = text(doc, '.book_name');
-	newItem.abstractNote = text(doc, 'div.zy_pp_val') || labels.getWith('引文');
+	newItem.abstractNote = text(doc, 'div.zy_pp_val') || labels.get('引文');
 	switch (newItem.itemType) {
 		case 'book': {
 			// http://find.nlc.cn/search/showDocDetails?docId=-5158343139126139955&dataSource=ucs01&query=%E5%B9%BF%E9%9F%B5
-			newItem.series = labels.getWith('丛编题名');
+			newItem.series = labels.get('丛编题名');
 			// newItem.seriesNumber = 系列编号;
 			// newItem.volume = 卷次;
 			// http://find.nlc.cn/search/showDocDetails?docId=-9108259640625243569&dataSource=ucs01&query=%E6%A2%A6%E6%BA%AA%E7%AC%94%E8%B0%88
-			newItem.numberOfVolumes = tryMatch(labels.getWith('载体形态'), /(\d+)册/, 1);
+			newItem.numberOfVolumes = tryMatch(labels.get('载体形态'), /(\d+)册/, 1);
 			// http://find.nlc.cn/search/showDocDetails?docId=-5158343139126139955&dataSource=ucs01&query=%E5%B9%BF%E9%9F%B5
-			newItem.edition = labels.getWith('版本说明 ');
-			newItem.place = labels.getWith('出版、发行地');
-			newItem.publisher = labels.getWith('出版、发行者');
-			newItem.date = labels.getWith('出版发行时间');
+			newItem.edition = labels.get('版本说明 ');
+			newItem.place = labels.get('出版、发行地');
+			newItem.publisher = labels.get('出版、发行者');
+			newItem.date = labels.get('出版发行时间');
 			// http://find.nlc.cn/search/showDocDetails?docId=-3372694795849761390&dataSource=mgwx&query=%E5%B9%BF%E9%9F%B5
-			newItem.numPages = tryMatch(labels.getWith('载体形态'), /(\d+)页$/, 1);
-			newItem.ISBN = labels.getWith('标识号');
+			newItem.numPages = tryMatch(labels.get('载体形态'), /(\d+)页$/, 1);
+			newItem.ISBN = labels.get('标识号');
 			// newItem.shortTitle = 短标题;
 			if (['善本', '普通古籍', '特藏古籍'].includes(text(doc, '.book_val'))) {
 				extra.add('Type', 'classic', true);
 			}
-			let creators = labels.getWith('所有责任者', true).innerText.trim().split(/\s{2}|，/).map((creator) => {
+			let creators = labels.get('所有责任者', true).innerText.trim().split(/\s{2}|，/).map((creator) => {
 				let creatorType = /译$/.test(creator)
 					? 'translator'
 					: 'author';
@@ -160,26 +160,26 @@ async function scrape(doc, url = doc.location.href) {
 			// http://find.nlc.cn/search/showDocDetails?docId=5443092259449818292&dataSource=ucs01&query=%E7%BA%A2%E6%98%9F
 			// http://find.nlc.cn/search/showDocDetails?docId=7092562696966199047&dataSource=ucs01&query=%E7%90%86%E6%9F%A5%E5%BE%B7
 			// http://find.nlc.cn/search/showDocDetails?docId=-9193368633718699152&dataSource=ucs01&query=%E8%8B%B1%E8%AF%AD
-			if (['CD', 'DVD', 'VCD', '光盘'].some(keyword => labels.getWith('载体形态').includes(keyword))) {
+			if (['CD', 'DVD', 'VCD', '光盘'].some(keyword => labels.get('载体形态').includes(keyword))) {
 				medium = 'CD';
 			}
 			// http://find.nlc.cn/search/showDocDetails?docId=-3935743997161595407&dataSource=ucs01&query=%E8%8B%B1%E8%AF%AD
-			else if (labels.getWith('载体形态').includes('录音带')) {
+			else if (labels.get('载体形态').includes('录音带')) {
 				medium = 'MT';
 			}
 			extra.add('medium', medium, true);
 			break;
 		}
 		case 'journalArticle':
-			newItem.publicationTitle = labels.getWith('刊名', true).innerText.trim().split(/\s{2}/)[0];
+			newItem.publicationTitle = labels.get('刊名', true).innerText.trim().split(/\s{2}/)[0];
 			// newItem.volume = 卷次;
-			newItem.issue = tryMatch(labels.getWith('期'), /0*([1-9]\d*)/, 1);
-			newItem.pages = labels.getWith('页');
-			newItem.date = labels.getWith(['出版发行时间', '年']);
-			newItem.ISSN = tryMatch(labels.getWith('标识号'), /:(.+?)(\s|$)/, 1);
-			extra.add('original-title', tryMatch(labels.getWith('文章题名'), /英文篇名 : (.+)(?:\s{2}|$)/, 1), true);
-			extra.add('fund', labels.getWith('基金'));
-			new Labels(doc, '#detail-info > .book_item').getWith('作者', true).innerText.trim()
+			newItem.issue = tryMatch(labels.get('期'), /0*([1-9]\d*)/, 1);
+			newItem.pages = labels.get('页');
+			newItem.date = labels.get(['出版发行时间', '年']);
+			newItem.ISSN = tryMatch(labels.get('标识号'), /:(.+?)(\s|$)/, 1);
+			extra.add('original-title', tryMatch(labels.get('文章题名'), /英文篇名 : (.+)(?:\s{2}|$)/, 1), true);
+			extra.add('fund', labels.get('基金'));
+			new Labels(doc, '#detail-info > .book_item').get('作者', true).innerText.trim()
 				.split(/\s{2}|，/).forEach((creator) => {
 					Z.debug(creator);
 					creator = ZU.cleanAuthor(creator, 'author');
@@ -192,13 +192,13 @@ async function scrape(doc, url = doc.location.href) {
 				});
 			break;
 		case 'thesis':
-			newItem.thesisType = labels.getWith('来源数据库').includes('博士')
+			newItem.thesisType = labels.get('来源数据库').includes('博士')
 				? '博士学位论文'
 				: '硕士学位论文';
-			newItem.university = labels.getWith('论文授予机构');
-			newItem.date = labels.getWith(['出版发行时间', '论文授予时间']);
-			newItem.numPages = tryMatch(labels.getWith('载体形态'), /(\d+)页$/, 1);
-			labels.getWith('所有责任者', true).innerText.trim()
+			newItem.university = labels.get('论文授予机构');
+			newItem.date = labels.get(['出版发行时间', '论文授予时间']);
+			newItem.numPages = tryMatch(labels.get('载体形态'), /(\d+)页$/, 1);
+			labels.get('所有责任者', true).innerText.trim()
 				.split(/\s{2}|，/).forEach((creator) => {
 					let creatorType = /指导$/.test(creator)
 						? 'contributor'
@@ -212,16 +212,16 @@ async function scrape(doc, url = doc.location.href) {
 					}
 					newItem.creators.push(creator);
 				});
-			extra.add('major', labels.getWith('论文专业 '));
+			extra.add('major', labels.get('论文专业 '));
 			break;
 		case 'newspaperArticle':
 			// http://find.nlc.cn/search/showDocDetails?docId=-382233026126726134&dataSource=fzbzcnml&query=%E6%96%B0%E5%8F%91%E5%B1%95%E7%90%86%E5%BF%B5
 			// http://find.nlc.cn/search/showDocDetails?docId=-4758410971070022650&dataSource=ccnd&query=%E6%96%B0%E5%8F%91%E5%B1%95%E7%90%86%E5%BF%B5
 			// http://find.nlc.cn/search/showDocDetails?docId=-3912556877249539014&dataSource=rdfyzlqwsjk&query=%E6%9D%A8%E8%A5%BF%E5%85%89
-			newItem.publicationTitle = labels.getWith(['报纸中文名', '期刊名称']);
-			newItem.date = labels.getWith(['日期', '出版发行扇门']);
-			newItem.pages = tryMatch(labels.getWith('来源'), /(\d+)版/, 1) || labels.getWith('版号');
-			labels.getWith(['所有责任者', '作者']).split(/\s/)
+			newItem.publicationTitle = labels.get(['报纸中文名', '期刊名称']);
+			newItem.date = labels.get(['日期', '出版发行扇门']);
+			newItem.pages = tryMatch(labels.get('来源'), /(\d+)版/, 1) || labels.get('版号');
+			labels.get(['所有责任者', '作者']).split(/\s/)
 				.filter(creator => !creator.includes('记者'))
 				.forEach((creator) => {
 					Z.debug(creator);
@@ -240,49 +240,68 @@ async function scrape(doc, url = doc.location.href) {
 			break;
 	}
 	newItem.url = url;
-	if (labels.getWith('语种').includes('Chinese')) {
+	if (labels.get('语种').includes('Chinese')) {
 		newItem.language = 'zh-CN';
 	}
 	// ---见于图书
 	// ;见于期刊
-	labels.getWith('关键词', true).innerText.trim().split(/(?:---)|;|\s{2}/).forEach(tag => newItem.tags.push(tag));
+	labels.get('关键词', true).innerText.trim().split(/(?:---)|;|\s{2}/).forEach(tag => newItem.tags.push(tag));
 	newItem.extra = extra.toString();
 	newItem.complete();
 }
 
 class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
-			.filter(element => element.firstElementChild)
+			// avoid nesting
 			.filter(element => !element.querySelector(selector))
+			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
-				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
-				this.innerData.push([key, elementCopy]);
+				const elmCopy = element.cloneNode(true);
+				// avoid empty text
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
+					// Z.debug(elementCopy.firstChild.textContent);
+					elmCopy.removeChild(elmCopy.firstChild);
+					// Z.debug(elementCopy.firstChild.textContent);
+				}
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
+				}
+				else {
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
+				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element));
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].innerText)
-			: '';
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElm
+				: '';
 	}
 }
 

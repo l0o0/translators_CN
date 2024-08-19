@@ -136,17 +136,17 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.nameOfAct = title;
 			// newItem.code = 法典;
 			// newItem.codeNumber = 法典编号;
-			newItem.publicLawNumber = labels.getWith(['发文字号', 'DocumentNumber']);
+			newItem.publicLawNumber = labels.get(['发文字号', 'DocumentNumber']);
 			// “签订日期”见于外交领域
-			newItem.dateEnacted = labels.getWith(['颁布日期', '公布日期', '发布日期', '签订日期']).replace(/\./g, '-')
-				|| ZU.strToISO(labels.getWith('Date Issued'));
+			newItem.dateEnacted = labels.get(['颁布日期', '公布日期', '发布日期', '签订日期']).replace(/\./g, '-')
+				|| ZU.strToISO(labels.get('Date Issued'));
 			// newItem.pages = 页码;
 			// newItem.section = 条文序号;
 			// newItem.history = 历史;
-			if (labels.getWith('时效性') == '失效') {
+			if (labels.get('时效性') == '失效') {
 				extra.set('Status', '已废止', true);
 			}
-			let rank = labels.getWith(['效力位阶', 'LevelofAuthority']);
+			let rank = labels.get(['效力位阶', 'LevelofAuthority']);
 			if (!/宪法|法律|Law/i.test(rank)) {
 				extra.set('Type', extra.get('Type') || 'regulation', true);
 			}
@@ -154,7 +154,7 @@ async function scrape(doc, url = doc.location.href) {
 				Z.debug(rank);
 				newItem.session = tryMatch(text(doc, '#divFullText'), /(中国共产党)?第.*?届.*?第.*?次.*?会议/);
 			}
-			labels.getWith(['制定机关', '发布部门', 'IssuingAuthority'], true)
+			labels.get(['制定机关', '发布部门', 'IssuingAuthority'], true)
 				.querySelectorAll('a:first-child')
 				.forEach(element => newItem.creators.push(processName(element.textContent))
 				);
@@ -162,8 +162,8 @@ async function scrape(doc, url = doc.location.href) {
 		}
 		case 'report':
 			newItem.title = title;
-			newItem.date = labels.getWith('公布日期').replace(/\./g, '-');
-			labels.getWith(['制定机关', '发布部门', 'IssuingAuthority'], true).querySelectorAll('a:first-child').forEach((element) => {
+			newItem.date = labels.get('公布日期').replace(/\./g, '-');
+			labels.get(['制定机关', '发布部门', 'IssuingAuthority'], true).querySelectorAll('a:first-child').forEach((element) => {
 				newItem.creators.push(processName(element.textContent));
 			});
 			extra.set('event-title', tryMatch(text(doc, '#divFullText'), /第.*?届.*?第.*?次.*?会议/), true);
@@ -172,46 +172,46 @@ async function scrape(doc, url = doc.location.href) {
 			if (title.startsWith('指导案例')) {
 				title = title.replace(/.*?：/, '');
 				extra.set('Series', '最高人民法院指导案例', true);
-				extra.set('Series Number', tryMatch(labels.getWith('案例编号'), /(\d+)/, 1), true);
+				extra.set('Series Number', tryMatch(labels.get('案例编号'), /(\d+)/, 1), true);
 			}
 			newItem.caseName = title;
-			newItem.court = text(labels.getWith(['裁决机构', '审理法院'], true), 'a[href*="Court="]');
-			newItem.dateDecided = labels.getWith(['裁决日期', '审结日期']).replace(/\./g, '-');
-			newItem.docketNumber = labels.getWith('案号').replace(/\(/g, '（').replace(/\)/g, '）');
-			let source = labels.getWith('来源');
+			newItem.court = text(labels.get(['裁决机构', '审理法院'], true), 'a[href*="Court="]');
+			newItem.dateDecided = labels.get(['裁决日期', '审结日期']).replace(/\./g, '-');
+			newItem.docketNumber = labels.get('案号').replace(/\(/g, '（').replace(/\)/g, '）');
+			let source = labels.get('来源');
 			newItem.reporter = tryMatch(source, /《(.+)》/, 1);
 			// "reporterVolume": "报告系统卷次";
 			// "firstPage": "起始页";
 			// "history": "历史";
-			extra.set('available-date', labels.getWith('发布日期').replace(/\./g, '-') || tryMatch(source, /(\d+)\s*年/, 1), true);
+			extra.set('available-date', labels.get('发布日期').replace(/\./g, '-') || tryMatch(source, /(\d+)\s*年/, 1), true);
 			extra.set('Issue', tryMatch(source, /年第\s*(\d+)\s*期/, 1), true);
-			extra.set('Genre', labels.getWith('文书类型'), true);
-			let caseType = ['民事', '刑事', '行政'].find(type => labels.getWith('案由').startsWith(type));
+			extra.set('Genre', labels.get('文书类型'), true);
+			let caseType = ['民事', '刑事', '行政'].find(type => labels.get('案由').startsWith(type));
 			if (caseType) {
 				extra.set('Genre', caseType + extra.get('Genre'), true);
 			}
 			else if (!title.endsWith('裁决书')) {
 				extra.set('Genre', '民事判决书', true);
 			}
-			labels.getWith('发布部门', true).querySelectorAll('span').forEach((element) => {
+			labels.get('发布部门', true).querySelectorAll('span').forEach((element) => {
 				newItem.creators.push(processName(element.textContent));
 			});
-			labels.getWith('权责关键词', true).querySelectorAll('a').forEach((element) => {
+			labels.get('权责关键词', true).querySelectorAll('a').forEach((element) => {
 				newItem.tags.push(element.textContent);
 			});
 			break;
 		}
 		case 'journalArticle':
 			newItem.title = title;
-			newItem.abstractNote = [labels.getWith('摘要'), labels.getWith('英文摘要')].join('\n');
-			newItem.publicationTitle = tryMatch(labels.getWith('期刊名称'), /《(.+)》/, 1);
-			newItem.issue = labels.getWith('期号');
-			newItem.pages = labels.getWith('页码');
-			newItem.date = labels.getWith('期刊年份');
-			labels.getWith('作者', true).querySelectorAll('a').forEach((element) => {
+			newItem.abstractNote = [labels.get('摘要'), labels.get('英文摘要')].join('\n');
+			newItem.publicationTitle = tryMatch(labels.get('期刊名称'), /《(.+)》/, 1);
+			newItem.issue = labels.get('期号');
+			newItem.pages = labels.get('页码');
+			newItem.date = labels.get('期刊年份');
+			labels.get('作者', true).querySelectorAll('a').forEach((element) => {
 				newItem.creators.push(processName(element.textContent));
 			});
-			labels.getWith('关键词', true).querySelectorAll('a').forEach((element) => {
+			labels.get('关键词', true).querySelectorAll('a').forEach((element) => {
 				newItem.tags.push(element.textContent);
 			});
 			break;
@@ -226,37 +226,56 @@ async function scrape(doc, url = doc.location.href) {
 
 class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
-			.filter(element => element.firstElementChild)
+			// avoid nesting
 			.filter(element => !element.querySelector(selector))
+			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
-				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
-				this.innerData.push([key, elementCopy]);
+				const elmCopy = element.cloneNode(true);
+				// avoid empty text
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
+					// Z.debug(elementCopy.firstChild.textContent);
+					elmCopy.removeChild(elmCopy.firstChild);
+					// Z.debug(elementCopy.firstChild.textContent);
+				}
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
+				}
+				else {
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
+				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element));
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].innerText)
-			: '';
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElm
+				: '';
 	}
 }
 

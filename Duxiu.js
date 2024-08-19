@@ -104,8 +104,8 @@ async function scrape(doc, url = doc.location.href) {
 	var newItem = new Z.Item(detectWeb(doc, url));
 	newItem.title = text(doc, 'dl > dt');
 	newItem.extra = '';
-	newItem.abstractNote = labels.getWith(['摘要', '内容提要', '简介']).replace(/\s*隐藏更多$/, '');
-	labels.getWith(['作者', '发明人']).split(/[;；]\s*/)
+	newItem.abstractNote = labels.get(['摘要', '内容提要', '简介']).replace(/\s*隐藏更多$/, '');
+	labels.get(['作者', '发明人']).split(/[;；]\s*/)
 		.forEach((group) => {
 			let creators = group.split(/[,，]\s*/);
 			let creatorType = /翻?译$/.test(creators[creators.length - 1])
@@ -124,8 +124,8 @@ async function scrape(doc, url = doc.location.href) {
 		});
 	switch (newItem.itemType) {
 		case 'book': {
-			newItem.series = labels.getWith('丛书名');
-			let pubInfo = labels.getWith('出版发行');
+			newItem.series = labels.get('丛书名');
+			let pubInfo = labels.get('出版发行');
 			// newItem.edition = 版本;
 			newItem.place = tryMatch(pubInfo, /(.+?)：/, 1);
 			// 有时pubInfo仅含出版社：https://book.duxiu.com/bookDetail.jsp?dxNumber=000007798830&d=84337FB71A1ED5917061A4BB4C3610AF
@@ -133,28 +133,28 @@ async function scrape(doc, url = doc.location.href) {
 				? tryMatch(pubInfo, /：(.+?)(?:，|\s*,\s*)/, 1)
 				: pubInfo;
 			newItem.date = ZU.strToISO(tryMatch(pubInfo, /[\d.-]*$/));
-			newItem.numPages = labels.getWith('页数');
-			newItem.ISBN = labels.getWith('ISBN');
+			newItem.numPages = labels.get('页数');
+			newItem.ISBN = labels.get('ISBN');
 			// newItem.shortTitle = 短标题;
 			break;
 		}
 		case 'journalArticle':
-			newItem.publicationTitle = labels.getWith('刊名, 来源');
-			newItem.issue = tryMatch(labels.getWith('期号'), /0*(\d+)/, 1);
-			newItem.pages = labels.getWith('页码');
-			newItem.date = labels.getWith('出版日期');
-			newItem.ISSN = labels.getWith('ISSN');
+			newItem.publicationTitle = labels.get('刊名, 来源');
+			newItem.issue = tryMatch(labels.get('期号'), /0*(\d+)/, 1);
+			newItem.pages = labels.get('页码');
+			newItem.date = labels.get('出版日期');
+			newItem.ISSN = labels.get('ISSN');
 			break;
 		case 'newspaperArticle':
-			newItem.publicationTitle = labels.getWith('来源');
-			newItem.date = ZU.strToISO(labels.getWith('日期'));
-			newItem.pages = tryMatch(labels.getWith('版次'), /0*(\d+)/, 1);
+			newItem.publicationTitle = labels.get('来源');
+			newItem.date = ZU.strToISO(labels.get('日期'));
+			newItem.pages = tryMatch(labels.get('版次'), /0*(\d+)/, 1);
 			break;
 		case 'thesis': {
-			newItem.university = labels.getWith('学位授予单位');
-			newItem.date = labels.getWith('学位年度');
-			newItem.thesisType = `${labels.getWith('学位名称')}学位论文`;
-			let tutors = labels.getWith('导师姓名');
+			newItem.university = labels.get('学位授予单位');
+			newItem.date = labels.get('学位年度');
+			newItem.thesisType = `${labels.get('学位名称')}学位论文`;
+			let tutors = labels.get('导师姓名');
 			if (tutors) {
 				tutors.split(/[,;，；]\s*/).forEach((tutor) => {
 					newItem.creators.push(ZU.cleanAuthor(tutor, 'contributor'));
@@ -163,17 +163,17 @@ async function scrape(doc, url = doc.location.href) {
 			break;
 		}
 		case 'conferencePaper':
-			newItem.date = labels.getWith('日期');
-			newItem.proceedingsTitle = labels.getWith('会议录名称');
-			newItem.conferenceName = labels.getWith('会议名称');
+			newItem.date = labels.get('日期');
+			newItem.proceedingsTitle = labels.get('会议录名称');
+			newItem.conferenceName = labels.get('会议名称');
 			// "place": "地点",
 			// "publisher": "出版社",
 			// "pages": "页码",
 			break;
 		case 'patent': {
-			newItem.place = labels.getWith('地址');
-			newItem.filingDate = ZU.strToISO(labels.getWith('申请日期'));
-			newItem.applicationNumber = labels.getWith('申请号');
+			newItem.place = labels.get('地址');
+			newItem.filingDate = ZU.strToISO(labels.get('申请日期'));
+			newItem.applicationNumber = labels.get('申请号');
 			let patentDetail = attr(doc, 'dd > a[href*="pat.hnipo"]', 'href');
 			if (patentDetail) {
 				let detailDoc = await requestDocument(patentDetail);
@@ -192,25 +192,25 @@ async function scrape(doc, url = doc.location.href) {
 			break;
 		}
 		case 'standard':
-			newItem.number = labels.getWith('标准号').replace('-', '—');
+			newItem.number = labels.get('标准号').replace('-', '—');
 			break;
 	}
 	newItem.url = tryMatch(url, /^.+dxNumber=\w+/i) || url;
-	newItem.extra += addExtra('original-title', labels.getWith(['外文题名', '标准英文名']));
-	newItem.extra += addExtra('Genre', labels.getWith('专利类型'));
-	newItem.extra += addExtra('price', labels.getWith('原书定价'));
-	newItem.extra += addExtra('IF', labels.getWith('影响因子'));
-	newItem.extra += addExtra('fund', labels.getWith('基金'));
-	newItem.extra += addExtra('cite as', labels.getWith('参考文献格式'));
-	newItem.extra += addExtra('CLC', labels.getWith('中图法分类号'));
-	newItem.extra += addExtra('contact', labels.getWith('作者联系方式'));
-	newItem.extra += addExtra('IPC', labels.getWith('IPC'));
-	newItem.extra += addExtra('ICS', labels.getWith('ICS'));
-	newItem.extra += addExtra('reference', labels.getWith('引用标准'));
+	newItem.extra += addExtra('original-title', labels.get(['外文题名', '标准英文名']));
+	newItem.extra += addExtra('Genre', labels.get('专利类型'));
+	newItem.extra += addExtra('price', labels.get('原书定价'));
+	newItem.extra += addExtra('IF', labels.get('影响因子'));
+	newItem.extra += addExtra('fund', labels.get('基金'));
+	newItem.extra += addExtra('cite as', labels.get('参考文献格式'));
+	newItem.extra += addExtra('CLC', labels.get('中图法分类号'));
+	newItem.extra += addExtra('contact', labels.get('作者联系方式'));
+	newItem.extra += addExtra('IPC', labels.get('IPC'));
+	newItem.extra += addExtra('ICS', labels.get('ICS'));
+	newItem.extra += addExtra('reference', labels.get('引用标准'));
 	// https://book.duxiu.com/StdDetail.jsp?dxid=320151549195&d=443146B469770278DD217B9CF31D9D84
-	newItem.extra += addExtra('replacement', labels.getWith('替代情况'));
-	newItem.extra += addExtra('CCS', labels.getWith('中标分类号'));
-	labels.getWith(['关键词', '主题词']).split(/[;，；]/).forEach(tag => newItem.tags.push(tag));
+	newItem.extra += addExtra('replacement', labels.get('替代情况'));
+	newItem.extra += addExtra('CCS', labels.get('中标分类号'));
+	labels.get(['关键词', '主题词']).split(/[;，；]/).forEach(tag => newItem.tags.push(tag));
 	return newItem;
 }
 
@@ -253,37 +253,56 @@ async function scrapeBookSection(doc, url = doc.location.href) {
 /* Util */
 class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
-			.filter(element => element.firstElementChild)
+			// avoid nesting
 			.filter(element => !element.querySelector(selector))
+			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
-				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
-				this.innerData.push([key, elementCopy]);
+				const elmCopy = element.cloneNode(true);
+				// avoid empty text
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
+					// Z.debug(elementCopy.firstChild.textContent);
+					elmCopy.removeChild(elmCopy.firstChild);
+					// Z.debug(elementCopy.firstChild.textContent);
+				}
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
+				}
+				else {
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
+				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element));
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].innerText)
-			: '';
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElm
+				: '';
 	}
 }
 

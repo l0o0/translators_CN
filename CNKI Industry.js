@@ -109,7 +109,7 @@ async function scrape(doc, url = doc.location.href) {
 			await button.click();
 		}
 	}
-	const labels = new LabelsX(doc, '[class*="summary"] > p, .summaryRight, .break > .pdfN, [class*="summary"] li.pdfN, .itembox .item');
+	const labels = new Labels(doc, '[class*="summary"] > p, .summaryRight, .break > .pdfN, [class*="summary"] li.pdfN, .itembox .item');
 
 	/* 因为两种抓取方式都需要补充extra,所以提前add */
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
@@ -117,11 +117,11 @@ async function scrape(doc, url = doc.location.href) {
 		extra.add('Status', 'advance online publication', true);
 		extra.add('available-date', ZU.strToISO(text(doc, '.head-tag')));
 	}
-	extra.add('foundation', labels.getWith('基金'));
-	extra.add('CLC', labels.getWith('分类号'));
-	extra.add('CNKICite', labels.getWith('被引频次'));
-	extra.add('download', labels.getWith('下载'));
-	extra.add('organizer', labels.getWith('主办单位'));
+	extra.add('foundation', labels.get('基金'));
+	extra.add('CLC', labels.get('分类号'));
+	extra.add('CNKICite', labels.get('被引频次'));
+	extra.add('download', labels.get('下载'));
+	extra.add('organizer', labels.get('主办单位'));
 	let typeKey = text(doc, '#catalog_Ptitle');
 	try {
 		// throw new Error('debug');
@@ -149,16 +149,16 @@ async function scrape(doc, url = doc.location.href) {
 		translator.setHandler('itemDone', (_obj, item) => {
 			switch (item.itemType) {
 				case 'thesis': {
-					let pubInfo = labels.getWith('作者基本信息');
+					let pubInfo = labels.get('作者基本信息');
 					item.thesisType = `${typeKey}学位论文`;
-					item.university = labels.getWith('网络出版投稿人') || pubInfo.split(/，\s?/)[0];
+					item.university = labels.get('网络出版投稿人') || pubInfo.split(/，\s?/)[0];
 					break;
 				}
 				case 'conferencePaper':
-					item.date = labels.getWith('会议时间');
-					item.proceedingsTitle = labels.getWith('会议录名称');
-					item.conferenceName = labels.getWith('会议名称');
-					item.place = labels.getWith('会议地点');
+					item.date = labels.get('会议时间');
+					item.proceedingsTitle = labels.get('会议录名称');
+					item.conferenceName = labels.get('会议名称');
+					item.place = labels.get('会议地点');
 					break;
 			}
 			procesAttachment(item, doc);
@@ -170,8 +170,8 @@ async function scrape(doc, url = doc.location.href) {
 	catch (error) {
 		var newItem = new Z.Item(typeMap[typeKey]);
 		newItem.title = text(doc, '#chTitle, #main h3');
-		newItem.abstractNote = labels.getWith(['摘要', 'Abstract']).replace(/\s*更多还原$/, '');
-		labels.getWith(['作者', 'Author'], true).querySelectorAll('a').forEach((creator) => {
+		newItem.abstractNote = labels.get(['摘要', 'Abstract']).replace(/\s*更多还原$/, '');
+		labels.get(['作者', 'Author'], true).querySelectorAll('a').forEach((creator) => {
 			creator = ZU.cleanAuthor(ZU.capitalizeName(ZU.trimInternal(creator.textContent).replace(/[;；]/g, '')), 'author');
 			if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
 				creator.lastName = creator.firstName + creator.lastName;
@@ -180,23 +180,23 @@ async function scrape(doc, url = doc.location.href) {
 			}
 			newItem.creators.push(creator);
 		});
-		labels.getWith(['关键词', 'Key Words'], true).querySelectorAll('a').forEach(tag => newItem.tags.push(ZU.trimInternal(tag.innerText)));
+		labels.get(['关键词', 'Key Words'], true).querySelectorAll('a').forEach(tag => newItem.tags.push(ZU.trimInternal(tag.innerText)));
 		switch (newItem.itemType) {
 			case 'journalArticle': {
 				let pubInfo = attr(doc, '#hidtitle', 'value');
-				newItem.publicationTitle = tryMatch(pubInfo, /-(.+?)-/, 1) || labels.getWith('Journal');
+				newItem.publicationTitle = tryMatch(pubInfo, /-(.+?)-/, 1) || labels.get('Journal');
 				// volume is unavailable
 				newItem.issue = tryMatch(pubInfo, /0*([1-9]\d*)期/, 1);
 				newItem.date = tryMatch(pubInfo, /(\d{4})年/, 1);
 				break;
 			}
 			case 'thesis': {
-				let pubInfo = labels.getWith('作者基本信息');
+				let pubInfo = labels.get('作者基本信息');
 				newItem.thesisType = `${typeKey}学位论文`;
-				newItem.university = labels.getWith('网络出版投稿人') || pubInfo.split(/，\s?/)[0];
-				newItem.date = tryMatch(pubInfo, /\d{4}/) || ZU.strToISO(labels.getWith('Year'));
-				newItem.ISSN = labels.getWith('ISSN');
-				labels.getWith('导师', true).querySelectorAll('a').forEach((creator) => {
+				newItem.university = labels.get('网络出版投稿人') || pubInfo.split(/，\s?/)[0];
+				newItem.date = tryMatch(pubInfo, /\d{4}/) || ZU.strToISO(labels.get('Year'));
+				newItem.ISSN = labels.get('ISSN');
+				labels.get('导师', true).querySelectorAll('a').forEach((creator) => {
 					creator = ZU.cleanAuthor(ZU.trimInternal(creator.textContent), 'contributor');
 					if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
 						creator.lastName = creator.firstName + creator.lastName;
@@ -208,70 +208,70 @@ async function scrape(doc, url = doc.location.href) {
 				break;
 			}
 			case 'conferencePaper':
-				newItem.date = labels.getWith('会议时间');
-				newItem.proceedingsTitle = labels.getWith('会议录名称');
-				newItem.conferenceName = labels.getWith('会议名称');
-				newItem.place = labels.getWith('会议地点');
+				newItem.date = labels.get('会议时间');
+				newItem.proceedingsTitle = labels.get('会议录名称');
+				newItem.conferenceName = labels.get('会议名称');
+				newItem.place = labels.get('会议地点');
 				break;
 		}
-		newItem.DOI = labels.getWith('DOI');
+		newItem.DOI = labels.get('DOI');
 		newItem.url = url;
 		procesAttachment(newItem, doc);
 		newItem.extra = extra.toString();
 		newItem.complete();
 	}
 }
-class LabelsX {
+class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
-		this.emptyElement = doc.createElement('div');
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
 			// avoid nesting
 			.filter(element => !element.querySelector(selector))
 			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
+				const elmCopy = element.cloneNode(true);
 				// avoid empty text
-				while (/^\s*$/.test(elementCopy.firstChild.textContent)) {
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
 					// Z.debug(elementCopy.firstChild.textContent);
-					elementCopy.removeChild(elementCopy.firstChild);
+					elmCopy.removeChild(elmCopy.firstChild);
 					// Z.debug(elementCopy.firstChild.textContent);
 				}
-				if (elementCopy.childNodes.length > 1) {
-					let key = elementCopy.removeChild(elementCopy.firstChild).textContent.replace(/\s/g, '');
-					this.innerData.push([key, elementCopy]);
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
 				}
 				else {
-					let text = ZU.trimInternal(elementCopy.textContent);
-					let key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
-					elementCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
-					this.innerData.push([key, elementCopy]);
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
 				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let results = label
-				.map(aLabel => this.getWith(aLabel, element));
-			let keyVal = element
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
 				? results.find(element => !/^\s*$/.test(element.textContent))
 				: results.find(string => string);
 			return keyVal
 				? keyVal
 				: element
-					? this.emptyElement
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyVal = this.innerData.find(arr => pattern.test(arr[0]));
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
 		return keyVal
 			? element
 				? keyVal[1]
 				: ZU.trimInternal(keyVal[1].textContent)
 			: element
-				? this.emptyElement
+				? this.emptyElm
 				: '';
 	}
 }

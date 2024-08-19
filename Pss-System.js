@@ -48,21 +48,21 @@ function detectWeb(doc, url) {
 
 async function doWeb(doc, _url) {
 	const newItem = new Z.Item('patent');
-	const labels = new LabelsX(doc, '.basic-con');
+	const labels = new Labels(doc, '.basic-con');
 	const extra = new Extra();
-	newItem.title = ZU.capitalizeTitle(labels.getWith(['发明名称(（公开）)?$', 'InventionTitle', 'Nameoftheinvention\\(disclosed\\)']));
-	extra.set('original-title', labels.getWith(['发明名称（原始国）', 'InventionTitle\\(Originalcountry\\)']), true);
-	newItem.abstractNote = labels.getWith(['摘要', 'Abstract']);
-	newItem.place = newItem.country = patentCountry(labels.getWith(['申请人所在国家', "Applicant'scountry"]));
-	newItem.assignee = ZU.capitalizeName(labels.getWith(['申请(（专利权）)?人(（公开）)?$', 'Applicant/Patentee', 'Applicant\\(public\\)']));
-	newItem.patentNumber = labels.getWith(['公开(（公告）)?号', 'PublicNoticeNo']);
-	newItem.filingDate = ZU.strToISO(labels.getWith(['申请日', 'ApplicationDate']));
-	newItem.applicationNumber = labels.getWith(['申请号', 'ApplicationNo']);
-	newItem.priorityNumbers = labels.getWith(['优先权号', 'PriorityNo']);
-	newItem.issueDate = ZU.strToISO(labels.getWith(['公开(（公告）)?日', 'PublicationDate']));
-	extra.set('IPC', labels.getWith('^IPC'));
-	extra.set('CPC', labels.getWith('^CPC'));
-	newItem.creators = labels.getWith(['发明人', 'Inventor']).split(/;\s/).map((string) => {
+	newItem.title = ZU.capitalizeTitle(labels.get(['发明名称(（公开）)?$', 'InventionTitle', 'Nameoftheinvention\\(disclosed\\)']));
+	extra.set('original-title', labels.get(['发明名称（原始国）', 'InventionTitle\\(Originalcountry\\)']), true);
+	newItem.abstractNote = labels.get(['摘要', 'Abstract']);
+	newItem.place = newItem.country = patentCountry(labels.get(['申请人所在国家', "Applicant'scountry"]));
+	newItem.assignee = ZU.capitalizeName(labels.get(['申请(（专利权）)?人(（公开）)?$', 'Applicant/Patentee', 'Applicant\\(public\\)']));
+	newItem.patentNumber = labels.get(['公开(（公告）)?号', 'PublicNoticeNo']);
+	newItem.filingDate = ZU.strToISO(labels.get(['申请日', 'ApplicationDate']));
+	newItem.applicationNumber = labels.get(['申请号', 'ApplicationNo']);
+	newItem.priorityNumbers = labels.get(['优先权号', 'PriorityNo']);
+	newItem.issueDate = ZU.strToISO(labels.get(['公开(（公告）)?日', 'PublicationDate']));
+	extra.set('IPC', labels.get('^IPC'));
+	extra.set('CPC', labels.get('^CPC'));
+	newItem.creators = labels.get(['发明人', 'Inventor']).split(/;\s/).map((string) => {
 		const creator = ZU.cleanAuthor(ZU.capitalizeName(string), 'inventor');
 		if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
 			creator.lastName = creator.firstName + creator.lastName;
@@ -78,57 +78,57 @@ async function doWeb(doc, _url) {
 	newItem.complete();
 }
 
-class LabelsX {
+class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
-		this.emptyElement = doc.createElement('div');
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
 			// avoid nesting
 			.filter(element => !element.querySelector(selector))
 			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
+				const elmCopy = element.cloneNode(true);
 				// avoid empty text
-				while (/^\s*$/.test(elementCopy.firstChild.textContent)) {
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
 					// Z.debug(elementCopy.firstChild.textContent);
-					elementCopy.removeChild(elementCopy.firstChild);
+					elmCopy.removeChild(elmCopy.firstChild);
 					// Z.debug(elementCopy.firstChild.textContent);
 				}
-				if (elementCopy.childNodes.length > 1) {
-					let key = elementCopy.removeChild(elementCopy.firstChild).textContent.replace(/\s/g, '');
-					this.innerData.push([key, elementCopy]);
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
 				}
 				else {
-					let text = ZU.trimInternal(elementCopy.textContent);
-					let key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
-					elementCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
-					this.innerData.push([key, elementCopy]);
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
 				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let results = label
-				.map(aLabel => this.getWith(aLabel, element));
-			let keyVal = element
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
 				? results.find(element => !/^\s*$/.test(element.textContent))
 				: results.find(string => string);
 			return keyVal
 				? keyVal
 				: element
-					? this.emptyElement
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyVal = this.innerData.find(arr => pattern.test(arr[0]));
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
 		return keyVal
 			? element
 				? keyVal[1]
 				: ZU.trimInternal(keyVal[1].textContent)
 			: element
-				? this.emptyElement
+				? this.emptyElm
 				: '';
 	}
 }

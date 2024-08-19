@@ -109,33 +109,33 @@ async function scrape(doc, url = doc.location.href) {
 			else {
 				newItem.title = title;
 			}
-			let subtitle = labels.getWith('副标题');
+			let subtitle = labels.get('副标题');
 			if (subtitle) {
 				newItem.shortTitle = newItem.title;
 				newItem.title = `${newItem.title}${/[\u4e00-\u9fff]/.test(newItem.title) ? '：' : ': '}${subtitle}`;
 			}
 			// https://book.douban.com/subject/21294724/
 			newItem.abstractNote = text(doc, '#link-report .hidden .intro') || text(doc, '#link-report .intro');
-			newItem.series = labels.getWith('丛书');
+			newItem.series = labels.get('丛书');
 			newItem.publisher = isRead
-				? labels.getWith('出版社').split(' / ')[0]
-				: labels.getWith('出版社');
+				? labels.get('出版社').split(' / ')[0]
+				: labels.get('出版社');
 			// https://book.douban.com/subject/1451400/
 			newItem.date = isRead
-				? tryMatch(labels.getWith('出版社'), /[\d.-]+/)
-				: labels.getWith('出版年').replace(/\./g, '-');
-			newItem.numPages = labels.getWith('页数');
-			newItem.ISBN = labels.getWith('ISBN');
+				? tryMatch(labels.get('出版社'), /[\d.-]+/)
+				: labels.get('出版年').replace(/\./g, '-');
+			newItem.numPages = labels.get('页数');
+			newItem.ISBN = labels.get('ISBN');
 			newItem.shortTitle = tryMatch(newItem.title, /[:：] (.+)$/, 1);
 			let authors = isRead
-				? Array.from(labels.getWith('作者', true).querySelectorAll('.author-item'))
+				? Array.from(labels.get('作者', true).querySelectorAll('.author-item'))
 					.map(creator => processName(ZU.trimInternal(creator.textContent), 'author'))
-				: labels.getWith('作者').split(/\s?\/\s?/)
+				: labels.get('作者').split(/\s?\/\s?/)
 					.map(creator => processName(creator, 'author'));
 			let translators = isRead
-				? Array.from(labels.getWith('译者', true).querySelectorAll('.author-item'))
+				? Array.from(labels.get('译者', true).querySelectorAll('.author-item'))
 					.map(translator => processName(ZU.trimInternal(translator.textContent), 'translator'))
-				: labels.getWith('译者').split(/\s?\/\s?/)
+				: labels.get('译者').split(/\s?\/\s?/)
 					.map(translator => processName(translator, 'translator'));
 			creators = [...authors, ...translators];
 			// 仅在read中有效
@@ -147,8 +147,8 @@ async function scrape(doc, url = doc.location.href) {
 				newItem.notes.push(`<h1>《${newItem.title}》 - 目录</h1>` + contents.innerHTML.replace(/ · · · [\s\S]*$/, '').replace(/展开全部$/, ''));
 			}
 			// https://book.douban.com/subject/26604008/
-			extra.set('original-title', labels.getWith('原作名'), true);
-			extra.set('price', labels.getWith('定价'));
+			extra.set('original-title', labels.get('原作名'), true);
+			extra.set('price', labels.get('定价'));
 			break;
 		}
 		case 'film': {
@@ -165,19 +165,19 @@ async function scrape(doc, url = doc.location.href) {
 			}
 			if (/tv/i.test(json['@type'])) {
 				newItem.itemType = 'tvBroadcast';
-				newItem.date = ZU.strToISO(labels.getWith('首播'));
+				newItem.date = ZU.strToISO(labels.get('首播'));
 			}
 			else {
 				newItem.itemType = 'film';
-				newItem.date = tryMatch(labels.getWith('上映日期'), /[\d-]+/);
+				newItem.date = tryMatch(labels.get('上映日期'), /[\d-]+/);
 			}
 			// https://movie.douban.com/subject/35725869/
 			newItem.abstractNote = text('.related-info .all') || text(doc, '.related-info [property*="summary"]');
-			newItem.runningTime = labels.getWith('片长').replace('分钟', ' min');
-			extra.set('place', labels.getWith('制片国家'));
-			extra.set('alias', labels.getWith('又名'));
-			extra.set('IMDb', labels.getWith('IMDb'));
-			extra.set('style', labels.getWith('类型'));
+			newItem.runningTime = labels.get('片长').replace('分钟', ' min');
+			extra.set('place', labels.get('制片国家'));
+			extra.set('alias', labels.get('又名'));
+			extra.set('IMDb', labels.get('IMDb'));
+			extra.set('style', labels.get('类型'));
 			let creatorsMap = {
 				director: json.director,
 				scriptwriter: json.author,
@@ -209,16 +209,16 @@ async function scrape(doc, url = doc.location.href) {
 		case 'audioRecording': {
 			newItem.title = title;
 			newItem.abstractNote = text('.related-info .all');
-			newItem.audioRecordingFormat = labels.getWith('介质');
-			newItem.label = labels.getWith('出版者');
-			newItem.date = labels.getWith('发行时间').replace(/\./, '-');
+			newItem.audioRecordingFormat = labels.get('介质');
+			newItem.label = labels.get('出版者');
+			newItem.date = labels.get('发行时间').replace(/\./, '-');
 			// runningTime: 时长,
 			extra.set('genre', 'Album', true);
-			extra.set('style', labels.getWith('流派'));
-			extra.set('alias', labels.getWith('又名'));
-			extra.set('ISRC', labels.getWith('ISRC'));
-			extra.set('barcode', labels.getWith('条形码'));
-			labels.getWith('表演者').split(' / ').forEach(performer => creators.push(processName(performer, 'performer')));
+			extra.set('style', labels.get('流派'));
+			extra.set('alias', labels.get('又名'));
+			extra.set('ISRC', labels.get('ISRC'));
+			extra.set('barcode', labels.get('条形码'));
+			labels.get('表演者').split(' / ').forEach(performer => creators.push(processName(performer, 'performer')));
 			let contents = doc.querySelector('.track-list');
 			if (contents) {
 				newItem.notes.push(`<h1>《${newItem.title}》 - 目录</h1>` + contents.innerHTML.replace(/ · · · [\s\S]*$/, '').replace(/展开全部$/, ''));
@@ -293,35 +293,56 @@ class TextLabels {
 
 class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
-			.filter(element => element.firstElementChild)
+			// avoid nesting
+			.filter(element => !element.querySelector(selector))
+			// avoid empty
+			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
-				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
-				this.innerData.push([key, elementCopy]);
+				const elmCopy = element.cloneNode(true);
+				// avoid empty text
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
+					// Z.debug(elementCopy.firstChild.textContent);
+					elmCopy.removeChild(elmCopy.firstChild);
+					// Z.debug(elementCopy.firstChild.textContent);
+				}
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
+				}
+				else {
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
+				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element));
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].innerText)
-			: '';
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElm
+				: '';
 	}
 }
 

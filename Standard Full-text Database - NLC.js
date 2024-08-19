@@ -90,19 +90,19 @@ async function scrape(doc, url = doc.location.href) {
 	// newItem.type = 类型;
 	newItem.number = text(doc, '.th_title').replace(/-/g, '—');
 	// newItem.versionNumber = 版本;
-	newItem.status = labels.getWith('标准状态');
-	newItem.date = labels.getWith('发布日期');
+	newItem.status = labels.get('标准状态');
+	newItem.date = labels.get('发布日期');
 	newItem.url = url;
-	newItem.numPages = tryMatch(labels.getWith('页数'), /\d+/);
-	newItem.language = labels.getWith('出版语种');
+	newItem.numPages = tryMatch(labels.get('页数'), /\d+/);
+	newItem.language = labels.get('出版语种');
 	newItem.libraryCatalog = '国家图书馆标准全文数据库';
-	newItem.extra += addExtra('applyDate', labels.getWith('实施日期'));
-	newItem.extra += addExtra('ICS', labels.getWith('标准ICS号'));
-	newItem.extra += addExtra('CCS', labels.getWith('中标分类号'));
-	newItem.extra += addExtra('substitute-for', labels.getWith('代替标准'));
-	newItem.extra += addExtra('substitute-by', labels.getWith('被代替标准'));
-	newItem.extra += addExtra('reference', labels.getWith('引用标准'));
-	newItem.extra += addExtra('adopted', labels.getWith('采用标准'));
+	newItem.extra += addExtra('applyDate', labels.get('实施日期'));
+	newItem.extra += addExtra('ICS', labels.get('标准ICS号'));
+	newItem.extra += addExtra('CCS', labels.get('中标分类号'));
+	newItem.extra += addExtra('substitute-for', labels.get('代替标准'));
+	newItem.extra += addExtra('substitute-by', labels.get('被代替标准'));
+	newItem.extra += addExtra('reference', labels.get('引用标准'));
+	newItem.extra += addExtra('adopted', labels.get('采用标准'));
 	let pdfLink = doc.querySelector('a[href*="downPdf"]');
 	if (pdfLink) {
 		newItem.attachments.push({
@@ -116,42 +116,56 @@ async function scrape(doc, url = doc.location.href) {
 
 class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
-			.filter(element => element.firstElementChild)
+			// avoid nesting
 			.filter(element => !element.querySelector(selector))
+			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
-				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
-				this.innerData.push([key, elementCopy]);
+				const elmCopy = element.cloneNode(true);
+				// avoid empty text
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
+					// Z.debug(elementCopy.firstChild.textContent);
+					elmCopy.removeChild(elmCopy.firstChild);
+					// Z.debug(elementCopy.firstChild.textContent);
+				}
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
+				}
+				else {
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
+				}
 			});
 	}
 
-	/**
-	 * @param {String} label the label text without anny space
-	 * @param {Boolean} element return a element or not
-	 * @returns a string or an elemnt related to label
-	 */
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element));
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label);
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].innerText)
-			: '';
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElm
+				: '';
 	}
 }
 

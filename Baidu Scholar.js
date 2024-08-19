@@ -180,7 +180,7 @@ async function scrapeRIS(doc, url) {
 	translator.setTranslator('32d59d2d-b65a-4da4-b0a3-bdd3cfb979e7');
 	translator.setString(risText);
 	translator.setHandler('itemDone', (_obj, item) => {
-		let labels = new LabelsX(doc, '.c_content > [class$="_wr"]');
+		let labels = new Labels(doc, '.c_content > [class$="_wr"]');
 		let extra = new Extra();
 		switch (item.itemType) {
 			case 'thesis':
@@ -195,7 +195,7 @@ async function scrapeRIS(doc, url) {
 				item.applicationNumber = text(doc, '[data-click*="appid"]');
 				item.patentNumber = text(doc, '[data-click*="pubid"]');
 				item.place = item.country = patentCountry(item.patentNumber || item.applicationNumber);
-				item.assignee = labels.getWith('申请\\(专利权\\)人');
+				item.assignee = labels.get('申请\\(专利权\\)人');
 				item.filingDate = ZU.strToISO(text(doc, '[data-click*="apptime"]'));
 				break;
 		}
@@ -208,7 +208,7 @@ async function scrapeRIS(doc, url) {
 }
 
 async function scrapeDoc(doc, url, itemType) {
-	let labels = new LabelsX(doc, '.c_content > [class$="_wr"]');
+	let labels = new Labels(doc, '.c_content > [class$="_wr"]');
 	let newItem = new Z.Item(itemType);
 	newItem.title = text(doc, '.main-info h3');
 	let extra = new Extra();
@@ -218,10 +218,10 @@ async function scrapeDoc(doc, url, itemType) {
 	});
 	switch (newItem.itemType) {
 		case 'standard':
-			newItem.number = labels.getWith('标准号').replace('-', '—');
-			newItem.date = labels.getWith('发布日期');
-			extra.set('CCS number', labels.getWith('CCS'));
-			extra.set('ICS number', labels.getWith('ICS'));
+			newItem.number = labels.get('标准号').replace('-', '—');
+			newItem.date = labels.get('发布日期');
+			extra.set('CCS number', labels.get('CCS'));
+			extra.set('ICS number', labels.get('ICS'));
 			break;
 		case 'report':
 			newItem.date = ZU.strToISO(text(doc, '.year_wr [class^="kw_main"]'));
@@ -258,57 +258,57 @@ function fixItem(item, extra, doc) {
 }
 
 /* Util */
-class LabelsX {
+class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
-		this.emptyElement = doc.createElement('div');
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
 			// avoid nesting
 			.filter(element => !element.querySelector(selector))
 			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
+				const elmCopy = element.cloneNode(true);
 				// avoid empty text
-				while (/^\s*$/.test(elementCopy.firstChild.textContent)) {
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
 					// Z.debug(elementCopy.firstChild.textContent);
-					elementCopy.removeChild(elementCopy.firstChild);
+					elmCopy.removeChild(elmCopy.firstChild);
 					// Z.debug(elementCopy.firstChild.textContent);
 				}
-				if (elementCopy.childNodes.length > 1) {
-					let key = elementCopy.removeChild(elementCopy.firstChild).textContent.replace(/\s/g, '');
-					this.innerData.push([key, elementCopy]);
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
 				}
 				else {
-					let text = ZU.trimInternal(elementCopy.textContent);
-					let key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
-					elementCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
-					this.innerData.push([key, elementCopy]);
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
 				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let results = label
-				.map(aLabel => this.getWith(aLabel, element));
-			let keyVal = element
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
 				? results.find(element => !/^\s*$/.test(element.textContent))
 				: results.find(string => string);
 			return keyVal
 				? keyVal
 				: element
-					? this.emptyElement
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyVal = this.innerData.find(arr => pattern.test(arr[0]));
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
 		return keyVal
 			? element
 				? keyVal[1]
 				: ZU.trimInternal(keyVal[1].textContent)
 			: element
-				? this.emptyElement
+				? this.emptyElm
 				: '';
 	}
 }

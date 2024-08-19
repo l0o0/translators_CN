@@ -121,60 +121,60 @@ async function scrape(doc, url = doc.location.href) {
 	var newItem = new Z.Item(detectWeb(doc, url));
 	newItem.title = attr(doc, '.article-summary > h1', 'title').replace(/_\((.+?)\)/g, '<sub>$1</sub>').replace(/_(\d)/g, '<sub>$1</sub>');
 	extra.set('original-title', text(doc, '.article-summary > em').replace(/_\((.+?)\)/g, '<sub>$1</sub>').replace(/_(\d)/g, '<sub>$1</sub>'), true);
-	newItem.abstractNote = labels.getWith('摘要');
+	newItem.abstractNote = labels.get('摘要');
 	switch (newItem.itemType) {
 		case 'journalArticle': {
 			newItem.publicationTitle = attr(doc, 'a[href*="/asset/journal/"]', 'title');
-			extra.set('original-container-title', tryMatch(labels.getWith('出版物'), /\((\w+)\)$/, 1), true);
-			let pubInfo = labels.getWith('年卷期');
+			extra.set('original-container-title', tryMatch(labels.get('出版物'), /\((\w+)\)$/, 1), true);
+			let pubInfo = labels.get('年卷期');
 			newItem.volume = tryMatch(pubInfo, /第0*(\d+)卷/, 1);
 			newItem.issue = tryMatch(pubInfo, /第([A-Z\d]+)期/, 1).replace(/0*(\d)/, '$1');
-			newItem.pages = labels.getWith('页码').replace(/\+/g, ', ').replace(/~/g, '-');
+			newItem.pages = labels.get('页码').replace(/\+/g, ', ').replace(/~/g, '-');
 			newItem.date = tryMatch(pubInfo, /^(\d{4})年/, 1);
 			creators = Array.from(doc.querySelectorAll('.author > a')).map(element => processName(ZU.trimInternal(element.textContent)));
 			creatorsEn = text(doc, '.author > em').split(/[;，；]\s*/).map(enName => ZU.capitalizeName(enName));
-			extra.set('foundation', labels.getWith('基金'));
+			extra.set('foundation', labels.get('基金'));
 			break;
 		}
 		case 'book':
-			newItem.series = labels.getWith('丛书名');
+			newItem.series = labels.get('丛书名');
 			// http://k.cqvip.com/asset/detail/101996618144
-			newItem.edition = labels.getWith('版本说明');
-			newItem.publisher = labels.getWith('出版社');
-			newItem.date = ZU.strToISO(labels.getWith('出版年'));
-			newItem.numPages = tryMatch(labels.getWith('页数'), /\d+/);
-			newItem.ISBN = ZU.cleanISBN(labels.getWith('ISBN'));
+			newItem.edition = labels.get('版本说明');
+			newItem.publisher = labels.get('出版社');
+			newItem.date = ZU.strToISO(labels.get('出版年'));
+			newItem.numPages = tryMatch(labels.get('页数'), /\d+/);
+			newItem.ISBN = ZU.cleanISBN(labels.get('ISBN'));
 			creators = Array.from(doc.querySelectorAll('.author > a')).map(element => processName(ZU.trimInternal(element.textContent)));
 			break;
 		case 'thesis':
-			newItem.thesisType = labels.getWith('学位级别') + '学位论文';
-			newItem.university = labels.getWith('作者单位');
-			newItem.date = ZU.strToISO(labels.getWith('授予年度'));
+			newItem.thesisType = labels.get('学位级别') + '学位论文';
+			newItem.university = labels.get('作者单位');
+			newItem.date = ZU.strToISO(labels.get('授予年度'));
 			creators = Array.from(doc.querySelectorAll('.author > a')).map(element => processName(ZU.trimInternal(element.textContent)));
-			labels.getWith('导师姓名').split(/[;，；]/).forEach(creator => creators.push(processName(creator, 'contributor')));
+			labels.get('导师姓名').split(/[;，；]/).forEach(creator => creators.push(processName(creator, 'contributor')));
 			break;
 		case 'conferencePaper':
-			newItem.date = ZU.strToISO(labels.getWith('会议日期'));
-			newItem.conferenceName = labels.getWith('会议名称').replace(/^《|》$/g, '');
+			newItem.date = ZU.strToISO(labels.get('会议日期'));
+			newItem.conferenceName = labels.get('会议名称').replace(/^《|》$/g, '');
 			creators = Array.from(doc.querySelectorAll('.author > a')).map(element => processName(ZU.trimInternal(element.textContent)));
 			break;
 		case 'standard':
 			newItem.title = attr(doc, '.article-summary > h1', 'title').replace(/([\u4e00-\u9fff]) ([\u4e00-\u9fff])/, '$1　$2');
-			newItem.number = labels.getWith('标准编号');
-			newItem.date = ZU.strToISO(labels.getWith('发布日期'));
-			extra.set('applyDate', labels.getWith('实施日期'));
-			newItem.numPages = tryMatch(labels.getWith('页码'), /\d+/);
-			extra.set('CCS', labels.getWith('中国标准分类号'));
-			extra.set('ICS', labels.getWith('国际标准分类号'));
+			newItem.number = labels.get('标准编号');
+			newItem.date = ZU.strToISO(labels.get('发布日期'));
+			extra.set('applyDate', labels.get('实施日期'));
+			newItem.numPages = tryMatch(labels.get('页码'), /\d+/);
+			extra.set('CCS', labels.get('中国标准分类号'));
+			extra.set('ICS', labels.get('国际标准分类号'));
 			break;
 		case 'patent':
-			newItem.patentNumber = labels.getWith('公开号').split(';')[0];
-			newItem.applicationNumber = labels.getWith('专利申请号').split(';')[0];
+			newItem.patentNumber = labels.get('公开号').split(';')[0];
+			newItem.applicationNumber = labels.get('专利申请号').split(';')[0];
 			newItem.place = newItem.country = patentCountry(newItem.patentNumber || newItem.applicationNumber);
-			newItem.filingDate = labels.getWith('申请日');
-			newItem.issueDate = labels.getWith('公开日');
-			extra.set('Genre', labels.getWith('专利类型'), true);
-			creators = Array.from(labels.getWith('发明人', true).querySelectorAll('a')).map(element => processName(ZU.trimInternal(element.textContent)));
+			newItem.filingDate = labels.get('申请日');
+			newItem.issueDate = labels.get('公开日');
+			extra.set('Genre', labels.get('专利类型'), true);
+			creators = Array.from(labels.get('发明人', true).querySelectorAll('a')).map(element => processName(ZU.trimInternal(element.textContent)));
 			break;
 
 		/*
@@ -184,41 +184,41 @@ async function scrape(doc, url = doc.location.href) {
 		*/
 		case 'statute': {
 			newItem.title = newItem.title.replace(/\((.+?)\)/, '（$1）');
-			let rank = labels.getWith('效力级别');
+			let rank = labels.get('效力级别');
 			if (rank == '党内法规制度' || newItem.title.includes('草案')) {
 				newItem.itemType = 'report';
 				newItem.shortTitle = tryMatch(newItem.title, /^(.+)——.+/, 1);
-				newItem.date = labels.getWith('颁布日期');
+				newItem.date = labels.get('颁布日期');
 			}
 			else {
-				if (!labels.getWith('效力级别').includes('法律')) {
+				if (!labels.get('效力级别').includes('法律')) {
 					extra.set('Type', 'regulation', true);
 				}
 				if (newItem.title.startsWith('中华人民共和国')) {
 					newItem.shortTitle = newItem.title.substring(7);
 				}
-				newItem.publicLawNumber = labels.getWith('发文文号');
-				newItem.dateEnacted = labels.getWith('颁布日期');
-				if (labels.getWith('时效性') == '已失效') {
+				newItem.publicLawNumber = labels.get('发文文号');
+				newItem.dateEnacted = labels.get('颁布日期');
+				if (labels.get('时效性') == '已失效') {
 					extra.set('Status', '已废止', true);
 				}
 			}
 
-			extra.set('applyDate', labels.getWith('实施日期'));
-			creators = Array.from(labels.getWith('颁布部门', true).querySelectorAll('a')).map(element => processName(ZU.trimInternal(element.textContent)));
+			extra.set('applyDate', labels.get('实施日期'));
+			creators = Array.from(labels.get('颁布部门', true).querySelectorAll('a')).map(element => processName(ZU.trimInternal(element.textContent)));
 			break;
 		}
 		case 'report':
 			newItem.reportType = '科技成果报告';
-			newItem.institution = labels.getWith('完成单位');
-			newItem.date = labels.getWith('公布年份');
-			extra.set('achievementType', labels.getWith('成果类别'));
+			newItem.institution = labels.get('完成单位');
+			newItem.date = labels.get('公布年份');
+			extra.set('achievementType', labels.get('成果类别'));
 			creators = Array.from(doc.querySelectorAll('.author > a')).map(element => processName(ZU.trimInternal(element.textContent)));
 			break;
 		case 'newspaperArticle':
-			newItem.publicationTitle = attr(labels.getWith('报纸名称', true), 'a', 'title');
-			newItem.date = labels.getWith('发表日期');
-			newItem.pages = labels.getWith('版名版号').replace(/0*(\d)/, '$1');
+			newItem.publicationTitle = attr(labels.get('报纸名称', true), 'a', 'title');
+			newItem.date = labels.get('发表日期');
+			newItem.pages = labels.get('版名版号').replace(/0*(\d)/, '$1');
 			creators = Array.from(doc.querySelectorAll('.author > a')).map(element => processName(ZU.trimInternal(element.textContent)));
 			break;
 	}
@@ -234,8 +234,8 @@ async function scrape(doc, url = doc.location.href) {
 		}
 		extra.set('creatorsExt', JSON.stringify(creators));
 	}
-	labels.getWith(['主题', '关键词'], true).querySelectorAll('a').forEach(element => newItem.tags.push(ZU.trimInternal(element.textContent)));
-	extra.set('CLC', labels.getWith('中图分类'));
+	labels.get(['主题', '关键词'], true).querySelectorAll('a').forEach(element => newItem.tags.push(ZU.trimInternal(element.textContent)));
+	extra.set('CLC', labels.get('中图分类'));
 	newItem.extra = extra.toString();
 	return newItem;
 }

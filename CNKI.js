@@ -710,14 +710,14 @@ async function scrapeDoc(doc, itemKey) {
 	const url = doc.location.href;
 	const ids = new ID(doc, url);
 	const newItem = new Zotero.Item(ids.toItemtype());
-	const labels = new LabelsX(doc, 'div.doc div[class^="row"], li.top-space, .total-inform > span');
+	const labels = new Labels(doc, 'div.doc div[class^="row"], li.top-space, .total-inform > span');
 	const extra = new Extra();
 	Z.debug(labels.innerData.map(element => [element[0], ZU.trimInternal(element[1].textContent)]));
 
 	richTextTitle(newItem, doc);
 	newItem.abstractNote = attr(doc, '#abstract_text', 'value');
 
-	const doi = labels.getWith('DOI');
+	const doi = labels.get('DOI');
 	if (ZU.fieldIsValidForType('DOI', newItem.itemType)) {
 		newItem.DOI = doi;
 	}
@@ -774,7 +774,7 @@ async function scrapeDoc(doc, itemKey) {
 	/* tags */
 	const tags = [
 		Array.from(doc.querySelectorAll('.keywords > a')).map(element => ZU.trimInternal(element.textContent).replace(/[，；,;]$/, '')),
-		labels.getWith(['关键词', '關鍵詞', 'keywords']).split(/[;，；]\s*/)
+		labels.get(['关键词', '關鍵詞', 'keywords']).split(/[;，；]\s*/)
 	].find(arr => arr.length);
 	if (tags) newItem.tags = tags;
 
@@ -785,7 +785,7 @@ async function scrapeDoc(doc, itemKey) {
 			newItem.publicationTitle = tryMatch(pubInfo, /^(.+?)\./, 1).replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
 			newItem.volume = tryMatch(pubInfo, /,\s?0*([1-9]\d*)\(/, 1);
 			newItem.issue = tryMatch(pubInfo, /\(([A-Z]?\d*)\)/i, 1).replace(/0*(\d+)/, '$1');
-			newItem.pages = labels.getWith(['页码', '頁碼', 'Page$']);
+			newItem.pages = labels.get(['页码', '頁碼', 'Page$']);
 			newItem.date = tryMatch(pubInfo, /\.\s?(\d{4})/, 1);
 			break;
 		}
@@ -802,59 +802,59 @@ async function scrapeDoc(doc, itemKey) {
 					CDFD: 'Doctoral dissertation',
 					CDMH: 'Master thesis'
 				}[ids.dbcode];
-			const pubInfo = labels.getWith('出版信息');
+			const pubInfo = labels.get('出版信息');
 			newItem.date = ZU.strToISO(pubInfo);
-			newItem.numPages = labels.getWith(['页数', '頁數', 'Page']);
-			labels.getWith(['导师', '導師', 'Tutor']).split(/[;，；]\s*/).forEach((supervisor) => {
+			newItem.numPages = labels.get(['页数', '頁數', 'Page']);
+			labels.get(['导师', '導師', 'Tutor']).split(/[;，；]\s*/).forEach((supervisor) => {
 				newItem.creators.push(cleanName(ZU.trimInternal(supervisor), 'contributor'));
 			});
-			extra.set('major', labels.getWith(['学科专业', '學科專業', 'Retraction']));
+			extra.set('major', labels.get(['学科专业', '學科專業', 'Retraction']));
 			break;
 		}
 		case 'conferencePaper': {
-			newItem.abstractNote = labels.getWith(['摘要', 'Abstract']).replace(/^[〈⟨<＜]正[＞>⟩〉]/, '');
-			newItem.date = ZU.strToISO(labels.getWith(['会议时间', '會議時間', 'ConferenceTime']));
+			newItem.abstractNote = labels.get(['摘要', 'Abstract']).replace(/^[〈⟨<＜]正[＞>⟩〉]/, '');
+			newItem.date = ZU.strToISO(labels.get(['会议时间', '會議時間', 'ConferenceTime']));
 			newItem.proceedingsTitle = attr(doc, '.top-tip > span:first-child', 'title');
-			newItem.conferenceName = labels.getWith(['会议名称', '會議名稱', 'ConferenceName']);
-			newItem.place = labels.getWith(['会议地点', '會議地點', 'ConferencePlace']);
-			newItem.pages = labels.getWith(['页码', '頁碼', 'Page$']);
+			newItem.conferenceName = labels.get(['会议名称', '會議名稱', 'ConferenceName']);
+			newItem.place = labels.get(['会议地点', '會議地點', 'ConferencePlace']);
+			newItem.pages = labels.get(['页码', '頁碼', 'Page$']);
 			break;
 		}
 		case 'newspaperArticle':
 			newItem.abstractNote = text(doc, '.abstract-text');
 			newItem.publicationTitle = text(doc, '.top-tip > a');
-			newItem.date = ZU.strToISO(labels.getWith(['报纸日期', '報紙日期', 'NewspaperDate']));
-			newItem.pages = labels.getWith(['版号', '版號', 'EditionCode']);
+			newItem.date = ZU.strToISO(labels.get(['报纸日期', '報紙日期', 'NewspaperDate']));
+			newItem.pages = labels.get(['版号', '版號', 'EditionCode']);
 			break;
 		case 'bookSection':
 			newItem.bookTitle = text(doc, '.book-info .book-tit');
-			newItem.date = tryMatch(labels.getWith(['来源年鉴', 'SourceYearbook']), /\d{4}/);
-			newItem.pages = labels.getWith(['页码', '頁碼', 'Page$']);
-			newItem.creators = labels.getWith(['责任说明', '責任說明', 'Statementofresponsibility'])
+			newItem.date = tryMatch(labels.get(['来源年鉴', 'SourceYearbook']), /\d{4}/);
+			newItem.pages = labels.get(['页码', '頁碼', 'Page$']);
+			newItem.creators = labels.get(['责任说明', '責任說明', 'Statementofresponsibility'])
 				.replace(/\s*([主]?编|Editor)$/, '')
 				.split(/[,;，；]/)
 				.map(creator => cleanName(creator, 'author'));
 			break;
 		case 'report':
-			newItem.abstractNote = labels.getWith(['成果简介', '成果簡介']);
-			newItem.creators = labels.getWith('成果完成人').split(/[,;，；]/).map(creator => cleanName(creator, 'author'));
-			newItem.date = labels.getWith(['入库时间', '入庫時間']);
-			newItem.institution = labels.getWith(['第一完成单位', '第一完成單位']);
-			extra.set('achievementType', labels.getWith(['成果类别', '成果類別']));
-			extra.set('level', labels.getWith('成果水平'));
-			extra.set('evaluation', labels.getWith(['评价形式', '評價形式']));
+			newItem.abstractNote = labels.get(['成果简介', '成果簡介']);
+			newItem.creators = labels.get('成果完成人').split(/[,;，；]/).map(creator => cleanName(creator, 'author'));
+			newItem.date = labels.get(['入库时间', '入庫時間']);
+			newItem.institution = labels.get(['第一完成单位', '第一完成單位']);
+			extra.set('achievementType', labels.get(['成果类别', '成果類別']));
+			extra.set('level', labels.get('成果水平'));
+			extra.set('evaluation', labels.get(['评价形式', '評價形式']));
 			break;
 		case 'standard':
-			newItem.number = labels.getWith(['标准号', '標準號', 'StandardNo']);
+			newItem.number = labels.get(['标准号', '標準號', 'StandardNo']);
 			if (newItem.number.startsWith('GB')) {
 				newItem.number = newItem.number.replace('-', '——');
 				newItem.title = newItem.title.replace(/([\u4e00-\u9fff]) ([\u4e00-\u9fff])/, '$1　$2');
 			}
 			newItem.status = text(doc, 'h1 > .type');
-			newItem.date = labels.getWith(['发布日期', '發佈日期', 'IssuanceDate']);
-			newItem.numPages = labels.getWith(['总页数', '總頁數', 'TotalPages']);
+			newItem.date = labels.get(['发布日期', '發佈日期', 'IssuanceDate']);
+			newItem.numPages = labels.get(['总页数', '總頁數', 'TotalPages']);
 			extra.set('original-title', text(doc, 'h1 > span'));
-			newItem.creators = labels.getWith(['标准技术委员会', '归口单位', '技術標準委員會', '歸口單位', 'StandardTechnicalCommittee'])
+			newItem.creators = labels.get(['标准技术委员会', '归口单位', '技術標準委員會', '歸口單位', 'StandardTechnicalCommittee'])
 				.split(/[;，；、]/)
 				.map(creator => ({
 					firstName: '',
@@ -862,27 +862,27 @@ async function scrapeDoc(doc, itemKey) {
 					creatorType: 'author',
 					fieldMode: 1
 				}));
-			extra.set('applyDate', labels.getWith(['实施日期', '實施日期']), true);
+			extra.set('applyDate', labels.get(['实施日期', '實施日期']), true);
 			break;
 		case 'patent':
-			newItem.patentNumber = labels.getWith(['申请公布号', '申請公佈號', 'PublicationNo']);
-			newItem.applicationNumber = labels.getWith(['申请\\(专利\\)号', '申請\\(專利\\)號', 'ApplicationNumber']);
+			newItem.patentNumber = labels.get(['申请公布号', '申請公佈號', 'PublicationNo']);
+			newItem.applicationNumber = labels.get(['申请\\(专利\\)号', '申請\\(專利\\)號', 'ApplicationNumber']);
 			newItem.place = newItem.country = patentCountry(newItem.patentNumber || newItem.applicationNumber);
-			newItem.filingDate = labels.getWith(['申请日', '申請日', 'ApplicationDate']);
-			newItem.issueDate = labels.getWith(['授权公告日', '授權公告日', 'IssuanceDate']);
+			newItem.filingDate = labels.get(['申请日', '申請日', 'ApplicationDate']);
+			newItem.issueDate = labels.get(['授权公告日', '授權公告日', 'IssuanceDate']);
 			newItem.rights = text(doc, '.claim > h5 + div');
-			extra.set('Genre', labels.getWith(['专利类型', '專利類型']), true);
-			labels.getWith(['发明人', '發明人', 'Inventor'])
+			extra.set('Genre', labels.get(['专利类型', '專利類型']), true);
+			labels.get(['发明人', '發明人', 'Inventor'])
 				.split(/[;，；]\s*/)
 				.forEach((inventor) => {
 					newItem.creators.push(cleanName(ZU.trimInternal(inventor), 'inventor'));
 				});
 			break;
 		case 'videoRecording':
-			newItem.abstractNote = labels.getWith(['视频简介', '視頻簡介']).replace(/\s*更多还原$/, '');
-			newItem.runningTime = labels.getWith(['时长', '時長']);
-			newItem.date = ZU.strToISO(labels.getWith(['发布时间', '發佈時間']));
-			extra.set('organizer', labels.getWith(['主办单位', '主辦單位']), true);
+			newItem.abstractNote = labels.get(['视频简介', '視頻簡介']).replace(/\s*更多还原$/, '');
+			newItem.runningTime = labels.get(['时长', '時長']);
+			newItem.date = ZU.strToISO(labels.get(['发布时间', '發佈時間']));
+			extra.set('organizer', labels.get(['主办单位', '主辦單位']), true);
 			doc.querySelectorAll('h3:first-of-type > span').forEach((element) => {
 				newItem.creators.push(cleanName(ZU.trimInternal(element.textContent), 'author'));
 			});
@@ -903,10 +903,10 @@ async function scrapeDoc(doc, itemKey) {
 	}
 
 	/* extra */
-	extra.set('foundation', labels.getWith('基金'));
-	extra.set('download', labels.getWith(['下载', '下載', 'Download']) || itemKey.download);
-	extra.set('album', labels.getWith(['专辑', '專輯', 'Series']));
-	extra.set('CLC', labels.getWith(['分类号', '分類號', 'ClassificationCode']));
+	extra.set('foundation', labels.get('基金'));
+	extra.set('download', labels.get(['下载', '下載', 'Download']) || itemKey.download);
+	extra.set('album', labels.get(['专辑', '專輯', 'Series']));
+	extra.set('CLC', labels.get(['分类号', '分類號', 'ClassificationCode']));
 	extra.set('CNKICite', itemKey.cite || attr(doc, '#paramcitingtimes', 'value') || text(doc, '#citations+span').substring(1, -1));
 	extra.set('dbcode', ids.dbcode);
 	extra.set('dbname', ids.dbname);
@@ -927,7 +927,7 @@ async function scrapeDoc(doc, itemKey) {
 async function parseRefer(referText, doc, url, itemKey) {
 	let item = {};
 
-	const labels = new LabelsX(doc, 'div.doc div[class^="row"], li.top-space, .total-inform > span');
+	const labels = new Labels(doc, 'div.doc div[class^="row"], li.top-space, .total-inform > span');
 	Z.debug('get labels:');
 	Z.debug(labels.innerData.map(element => [element[0], ZU.trimInternal(element[1].textContent)]));
 	const extra = new Extra();
@@ -961,8 +961,8 @@ async function parseRefer(referText, doc, url, itemKey) {
 			}
 			break;
 		case 'thesis':
-			item.numPages = labels.getWith(['页数', '頁數', 'Page']);
-			extra.set('major', labels.getWith(['学科专业', '學科專業', 'Retraction']));
+			item.numPages = labels.get(['页数', '頁數', 'Page']);
+			extra.set('major', labels.get(['学科专业', '學科專業', 'Retraction']));
 			break;
 		case 'conferencePaper': {
 			item.proceedingsTitle = attr(doc, '.top-tip > span:first-child', 'title');
@@ -970,30 +970,30 @@ async function parseRefer(referText, doc, url, itemKey) {
 		}
 		case 'newspaperArticle':
 			item.abstractNote = text(doc, '.abstract-text');
-			item.tags = labels.getWith(['关键词', '關鍵詞', 'keywords']).split(/[;，；]\s*/);
+			item.tags = labels.get(['关键词', '關鍵詞', 'keywords']).split(/[;，；]\s*/);
 			break;
 
 		/* yearbook */
 		case 'bookSection': {
 			item.bookTitle = text(doc, '.book-tit');
-			item.creators = labels.getWith(['责任说明', '責任說明', 'Statementofresponsibility'])
+			item.creators = labels.get(['责任说明', '責任說明', 'Statementofresponsibility'])
 				.replace(/\s*([主]?编|Editor)$/, '')
 				.split(/[,;，；]/)
 				.map(creator => cleanName(creator, 'author'));
 			break;
 		}
 		case 'report':
-			item.creators = labels.getWith('成果完成人').split(/[,;，；]/).map(creator => cleanName(creator, 'author'));
-			item.date = labels.getWith(['入库时间', '入庫時間']);
-			item.institution = labels.getWith(['第一完成单位', '第一完成單位']);
-			extra.set('achievementType', labels.getWith(['成果类别', '成果類別']));
-			extra.set('level', labels.getWith('成果水平'));
-			extra.set('evaluation', labels.getWith(['评价形式', '評價形式']));
+			item.creators = labels.get('成果完成人').split(/[,;，；]/).map(creator => cleanName(creator, 'author'));
+			item.date = labels.get(['入库时间', '入庫時間']);
+			item.institution = labels.get(['第一完成单位', '第一完成單位']);
+			extra.set('achievementType', labels.get(['成果类别', '成果類別']));
+			extra.set('level', labels.get('成果水平'));
+			extra.set('evaluation', labels.get(['评价形式', '評價形式']));
 			break;
 		case 'standard':
 			extra.set('original-title', text(doc, 'h1 > span'));
 			item.status = text(doc, '.type');
-			item.creators = labels.getWith(['标准技术委员会', '归口单位', '技術標準委員會', '歸口單位', 'StandardTechnicalCommittee'])
+			item.creators = labels.get(['标准技术委员会', '归口单位', '技術標準委員會', '歸口單位', 'StandardTechnicalCommittee'])
 				.split(/[;，；、]/)
 				.map(creator => ({
 					firstName: '',
@@ -1001,21 +1001,21 @@ async function parseRefer(referText, doc, url, itemKey) {
 					creatorType: 'author',
 					fieldMode: 1
 				}));
-			extra.set('applyDate', labels.getWith(['实施日期', '實施日期']), true);
+			extra.set('applyDate', labels.get(['实施日期', '實施日期']), true);
 			break;
 		case 'patent':
 			// item.place = labels.getWith('地址');
-			item.filingDate = labels.getWith(['申请日', '申請日', 'ApplicationDate']);
-			item.applicationNumber = labels.getWith(['申请\\(专利\\)号', '申請\\(專利\\)號', 'ApplicationNumber']);
-			item.issueDate = labels.getWith(['授权公告日', '授權公告日', 'IssuanceDate']);
+			item.filingDate = labels.get(['申请日', '申請日', 'ApplicationDate']);
+			item.applicationNumber = labels.get(['申请\\(专利\\)号', '申請\\(專利\\)號', 'ApplicationNumber']);
+			item.issueDate = labels.get(['授权公告日', '授權公告日', 'IssuanceDate']);
 			item.rights = text(doc, '.claim > h5+div');
 			break;
 	}
 	item.language = ids.toLanguage();
-	extra.set('foundation', labels.getWith('基金'));
-	extra.set('download', labels.getWith(['下载', '下載', 'Download']) || itemKey.download);
-	extra.set('album', labels.getWith(['专辑', '專輯', 'Series']));
-	extra.set('CLC', labels.getWith(['分类号', '分類號', 'ClassificationCode']));
+	extra.set('foundation', labels.get('基金'));
+	extra.set('download', labels.get(['下载', '下載', 'Download']) || itemKey.download);
+	extra.set('album', labels.get(['专辑', '專輯', 'Series']));
+	extra.set('CLC', labels.get(['分类号', '分類號', 'ClassificationCode']));
 	extra.set('CNKICite', itemKey.cite || attr(doc, '#paramcitingtimes', 'value') || text(doc, '#citations+span').substring(1, -1));
 	extra.set('dbcode', ids.dbcode);
 	extra.set('dbname', ids.dbname);
@@ -1030,57 +1030,57 @@ async function parseRefer(referText, doc, url, itemKey) {
  * utils *
  *********/
 
-class LabelsX {
+class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
-		this.emptyElement = doc.createElement('div');
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
 			// avoid nesting
 			.filter(element => !element.querySelector(selector))
 			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				const elementCopy = element.cloneNode(true);
+				const elmCopy = element.cloneNode(true);
 				// avoid empty text
-				while (/^\s*$/.test(elementCopy.firstChild.textContent)) {
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
 					// Z.debug(elementCopy.firstChild.textContent);
-					elementCopy.removeChild(elementCopy.firstChild);
+					elmCopy.removeChild(elmCopy.firstChild);
 					// Z.debug(elementCopy.firstChild.textContent);
 				}
-				if (elementCopy.childNodes.length > 1) {
-					const key = elementCopy.removeChild(elementCopy.firstChild).textContent.replace(/\s/g, '');
-					this.innerData.push([key, elementCopy]);
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
 				}
 				else {
-					const text = ZU.trimInternal(elementCopy.textContent);
+					const text = ZU.trimInternal(elmCopy.textContent);
 					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
-					elementCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
-					this.innerData.push([key, elementCopy]);
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
 				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
 			const results = label
-				.map(aLabel => this.getWith(aLabel, element));
+				.map(aLabel => this.get(aLabel, element));
 			const keyVal = element
 				? results.find(element => !/^\s*$/.test(element.textContent))
 				: results.find(string => string);
 			return keyVal
 				? keyVal
 				: element
-					? this.emptyElement
+					? this.emptyElm
 					: '';
 		}
 		const pattern = new RegExp(label, 'i');
-		const keyVal = this.innerData.find(arr => pattern.test(arr[0]));
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
 		return keyVal
 			? element
 				? keyVal[1]
 				: ZU.trimInternal(keyVal[1].textContent)
 			: element
-				? this.emptyElement
+				? this.emptyElm
 				: '';
 	}
 }
@@ -1350,7 +1350,6 @@ function strChild(docOrElem, selector, key, index) {
 		? element[key]
 		: '';
 }
-
 
 /**
  * Attempts to get the part of the pattern described from the character,

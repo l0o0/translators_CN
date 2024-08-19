@@ -51,7 +51,7 @@ var typeMap = {
 };
 
 function detectWeb(doc, _url) {
-	let docType = new Labels(doc, '.MainPanelCenter > table table:nth-of-type(2) > tbody > tr').getWith(['資料類型', 'Contenttype', '資料の種類']);
+	let docType = new Labels(doc, '.MainPanelCenter > table table:nth-of-type(2) > tbody > tr').get(['資料類型', 'Contenttype', '資料の種類']);
 	let typeKey = Object.keys(typeMap).find(key => docType.includes(key));
 	if (typeKey) {
 		return typeMap[typeKey];
@@ -105,7 +105,7 @@ async function scrape(doc, url = doc.location.href) {
 		let content = attr(doc, `meta[name="citation_${name}"]`, 'content');
 		return split(content, original);
 	}
-	newItem.abstractNote = labels.getWith(['摘要', 'Abstract', '抄録']);
+	newItem.abstractNote = labels.get(['摘要', 'Abstract', '抄録']);
 	let creators = [];
 	doc.querySelectorAll('meta[name="citation_author"]').forEach((element) => {
 		creators.push(processName(element.getAttribute('content')));
@@ -120,11 +120,11 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.ISSN = ZU.cleanISSN(meta('issn'));
 			break;
 		case 'book':
-			newItem.series = labels.getWith(['叢書名', 'Series', 'シリーズ']);
-			newItem.seriesNumber = labels.getWith(['叢書號', 'Series No', 'シリーズナンバー']);
+			newItem.series = labels.get(['叢書名', 'Series', 'シリーズ']);
+			newItem.seriesNumber = labels.get(['叢書號', 'Series No', 'シリーズナンバー']);
 			newItem.volume = meta('issue');
 			newItem.ISBN = ZU.cleanISBN(meta('issn'));
-			if (labels.getWith(['資料類型', 'Contenttype', '資料の種類']).includes('專題研究論文=Research Paper')) {
+			if (labels.get(['資料類型', 'Contenttype', '資料の種類']).includes('專題研究論文=Research Paper')) {
 				newItem.itemType = 'bookSection';
 				newItem.pages = Array.from(new Set([meta('firstpage'), meta('lastpage')])).join('-');
 			}
@@ -139,19 +139,19 @@ async function scrape(doc, url = doc.location.href) {
 					return {
 						master: "Master's thesis",
 						doctor: 'Doctoral dissertation',
-					}[labels.getWith('Degree')] || [labels.getWith('Degree')];
+					}[labels.get('Degree')] || [labels.get('Degree')];
 				}
 				else if (url.includes('/jp/')) {
-					return labels.getWith('学位') + '号論文';
+					return labels.get('学位') + '号論文';
 				}
-				return labels.getWith('學位類別') + '學位論文';
+				return labels.get('學位類別') + '學位論文';
 			});
-			newItem.university = labels.getWith(['校院名稱', '学校', 'Institution']);
-			labels.getWith(['指導教授', 'Advisor', '指導教官']).split(/\s?;\s?/).forEach(creator => creators.push(processName(creator, 'contributor')));
+			newItem.university = labels.get(['校院名稱', '学校', 'Institution']);
+			labels.get(['指導教授', 'Advisor', '指導教官']).split(/\s?;\s?/).forEach(creator => creators.push(processName(creator, 'contributor')));
 			newItem.numPages = meta('firstpage');
 			break;
 		case 'document':
-			extra.set('container-title', labels.getWith('出處題名'), true);
+			extra.set('container-title', labels.get('出處題名'), true);
 			break;
 	}
 	newItem.date = ZU.strToISO(meta('date'));
@@ -159,9 +159,9 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.url = tryMatch(url, /^.+seq=\d+/);
 	[
 		{ key: 'publisher', value: meta('publisher') },
-		{ key: 'place', value: tryMatch(labels.getWith(['出版地', 'Location']), /^(.+?)\[/, 1) },
+		{ key: 'place', value: tryMatch(labels.get(['出版地', 'Location']), /^(.+?)\[/, 1) },
 		// https://buddhism.lib.ntu.edu.tw/DLMBS/search/search_detail.jsp?seq=646597
-		{ key: 'DOI', value: ZU.cleanDOI(labels.getWith('DOI')) }
+		{ key: 'DOI', value: ZU.cleanDOI(labels.get('DOI')) }
 
 	].forEach((obj) => {
 		if (ZU.fieldIsValidForType(obj.key, newItem.itemType)) {
@@ -171,10 +171,10 @@ async function scrape(doc, url = doc.location.href) {
 			extra.set(obj.key, obj.value, true);
 		}
 	});
-	extra.set('original-publisher-place', tryMatch(labels.getWith('出版地'), /\[(.+?)\]$/, 1), true);
-	extra.set('remark', labels.getWith(['附註項', 'Note', 'ノート']));
-	extra.set('view', labels.getWith(['點閱次數', 'Hits', 'ヒット数']));
-	extra.set('publisherURL', labels.getWith(['出版者網址', 'Publisher URL', '出版サイト']));
+	extra.set('original-publisher-place', tryMatch(labels.get('出版地'), /\[(.+?)\]$/, 1), true);
+	extra.set('remark', labels.get(['附註項', 'Note', 'ノート']));
+	extra.set('view', labels.get(['點閱次數', 'Hits', 'ヒット数']));
+	extra.set('publisherURL', labels.get(['出版者網址', 'Publisher URL', '出版サイト']));
 	if (creators.some(creator => creator.original)) {
 		extra.set('creatorsExt', JSON.stringify(creators));
 	}
@@ -197,45 +197,64 @@ async function scrape(doc, url = doc.location.href) {
 		document: doc
 	});
 	newItem.tags = attr(doc, 'meta[name="citation_keywords"]', 'content').split('; ').map(keywordPair => split(keywordPair));
-	if (labels.getWith(['目次', 'Table of contents'], true).querySelector('td')) {
-		newItem.notes.push('<h1>目次</h1>' + labels.getWith(['目次', 'Table of contents'], true).querySelector('td').innerHTML);
+	if (labels.get(['目次', 'Table of contents'], true).querySelector('td')) {
+		newItem.notes.push('<h1>目次</h1>' + labels.get(['目次', 'Table of contents'], true).querySelector('td').innerHTML);
 	}
 	newItem.complete();
 }
 
 class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
-			.filter(element => element.firstElementChild)
+			// avoid nesting
 			.filter(element => !element.querySelector(selector))
+			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
-				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
-				this.innerData.push([key, elementCopy]);
+				const elmCopy = element.cloneNode(true);
+				// avoid empty text
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
+					// Z.debug(elementCopy.firstChild.textContent);
+					elmCopy.removeChild(elmCopy.firstChild);
+					// Z.debug(elementCopy.firstChild.textContent);
+				}
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
+				}
+				else {
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
+				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element));
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].innerText)
-			: '';
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElm
+				: '';
 	}
 }
 

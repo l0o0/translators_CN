@@ -88,15 +88,15 @@ async function scrape(doc, url = doc.location.href) {
 			// 两个selector分别见
 			// https://www.gov.cn/zhengce/zhengceku/2022-08/16/content_5705882.htm
 			// https://www.gov.cn/zhengce/zhengceku/2019-06/28/content_5404170.htm
-			const labels = new CellLabels(doc, 'table table:only-child td, [class*="pctoubukuang"] > table td');
-			Z.debug(labels.innerData.map(arr => [arr[0], ZU.trim(arr[1].innerText)]));
-			newItem.nameOfAct = labels.getWith('标题');
+			const labels = new Cells(doc, 'table table:only-child td, [class*="pctoubukuang"] > table td');
+			Z.debug(labels.data.map(arr => [arr[0], ZU.trim(arr[1].innerText)]));
+			newItem.nameOfAct = labels.get('标题');
 			// newItem.code = 法典;
 			// newItem.codeNumber = 法典编号;
-			newItem.publicLawNumber = labels.getWith('发文字号');
-			newItem.dateEnacted = labels.getWith('成文日期').replace(/\D/g, '-').replace(/-$/, '');
-			labels.getWith('主题分类').split('\\').forEach(tag => newItem.tags.push(tag));
-			labels.getWith('发文机关').split(/\s/).forEach((creator) => {
+			newItem.publicLawNumber = labels.get('发文字号');
+			newItem.dateEnacted = labels.get('成文日期').replace(/\D/g, '-').replace(/-$/, '');
+			labels.get('主题分类').split('\\').forEach(tag => newItem.tags.push(tag));
+			labels.get('发文机关').split(/\s/).forEach((creator) => {
 				creator = ZU.cleanAuthor(creator, 'author');
 				creator.fieldMode = 1;
 				newItem.creators.push(creator);
@@ -147,33 +147,34 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.complete();
 }
 
-class CellLabels {
+class Cells {
 	constructor(doc, selector) {
-		this.innerData = [];
-		let cells = Array.from(doc.querySelectorAll(selector)).filter(element => !element.querySelector(selector));
+		this.emptyElm = doc.createElement('div');
+		this.data = [];
+		const cells = Array.from(doc.querySelectorAll(selector)).filter(element => !element.querySelector(selector));
 		let i = 0;
 		while (cells[i + 1]) {
-			this.innerData.push([cells[i].textContent.replace(/\s*/g, ''), cells[i + 1]]);
+			this.data.push([cells[i].textContent.replace(/\s*/g, ''), cells[i + 1]]);
 			i += 2;
 		}
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
 			let result = label
-				.map(aLabel => this.getWith(aLabel, element));
+				.map(aLabel => this.get(aLabel, element));
 			result = element
 				? result.find(element => element.childNodes.length)
 				: result.find(element => element);
 			return result
 				? result
 				: element
-					? document.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label);
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
+		const pattern = new RegExp(label);
+		const keyValPair = this.data.find(element => pattern.test(element[0]));
+		if (element) return keyValPair ? keyValPair[1] : this.emptyElm;
 		return keyValPair
 			? ZU.trimInternal(keyValPair[1].innerText)
 			: '';

@@ -81,13 +81,13 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.publicationTitle = text(doc, 'a.jourName').replace(/^《|》$/g, '');
 	let labels = new Labels(doc, '[class^="Fmian"] tr, #generateCatalog_1, #other > p');
 	Z.debug(labels.innerData.map(arr => [arr[0], arr[1].innerText]));
-	let pubInfo = labels.getWith('来源');
+	let pubInfo = labels.get('来源');
 	Z.debug(pubInfo);
 	newItem.volume = tryMatch(attr(doc, '#GBTInputId', 'value'), /第(\d+)卷/, 1);
 	newItem.issue = tryMatch(pubInfo, /(\d+)期/, 1);
 	newItem.pages = tryMatch(pubInfo, /([\d-,+]*)$/, 1);
 	newItem.date = tryMatch(pubInfo, /(\d+)年/, 1);
-	newItem.DOI = labels.getWith('DOI');
+	newItem.DOI = labels.get('DOI');
 	newItem.url = url;
 	let creators = text(doc, 'p.F_name').split(/[\d,;，；]\s*/);
 	creators.forEach((creator) => {
@@ -98,7 +98,7 @@ async function scrape(doc, url = doc.location.href) {
 			element.fieldMode = 1;
 		}
 	});
-	let tags = labels.getWith('关键词').split(/[,;，；]/);
+	let tags = labels.get('关键词').split(/[,;，；]/);
 	tags.forEach((tag) => {
 		newItem.tags.push(tag);
 	});
@@ -109,8 +109,8 @@ async function scrape(doc, url = doc.location.href) {
 		newItem.language = {
 			中文: 'zh-CN',
 			英文: 'en-US'
-		}[labels.getWith('语言')];
-		newItem.ISSN = labels.getWith('ISSN');
+		}[labels.get('语言')];
+		newItem.ISSN = labels.get('ISSN');
 	}
 	catch (error) {
 		Z.debug('some error occured while geting journalDoc');
@@ -134,37 +134,56 @@ async function scrape(doc, url = doc.location.href) {
 /* Util */
 class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
-			.filter(element => element.firstElementChild)
+			// avoid nesting
 			.filter(element => !element.querySelector(selector))
+			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
-				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
-				this.innerData.push([key, elementCopy]);
+				const elmCopy = element.cloneNode(true);
+				// avoid empty text
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
+					// Z.debug(elementCopy.firstChild.textContent);
+					elmCopy.removeChild(elmCopy.firstChild);
+					// Z.debug(elementCopy.firstChild.textContent);
+				}
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
+				}
+				else {
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
+				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element));
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].innerText)
-			: '';
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElm
+				: '';
 	}
 }
 

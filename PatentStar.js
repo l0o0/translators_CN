@@ -128,17 +128,17 @@ async function scrape(doc, url) {
 		Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 		newItem.abstractNote = text(doc, '.item-summary > p:nth-child(1) > strong+span');
 		// newItem.place = labels.getWith('申请人地址');
-		newItem.place = labels.getWith('国家/省市');
-		newItem.country = labels.getWith('国家/省市');
-		newItem.assignee = labels.getWith('当前权利人');
-		newItem.patentNumber = labels.getWith('申请号');
-		newItem.filingDate = labels.getWith('申请日').replace(/\./g, '-');
-		newItem.applicationNumber = labels.getWith('申请号');
-		newItem.priorityNumbers = labels.getWith('优先权');
-		newItem.issueDate = labels.getWith(['授权公告日', '公开日']).replace(/\./g, '-');
-		newItem.legalStatus = labels.getWith('当前状态');
+		newItem.place = labels.get('国家/省市');
+		newItem.country = labels.get('国家/省市');
+		newItem.assignee = labels.get('当前权利人');
+		newItem.patentNumber = labels.get('申请号');
+		newItem.filingDate = labels.get('申请日').replace(/\./g, '-');
+		newItem.applicationNumber = labels.get('申请号');
+		newItem.priorityNumbers = labels.get('优先权');
+		newItem.issueDate = labels.get(['授权公告日', '公开日']).replace(/\./g, '-');
+		newItem.legalStatus = labels.get('当前状态');
 		newItem.rights = text(doc, '.item-summary > p:nth-child(2) > strong+span');
-		labels.getWith('发明人', true).querySelectorAll('a').forEach((element) => {
+		labels.get('发明人', true).querySelectorAll('a').forEach((element) => {
 			newItem.creators.push(processName(ZU.trimInternal(element.textContent)));
 		});
 	}
@@ -184,37 +184,56 @@ async function scrape(doc, url) {
 
 class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
-			.filter(element => element.firstElementChild)
+			// avoid nesting
 			.filter(element => !element.querySelector(selector))
+			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
-				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
-				this.innerData.push([key, elementCopy]);
+				const elmCopy = element.cloneNode(true);
+				// avoid empty text
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
+					// Z.debug(elementCopy.firstChild.textContent);
+					elmCopy.removeChild(elmCopy.firstChild);
+					// Z.debug(elementCopy.firstChild.textContent);
+				}
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
+				}
+				else {
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
+				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element));
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? doc.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : doc.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].innerText)
-			: '';
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElm
+				: '';
 	}
 }
 

@@ -101,41 +101,41 @@ async function scrape(doc, url = doc.location.href) {
 	var newItem = new Z.Item(type);
 	switch (type) {
 		case 'journalArticle':
-			newItem.title = labels.getWith('题名');
-			newItem.creators = labels.getWith('作者').split(/\s/)
+			newItem.title = labels.get('题名');
+			newItem.creators = labels.get('作者').split(/\s/)
 				.filter(element => !element.match(/[著作译譯词詞曲]$/))
 				.map(element => matchCreator(element));
-			newItem.publicationTitle = labels.getWith('文献来源').replace(/^《|》$/g, '');
-			newItem.date = labels.getWith('出版时间').replace(/年$/, '');
-			newItem.volume = tryMatch(labels.getWith('卷期(页)'), /(\d*)卷/, 1);
-			newItem.issue = tryMatch(labels.getWith('卷期(页)'), /(\d*)期/, 1);
-			newItem.pages = tryMatch(labels.getWith('卷期(页)'), /([\d-.+]*)页/, 1);
-			newItem.abstractNote = labels.getWith('摘要');
-			newItem.tags = labels.getWith('主题词').slice(1, -1).split(/[,;，；]/)
+			newItem.publicationTitle = labels.get('文献来源').replace(/^《|》$/g, '');
+			newItem.date = labels.get('出版时间').replace(/年$/, '');
+			newItem.volume = tryMatch(labels.get('卷期(页)'), /(\d*)卷/, 1);
+			newItem.issue = tryMatch(labels.get('卷期(页)'), /(\d*)期/, 1);
+			newItem.pages = tryMatch(labels.get('卷期(页)'), /([\d-.+]*)页/, 1);
+			newItem.abstractNote = labels.get('摘要');
+			newItem.tags = labels.get('主题词').slice(1, -1).split(/[,;，；]/)
 				.map(element => ({ tag: element }));
 			break;
 		case 'newspaperArticle':
-			newItem.title = labels.getWith('标题');
-			newItem.shortTitle = labels.getWith('标题2');
-			newItem.publicationTitle = labels.getWith('文献来源').replace(/^《|》$/g, '');
-			newItem.place = labels.getWith('新闻发布地');
-			newItem.data = labels.getWith('出版时间')
+			newItem.title = labels.get('标题');
+			newItem.shortTitle = labels.get('标题2');
+			newItem.publicationTitle = labels.get('文献来源').replace(/^《|》$/g, '');
+			newItem.place = labels.get('新闻发布地');
+			newItem.data = labels.get('出版时间')
 				.replace(/(^\D*)|(\D*$)/g, '')
 				.replace(/\D+/g, '-')
 				.replace(/-(\d)(?:\D|$)/g, '-0$1');
-			newItem.pages = labels.getWith('版次').replace(/^0*/, '');
-			newItem.creators = matchCreator(labels.getWith('新闻来源'));
-			newItem.extra += `\n类别: ${labels.getWith('类别')}`;
+			newItem.pages = labels.get('版次').replace(/^0*/, '');
+			newItem.creators = matchCreator(labels.get('新闻来源'));
+			newItem.extra += `\n类别: ${labels.get('类别')}`;
 			break;
 		case 'artwork':
-			newItem.title = labels.getWith('图片标题');
-			newItem.abstractNote = labels.getWith('图片描述');
-			newItem.creators = labels.getWith('图片责任者').split(/\s/).map(element => matchCreator(element));
-			newItem.date = labels.getWith('出版年份');
-			newItem.artworkMedium = labels.getWith('图片类型');
-			newItem.artworkSize = labels.getWith('图片尺寸');
-			newItem.archive = labels.getWith('图片来源');
-			newItem.archiveLocation = `${labels.getWith('收录卷期')} ${labels.getWith('所属正文篇名')}`;
+			newItem.title = labels.get('图片标题');
+			newItem.abstractNote = labels.get('图片描述');
+			newItem.creators = labels.get('图片责任者').split(/\s/).map(element => matchCreator(element));
+			newItem.date = labels.get('出版年份');
+			newItem.artworkMedium = labels.get('图片类型');
+			newItem.artworkSize = labels.get('图片尺寸');
+			newItem.archive = labels.get('图片来源');
+			newItem.archiveLocation = `${labels.get('收录卷期')} ${labels.get('所属正文篇名')}`;
 			newItem.url = url;
 			newItem.attachments.push({
 				title: 'Snapshot',
@@ -160,37 +160,56 @@ function tryMatch(string, pattern, index = 0) {
 
 class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
-			.filter(element => element.firstElementChild)
+			// avoid nesting
 			.filter(element => !element.querySelector(selector))
+			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
-				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
-				this.innerData.push([key, elementCopy]);
+				const elmCopy = element.cloneNode(true);
+				// avoid empty text
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
+					// Z.debug(elementCopy.firstChild.textContent);
+					elmCopy.removeChild(elmCopy.firstChild);
+					// Z.debug(elementCopy.firstChild.textContent);
+				}
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
+				}
+				else {
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
+				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element));
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].innerText)
-			: '';
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElm
+				: '';
 	}
 }
 

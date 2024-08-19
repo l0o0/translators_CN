@@ -93,14 +93,14 @@ async function scrapeDoc(doc, url = doc.location.href) {
 	newItem.title = title;
 	extra.set('original-title', text(doc, '#subTitleNote'), true);
 	newItem.abstractNote = text(doc, '#astInfo > span');
-	let pubInfo = labels.getWith('原文出处');
+	let pubInfo = labels.get('原文出处');
 	newItem.publicationTitle = tryMatch(pubInfo, /《(.+?)》/, 1);
 	newItem.volume = tryMatch(pubInfo, /0*(\d+)卷/, 1);
 	newItem.issue = tryMatch(pubInfo, /([A-Z]?\d+)期/i, 1).replace(/0*(\d)/, '$1');
 	newItem.pages = tryMatch(pubInfo, /第([\d,\s+~-]+?)页/, 1).replace(/\+/g, ', ').replace(/~/g, '-');
 	newItem.date = tryMatch(pubInfo, /(\d{4})年/, 1);
 	extra.set('place', tryMatch(pubInfo, /》\((.+?)\)/, 1), true);
-	extra.set('remark', labels.getWith('标题注释'));
+	extra.set('remark', labels.get('标题注释'));
 	newItem.libraryCatalog = '人大复印报刊资料';
 	newItem.url = tryMatch(url, /^.+id=\d+/);
 	newItem.rights = '中国人民大学书报资料中心';
@@ -163,40 +163,56 @@ async function scrapeAPI(url) {
 
 class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
-			.filter(element => element.firstElementChild)
+			// avoid nesting
 			.filter(element => !element.querySelector(selector))
+			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
-				while (elementCopy.querySelector('br:first-child')) {
-					elementCopy.removeChild(elementCopy.firstElementChild);
+				const elmCopy = element.cloneNode(true);
+				// avoid empty text
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
+					// Z.debug(elementCopy.firstChild.textContent);
+					elmCopy.removeChild(elmCopy.firstChild);
+					// Z.debug(elementCopy.firstChild.textContent);
 				}
-				let key = elementCopy.removeChild(elementCopy.firstElementChild).innerText.replace(/\s/g, '');
-				this.innerData.push([key, elementCopy]);
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
+				}
+				else {
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
+				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.getWith(aLabel, element));
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
 				: element
-					? document.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].innerText)
-			: '';
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElm
+				: '';
 	}
 }
 

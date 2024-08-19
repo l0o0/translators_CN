@@ -76,24 +76,24 @@ async function doWeb(doc, url) {
 async function scrape(doc, url = doc.location.href) {
 	var newItem = new Zotero.Item('standard');
 	newItem.extra = '';
-	let labels = new CellLabels(doc, '.row div.col-xs-12');
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
+	let labels = new Cells(doc, '.row div.col-xs-12');
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	let textLabels = new TextLabels(doc, '.container table:nth-child(2)');
 	Z.debug(textLabels.innerData);
 	newItem.title = textLabels.getWith('中文标准名称');
 	newItem.number = tryMatch(text(doc, 'td > h1'), /：([\w /-]+)/, 1).replace('-', '—');
 	newItem.status = textLabels.getWith('标准状态').split(' ')[0];
-	newItem.date = labels.getWith(['发布日期', '实施日期']);
+	newItem.date = labels.get(['发布日期', '实施日期']);
 	newItem.url = url;
 	newItem.language = 'zh-CN';
 	newItem.libraryCatalog = '国家标准全文公开系统';
 	newItem.extra += addExtra('original-title', textLabels.getWith('英文标准名称'));
-	newItem.extra += addExtra('CCS', labels.getWith('CCS'));
-	newItem.extra += addExtra('ICS', labels.getWith('ICS'));
-	newItem.extra += addExtra('applyDate', labels.getWith('实施日期'));
+	newItem.extra += addExtra('CCS', labels.get('CCS'));
+	newItem.extra += addExtra('ICS', labels.get('ICS'));
+	newItem.extra += addExtra('applyDate', labels.get('实施日期'));
 	newItem.creators.push({
 		firstName: '',
-		lastName: labels.getWith(['归口部门', '主管部门']),
+		lastName: labels.get(['归口部门', '主管部门']),
 		creatorType: 'author',
 		fieldMode: 1
 	});
@@ -104,33 +104,34 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.complete();
 }
 
-class CellLabels {
+class Cells {
 	constructor(doc, selector) {
-		this.innerData = [];
-		let cells = Array.from(doc.querySelectorAll(selector)).filter(element => !element.querySelector(selector));
+		this.emptyElm = doc.createElement('div');
+		this.data = [];
+		const cells = Array.from(doc.querySelectorAll(selector)).filter(element => !element.querySelector(selector));
 		let i = 0;
 		while (cells[i + 1]) {
-			this.innerData.push([cells[i].textContent.replace(/\s*/g, ''), cells[i + 1]]);
+			this.data.push([cells[i].textContent.replace(/\s*/g, ''), cells[i + 1]]);
 			i += 2;
 		}
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
 			let result = label
-				.map(aLabel => this.getWith(aLabel, element));
+				.map(aLabel => this.get(aLabel, element));
 			result = element
 				? result.find(element => element.childNodes.length)
 				: result.find(element => element);
 			return result
 				? result
 				: element
-					? document.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label);
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
+		const pattern = new RegExp(label);
+		const keyValPair = this.data.find(element => pattern.test(element[0]));
+		if (element) return keyValPair ? keyValPair[1] : this.emptyElm;
 		return keyValPair
 			? ZU.trimInternal(keyValPair[1].innerText)
 			: '';

@@ -100,9 +100,9 @@ async function scrape(doc, url = doc.location.href) {
 			extra.set('citation', text(doc, '[data-type="4"] .source-num').slice(1, -1));
 			try {
 				let pubDoc = await requestDocument(attr(doc, 'a.periodical_name', 'href'));
-				let labels = new CellLabels(pubDoc, '.modern_industry_list > div > div');
-				Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
-				item.ISSN = labels.getWith('ISSN');
+				let labels = new Cells(pubDoc, '.modern_industry_list > div > div');
+				Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
+				item.ISSN = labels.get('ISSN');
 				extra.set('original-title', text(pubDoc, '.tit_eng'), true);
 				extra.set('IF', text(pubDoc, '.ppif-span > span:last-child'));
 				extra.set('publicationTag', Array.from(pubDoc.querySelectorAll('.new-tag-box a')).map(element => ZU.trimInternal(element.textContent)).join(', '));
@@ -114,19 +114,19 @@ async function scrape(doc, url = doc.location.href) {
 			break;
 		}
 		case 'patent': {
-			let labels = new CellLabels(doc, 'table.patent-table > tbody > tr > td');
-			Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
-			item.patentNumber = labels.getWith('公布号');
-			item.applicationNumber = labels.getWith('申请\\(专利\\)号');
+			let labels = new Cells(doc, 'table.patent-table > tbody > tr > td');
+			Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
+			item.patentNumber = labels.get('公布号');
+			item.applicationNumber = labels.get('申请\\(专利\\)号');
 			item.place = item.country = patentCountry(item.patentNumber || item.applicationNumber);
 			item.assignee = Array.from(doc.querySelectorAll('.common-infor-company a')).map(element => ZU.trimInternal(element.textContent)).join(', ');
-			item.filingDate = labels.getWith('申请日');
-			item.issueDate = labels.getWith('公告日');
+			item.filingDate = labels.get('申请日');
+			item.issueDate = labels.get('公告日');
 			doc.querySelectorAll('.common-infor-author a').forEach((element) => {
 				item.creators.push(ZU.cleanAuthor(ZU.trimInternal(element.textContent), 'inventor'));
 			});
 			item.legalStatus = text(doc, 'div#legalStatus table> tbody > tr:first-child > td:nth-child(2)');
-			item.extra = `Grenre: ${labels.getWith('专利类型')}专利`;
+			item.extra = `Grenre: ${labels.get('专利类型')}专利`;
 			break;
 		}
 	}
@@ -140,33 +140,34 @@ async function scrape(doc, url = doc.location.href) {
 	item.complete();
 }
 
-class CellLabels {
+class Cells {
 	constructor(doc, selector) {
-		this.innerData = [];
-		let cells = Array.from(doc.querySelectorAll(selector)).filter(element => !element.querySelector(selector));
+		this.emptyElm = doc.createElement('div');
+		this.data = [];
+		const cells = Array.from(doc.querySelectorAll(selector)).filter(element => !element.querySelector(selector));
 		let i = 0;
 		while (cells[i + 1]) {
-			this.innerData.push([cells[i].textContent.replace(/\s*/g, ''), cells[i + 1]]);
+			this.data.push([cells[i].textContent.replace(/\s*/g, ''), cells[i + 1]]);
 			i += 2;
 		}
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
 			let result = label
-				.map(aLabel => this.getWith(aLabel, element));
+				.map(aLabel => this.get(aLabel, element));
 			result = element
 				? result.find(element => element.childNodes.length)
 				: result.find(element => element);
 			return result
 				? result
 				: element
-					? document.createElement('div')
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label);
-		let keyValPair = this.innerData.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : document.createElement('div');
+		const pattern = new RegExp(label);
+		const keyValPair = this.data.find(element => pattern.test(element[0]));
+		if (element) return keyValPair ? keyValPair[1] : this.emptyElm;
 		return keyValPair
 			? ZU.trimInternal(keyValPair[1].innerText)
 			: '';

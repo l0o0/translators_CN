@@ -78,30 +78,30 @@ async function doWeb(doc, url) {
 
 async function scrape(doc) {
 	Z.debug(doc.body.innerText);
-	let labels = new LabelsX(doc, '#aa:first-child > #format0_disparea > tbody > tr');
+	let labels = new Labels(doc, '#aa:first-child > #format0_disparea > tbody > tr');
 	let extra = new Extra();
 	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	let newIetm = new Z.Item('thesis');
-	newIetm.title = labels.getWith('論文名稱');
+	newIetm.title = labels.get('論文名稱');
 	newIetm.abstractNote = text(doc, '#aa:nth-child(2) > #format0_disparea').replace(/\s{2,}/g, '\n');
-	newIetm.thesisType = labels.getWith('學位類別') + '學位論文';
-	newIetm.university = labels.getWith('校院名稱');
-	newIetm.date = labels.getWith('論文出版年');
-	newIetm.numPages = labels.getWith('論文頁數');
+	newIetm.thesisType = labels.get('學位類別') + '學位論文';
+	newIetm.university = labels.get('校院名稱');
+	newIetm.date = labels.get('論文出版年');
+	newIetm.numPages = labels.get('論文頁數');
 	newIetm.language = 'zh-TW';
 	newIetm.url = attr(doc, 'input#fe_text1', 'value');
 	newIetm.libraryCatalog = '臺灣博碩士論文知識加值系統';
-	extra.set('major', labels.getWith('學類').slice(0, -1));
+	extra.set('major', labels.get('學類').slice(0, -1));
 	let creators = [];
 	creators.push({
 		firstName: '',
-		lastName: labels.getWith('研究生'),
+		lastName: labels.get('研究生'),
 		creatorType: 'author',
 		fieldMode: 1,
-		original: ZU.capitalizeName(labels.getWith('研究生\\(外文\\)'))
+		original: ZU.capitalizeName(labels.get('研究生\\(外文\\)'))
 	});
-	let supervisorsZh = labels.getWith('指導教授').split(/[;，；、]\s*/);
-	let supervisorsEn = labels.getWith('指導教授\\(外文\\)').split(/[;，；、]\s*/);
+	let supervisorsZh = labels.get('指導教授').split(/[;，；、]\s*/);
+	let supervisorsEn = labels.get('指導教授\\(外文\\)').split(/[;，；、]\s*/);
 	supervisorsZh.forEach((supervisor, index) => {
 		creators.push({
 			firstName: '',
@@ -119,8 +119,8 @@ async function scrape(doc) {
 		delete creator.original;
 		newIetm.creators.push(creator);
 	});
-	newIetm.tags = `${labels.getWith('中文關鍵詞')}、${labels.getWith('外文關鍵詞')}`.split('、');
-	newIetm.extra = extra.toString(labels.getWith('相關次數')
+	newIetm.tags = `${labels.get('中文關鍵詞')}、${labels.get('外文關鍵詞')}`.split('、');
+	newIetm.extra = extra.toString(labels.get('相關次數')
 		.replace('被引用:', 'citation: ')
 		.replace('點閱:', '\nview: ')
 		.replace('評分:', '\nrating: ')
@@ -130,57 +130,57 @@ async function scrape(doc) {
 	newIetm.complete();
 }
 
-class LabelsX {
+class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
-		this.emptyElement = doc.createElement('div');
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
 			// avoid nesting
 			.filter(element => !element.querySelector(selector))
 			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
+				const elmCopy = element.cloneNode(true);
 				// avoid empty text
-				while (/^\s*$/.test(elementCopy.firstChild.textContent)) {
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
 					// Z.debug(elementCopy.firstChild.textContent);
-					elementCopy.removeChild(elementCopy.firstChild);
+					elmCopy.removeChild(elmCopy.firstChild);
 					// Z.debug(elementCopy.firstChild.textContent);
 				}
-				if (elementCopy.childNodes.length > 1) {
-					let key = elementCopy.removeChild(elementCopy.firstChild).textContent.replace(/\s/g, '');
-					this.innerData.push([key, elementCopy]);
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
 				}
 				else {
-					let text = ZU.trimInternal(elementCopy.textContent);
-					let key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
-					elementCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
-					this.innerData.push([key, elementCopy]);
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
 				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let results = label
-				.map(aLabel => this.getWith(aLabel, element));
-			let keyVal = element
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
 				? results.find(element => !/^\s*$/.test(element.textContent))
 				: results.find(string => string);
 			return keyVal
 				? keyVal
 				: element
-					? this.emptyElement
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyVal = this.innerData.find(arr => pattern.test(arr[0]));
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
 		return keyVal
 			? element
 				? keyVal[1]
 				: ZU.trimInternal(keyVal[1].textContent)
 			: element
-				? this.emptyElement
+				? this.emptyElm
 				: '';
 	}
 }
