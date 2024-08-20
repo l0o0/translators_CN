@@ -4849,6 +4849,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:31:03 +0800",
+        "message": "innerData -> data; getWith -> get"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-20 13:22:33 +0800",
         "message": "fix typo"
       },
@@ -6200,6 +6205,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:31:03 +0800",
+        "message": "innerData -> data; getWith -> get"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-20 13:22:33 +0800",
         "message": "fix typo"
       },
@@ -6207,11 +6217,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-08-09 14:13:31 +0800",
-        "message": "修复某些VPN版本中无法抓取date；严格的变量声明；优化摘要抓取"
       }
     ]
   },
@@ -8432,6 +8437,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:31:03 +0800",
+        "message": "innerData -> data; getWith -> get"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-20 13:22:33 +0800",
         "message": "fix typo"
       },
@@ -8439,11 +8449,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-06-20 17:04:42 +0800",
-        "message": "clean EOL, fix #351, fix #352"
       }
     ]
   },
@@ -11444,6 +11449,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:31:03 +0800",
+        "message": "innerData -> data; getWith -> get"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -11451,11 +11461,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2023-12-29 19:41:26 +0800",
-        "message": "大幅重构；支持多条目；更新测试用例"
       }
     ]
   },
