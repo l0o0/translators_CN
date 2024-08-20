@@ -902,6 +902,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -909,11 +914,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-03-08 15:39:18 +0800",
-        "message": "更正typo"
       }
     ]
   },
@@ -2150,6 +2150,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -2157,11 +2162,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-04-01 16:50:35 +0800",
-        "message": "升级公共API；更新部分测试用例"
       }
     ]
   },
@@ -2657,6 +2657,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -2664,11 +2669,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-04-01 16:50:35 +0800",
         "message": "升级公共API；更新部分测试用例"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-02-26 01:25:50 +0800",
-        "message": "add (CNKI Law.js) 新增中国法律知识资源总库"
       }
     ]
   },
@@ -4018,6 +4018,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -4025,11 +4030,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-03-02 02:47:59 +0800",
         "message": "修复无法在CNKI主站抓取Scholar的问题；升级extra；extra中新增ids记录"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-02-08 23:41:49 +0800",
-        "message": "新增CHKD；新增CNKI Refworks；改善CNKI Refer对年鉴、报告、报纸、标准的支持，优化url显示；CNKI和Scholar暴露接口，完全支持所有条目类型，增加部分出版信息，完整的双语支持"
       }
     ]
   },
@@ -4847,6 +4847,11 @@
     ],
     "zhLabel": "中国知网心可图书馆",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2024-01-31 17:55:52 +0800",
@@ -6195,6 +6200,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -6202,11 +6212,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-08-09 14:13:31 +0800",
         "message": "修复某些VPN版本中无法抓取date；严格的变量声明；优化摘要抓取"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-07-12 21:03:37 +0800",
-        "message": "修复大陆知网无法抓取学位论文PDF"
       }
     ]
   },
@@ -6434,6 +6439,11 @@
     ],
     "zhLabel": "中国学术调查数据资料库",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
@@ -7083,6 +7093,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -7090,11 +7105,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-21 12:54:49 +0800",
         "message": "lint; replace launch.json with tasks.json"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-06-20 17:04:42 +0800",
-        "message": "clean EOL, fix #351, fix #352"
       }
     ]
   },
@@ -7480,6 +7490,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -7487,11 +7502,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-04-01 16:50:35 +0800",
-        "message": "升级公共API；更新部分测试用例"
       }
     ]
   },
@@ -8422,6 +8432,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -8429,11 +8444,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-04-17 21:06:27 +0800",
-        "message": "fix #335"
       }
     ]
   },
@@ -8841,6 +8851,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -8848,11 +8863,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-02-11 12:38:50 +0800",
-        "message": "更新内部函数"
       }
     ]
   },
@@ -10003,6 +10013,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -10010,11 +10025,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-04-01 16:50:35 +0800",
-        "message": "升级公共API；更新部分测试用例"
       }
     ]
   },
@@ -10667,6 +10677,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -10674,11 +10689,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-03-03 01:06:57 +0800",
-        "message": "add (NTU Digital Library of Buddhist Studies.js) 新增臺大佛學數位圖書館"
       }
     ]
   },
@@ -11186,6 +11196,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -11193,11 +11208,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-03-21 16:58:57 +0800",
-        "message": "fix #307"
       }
     ]
   },
@@ -12535,6 +12545,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -12542,11 +12557,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-09 22:22:21 +0800",
         "message": "fix #346"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-02-24 19:21:13 +0800",
-        "message": "fix #316"
       }
     ]
   },
@@ -12690,6 +12700,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -12697,11 +12712,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-07-23 22:23:22 +0800",
         "message": "feat: detect async loaded results"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-06-20 17:04:42 +0800",
-        "message": "clean EOL, fix #351, fix #352"
       }
     ]
   },
@@ -14162,6 +14172,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -14656,6 +14671,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -14663,11 +14683,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-01-18 20:37:38 +0800",
-        "message": "新增 (Science Reading.js) 科学文库"
       }
     ]
   },
@@ -15035,6 +15050,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -15042,11 +15062,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-02-11 12:38:50 +0800",
         "message": "更新内部函数"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-01-03 15:23:44 +0800",
-        "message": "feat (Scp.org.cn.js) 支持多条目；统一内部函数；修复一字线问题；更新测试用例"
       }
     ]
   },
@@ -15546,6 +15561,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -15553,11 +15573,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-04-01 16:53:44 +0800",
         "message": "修复extra未输出"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-04-01 16:50:35 +0800",
-        "message": "升级公共API；更新部分测试用例"
       }
     ]
   },
@@ -15580,6 +15595,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -15587,11 +15607,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-04-01 16:50:35 +0800",
         "message": "升级公共API；更新部分测试用例"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-03-18 22:27:37 +0800",
-        "message": "close #323"
       }
     ]
   },
@@ -16150,6 +16165,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -16157,11 +16177,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-05-23 12:23:29 +0800",
-        "message": "取消对VPN异形网址的支持；修复英文标题可能无法抓取；修复报告缺字段fix #342"
       }
     ]
   },
@@ -16899,6 +16914,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -16906,11 +16926,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-02-11 12:38:50 +0800",
-        "message": "更新内部函数"
       }
     ]
   },
@@ -17616,6 +17631,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -17623,11 +17643,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-02-11 12:38:50 +0800",
-        "message": "更新内部函数"
       }
     ]
   },
@@ -19349,6 +19364,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-20 13:22:33 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -19356,11 +19376,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-04-13 15:13:04 +0800",
         "message": "补充日语和俄语的language key"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-04-10 16:20:10 +0800",
-        "message": "fix #334"
       }
     ]
   },
