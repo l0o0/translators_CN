@@ -712,7 +712,7 @@ async function scrapeDoc(doc, itemKey) {
 	const newItem = new Zotero.Item(ids.toItemtype());
 	const labels = new Labels(doc, 'div.doc div[class^="row"], li.top-space, .total-inform > span');
 	const extra = new Extra();
-	Z.debug(labels.innerData.map(element => [element[0], ZU.trimInternal(element[1].textContent)]));
+	Z.debug(labels.data.map(element => [element[0], ZU.trimInternal(element[1].textContent)]));
 
 	richTextTitle(newItem, doc);
 	newItem.abstractNote = attr(doc, '#abstract_text', 'value');
@@ -929,7 +929,7 @@ async function parseRefer(referText, doc, url, itemKey) {
 
 	const labels = new Labels(doc, 'div.doc div[class^="row"], li.top-space, .total-inform > span');
 	Z.debug('get labels:');
-	Z.debug(labels.innerData.map(element => [element[0], ZU.trimInternal(element[1].textContent)]));
+	Z.debug(labels.data.map(element => [element[0], ZU.trimInternal(element[1].textContent)]));
 	const extra = new Extra();
 	const ids = new ID(doc, url);
 	const translator = Zotero.loadTranslator('import');

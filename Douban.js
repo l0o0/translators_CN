@@ -96,7 +96,7 @@ async function scrape(doc, url = doc.location.href) {
 	var labels = isRead
 		? new Labels(doc, '.article-meta > p')
 		: new TextLabels(doc, '#info', /.+?:/);
-	Z.debug(isRead ? labels.innerData.map(arr => [arr[0], arr[1].innerText]) : labels.innerData);
+	Z.debug(isRead ? labels.data.map(arr => [arr[0], arr[1].innerText]) : labels.data);
 	var title = ZU.trimInternal(text(doc, 'h1'));
 	switch (newItem.itemType) {
 		case 'book': {

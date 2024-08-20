@@ -115,7 +115,7 @@ var selectors = {
 
 async function scrapeSearch(doc) {
 	let labels = new Labels(doc, exports.selectors.labels);
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	let doi = text(doc, exports.selectors.DOI) || labels.get('DOI');
 	let isbn = labels.get('ISBN');
 	Z.debug(`DOI: ${doi}`);
@@ -157,7 +157,7 @@ async function scrapeSearch(doc) {
 
 async function scrapeDoc(doc, url = doc.location.href) {
 	let labels = new Labels(doc, exports.selectors.labels);
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	let extra = new Extra();
 	let doi = text(doc, exports.selectors.DOI) || labels.get('DOI');
 	let isbn = labels.get('ISBN');
@@ -248,7 +248,7 @@ async function scrapeDoc(doc, url = doc.location.href) {
 
 function patchBook(bookItem, extra, doc) {
 	let labels = new Labels(doc, '[id*="doc-about"] .infoBox-item');
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	bookItem.abstractNote = labels.get(['摘要', 'Abstract']);
 	bookItem.series = labels.get('书系');
 	bookItem.publisher = text(doc, exports.selectors.publisher);

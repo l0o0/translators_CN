@@ -112,7 +112,7 @@ async function scrape(doc, url = doc.location.href) {
 	const labels = new Labels(doc, '[class*="summary"] > p, .summaryRight, .break > .pdfN, [class*="summary"] li.pdfN, .itembox .item');
 
 	/* 因为两种抓取方式都需要补充extra,所以提前add */
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	if (doc.querySelector('.shoufa')) {
 		extra.add('Status', 'advance online publication', true);
 		extra.add('available-date', ZU.strToISO(text(doc, '.head-tag')));

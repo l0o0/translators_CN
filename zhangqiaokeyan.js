@@ -134,7 +134,7 @@ async function scrape(doc, url = doc.location.href) {
 	let item = {};
 	let extra = new Extra();
 	let labels = new Labels(doc, '.record > ul > li, .record ul > li > p, .record ul > li > div > p, .booksintroduce > ul > li');
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 
 	let translator = Zotero.loadTranslator('web');
 	// Embedded Metadata
@@ -267,7 +267,7 @@ async function addPubDetail(item, extra, url) {
 	try {
 		let pubDoc = await requestDocument(url);
 		let labels = new Labels(pubDoc, '[class*="introduce"] > ul > li> div, .teach_info > ul > li, .teach_info > p');
-		Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
+		Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 		switch (item.itemType) {
 			case 'journalArticle': {
 				item.ISSN = labels.get('ISSN');

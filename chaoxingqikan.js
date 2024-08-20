@@ -80,7 +80,7 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.abstractNote = text(doc, '#generateCatalog_0');
 	newItem.publicationTitle = text(doc, 'a.jourName').replace(/^《|》$/g, '');
 	let labels = new Labels(doc, '[class^="Fmian"] tr, #generateCatalog_1, #other > p');
-	Z.debug(labels.innerData.map(arr => [arr[0], arr[1].innerText]));
+	Z.debug(labels.data.map(arr => [arr[0], arr[1].innerText]));
 	let pubInfo = labels.get('来源');
 	Z.debug(pubInfo);
 	newItem.volume = tryMatch(attr(doc, '#GBTInputId', 'value'), /第(\d+)卷/, 1);

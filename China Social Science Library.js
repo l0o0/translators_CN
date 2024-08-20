@@ -94,7 +94,7 @@ async function scrape(doc, url = doc.location.href) {
 			break;
 		case 'bookSection': {
 			let labels = new Labels(doc, '.chapter-infor > *');
-			Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
+			Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 			let bookLink = labels.get('所属图书', true).querySelector('a');
 			if (bookLink) {
 				try {
@@ -159,7 +159,7 @@ function scrapeBook(doc, url = doc.location.href) {
 	let newItem = new Z.Item(detectWeb(doc, url));
 	newItem.extra = '';
 	let labels = new Labels(doc, '.bookinfor-detail > .itemize, .book-info .content > p');
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	newItem.title = text(doc, '.book-info > h4');
 	newItem.abstractNote = text(doc, '#book-list');
 	newItem.series = labels.get('丛书名').replace(/(《|》)/g, '');

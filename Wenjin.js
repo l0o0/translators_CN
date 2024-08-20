@@ -101,7 +101,7 @@ async function scrape(doc, url = doc.location.href) {
 	var newItem = new Z.Item(detectType(doc));
 	newItem.extra = '';
 	const labels = new Labels(doc, '.book_item');
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	newItem.title = text(doc, '.book_name');
 	newItem.abstractNote = text(doc, 'div.zy_pp_val') || labels.get('引文');
 	switch (newItem.itemType) {

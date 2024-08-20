@@ -93,7 +93,7 @@ async function doWeb(doc, url) {
 /* 有meta可以用,但是meta的数据没有分割,且元数据不全面,因此还是用 */
 async function scrape(doc, url = doc.location.href) {
 	let labels = new Labels(doc, '.MainPanelCenter > table table:nth-of-type(2) > tbody > tr');
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	let extra = new Extra();
 	let newItem = new Z.Item(detectWeb(doc, url));
 	newItem.title = meta('title');

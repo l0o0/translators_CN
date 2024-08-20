@@ -112,7 +112,7 @@ async function scrapeAPI(doc, url = doc.location.href) {
 	let filename = tryMatch(url, /filename=([^&#/]+)/i, 1);
 	Z.debug(`filename: ${filename}`);
 	let labels = new Labels(doc, '[class*="summary"] > p, [class*="summary"] > ul > li');
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	let extra = new Extra();
 	let referDoc = await requestDocument(
 		'https://lawnew.cnki.net/kns/ViewPage/viewsave.aspx?TablePre=SCDB&displayMode=EndNote',
@@ -197,7 +197,7 @@ async function scrapeAPI(doc, url = doc.location.href) {
 
 async function scrapeDoc(doc, url = doc.location.href) {
 	let labels = new Labels(doc, '[class*="summary"] > p, .summary > div > p');
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	let extra = new Extra();
 	var newItem = new Z.Item(detectWeb(doc, url));
 	let title = text(doc, '#title > h1');

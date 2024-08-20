@@ -89,7 +89,7 @@ async function doWeb(doc, url) {
 async function scrape(doc, url = doc.location.href) {
 	Z.debug(doc.body.innerText);
 	const labels = new Labels(doc, '.content > ul:first-child > li, .tubox dd');
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	let extra = new Extra();
 	var newItem = new Zotero.Item(detectWeb(doc, url));
 	newItem.extra = '';

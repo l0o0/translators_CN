@@ -77,7 +77,7 @@ async function doWeb(doc, url) {
 async function scrape(doc, url = doc.location.href) {
 	let newItem = new Z.Item('journalArticle');
 	let labels = new Labels(doc, '.article-field__outer > div');
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	let extra = new Extra();
 	newItem.title = text(doc, '.main-title');
 	newItem.abstractNote = labels.get('中文摘要');

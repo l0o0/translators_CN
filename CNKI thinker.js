@@ -95,7 +95,7 @@ async function scrape(doc, url = doc.location.href) {
 		.map(creator => ZU.cleanAuthor(creator, 'author'));
 	newItem.creators.forEach(creator => creator.fieldMode = 1);
 	let labels = new TextLabels(doc, '.bc_a, .desc-info');
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1])]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1])]));
 	newItem.edition = labels.getWith('版次');
 	switch (newItem.itemType) {
 		case 'book':

@@ -80,7 +80,7 @@ async function scrape(doc) {
 	Z.debug(doc.body.innerText);
 	let labels = new Labels(doc, '#aa:first-child > #format0_disparea > tbody > tr');
 	let extra = new Extra();
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	let newIetm = new Z.Item('thesis');
 	newIetm.title = labels.get('論文名稱');
 	newIetm.abstractNote = text(doc, '#aa:nth-child(2) > #format0_disparea').replace(/\s{2,}/g, '\n');

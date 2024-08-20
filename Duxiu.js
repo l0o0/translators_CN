@@ -100,7 +100,7 @@ async function doWeb(doc, url) {
 async function scrape(doc, url = doc.location.href) {
 	// Z.debug(doc.body.innerText);
 	let labels = new Labels(doc, 'dl > dd');
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	var newItem = new Z.Item(detectWeb(doc, url));
 	newItem.title = text(doc, 'dl > dt');
 	newItem.extra = '';

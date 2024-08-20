@@ -76,7 +76,7 @@ async function doWeb(doc, url) {
 
 async function scrape(doc, url = doc.location.href) {
 	const labels = new Labels(doc, '.book_info_row');
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	let more = doc.querySelector('#addinfo > a');
 	if (more && !/收起\s*$/.test(more.innerText)) {
 		Z.debug(more.textContent);

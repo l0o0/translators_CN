@@ -125,7 +125,7 @@ async function scrape(doc, url) {
 		Z.debug(error);
 		newItem.title = attr(doc, 'label.title-color', 'title');
 		let labels = new Labels(doc, '.item-content > div');
-		Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
+		Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 		newItem.abstractNote = text(doc, '.item-summary > p:nth-child(1) > strong+span');
 		// newItem.place = labels.getWith('申请人地址');
 		newItem.place = labels.get('国家/省市');

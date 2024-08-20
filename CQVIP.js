@@ -117,7 +117,7 @@ async function scrape(doc, url = doc.location.href) {
 	let creatorsEn = [];
 	let labels = new Labels(doc, '.article-detail > p');
 	let extra = new Extra();
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	var newItem = new Z.Item(detectWeb(doc, url));
 	newItem.title = attr(doc, '.article-summary > h1', 'title').replace(/_\((.+?)\)/g, '<sub>$1</sub>').replace(/_(\d)/g, '<sub>$1</sub>');
 	extra.set('original-title', text(doc, '.article-summary > em').replace(/_\((.+?)\)/g, '<sub>$1</sub>').replace(/_(\d)/g, '<sub>$1</sub>'), true);

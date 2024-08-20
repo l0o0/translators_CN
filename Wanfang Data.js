@@ -168,7 +168,7 @@ async function doWeb(doc, url) {
 async function scrapePage(doc, url = doc.location.href) {
 	let ids = new ID(doc, url);
 	let labels = new Labels(doc, '.detailList .list');
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
 	let extra = new Extra();
 	let newItem = new Zotero.Item(ids.itemType);
 	// span.abstractIcon.btn：摘要的详情按钮，多见于学位论文

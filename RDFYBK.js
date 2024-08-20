@@ -81,7 +81,7 @@ async function doWeb(doc, url) {
 async function scrapeDoc(doc, url = doc.location.href) {
 	Z.debug(url);
 	let labels = new Labels(doc, '.desc > div, .desc > span, #content >p');
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	let extra = new Extra();
 	let newItem = new Z.Item('journalArticle');
 	let title = text(doc, '#artTitles');

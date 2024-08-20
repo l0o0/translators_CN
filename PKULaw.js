@@ -102,7 +102,7 @@ async function scrape(doc, url = doc.location.href) {
 	const labels = url.includes('law.pkulaw')
 		? new Labels(doc, '.fields li')
 		: new Labels(doc, '.fields li > .box');
-	Z.debug(labels.innerData.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
+	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	let extra = new Extra();
 	let matches = text(doc, '.info').match(/[[【](.+)[】\]]\s*([0-9A-Z.()]+)/);
 	extra.set(matches[1], matches[2]);
