@@ -79,15 +79,15 @@ async function scrape(doc, url = doc.location.href) {
 	let labels = new Cells(doc, '.row div.col-xs-12');
 	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	let textLabels = new TextLabels(doc, '.container table:nth-child(2)');
-	Z.debug(textLabels.innerData);
-	newItem.title = textLabels.getWith('中文标准名称');
+	Z.debug(textLabels.data);
+	newItem.title = textLabels.get('中文标准名称');
 	newItem.number = tryMatch(text(doc, 'td > h1'), /：([\w /-]+)/, 1).replace('-', '—');
-	newItem.status = textLabels.getWith('标准状态').split(' ')[0];
+	newItem.status = textLabels.get('标准状态').split(' ')[0];
 	newItem.date = labels.get(['发布日期', '实施日期']);
 	newItem.url = url;
 	newItem.language = 'zh-CN';
 	newItem.libraryCatalog = '国家标准全文公开系统';
-	newItem.extra += addExtra('original-title', textLabels.getWith('英文标准名称'));
+	newItem.extra += addExtra('original-title', textLabels.get('英文标准名称'));
 	newItem.extra += addExtra('CCS', labels.get('CCS'));
 	newItem.extra += addExtra('ICS', labels.get('ICS'));
 	newItem.extra += addExtra('applyDate', labels.get('实施日期'));
@@ -141,7 +141,7 @@ class Cells {
 class TextLabels {
 	constructor(doc, selector) {
 		// innerText在详情页表现良好，但在多条目表现欠佳，故统一使用经过处理的text
-		this.innerData = text(doc, selector)
+		this.data = text(doc, selector)
 			.replace(/^[\s\n]*/gm, '')
 			.replace(/:\n/g, ': ')
 			.replace(/\n([^】\]:：]+?\n)/g, ' $1')
@@ -152,17 +152,17 @@ class TextLabels {
 			]);
 	}
 
-	getWith(label) {
+	get(label) {
 		if (Array.isArray(label)) {
 			let result = label
-				.map(aLabel => this.getWith(aLabel))
+				.map(aLabel => this.get(aLabel))
 				.find(value => value);
 			return result
 				? result
 				: '';
 		}
 		let pattern = new RegExp(label);
-		let keyVal = this.innerData.find(element => pattern.test(element[0]));
+		let keyVal = this.data.find(element => pattern.test(element[0]));
 		return keyVal
 			? ZU.trimInternal(keyVal[1])
 			: '';

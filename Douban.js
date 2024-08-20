@@ -252,39 +252,39 @@ async function scrape(doc, url = doc.location.href) {
 
 class TextLabels {
 	constructor(doc, selector, label) {
-		this.innerData = [];
+		this.data = [];
 		let arr = text(doc, selector)
 			.replace(/^\s*/gm, '')
 			.replace(/\n+/g, '\n')
 			.split('\n');
 		for (let i = 0; i < arr.length; i++) {
 			if (i > 0 && !label.test(arr[i])) {
-				this.innerData.push(this.innerData.pop() + arr[i]);
+				this.data.push(this.data.pop() + arr[i]);
 			}
 			else {
-				this.innerData.push(arr[i]);
+				this.data.push(arr[i]);
 			}
 		}
-		Z.debug(this.innerData);
+		Z.debug(this.data);
 		// innerText在详情页表现良好，但在多条目表现欠佳，故统一使用经过处理的text
-		this.innerData = this.innerData
+		this.data = this.data
 			.map(keyVal => [
 				tryMatch(keyVal, new RegExp(`^${label.source}`)).replace(/\s/g, ''),
 				tryMatch(keyVal, new RegExp(`^${label.source}(.+)`), 1)
 			]);
 	}
 
-	getWith(label) {
+	get(label) {
 		if (Array.isArray(label)) {
 			let result = label
-				.map(aLabel => this.getWith(aLabel))
+				.map(aLabel => this.get(aLabel))
 				.find(value => value);
 			return result
 				? result
 				: '';
 		}
 		let pattern = new RegExp(label);
-		let keyVal = this.innerData.find(element => pattern.test(element[0]));
+		let keyVal = this.data.find(element => pattern.test(element[0]));
 		return keyVal
 			? ZU.trimInternal(keyVal[1])
 			: '';

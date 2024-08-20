@@ -96,22 +96,22 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.creators.forEach(creator => creator.fieldMode = 1);
 	let labels = new TextLabels(doc, '.bc_a, .desc-info');
 	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1])]));
-	newItem.edition = labels.getWith('版次');
+	newItem.edition = labels.get('版次');
 	switch (newItem.itemType) {
 		case 'book':
-			newItem.numPages = labels.getWith('页数');
+			newItem.numPages = labels.get('页数');
 			break;
 		case 'bookSection':
 			newItem.bookTitle = text(doc, '.book-p');
-			newItem.pages = labels.getWith('页码');
+			newItem.pages = labels.get('页码');
 			break;
 	}
-	newItem.publisher = text(doc, '.xqy_g') || labels.getWith('出版社');
-	newItem.date = ZU.strToISO(labels.getWith('出版时间').replace(/(\d{4})(0?\d{1,2})(\d{1,2})/, '$1-$2-$3'));
+	newItem.publisher = text(doc, '.xqy_g') || labels.get('出版社');
+	newItem.date = ZU.strToISO(labels.get('出版时间').replace(/(\d{4})(0?\d{1,2})(\d{1,2})/, '$1-$2-$3'));
 	newItem.language = 'zh-CN';
-	newItem.ISBN = labels.getWith('国际标准书号ISBN') || tryMatch(url, /bookcode=(\d{10,13})/, 1);
+	newItem.ISBN = labels.get('国际标准书号ISBN') || tryMatch(url, /bookcode=(\d{10,13})/, 1);
 	newItem.url = url;
-	newItem.libraryCatalog = labels.getWith('所属分类');
+	newItem.libraryCatalog = labels.get('所属分类');
 	newItem.notes.push(innerText(doc, '.xqy_bd'));
 	extra.add('CNKICite', text(doc, '.book_zb_yy span:last-child'));
 	extra.add('price', text(doc, '#OriginalPrice'));
@@ -131,7 +131,7 @@ class TextLabels {
 			.replace(/\n([^】\]:：]+?\n)/g, ' $1')
 			.split('\n'));
 		// innerText在详情页表现良好，但在多条目表现欠佳，故统一使用经过处理的text
-		this.innerData = text(doc, selector)
+		this.data = text(doc, selector)
 			.replace(/^[\s\n]*/gm, '')
 			.replace(/:\n/g, ': ')
 			.replace(/\n\/\n/g, ' / ')
@@ -144,17 +144,17 @@ class TextLabels {
 			]);
 	}
 
-	getWith(label) {
+	get(label) {
 		if (Array.isArray(label)) {
 			let result = label
-				.map(aLabel => this.getWith(aLabel))
+				.map(aLabel => this.get(aLabel))
 				.find(value => value);
 			return result
 				? result
 				: '';
 		}
 		let pattern = new RegExp(label);
-		let keyVal = this.innerData.find(element => pattern.test(element[0]));
+		let keyVal = this.data.find(element => pattern.test(element[0]));
 		return keyVal
 			? ZU.trimInternal(keyVal[1])
 			: '';

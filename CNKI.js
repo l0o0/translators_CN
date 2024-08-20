@@ -1004,7 +1004,7 @@ async function parseRefer(referText, doc, url, itemKey) {
 			extra.set('applyDate', labels.get(['实施日期', '實施日期']), true);
 			break;
 		case 'patent':
-			// item.place = labels.getWith('地址');
+			// item.place = labels.get('地址');
 			item.filingDate = labels.get(['申请日', '申請日', 'ApplicationDate']);
 			item.applicationNumber = labels.get(['申请\\(专利\\)号', '申請\\(專利\\)號', 'ApplicationNumber']);
 			item.issueDate = labels.get(['授权公告日', '授權公告日', 'IssuanceDate']);
@@ -1222,20 +1222,20 @@ async function addPubDetail(item, extra, ids, doc) {
 		}
 		const container = {
 			originalContainerTitle: ZU.capitalizeTitle(text(pubDoc, '.infobox > h3 > p')),
-			innerData: Array.from(pubDoc.querySelectorAll('.listbox li p'))
+			data: Array.from(pubDoc.querySelectorAll('.listbox li p'))
 				.map(element => [tryMatch(ZU.trimInternal(element.textContent), /^[[【]?[\s\S]+?[】\]:：]/).replace(/\s/g, ''), attr(element, 'span', 'title') || text(element, 'span')])
 				.filter(arr => arr[0]),
-			getWith: function (label) {
+			get: function (label) {
 				if (Array.isArray(label)) {
 					let result = label
-						.map(aLabel => this.getWith(aLabel))
+						.map(aLabel => this.get(aLabel))
 						.find(element => element);
 					return result
 						? result
 						: '';
 				}
 				let pattern = new RegExp(label, 'i');
-				let keyValPair = this.innerData.find(arr => pattern.test(arr[0]));
+				let keyValPair = this.data.find(arr => pattern.test(arr[0]));
 				return keyValPair
 					? ZU.trimInternal(keyValPair[1])
 					: '';
@@ -1246,27 +1246,27 @@ async function addPubDetail(item, extra, ids, doc) {
 		extra.set('original-container-title', container.originalContainerTitle, true);
 		switch (item.itemType) {
 			case 'journalArticle': {
-				item.ISSN = container.getWith('ISSN');
+				item.ISSN = container.get('ISSN');
 				extra.set('publicationTag', Array.from(pubDoc.querySelectorAll('.journalType2 > span')).map(element => ZU.trimInternal(element.textContent)).join(', '));
 				extra.set('CIF', text(pubDoc, '#evaluateInfo span:not([title])', 0));
 				extra.set('AIF', text(pubDoc, '#evaluateInfo span:not([title])', 1));
 				break;
 			}
 			case 'conferencePaper':
-				item.publisher = container.getWith('出版单位');
-				item.date = ZU.strToISO(container.getWith(['出版时间', '出版日期', 'PublishingDate']));
-				container.getWith(['编者', '編者', 'Editor']).split('、').forEach(creator => item.creators.push({
+				item.publisher = container.get('出版单位');
+				item.date = ZU.strToISO(container.get(['出版时间', '出版日期', 'PublishingDate']));
+				container.get(['编者', '編者', 'Editor']).split('、').forEach(creator => item.creators.push({
 					firstName: '',
 					lastName: creator.replace(/\(.*?\)$/, ''),
 					creatorType: 'editor',
 					fieldMode: 1
 				}));
-				// extra.set('organizer', container.getWith('主办单位'), true);
+				// extra.set('organizer', container.get('主办单位'), true);
 				break;
 			case 'bookSection': {
-				item.ISBN = container.getWith('ISBN');
-				item.date = ZU.strToISO(container.getWith('出版时间'));
-				item.publisher = container.getWith('出版者');
+				item.ISBN = container.get('ISBN');
+				item.date = ZU.strToISO(container.get('出版时间'));
+				item.publisher = container.get('出版者');
 			}
 		}
 	}
