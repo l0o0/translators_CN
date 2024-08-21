@@ -90,8 +90,8 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url = doc.location.href) {
-	const labels = new LabelsX(doc, '.horizontalData-f, .mainContainerDataList-item');
-	const doi = labels.getWith('DOI');
+	const labels = new Labels(doc, '.horizontalData-f, .mainContainerDataList-item');
+	const doi = labels.get('DOI');
 	if (doi) {
 		try {
 			await scrapeSearch(doi);
@@ -120,7 +120,7 @@ async function scrape(doc, url = doc.location.href) {
 		const extra = new Extra();
 		extra.set('citation', text(doc, '.horizontalData-content'));
 		extra.set('download', text(doc, '.horizontalData-content', 2));
-		extra.set('CLC', labels.getWith('中图分类号'));
+		extra.set('CLC', labels.get('中图分类号'));
 		item.language = /[\u4e00-\u9fff]/.test(item.title)
 			? 'zh-CN'
 			: 'en-US';
@@ -132,13 +132,13 @@ async function scrape(doc, url = doc.location.href) {
 			case 'thesis':
 				item.thesisType = `${item.edition}学位论文`;
 				delete item.edition;
-				labels.getWith('导师', true).querySelectorAll('.info-line > span').forEach((element) => {
+				labels.get('导师', true).querySelectorAll('.info-line > span').forEach((element) => {
 					item.creators.push(ZU.cleanAuthor(element.textContent, 'contributor'));
 				});
 				break;
 			case 'conferencePaper':
-				item.conferenceName = labels.getWith('会议名称');
-				item.place = labels.getWith('会议地点');
+				item.conferenceName = labels.get('会议名称');
+				item.place = labels.get('会议地点');
 				extra.set('organizer', item.publisher, true);
 				delete item.publisher;
 				break;
@@ -153,11 +153,11 @@ async function scrape(doc, url = doc.location.href) {
 				item.place = item.country = patentCountry(item.patentNumber || item.applicationNumber);
 				item.assignee = item.issuingAuthority;
 				delete item.issuingAuthority;
-				item.filingDate = labels.getWith('申请日');
-				item.issueDate = labels.getWith('公开\\(公告\\)日');
+				item.filingDate = labels.get('申请日');
+				item.issueDate = labels.get('公开\\(公告\\)日');
 				item.legalStatus = text(doc, '.legalstatus .el-table__row:first-child > td:nth-child(2)');
-				extra.set('IPC', labels.getWith('IPC分类号'));
-				item.rights = labels.getWith('主权项');
+				extra.set('IPC', labels.get('IPC分类号'));
+				item.rights = labels.get('主权项');
 				break;
 			case 'standard':
 				item.title = item.title
@@ -165,8 +165,8 @@ async function scrape(doc, url = doc.location.href) {
 					.replace(/([\u4e00-\u9fff]): ?([\u4e00-\u9fff])/, '$1：$2');
 				item.number = tryMatch(refText, /^ID (.+)/m, 1);
 				delete item.publisher;
-				extra.set('CSC', labels.getWith('中国标准分类号'));
-				extra.set('ICS', labels.getWith('国际标准分类号'));
+				extra.set('CSC', labels.get('中国标准分类号'));
+				extra.set('ICS', labels.get('国际标准分类号'));
 				break;
 		}
 		item.creators.forEach((creator) => {
@@ -204,57 +204,57 @@ async function scrapeSearch(doi) {
 	await translator.translate();
 }
 
-class LabelsX {
+class Labels {
 	constructor(doc, selector) {
-		this.innerData = [];
-		this.emptyElement = doc.createElement('div');
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
 		Array.from(doc.querySelectorAll(selector))
 			// avoid nesting
 			.filter(element => !element.querySelector(selector))
 			// avoid empty
 			.filter(element => !/^\s*$/.test(element.textContent))
 			.forEach((element) => {
-				let elementCopy = element.cloneNode(true);
+				const elmCopy = element.cloneNode(true);
 				// avoid empty text
-				while (/^\s*$/.test(elementCopy.firstChild.textContent)) {
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
 					// Z.debug(elementCopy.firstChild.textContent);
-					elementCopy.removeChild(elementCopy.firstChild);
+					elmCopy.removeChild(elmCopy.firstChild);
 					// Z.debug(elementCopy.firstChild.textContent);
 				}
-				if (elementCopy.childNodes.length > 1) {
-					let key = elementCopy.removeChild(elementCopy.firstChild).textContent.replace(/\s/g, '');
-					this.innerData.push([key, elementCopy]);
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
 				}
 				else {
-					let text = ZU.trimInternal(elementCopy.textContent);
-					let key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
-					elementCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
-					this.innerData.push([key, elementCopy]);
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
 				}
 			});
 	}
 
-	getWith(label, element = false) {
+	get(label, element = false) {
 		if (Array.isArray(label)) {
-			let results = label
-				.map(aLabel => this.getWith(aLabel, element));
-			let keyVal = element
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
 				? results.find(element => !/^\s*$/.test(element.textContent))
 				: results.find(string => string);
 			return keyVal
 				? keyVal
 				: element
-					? this.emptyElement
+					? this.emptyElm
 					: '';
 		}
-		let pattern = new RegExp(label, 'i');
-		let keyVal = this.innerData.find(arr => pattern.test(arr[0]));
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
 		return keyVal
 			? element
 				? keyVal[1]
 				: ZU.trimInternal(keyVal[1].textContent)
 			: element
-				? this.emptyElement
+				? this.emptyElm
 				: '';
 	}
 }
