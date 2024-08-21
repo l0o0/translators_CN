@@ -67,9 +67,17 @@
     "label": "中国学术调查数据资料库",
     "lastUpdated": "2024-02-26 08:37:30"
   },
-  "CQVIP.js": {
+  "CQVIP Knowledge.js": {
     "label": "维普经纶知识服务平台",
-    "lastUpdated": "2024-04-01 05:42:11"
+    "lastUpdated": "2024-08-17 07:39:28"
+  },
+  "CQVIP Qikan.js": {
+    "label": "维普期刊",
+    "lastUpdated": "2024-08-17 03:23:36"
+  },
+  "CQVIP.js": {
+    "label": "维普网",
+    "lastUpdated": "2024-08-17 03:05:34"
   },
   "China Judgements Online.js": {
     "label": "中国裁判文书网",
@@ -238,10 +246,6 @@
   "Wanfang Med.js": {
     "label": "万方医疗",
     "lastUpdated": "2024-02-03 10:06:09"
-  },
-  "WeiPu.js": {
-    "label": "维普",
-    "lastUpdated": "2024-01-04 10:42:39"
   },
   "Weixin.js": {
     "label": "微信",
