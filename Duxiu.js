@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-13 10:22:39"
+	"lastUpdated": "2024-08-23 01:11:51"
 }
 
 /*
@@ -235,6 +235,9 @@ async function scrapeBookSection(doc, url = doc.location.href) {
 	delete bookItem.pages;
 	delete bookItem.url;
 	bookItem = Object.assign(sectionItem, bookItem);
+	if(bookItem.bookTitle.length===0) { // book info page is unavailable
+		sectionItem.extra += addExtra('bookinfo', text(doc, '#bookinfo'));
+	}
 	let pdfLink = doc.querySelector('#saveAs');
 	if (pdfLink) {
 		sectionItem.attachments.push({
@@ -320,6 +323,7 @@ function tryMatch(string, pattern, index = 0) {
 		? match[index]
 		: '';
 }
+
 
 /** BEGIN TEST CASES **/
 var testCases = [
