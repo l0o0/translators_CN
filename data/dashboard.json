@@ -103,7 +103,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-04-01 16:01:54"
+      "lastUpdated": "2024-08-24 15:38:42"
     },
     "testCases": [
       {
@@ -370,6 +370,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-08-24 23:44:50 +0800",
+        "message": "close #376"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -377,11 +382,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-21 12:54:49 +0800",
         "message": "lint; replace launch.json with tasks.json"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-04-02 00:04:25 +0800",
-        "message": "精确的类型识别；更准确的返回结果；清理重复测试用例；调整测试用例顺序；更新测试用例"
       }
     ]
   },
