@@ -4876,7 +4876,7 @@
       "inRepository": true,
       "translatorType": 12,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-08-09 06:04:54"
+      "lastUpdated": "2024-08-24 13:09:51"
     },
     "testCases": [
       {
@@ -6199,10 +6199,22 @@
             "seeAlso": []
           }
         ]
+      },
+      {
+        "type": "search",
+        "input": {
+          "DOI": "10.13198/j.issn.1001-6929.2021.12.09"
+        },
+        "items": []
       }
     ],
     "zhLabel": "中国知网",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-08-24 21:13:35 +0800",
+        "message": "支持双语文章的DOI解析"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2024-08-20 13:31:03 +0800",
@@ -6212,11 +6224,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-08-20 13:22:33 +0800",
         "message": "fix typo"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-08-19 17:42:48 +0800",
-        "message": "lint"
       }
     ]
   },
