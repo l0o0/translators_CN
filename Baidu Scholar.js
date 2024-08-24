@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-04-01 16:01:54"
+	"lastUpdated": "2024-08-24 15:38:42"
 }
 
 /*
@@ -36,13 +36,13 @@
 */
 
 function detectWeb(doc, _url) {
-	let paperType = tryMatch(
+	const paperType = tryMatch(
 		ZU.xpathText(doc, '//script[contains(text(), "paperType")]'),
 		/paperType:\s?'(.+)'/,
 		1
 	);
 	// 即搜索结果的a[data-click*="filter_type"]
-	let paperTypes = [
+	const paperTypes = [
 		'journalArticle',
 		'thesis',
 		'conferencePaper',
@@ -61,12 +61,12 @@ function detectWeb(doc, _url) {
 }
 
 function getSearchResults(doc, checkOnly) {
-	var items = {};
-	var found = false;
-	var rows = doc.querySelectorAll('h3 > a[href*="show?paperid="], h3 > a[href*="cmd=paper_forward"]');
-	for (let row of rows) {
-		let href = row.href;
-		let title = ZU.trimInternal(row.textContent);
+	const items = {};
+	let found = false;
+	const rows = doc.querySelectorAll('h3 > a[href*="show?paperid="], h3 > a[href*="cmd=paper_forward"]');
+	for (const row of rows) {
+		const href = row.href;
+		const title = ZU.trimInternal(row.textContent);
 		if (!href || !title) continue;
 		if (checkOnly) return true;
 		found = true;
@@ -77,9 +77,9 @@ function getSearchResults(doc, checkOnly) {
 
 async function doWeb(doc, url) {
 	if (detectWeb(doc, url) == 'multiple') {
-		let items = await Zotero.selectItems(getSearchResults(doc, false));
+		const items = await Zotero.selectItems(getSearchResults(doc, false));
 		if (!items) return;
-		for (let url of Object.keys(items)) {
+		for (const url of Object.keys(items)) {
 			await scrape(await requestDocument(url));
 		}
 	}
@@ -100,7 +100,7 @@ async function scrape(doc, url = doc.location.href) {
 		}
 		catch (error2) {
 			Z.debug(error2);
-			let itemType = detectWeb(doc, url);
+			const itemType = detectWeb(doc, url);
 			if (!['standard', 'report'].includes(itemType)) {
 				await scrapeRIS(doc, url);
 			}
@@ -114,7 +114,7 @@ async function scrape(doc, url = doc.location.href) {
 async function scrapeSearch(doi) {
 	if (!doi) throw new ReferenceError('no identifier available');
 	Z.debug(`DOI: ${doi}`);
-	let translate = Z.loadTranslator('search');
+	const translate = Z.loadTranslator('search');
 	// DOI Content Negotiation
 	translate.setTranslator('b28d0d42-8549-4c6d-83fc-8382874a5cb9');
 	translate.setHandler('error', () => {});
@@ -127,8 +127,7 @@ async function scrapeSearch(doi) {
 
 const translatorMap = {
 	'kns.cnki.net': '5c95b67b-41c5-4f55-b71a-48d5d7183063',
-	// Embedded Metadata
-	'www.cqvip.com': '951c027d-74ac-47d4-a107-9c3069ab7b48',
+	'qikan.cqvip.com': 'dd9efb0b-ca1d-4634-b480-9aabc84213c0',
 	'sciencedirect.com': 'b6d0a7a-d076-48ae-b2f0-b6de28b194e',
 	'onlinelibrary.wiley.com': 'fe728bc9-595a-4f03-98fc-766f1d8d0936',
 	'inspirehep.net': '17b1a93f-b342-4b54-ad50-08ecc26e0ac3',
@@ -147,9 +146,6 @@ async function scrapeWeb(doc) {
 	for (let host in translatorMap) {
 		for (let element of sources) {
 			url = element.href;
-			if (url.includes('www.cnki.com.cn')) {
-				url = `https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=${tryMatch(url, /\/([A-Z]{4})[^/]+.htm/, 1)}&filename=${tryMatch(url, /-(.+).htm/, 1)}`;
-			}
 			if (url.includes(host)) {
 				translatorID = translatorMap[host];
 				break;
@@ -160,7 +156,7 @@ async function scrapeWeb(doc) {
 	Z.debug(url);
 	Z.debug(translatorID);
 	if (!url || !translatorID) throw Error('no other translator available');
-	let translator = Zotero.loadTranslator('web');
+	const translator = Zotero.loadTranslator('web');
 	translator.setTranslator(translatorID);
 	translator.setDocument(await requestDocument(url));
 	translator.setHandler('itemDone', (_obj, item) => {
@@ -171,17 +167,17 @@ async function scrapeWeb(doc) {
 }
 
 async function scrapeRIS(doc, url) {
-	let id = tryMatch(url, /paperid=\w+/i);
-	let risUrl = `https://xueshu.baidu.com/u/citation?type=ris&${id}`;
-	let risText = await requestText(risUrl);
+	const id = tryMatch(url, /paperid=\w+/i);
+	const risUrl = `https://xueshu.baidu.com/u/citation?type=ris&${id}`;
+	const risText = await requestText(risUrl);
 	Z.debug(risText);
-	let translator = Zotero.loadTranslator('import');
+	const translator = Zotero.loadTranslator('import');
 	// RIS
 	translator.setTranslator('32d59d2d-b65a-4da4-b0a3-bdd3cfb979e7');
 	translator.setString(risText);
 	translator.setHandler('itemDone', (_obj, item) => {
-		let labels = new Labels(doc, '.c_content > [class$="_wr"]');
-		let extra = new Extra();
+		const labels = new Labels(doc, '.c_content > [class$="_wr"]');
+		const extra = new Extra();
 		switch (item.itemType) {
 			case 'thesis':
 				item.thesisType = `${text(doc, '[data-click*="degree_name"]')}学位论文`;
@@ -208,11 +204,11 @@ async function scrapeRIS(doc, url) {
 }
 
 async function scrapeDoc(doc, url, itemType) {
-	let labels = new Labels(doc, '.c_content > [class$="_wr"]');
-	let newItem = new Z.Item(itemType);
+	const labels = new Labels(doc, '.c_content > [class$="_wr"]');
+	const newItem = new Z.Item(itemType);
 	newItem.title = text(doc, '.main-info h3');
-	let extra = new Extra();
-	let creators = Array.from(doc.querySelectorAll('.author_text > span, .author_wr [class^="kw_main"] > span'));
+	const extra = new Extra();
+	const creators = Array.from(doc.querySelectorAll('.author_text > span, .author_wr [class^="kw_main"] > span'));
 	creators.forEach((element) => {
 		newItem.creators.push(ZU.cleanAuthor(element.innerText, 'author'));
 	});
@@ -235,7 +231,7 @@ async function scrapeDoc(doc, url, itemType) {
 
 function fixItem(item, extra, doc) {
 	item.abstractNote = item.abstractNote || text(doc, 'p.abstract');
-	let doi = text(doc, '[data-click*="doi"]');
+	const doi = text(doc, '[data-click*="doi"]');
 	if (ZU.fieldIsValidForType('DOI', item.itemType)) {
 		item.DOI = doi;
 	}
@@ -251,7 +247,7 @@ function fixItem(item, extra, doc) {
 			creator.fieldMode = 1;
 		}
 	});
-	let tags = doc.querySelectorAll('div.kw_wr a');
+	const tags = doc.querySelectorAll('div.kw_wr a');
 	item.tags = tags.length == 1
 		? item.tags = tags[0].innerText.split("；")
 		: Array.from(tags).map(element => element.innerText);
@@ -457,7 +453,6 @@ var testCases = [
 						"tag": "德国"
 					},
 					{
-					
 						"tag": "犹太难民政策"
 					},
 					{
