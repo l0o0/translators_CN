@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-08-09 06:04:54"
+	"lastUpdated": "2024-08-24 13:09:51"
 }
 
 /*
@@ -29,6 +29,13 @@
 	along with Zotero. If not, see <http://www.gnu.org/licenses/>.
 	***** END LICENSE BLOCK *****
 */
+
+// Whether user ip is in Chinese Mainland, default is true.
+let inMainland = true;
+
+// Platform of CNKI, default to the National Zong Ku Ping Tai(pin yin of "Total Database Platform").
+// It may be modified when this Translator called by other translators.
+const platform = 'NZKPT';
 
 /*********************
  * search translator *
@@ -50,8 +57,8 @@ function filterQuery(items) {
 	if (typeof items == 'string' || !items.length) items = [items];
 
 	// filter out invalid queries
-	var dois = [], doi;
-	for (var i = 0, n = items.length; i < n; i++) {
+	let dois = [], doi;
+	for (let i = 0, n = items.length; i < n; i++) {
 		if (items[i].DOI && /(\/j\.issn|\/[a-z]\.cnki)/i.test(items[i].DOI) && (doi = ZU.cleanDOI(items[i].DOI))) {
 			dois.push(doi);
 		}
@@ -65,12 +72,29 @@ function filterQuery(items) {
 }
 
 async function doSearch(items) {
-	for (let doi of filterQuery(items)) {
-		// 仅在国内有效
-		const url = `https://link.cnki.net/doi/${encodeURIComponent(doi)}`;
+	const respond = await fetch('https://chn.oversea.cnki.net/kns');
+	Z.debug(respond);
+	if (respond.ok) {
+		inMainland = false;
+	}
+	Z.debug(`inMainland: ${inMainland}`);
+	for (const doi of filterQuery(items)) {
+		const url = `https://doi.org/${encodeURIComponent(doi)}`;
 		Z.debug(`search url: ${url}`);
-		const doc = await requestDocument(url);
-		// Z.debug(doc);
+		let doc = await requestDocument(url);
+		const mainlandLink = doc.querySelector('.feedbackresult tr:last-child a[href*="link.cnki.net"]');
+		Z.debug(`mainlandLink: ${!!mainlandLink}`);
+		const overseaLinnk = doc.querySelector('.feedbackresult tr:last-child a[href*="link.oversea.cnki.net"]');
+		Z.debug(`overseaLink: ${!!overseaLinnk}`);
+		if (mainlandLink && overseaLinnk) {
+			if (inMainland) {
+				doc = await requestDocument(mainlandLink.href);
+			}
+			else {
+				doc = await requestDocument(overseaLinnk.href);
+			}
+		}
+		Z.debug(doc.body);
 		await doWeb(doc, url);
 	}
 }
@@ -393,13 +417,6 @@ function getSearchResults(doc, url, checkOnly) {
 	}
 	return found ? items : false;
 }
-
-// Whether user ip is in Chinese Mainland, default is true.
-let inMainland = true;
-
-// Platform of CNKI, default to the National Zong Ku Ping Tai(pin yin of "Total Database Platform").
-// It may be modified when this Translator called by other translators.
-const platform = 'NZKPT';
 
 // Css selectors for CNKI Scholar like page, to change the default behavior of CNKI Scholar translator.
 // It may be modified when this Translator called by other translators.
@@ -2699,6 +2716,13 @@ var testCases = [
 				"seeAlso": []
 			}
 		]
+	},
+	{
+		"type": "search",
+		"input": {
+			"DOI": "10.13198/j.issn.1001-6929.2021.12.09"
+		},
+		"items": []
 	}
 ]
 /** END TEST CASES **/
