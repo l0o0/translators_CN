@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-08-24 13:09:51"
+	"lastUpdated": "2024-08-25 13:42:51"
 }
 
 /*
@@ -1941,6 +1941,87 @@ var testCases = [
 		]
 	},
 	{
+		"type": "search",
+		"input": {
+			"DOI": "10.13198/j.issn.1001-6929.2021.12.09"
+		},
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "燃煤锅炉协同处置油基岩屑碳排放核算及降碳贡献度分析",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "崔长颢",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "刘美佳",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "葛金林",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "王铭玮",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "闫大海",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2022",
+				"DOI": "10.13198/j.issn.1001-6929.2021.12.09",
+				"ISSN": "1001-6929",
+				"abstractNote": "我国电力行业CO<sub>2</sub>排放量巨大，约占全国CO<sub>2</sub>排放总量的50%.有效降低电力行业的碳排放，对我国按时实现“3060”碳达峰与碳中和的目标将起到有力支撑.石油和天然气开采过程中产生的油基岩屑因含有较高的热值可作为锅炉煤炭燃料的替代燃料使用.为探明利用燃煤锅炉协同处置油基岩屑的碳减排效果，选取某电站600 MW循环流化床锅炉，以30%的比例掺烧油基岩屑，并参照《温室气体排放核算与报告要求第1部分：发电企业》和《企业温室气体排放核算方法与报告指南发电设施（征求意见稿）》两种核算方法计算协同处置前后锅炉CO<sub>2</sub>的排放量.结果表明：（1）在30%的掺加比下，油基岩屑协同处置具有碳减排效果.两种核算方法计算的降碳量分别为159.2和157.7 t，降碳比分别为0.543和0.538.（2）油基岩屑焚烧产生的CO<sub>2</sub>排放量小于被替代的煤炭燃烧产生的碳排放量，是协同处置具有碳减排效益的主要原因.（3）核算法与检测法CO<sub>2</sub>排放量的差异表明，企业源评估模型碳核算法最主要的不确定性来源于检测数据的精准度.研究显示，燃煤锅炉协同处置油基岩屑具有一定的CO<sub>2</sub>减排效果，单位热值含碳量和消耗量是影响碳减排效果的两个关键因素，建议开展油基岩屑掺加比与碳减排量间的相关性研究，为规模化开展燃煤锅炉协同处置降碳工作提供参考.",
+				"extra": "original-container-title: Research of Environmental Sciences\nfoundation: 国家重点研发计划项目(No.2018YFC1900100)； 中央级公益性科研院所基本科研业务专项(No.2019YSKY-016)~~；\ndownload: 510\nalbum: 工程科技Ⅰ辑;工程科技Ⅱ辑\nCLC: X773;X741\ndbcode: CJFQ\ndbname: CJFDLAST2022\nfilename: HJKX202202025\npublicationTag: 北大核心, CA, JST, CSCD, WJCI, AMI扩展\nCIF: 4.747\nAIF: 3.657",
+				"issue": "2",
+				"language": "zh-CN",
+				"libraryCatalog": "CNKI",
+				"pages": "540-546",
+				"publicationTitle": "环境科学研究",
+				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFQ&dbname=CJFDLAST2022&filename=HJKX202202025",
+				"volume": "35",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
+					}
+				],
+				"tags": [
+					{
+						"tag": "协同处置"
+					},
+					{
+						"tag": "循环流化床"
+					},
+					{
+						"tag": "油基岩屑"
+					},
+					{
+						"tag": "碳排放核算"
+					},
+					{
+						"tag": "降碳潜力"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
 		"type": "web",
 		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHiJfPd1-3LeRj-WKnQqUbImgyRoJSUXvw06sJxr4HxTgaTY5RlyN-OIqHx_mNjyHY2VSmZdnwR_XQmg3dzHFGkmtgUtIEiBUrxSubRrXN75GIPXIWiptn0-uKS1IS2Mx6f-oEZwMAlkBF_QAa_Waa_8&uniplatform=NZKPT&language=CHS",
 		"items": [
@@ -2716,13 +2797,6 @@ var testCases = [
 				"seeAlso": []
 			}
 		]
-	},
-	{
-		"type": "search",
-		"input": {
-			"DOI": "10.13198/j.issn.1001-6929.2021.12.09"
-		},
-		"items": []
 	}
 ]
 /** END TEST CASES **/
