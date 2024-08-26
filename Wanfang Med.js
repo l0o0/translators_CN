@@ -9,13 +9,13 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-03 10:06:09"
+	"lastUpdated": "2024-08-26 05:50:26"
 }
 
 /*
 	***** BEGIN LICENSE BLOCK *****
 
-	Copyright © 2022 jiaojiaodubai23 <jiaojiaodubai23@gmail.com>
+	Copyright © 2022 jiaojiaodubai<jiaojiaodubai23@gmail.com>
 
 	This file is part of Zotero.
 
@@ -38,8 +38,8 @@
 
 class ID {
 	constructor(node, url) {
-		this.filename = tryMatch(url, /id=\w+[_/]([\w.% /-]+)/, 1) || attr(node, '.btn-export', 'data-id');
-		this.dbname = tryMatch(url, /id=(\w+)[_/][\w.% /-]+/, 1);
+		this.filename = tryMatch(url, /\/Detail(?:\/|\?id=)\w+[_/]([\w.% /-]+)/, 1) || attr(node, '.btn-export', 'data-id');
+		this.dbname = tryMatch(url, /\/Detail(?:\/|\?id=)(\w+)[_/][\w.% /-]+/, 1);
 		const dbType = {
 			PeriodicalPaper: 'journalArticle',
 			DegreePaper: 'thesis',
@@ -56,37 +56,37 @@ class ID {
 }
 
 function detectWeb(doc, url) {
-	let dynamic = doc.querySelector('#paper-content-wrap');
+	const dynamic = doc.querySelector('#paper-content-wrap');
 	if (dynamic) {
 		Z.monitorDOMChanges(dynamic, { childList: true });
 	}
 	if (getSearchResults(doc, true)) return 'multiple';
-	let ids = new ID(doc, url);
+	const ids = new ID(doc, url);
 	Z.debug(ids);
 	return ids.itemType;
 }
 
 function getSearchResults(doc, checkOnly) {
-	var items = {};
-	var found = false;
-	var rows = doc.querySelectorAll('#resultsList > .item .item-title > a');
-	for (let row of rows) {
-		let title = ZU.trimInternal(row.textContent);
-		let href = row.href;
+	const items = {};
+	let found = false;
+	// ".item > h3 > a" for Journal Nav
+	const rows = doc.querySelectorAll('#resultsList > .item .item-title > a, .item > h3 > a');
+	for (const row of rows) {
+		const title = ZU.trimInternal(row.textContent);
+		const href = row.href;
 		if (!href || !title) continue;
 		if (checkOnly) return true;
 		found = true;
 		items[href] = title;
 	}
-	Z.debug(items);
 	return found ? items : false;
 }
 
 async function doWeb(doc, url) {
 	if (detectWeb(doc, url) == 'multiple') {
-		let items = await Zotero.selectItems(getSearchResults(doc, false));
+		const items = await Zotero.selectItems(getSearchResults(doc, false));
 		if (!items) return;
-		for (let url of Object.keys(items)) {
+		for (const url of Object.keys(items)) {
 			await scrape(await requestDocument(url));
 		}
 	}
@@ -96,41 +96,21 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url = doc.location.href) {
-	let ids = new ID(doc, url);
-	let labels = new Labels(doc, '.details .table > .table-tr');
-	var newItem = new Zotero.Item(ids.itemType);
+	const ids = new ID(doc, url);
+	const labels = new Labels(doc, '.details .table > .table-tr');
+	const extra = new Extra();
+	const newItem = new Zotero.Item(ids.itemType);
 	newItem.title = text(doc, '.headline > h2');
-	// Display full abstract
-	let clickMore = doc.querySelector('btn-more');
-	if (clickMore && clickMore.textContent.includes('收起')) {
-		await clickMore.click();
-	}
-	newItem.abstractNote = text(doc, '.abstracts').replace(/^摘要：\s*/, '').replace(/\s*更多$/, '');
-	let breadcrumbs = doc.querySelector('.breadcrumbs');
-	let publicationTitle = (breadcrumbs && breadcrumbs.children.length > 3)
-		? breadcrumbs.children[breadcrumbs.children.length - 3].textContent
-		: '';
+	extra.set('original-title', text(doc, '.headline > h3'), true);
+	newItem.abstractNote = text(doc, '.abstracts > p:first-of-type');
 	newItem.url = url;
 	labels.get('作者', true).querySelectorAll('span > a').forEach((creator) => {
-		newItem.creators.push(ZU.cleanAuthor(creator.innerText, 'author'));
+		newItem.creators.push(cleanAuthor(creator.innerText, 'author'));
 	});
-	labels.get('关键词', true).querySelectorAll('a').forEach((tag) => {
-		newItem.tags.push(tag.innerText);
-	});
-	let pdfLink = doc.querySelector('a.lnk-download');
-	if (pdfLink) {
-		newItem.attachments.push({
-			url: pdfLink.href,
-			title: 'Full Text PDF',
-			mimeType: 'application/pdf'
-		});
-	}
-	extra.add('original-title', text(doc, '.headline > h3'), true);
-	extra.add('citation', tryMatch(text(doc, '.statistics .ico-link'), /\d+/));
 	switch (newItem.itemType) {
 		case 'journalArticle': {
 			let pubInfo = labels.get('期刊');
-			newItem.publicationTitle = publicationTitle;
+			newItem.publicationTitle = text(doc, '.breadcrumbs > *:nth-child(3)');
 			newItem.volume = tryMatch(pubInfo, /0*(\d+)卷/, 1);
 			newItem.issue = tryMatch(pubInfo, /[A-Z]?0*\d+期/i, 1).replace(/([A-Z]?)0*(\d+)/, '$1$2');
 			newItem.pages = tryMatch(pubInfo, /([\d+,~-]+)页/, 1).replace('+', ',').replace('~', '-');
@@ -139,28 +119,29 @@ async function scrape(doc, url = doc.location.href) {
 			break;
 		}
 		case 'thesis':
-			newItem.university = text(doc, '.breadcrumbs > a[href*="%e6%8e%88%e4%ba%88%e5%8d%95%e4%bd%8d%3d"]');
+			newItem.university = text(doc, '.breadcrumbs > *:nth-child(3)');
+			// URL编码，解码为“专业=”
 			newItem.thesisType = `${tryMatch(text(doc, 'a[href*="%e4%b8%93%e4%b8%9a%3d"]'), /（(.*)）/, 1)}学位论文`;
 			newItem.date = tryMatch(labels.get('学位信息'), /(\d+)年/, 1);
 			labels.get('导师', true).querySelectorAll('a').forEach((creator) => {
-				newItem.creators.push(ZU.cleanAuthor(creator.innerText, 'contributor'));
+				newItem.creators.push(cleanAuthor(creator.innerText, 'contributor'));
 			});
 			break;
 		case 'conferencePaper': {
 			newItem.date = tryMatch(labels.get('会议名称'), /(\d+)年/, 1);
-			newItem.conferenceName = publicationTitle;
+			newItem.conferenceName = text(doc, '.breadcrumbs > *:nth-child(3)');
 			newItem.proceedingsTitle = labels.get('母体文献');
 			newItem.place = text(labels.get('会议名称', true), 'a+em');
 			break;
 		}
 		case 'patent': {
 			labels.get('发明/设计人', true).querySelectorAll('span > a').forEach((creator) => {
-				newItem.creators.push(ZU.cleanAuthor(creator.innerText, 'inventor'));
+				newItem.creators.push(cleanAuthor(creator.innerText, 'inventor'));
 			});
 			labels.get('代理人', true).querySelectorAll('span').forEach((creator) => {
-				newItem.creators.push(ZU.cleanAuthor(creator.innerText, 'attorneyAgent'));
+				newItem.creators.push(cleanAuthor(creator.innerText, 'attorneyAgent'));
 			});
-			extra.add('Genre', labels.get('专利类型'), true);
+			extra.set('Genre', labels.get('专利类型'), true);
 			newItem.assignee = labels.get('申请/专利权人');
 			newItem.patentNumber = labels.get('公开/公告号');
 			newItem.applicationNumber = labels.get('申请/专利号');
@@ -174,32 +155,45 @@ async function scrape(doc, url = doc.location.href) {
 		}
 		case 'standard':
 			labels.get('发布单位', true).querySelectorAll('em').forEach((creator) => {
-				newItem.creators.push(ZU.cleanAuthor(creator.innerText, 'author'));
+				newItem.creators.push(cleanAuthor(creator.innerText, 'author'));
 			});
 			newItem.number = labels.get('标准编号');
 			newItem.date = labels.get('发布日期');
 			newItem.status = labels.get('状态');
-			extra.add('applyDate', labels.get('实施日期'));
+			extra.set('applyDate', labels.get('实施日期'));
 			break;
 		case 'statute':
 			newItem.nameOfAct = newItem.title;
 			delete newItem.title;
 			labels.get(' 颁布部门', true).querySelectorAll('span').forEach((creator) => {
-				newItem.creators.push(ZU.cleanAuthor(creator.innerText, 'author'));
+				newItem.creators.push(cleanAuthor(creator.innerText, 'author'));
 			});
 			newItem.codeNumber = labels.get('发文文号');
 			newItem.dateEnacted = labels.get('颁布日期');
 			break;
-		default:
-			break;
 	}
-	newItem.creators.forEach((creator) => {
-		if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
-			creator.fieldMode = 1;
-		}
+	labels.get('关键词', true).querySelectorAll('a').forEach((tag) => {
+		newItem.tags.push(tag.innerText);
 	});
+	let pdfLink = doc.querySelector('a.lnk-download');
+	if (pdfLink) {
+		newItem.attachments.push({
+			url: pdfLink.href,
+			title: 'Full Text PDF',
+			mimeType: 'application/pdf'
+		});
+	}
+	extra.set('citation', tryMatch(text(doc, '.statistics .ico-link'), /\d+/));
 	newItem.extra = extra.toString();
 	newItem.complete();
+}
+
+function cleanAuthor(name, creatorType = 'author') {
+	const creator = ZU.cleanAuthor(name, creatorType);
+	if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
+		creator.fieldMode = 1;
+	}
+	return creator;
 }
 
 function tryMatch(string, pattern, index = 0) {
@@ -264,29 +258,41 @@ class Labels {
 	}
 }
 
-const extra = {
-	clsFields: [],
-	elseFields: [],
-	add: function (key, value, cls = false) {
-		if (value && cls) {
-			this.clsFields.push([key, value]);
-		}
-		else if (value) {
-			this.elseFields.push([key, value]);
-		}
-	},
-	toString: function (original) {
-		return original
-			? [
-				...this.clsFields.map(entry => `${entry[0]}: ${entry[1]}`),
-				original.replace(/^\n|\n$/g, ''),
-				...this.elseFields.map(entry => `${entry[0]}: ${entry[1]}`)
-			].join('\n')
-			: [...this.clsFields, ...this.elseFields]
-				.map(entry => `${entry[0]}: ${entry[1]}`)
-				.join('\n');
+class Extra {
+	constructor() {
+		this.fields = [];
 	}
-};
+
+	push(key, val, csl = false) {
+		this.fields.push({ key: key, val: val, csl: csl });
+	}
+
+	set(key, val, csl = false) {
+		const target = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		if (target) {
+			target.val = val;
+		}
+		else {
+			this.push(key, val, csl);
+		}
+	}
+
+	get(key) {
+		const result = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		return result
+			? result.val
+			: '';
+	}
+
+	toString(history = '') {
+		this.fields = this.fields.filter(obj => obj.val);
+		return [
+			this.fields.filter(obj => obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n'),
+			history,
+			this.fields.filter(obj => !obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n')
+		].filter(obj => obj).join('\n');
+	}
+}
 
 function patentCountry(idNumber) {
 	return {
@@ -300,7 +306,6 @@ function patentCountry(idNumber) {
 		VA: '梵蒂冈', VC: '圣文森特岛和格林纳达', VE: '委内瑞拉', VG: '维尔京群岛', VN: '越南', VU: '瓦努阿图', WO: '世界知识产权组织', WS: '萨摩亚', YD: '民主也门', YE: '也门', YU: '南斯拉夫', ZA: '南非', ZM: '赞比亚', ZR: '扎伊尔', ZW: '津巴布韦'
 	}[idNumber.substring(0, 2).toUpperCase()] || '';
 }
-
 
 /** BEGIN TEST CASES **/
 var testCases = [
@@ -340,7 +345,7 @@ var testCases = [
 				"date": "2023",
 				"DOI": "10.13699/j.cnki.1001-6821.2023.06.005",
 				"abstractNote": "目的 探讨美沙拉嗪肠溶片联合保留灌肠治疗溃疡性结肠炎(UC)患者的疗效.方法 采用随机数字表法将UC患者分为对照组和试验组.用美沙拉嗪肠溶片给予对照组患者口服治疗,每次1.0 g,每天4次.试验组在对照组的基础上给予美沙拉嗪肠溶液保留灌肠,睡前把灌肠管插入距离患者肛门10～15 cm处,灌入美沙拉嗪灌肠液,每次4 g,每天一次.2组治疗时间均为1个月.比较2组治疗1个月后的临床疗效,治疗前、治疗1个月后的肠黏膜变化、炎症反应、细胞间黏附分子-1(ICAM-1)、血管细胞黏附分子(VCAM-1)、血小板计数(PLT)及血小板体积(MPV),治疗期间的药物不良反应.结果 试验过程中共脱落6例,最终试验组和对照组分别纳入40例,治疗1个月后,试验组及对照组的总有效率分别为92.50％和75.00％;溃疡的患者占比分别为7.50％和25.00％;充血水肿的患者占比分别为22.50％和45.00％;血清白细胞介素1(IL-1)含量分别为(14.65±5.87)和(12.54±4.23)pg·L-1;血清白细胞介素4(IL-4)含量分别为(32.65±4.76)和(29.65±4.54)pg·mL-1;血清C反应蛋白(CRP)含量分别为(5.32±0.43)和(6.54±0.54)mg·L-1;血清肿瘤坏死因子-α(TNF-α)含量分别为(0.12±0.04)和(0.23±0.05)μg·L-1;血清γ干扰素(IFN-γ)含量分别为(174.32±13.27)和(203.21±14.32)μg·L-1;血清ICAM-1含量分别为(44.76±3.29)和(54.32±4.38)ng·mL-1;血清VCAM-1含量分别为(45.32±3.29)和(60.54±3.76)ng·mL-1;外周血PLT数量分别为(170.25±34.64)和(211.54±37.45)×109 cell·L-1;MPV分别为(13.51±4.56)和(11.65±3.21)fL,组间比较,差异均有统计学意义(均P>0.05).试验组和对照组治疗期间的药物不良反应发生率比较,差异无统计学差异(12.50％vs.20.00％,P>0.05).结论 美沙拉嗪肠溶片联合保留灌肠能够有效促进UC患者肠黏膜的修复,减轻患者炎症反应,缓解病情,提高临床疗效,安全性良好.",
-				"extra": "original-title: Clinical trial of mesalazine enteric coated tablets combined with retention enema of patients with ulcerative colitis\ncitation: 4",
+				"extra": "original-title: Clinical trial of mesalazine enteric coated tablets combined with retention enema of patients with ulcerative colitis\ncitation: 10",
 				"libraryCatalog": "Wanfang Med",
 				"pages": "781-785",
 				"publicationTitle": "中国临床药理学杂志",
@@ -526,7 +531,7 @@ var testCases = [
 		"items": [
 			{
 				"itemType": "standard",
-				"title": "医用电气设备 光电X射线影像增强器特性 第4部分：影像失真的测定",
+				"title": "医用电气设备.光电X射线影像增强器特性.第4部分:影像失真的测定",
 				"creators": [
 					{
 						"firstName": "",
@@ -537,9 +542,10 @@ var testCases = [
 				],
 				"date": "2003-06-20",
 				"abstractNote": "YY/T 0457的本部分适用于作为医用诊断X射线设备部件的光电X射线影像增强器。    本部分描述了测定X射线影像增强器影像失真的方法。",
-				"extra": "original-title: Medical electrical equipment-Characteristics of electro-optical X-ray image intensifiers-Part 4:Determination of the image distortion\ncitation: 0\napplyDate: 2004-01-01",
+				"extra": "original-title: Medical electrical equipment-Characteristics of electro-optical X-ray image intensifiers-Part 4:Determination of the image distortion\napplyDate: 2004-01-01\ncitation: 0",
 				"libraryCatalog": "Wanfang Med",
 				"number": "YY/T 0457.4-2003",
+				"shortTitle": "医用电气设备.光电X射线影像增强器特性.第4部分",
 				"status": "现行",
 				"url": "https://med.wanfangdata.com.cn/Paper/Detail?id=Standard_YY/T%200457.4-2003&dbid=WF_BZ",
 				"attachments": [
@@ -584,11 +590,6 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://med.wanfangdata.com.cn/Paper/Search?q=%E5%BD%B1%E5%83%8F&%E8%B5%84%E6%BA%90%E7%B1%BB%E5%9E%8B_fl=(%E4%B8%AD%E6%96%87%E6%9C%9F%E5%88%8A%20OR%20%E5%A4%96%E6%96%87%E6%9C%9F%E5%88%8A%20OR%20%E5%AD%A6%E4%BD%8D%E8%AE%BA%E6%96%87%20OR%20%E4%BC%9A%E8%AE%AE%E8%AE%BA%E6%96%87)&SearchMode=Default",
-		"items": "multiple"
-	},
-	{
-		"type": "web",
 		"url": "https://med.wanfangdata.com.cn/Paper/Detail?id=Law_D462310887&dbid=WF_FG",
 		"items": [
 			{
@@ -610,6 +611,120 @@ var testCases = [
 				"seeAlso": []
 			}
 		]
+	},
+	{
+		"type": "web",
+		"url": "https://med.wanfangdata.com.cn/Paper/Detail/PeriodicalPaper_zgzyzz202414025",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "23种常用中成药治疗失眠的临床研究证据图分析",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "马永庆",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "邢畅",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "李巧凤",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "徐征",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "张金生",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "吴承玉",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2024",
+				"DOI": "10.19540/j.cnki.cjcmm.20240410.501",
+				"abstractNote": "运用证据图系统检索和梳理中成药治疗失眠的临床研究证据,了解该领域证据分布特点,发现中成药治疗失眠相关研究存在的问题.检索3个国家药物目录中明确提及治疗失眠的中成药,检索建库至2023年8月的中、英文文献.采用图、表展示结果.最终纳入中成药23种,相关文献299篇,包括随机对照试验(RCTs)236篇,非随机对照试验(non-RCTs)35篇,回顾性研究7篇,系统评价/Meta分析17篇,指南和专家建议或共识4篇.文献占比较大的是百乐眠胶囊、乌灵胶囊、养血清脑颗粒;结局指标包括睡眠评定量表、临床有效率、安全性指标、焦虑抑郁评分等.结果表明,中成药治疗失眠研究整体呈增长趋势,但研究证据相对较少,研究以单中心、小样本和短周期为主;临床定位宽泛,中医优势不足;结局指标对生活质量、随访及复发率方面关注度不够;RCT整体偏倚风险偏高,系统评价/Meta分析整体质量较低,回顾性研究总体评分不高,non-RCT均未提及随访时间、失访率及样本量估算,结果可信度降低.建议以中医药临床研究规范来设计治疗失眠的中成药研究方案,将中医证候积分评价作为重要结局指标,多关注患者生活质量、随访及复发情况,提高有效治疗失眠中成药的可及性和经济性,加强医保政策与中成药政策的衔接,合理提升具有明确疗效和安全证据支持的中成药在医保甲类目录中的占比.",
+				"extra": "original-title: Evidence mapping of clinical studies on 23 commonly used Chinese patent medicines for treating insomnia\ncitation: 0",
+				"libraryCatalog": "Wanfang Med",
+				"pages": "3952-3962",
+				"publicationTitle": "中国中药杂志",
+				"url": "https://med.wanfangdata.com.cn/Paper/Detail/PeriodicalPaper_zgzyzz202414025",
+				"volume": "49",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "Chinese patent medicine"
+					},
+					{
+						"tag": "economic"
+					},
+					{
+						"tag": "evidence map"
+					},
+					{
+						"tag": "insomnia"
+					},
+					{
+						"tag": "intervention study"
+					},
+					{
+						"tag": "retrospective study"
+					},
+					{
+						"tag": "systematic review/Meta-analysis"
+					},
+					{
+						"tag": "中成药"
+					},
+					{
+						"tag": "回顾性研究"
+					},
+					{
+						"tag": "失眠"
+					},
+					{
+						"tag": "干预性研究"
+					},
+					{
+						"tag": "系统评价/Meta分析"
+					},
+					{
+						"tag": "经济性"
+					},
+					{
+						"tag": "证据图"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://med.wanfangdata.com.cn/Paper/Search?q=%E5%BD%B1%E5%83%8F&%E8%B5%84%E6%BA%90%E7%B1%BB%E5%9E%8B_fl=(%E4%B8%AD%E6%96%87%E6%9C%9F%E5%88%8A%20OR%20%E5%A4%96%E6%96%87%E6%9C%9F%E5%88%8A%20OR%20%E5%AD%A6%E4%BD%8D%E8%AE%BA%E6%96%87%20OR%20%E4%BC%9A%E8%AE%AE%E8%AE%BA%E6%96%87)&SearchMode=Default",
+		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://med.wanfangdata.com.cn/Periodical/zgzyzz",
+		"items": "multiple"
 	}
 ]
 /** END TEST CASES **/
