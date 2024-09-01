@@ -10509,7 +10509,7 @@
     "header": {
       "translatorID": "cd01cf63-90ba-42b4-a505-74d8d14f79d6",
       "label": "National Public Service Platform for Standards Information - China",
-      "creator": "Zeping Lee, rnicrosoft",
+      "creator": "Zeping Lee, rnicrosoft, jiaojiaodubai",
       "target": "https?://(std\\.samr\\.gov\\.cn/)|((h|d)bba\\.sacinfo\\.org\\.cn)",
       "minVersion": "3.0",
       "maxVersion": "",
@@ -10517,7 +10517,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-06-20 16:34:51"
+      "lastUpdated": "2024-09-01 18:27:37"
     },
     "testCases": [
       {
@@ -10535,7 +10535,7 @@
               }
             ],
             "date": "2015-05-15",
-            "extra": "applyDate: 2015-12-01\nsubstitute: GB/T 7714—2005\nCCS: A14\nICS: 01.140.20",
+            "extra": "applyDate: 2015-12-01\nCCS: A14\nICS: 01.140.20 01 综合、术语学、标准化、文献 01.140 信息学、出版 01.140.20 信息学",
             "language": "zh-CN",
             "libraryCatalog": "全国标准信息公共服务平台",
             "number": "GB/T 7714—2015",
@@ -10569,7 +10569,7 @@
               }
             ],
             "date": "2017-04-17",
-            "extra": "applyDate: 2017-04-17\nCCS: A19\nICS: 01.140.40\nindustry: 文化、体育和娱乐业",
+            "extra": "applyDate: 2017-04-17\nCCS: A19\nICS: 01.140.40 01 综合、术语学、标准化、文献 01.140 信息学、出版 01.140.40 出版\nindustry: 文化、体育和娱乐业",
             "language": "zh-CN",
             "libraryCatalog": "全国标准信息公共服务平台",
             "number": "CY/T 154—2017",
@@ -10692,6 +10692,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-09-02 02:33:24 +0800",
+        "message": "修复非Document创建元素引起的bug"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -10699,11 +10704,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
-      },
-      {
-        "author": "Chi Lei",
-        "date": "2024-01-25 19:45:46 +0800",
-        "message": "Update National Public Service Platform for Standards Information - China.js"
       }
     ]
   },
