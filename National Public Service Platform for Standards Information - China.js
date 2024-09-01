@@ -1,7 +1,7 @@
 {
 	"translatorID": "cd01cf63-90ba-42b4-a505-74d8d14f79d6",
 	"label": "National Public Service Platform for Standards Information - China",
-	"creator": "Zeping Lee, rnicrosoft",
+	"creator": "Zeping Lee, rnicrosoft, jiaojiaodubai",
 	"target": "https?://(std\\.samr\\.gov\\.cn/)|((h|d)bba\\.sacinfo\\.org\\.cn)",
 	"minVersion": "3.0",
 	"maxVersion": "",
@@ -9,13 +9,13 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-06-20 16:34:51"
+	"lastUpdated": "2024-09-01 18:27:37"
 }
 
 /*
 	***** BEGIN LICENSE BLOCK *****
 
-	Copyright © 2022 Zeping Lee
+	Copyright © 2022 Zeping Lee, 2024 jiaojiaodubai<jiaojiaodubai23@gmail.com>
 
 	This file is part of Zotero.
 
@@ -46,13 +46,13 @@ function detectWeb(doc, url) {
 }
 
 function getSearchResults(doc, checkOnly) {
-	var items = {};
-	var found = false;
+	const items = {};
+	let found = false;
 	// 依赖浏览器环境
-	var rows = doc.querySelectorAll('.s-title td > a');
+	const rows = doc.querySelectorAll('.s-title td > a');
 	for (let row of rows) {
-		let href = row.href;
-		let title = ZU.trimInternal(row.textContent);
+		const href = row.href;
+		const title = ZU.trimInternal(row.textContent);
 		if (!href || !title) continue;
 		if (checkOnly) return true;
 		found = true;
@@ -63,9 +63,9 @@ function getSearchResults(doc, checkOnly) {
 
 async function doWeb(doc, url) {
 	if (detectWeb(doc, url) == 'multiple') {
-		let items = await Zotero.selectItems(getSearchResults(doc, false));
+		const items = await Zotero.selectItems(getSearchResults(doc, false));
 		if (!items) return;
-		for (let url of Object.keys(items)) {
+		for (const url of Object.keys(items)) {
 			await scrape(await requestDocument(url));
 		}
 	}
@@ -75,36 +75,36 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url = doc.location.href) {
-	var newItem = new Z.Item('standard');
-	let labels = new Cells(doc.querySelector('.basic-info'), 'dl > .basicInfo-item');
-	Z.debug(labels.data.map(arr => [arr[0], arr[1].innerText]));
+	const newItem = new Z.Item('standard');
+	const extra = new Extra();
 	newItem.title = url.includes('/gj/')
 		? text(doc, '.page-header+p')
 		// 有时会在标题处塞进来一些额外的元素（如附件）
 		: text(doc, '.page-header > h4').split('\n')[0];
-	newItem.extra = '';
-	newItem.number = labels.get('标准号').replace('-', '—');
+	const basicInfo = doc.querySelector('div.basic-info');
+	newItem.number = getValue(basicInfo, '标准号').replace('-', '—');
 	newItem.type = text(doc, '.label-info');
 	newItem.status = text(doc, '.label-primary');
-	newItem.date = labels.get(['发布日期', '实施日期']);
+	newItem.date = getValue(basicInfo, ['发布日期', '实施日期']);
 	newItem.url = url;
-	newItem.language = /en/i.test(labels.get('标准语言'))
+	newItem.language = /en/i.test(getValue(basicInfo, '标准语言'))
 		? 'en-US'
 		: 'zh-CN';
 	newItem.libraryCatalog = '全国标准信息公共服务平台';
-	newItem.extra += addExtra('applyDate', labels.get('实施日期'));
-	newItem.extra += addExtra('substitute', labels.get('代替标准').replace(/-/g, '—'));
-	newItem.extra += addExtra('CCS', labels.get('中国标准分类号'));
-	newItem.extra += addExtra('ICS', labels.get('国际标准分类号'));
-	newItem.extra += addExtra('industry', labels.get('行业分类'));
-	labels.get(['归口单位', '归口部门', '技术归口', '标准发布组织']).split('、').forEach((creator) => {
+	extra.set('applyDate', getValue(basicInfo, '实施日期'));
+	extra.set('substitute', getValue(basicInfo, '代替标准').replace(/-/g, '—'));
+	extra.set('CCS', getValue(basicInfo, '中国标准分类号'));
+	extra.set('ICS', getValue(basicInfo, '国际标准分类号'));
+	extra.set('industry', getValue(basicInfo, '行业分类'));
+	newItem.extra = extra.toString();
+	getValue(basicInfo, ['归口单位', '归口部门', '技术归口', '标准发布组织']).split('、').forEach((creator) => {
 		newItem.creators.push({
 			lastName: creator,
 			creatorType: 'author',
 			fieldMode: 1
 		});
 	});
-	let pdfLink = doc.querySelector('.page-header a[href*="/attachment/"]');
+	const pdfLink = doc.querySelector('.page-header a[href*="/attachment/"]');
 	if (pdfLink) {
 		newItem.attachments.push({
 			url: pdfLink.href,
@@ -119,44 +119,60 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.complete();
 }
 
-class Cells {
-	constructor(doc, selector) {
-		this.emptyElm = doc.createElement('div');
-		this.data = [];
-		const cells = Array.from(doc.querySelectorAll(selector)).filter(element => !element.querySelector(selector));
-		let i = 0;
-		while (cells[i + 1]) {
-			this.data.push([cells[i].textContent.replace(/\s*/g, ''), cells[i + 1]]);
-			i += 2;
-		}
-	}
-
-	get(label, element = false) {
-		if (Array.isArray(label)) {
-			let result = label
-				.map(aLabel => this.get(aLabel, element));
-			result = element
-				? result.find(element => element.childNodes.length)
-				: result.find(element => element);
-			return result
-				? result
-				: element
-					? this.emptyElm
-					: '';
-		}
-		const pattern = new RegExp(label);
-		const keyValPair = this.data.find(element => pattern.test(element[0]));
-		if (element) return keyValPair ? keyValPair[1] : this.emptyElm;
-		return keyValPair
-			? ZU.trimInternal(keyValPair[1].innerText)
+function getValue(docOrElm, label) {
+	if (Array.isArray(label)) {
+		const value = label.map(aLabel => getValue(docOrElm, aLabel)).find(aValue => aValue);
+		return value
+			? value
 			: '';
 	}
+	const labelNodes = docOrElm.querySelectorAll('.basicInfo-item.name');
+	for (const labelNode of labelNodes) {
+		if (labelNode.textContent.trim() == label) {
+			const valueNode = labelNode.nextElementSibling;
+			Z.debug(`${label}: ${!!valueNode}`);
+			return valueNode
+				? ZU.trimInternal(valueNode.textContent)
+				: '';
+		}
+	}
+	return '';
 }
 
-function addExtra(key, value) {
-	return value
-		? `${key}: ${value}\n`
-		: '';
+class Extra {
+	constructor() {
+		this.fields = [];
+	}
+
+	push(key, val, csl = false) {
+		this.fields.push({ key: key, val: val, csl: csl });
+	}
+
+	set(key, val, csl = false) {
+		const target = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		if (target) {
+			target.val = val;
+		}
+		else {
+			this.push(key, val, csl);
+		}
+	}
+
+	get(key) {
+		const result = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		return result
+			? result.val
+			: '';
+	}
+
+	toString(history = '') {
+		this.fields = this.fields.filter(obj => obj.val);
+		return [
+			this.fields.filter(obj => obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n'),
+			history,
+			this.fields.filter(obj => !obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n')
+		].filter(obj => obj).join('\n');
+	}
 }
 
 /** BEGIN TEST CASES **/
@@ -176,7 +192,7 @@ var testCases = [
 					}
 				],
 				"date": "2015-05-15",
-				"extra": "applyDate: 2015-12-01\nsubstitute: GB/T 7714—2005\nCCS: A14\nICS: 01.140.20",
+				"extra": "applyDate: 2015-12-01\nCCS: A14\nICS: 01.140.20 01 综合、术语学、标准化、文献 01.140 信息学、出版 01.140.20 信息学",
 				"language": "zh-CN",
 				"libraryCatalog": "全国标准信息公共服务平台",
 				"number": "GB/T 7714—2015",
@@ -210,7 +226,7 @@ var testCases = [
 					}
 				],
 				"date": "2017-04-17",
-				"extra": "applyDate: 2017-04-17\nCCS: A19\nICS: 01.140.40\nindustry: 文化、体育和娱乐业",
+				"extra": "applyDate: 2017-04-17\nCCS: A19\nICS: 01.140.40 01 综合、术语学、标准化、文献 01.140 信息学、出版 01.140.40 出版\nindustry: 文化、体育和娱乐业",
 				"language": "zh-CN",
 				"libraryCatalog": "全国标准信息公共服务平台",
 				"number": "CY/T 154—2017",
