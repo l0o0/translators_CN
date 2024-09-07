@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-06-20 16:34:51"
+	"lastUpdated": "2024-09-07 14:16:08"
 }
 
 /*
@@ -307,8 +307,23 @@ async function scrape({ url, type, json }) {
 		/* get tags */
 		switch (type.dbType) {
 			case 'video': {
-				Z.debug(type.id.bvid);
-				let tags = await requestJSON(`https://api.bilibili.com/x/tag/archive/tags?bvid=${url.match(type.id.bvid)[1]}`);
+				Z.debug(type.id.bvid.toString());
+				let vid = url.match(type.id.bvid);
+				let jsonUrl;
+				if (vid) {
+					jsonUrl = `https://api.bilibili.com/x/tag/archive/tags?bvid=${vid[1]}`;
+				}
+				else {
+					vid = url.match(type.id.aid);
+					if (vid) {
+						jsonUrl = `https://api.bilibili.com/x/tag/archive/tags?aid=${vid[1]}`;
+					}
+					else {
+						Z.debug(`url is malformation for getting tags`);
+						break;
+					}
+				}
+				let tags = await requestJSON(jsonUrl);
 				Z.debug(`tags`);
 				Z.debug(tags);
 				if (tags.code == 0) {
@@ -624,7 +639,140 @@ var testCases = [
 		"type": "web",
 		"url": "https://www.bilibili.com/bangumi/media/md28227662/",
 		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://www.bilibili.com/video/av1305985741/",
+		"items": [
+			{
+				"itemType": "videoRecording",
+				"title": "让学霸医生都头疼的「偏头痛」，究竟要怎么办？",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "大物是也",
+						"creatorType": "director",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "斑马酱锵锵锵",
+						"creatorType": "castMember",
+						"fieldMode": 1
+					}
+				],
+				"date": "2024-6-19",
+				"extra": "like: 31138\nview: 710900",
+				"libraryCatalog": "科学科普",
+				"runningTime": "0:21:13",
+				"url": "https://www.bilibili.com/video/av1305985741/",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "2024科学很可爱"
+					},
+					{
+						"tag": "偏头痛"
+					},
+					{
+						"tag": "健康"
+					},
+					{
+						"tag": "冥想"
+					},
+					{
+						"tag": "北大医生"
+					},
+					{
+						"tag": "医院"
+					},
+					{
+						"tag": "头疼"
+					},
+					{
+						"tag": "止痛药"
+					},
+					{
+						"tag": "看病"
+					},
+					{
+						"tag": "神经内科"
+					},
+					{
+						"tag": "科学很可爱"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.bilibili.com/video/BV1VM4m1U7r4/",
+		"items": [
+			{
+				"itemType": "videoRecording",
+				"title": "让学霸医生都头疼的「偏头痛」，究竟要怎么办？",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "大物是也",
+						"creatorType": "director",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "斑马酱锵锵锵",
+						"creatorType": "castMember",
+						"fieldMode": 1
+					}
+				],
+				"date": "2024-6-19",
+				"extra": "like: 31138\nview: 710900",
+				"libraryCatalog": "科学科普",
+				"runningTime": "0:21:13",
+				"url": "https://www.bilibili.com/video/BV1VM4m1U7r4/",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "2024科学很可爱"
+					},
+					{
+						"tag": "偏头痛"
+					},
+					{
+						"tag": "健康"
+					},
+					{
+						"tag": "冥想"
+					},
+					{
+						"tag": "北大医生"
+					},
+					{
+						"tag": "医院"
+					},
+					{
+						"tag": "头疼"
+					},
+					{
+						"tag": "止痛药"
+					},
+					{
+						"tag": "看病"
+					},
+					{
+						"tag": "神经内科"
+					},
+					{
+						"tag": "科学很可爱"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
 	}
-	
 ]
 /** END TEST CASES **/
