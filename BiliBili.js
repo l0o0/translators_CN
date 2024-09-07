@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-09-07 14:16:08"
+	"lastUpdated": "2024-09-07 16:16:51"
 }
 
 /*
@@ -347,16 +347,16 @@ async function scrape({ url, type, json }) {
 
 function secondsToTime(seconds) {
 	let hours = Math.floor(seconds / 3600);
-	let minutes = Math.floor((seconds % 3600) / 60);
-	let remainingSeconds = seconds % 60;
+	let minutes = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+	let remainingSeconds = (seconds % 60).toString().padStart(2, '0');
 	return `${hours}:${minutes}:${remainingSeconds}`;
 }
 
 function secondsToDate(seconds) {
 	let date = new Date(seconds * 1000);
 	let year = date.getFullYear();
-	let month = date.getMonth() + 1;
-	let day = date.getDate();
+	let month = (date.getMonth() + 1).toString().padStart(2, '0');
+	let day = (date.getDate()).toString().padStart(2, '0');
 	return `${year}-${month}-${day}`;
 }
 
@@ -422,11 +422,11 @@ var testCases = [
 						"fieldMode": 1
 					}
 				],
-				"date": "2020-4-2",
+				"date": "2020-04-02",
 				"abstractNote": "作曲：青瑶\n编曲：金大王gold\n\n\n录音：张洋\n混音：徐晓晖\n琵琶：青瑶\n中国鼓：王佳男（著名国乐大师，中国歌剧舞剧院首席打击乐演奏家）",
 				"extra": "like: 1318443\nview: 22127322",
 				"libraryCatalog": "演奏",
-				"runningTime": "0:4:59",
+				"runningTime": "0:04:59",
 				"url": "https://www.bilibili.com/video/BV1PK411L7h5/",
 				"attachments": [],
 				"tags": [
@@ -661,8 +661,8 @@ var testCases = [
 						"fieldMode": 1
 					}
 				],
-				"date": "2024-6-19",
-				"extra": "like: 31138\nview: 710900",
+				"date": "2024-06-19",
+				"extra": "like: 31144\nview: 711087",
 				"libraryCatalog": "科学科普",
 				"runningTime": "0:21:13",
 				"url": "https://www.bilibili.com/video/av1305985741/",
@@ -728,8 +728,8 @@ var testCases = [
 						"fieldMode": 1
 					}
 				],
-				"date": "2024-6-19",
-				"extra": "like: 31138\nview: 710900",
+				"date": "2024-06-19",
+				"extra": "like: 31144\nview: 711087",
 				"libraryCatalog": "科学科普",
 				"runningTime": "0:21:13",
 				"url": "https://www.bilibili.com/video/BV1VM4m1U7r4/",
