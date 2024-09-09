@@ -308,20 +308,18 @@ async function scrape({ url, type, json }) {
 		switch (type.dbType) {
 			case 'video': {
 				Z.debug(type.id.bvid.toString());
-				let vid = url.match(type.id.bvid);
+				const bvid = url.match(type.id.bvid);
+				const avid = url.match(type.id.aid);
 				let jsonUrl;
-				if (vid) {
-					jsonUrl = `https://api.bilibili.com/x/tag/archive/tags?bvid=${vid[1]}`;
+				if (bvid && bvid[1]) {
+					jsonUrl = `https://api.bilibili.com/x/tag/archive/tags?bvid=${bvid[1]}`;
+				}
+				else if (avid && avid[1]) {
+					jsonUrl = `https://api.bilibili.com/x/tag/archive/tags?aid=${avid[1]}`;
 				}
 				else {
-					vid = url.match(type.id.aid);
-					if (vid) {
-						jsonUrl = `https://api.bilibili.com/x/tag/archive/tags?aid=${vid[1]}`;
-					}
-					else {
-						Z.debug(`url is malformation for getting tags`);
-						break;
-					}
+					Z.debug(`url is malformation for getting tags`);
+					break;
 				}
 				let tags = await requestJSON(jsonUrl);
 				Z.debug(`tags`);
