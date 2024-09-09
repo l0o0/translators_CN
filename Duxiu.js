@@ -235,7 +235,7 @@ async function scrapeBookSection(doc, url = doc.location.href) {
 	delete bookItem.pages;
 	delete bookItem.url;
 	bookItem = Object.assign(sectionItem, bookItem);
-	if(bookItem.bookTitle.length===0) { // book info page is unavailable
+	if (bookItem.bookTitle.length === 0) { // book info page is unavailable
 		sectionItem.extra += addExtra('bookinfo', text(doc, '#bookinfo'));
 	}
 	let pdfLink = doc.querySelector('#saveAs');
