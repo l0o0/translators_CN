@@ -397,7 +397,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-06-20 16:34:51"
+      "lastUpdated": "2024-09-07 16:16:51"
     },
     "testCases": [
       {
@@ -460,11 +460,11 @@
                 "fieldMode": 1
               }
             ],
-            "date": "2020-4-2",
+            "date": "2020-04-02",
             "abstractNote": "作曲：青瑶\n编曲：金大王gold\n\n\n录音：张洋\n混音：徐晓晖\n琵琶：青瑶\n中国鼓：王佳男（著名国乐大师，中国歌剧舞剧院首席打击乐演奏家）",
             "extra": "like: 1318443\nview: 22127322",
             "libraryCatalog": "演奏",
-            "runningTime": "0:4:59",
+            "runningTime": "0:04:59",
             "url": "https://www.bilibili.com/video/BV1PK411L7h5/",
             "attachments": [],
             "tags": [
@@ -677,10 +677,149 @@
         "type": "web",
         "url": "https://www.bilibili.com/bangumi/media/md28227662/",
         "items": "multiple"
+      },
+      {
+        "type": "web",
+        "url": "https://www.bilibili.com/video/av1305985741/",
+        "items": [
+          {
+            "itemType": "videoRecording",
+            "title": "让学霸医生都头疼的「偏头痛」，究竟要怎么办？",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "大物是也",
+                "creatorType": "director",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "斑马酱锵锵锵",
+                "creatorType": "castMember",
+                "fieldMode": 1
+              }
+            ],
+            "date": "2024-06-19",
+            "extra": "like: 31144\nview: 711087",
+            "libraryCatalog": "科学科普",
+            "runningTime": "0:21:13",
+            "url": "https://www.bilibili.com/video/av1305985741/",
+            "attachments": [],
+            "tags": [
+              {
+                "tag": "2024科学很可爱"
+              },
+              {
+                "tag": "偏头痛"
+              },
+              {
+                "tag": "健康"
+              },
+              {
+                "tag": "冥想"
+              },
+              {
+                "tag": "北大医生"
+              },
+              {
+                "tag": "医院"
+              },
+              {
+                "tag": "头疼"
+              },
+              {
+                "tag": "止痛药"
+              },
+              {
+                "tag": "看病"
+              },
+              {
+                "tag": "神经内科"
+              },
+              {
+                "tag": "科学很可爱"
+              }
+            ],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://www.bilibili.com/video/BV1VM4m1U7r4/",
+        "items": [
+          {
+            "itemType": "videoRecording",
+            "title": "让学霸医生都头疼的「偏头痛」，究竟要怎么办？",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "大物是也",
+                "creatorType": "director",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "斑马酱锵锵锵",
+                "creatorType": "castMember",
+                "fieldMode": 1
+              }
+            ],
+            "date": "2024-06-19",
+            "extra": "like: 31144\nview: 711087",
+            "libraryCatalog": "科学科普",
+            "runningTime": "0:21:13",
+            "url": "https://www.bilibili.com/video/BV1VM4m1U7r4/",
+            "attachments": [],
+            "tags": [
+              {
+                "tag": "2024科学很可爱"
+              },
+              {
+                "tag": "偏头痛"
+              },
+              {
+                "tag": "健康"
+              },
+              {
+                "tag": "冥想"
+              },
+              {
+                "tag": "北大医生"
+              },
+              {
+                "tag": "医院"
+              },
+              {
+                "tag": "头疼"
+              },
+              {
+                "tag": "止痛药"
+              },
+              {
+                "tag": "看病"
+              },
+              {
+                "tag": "神经内科"
+              },
+              {
+                "tag": "科学很可爱"
+              }
+            ],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
       }
     ],
     "zhLabel": "Bilibili视频",
     "trends": [
+      {
+        "author": "YFdyh000",
+        "date": "2024-09-09 22:23:55 +0800",
+        "message": "Fix BiliBili break by getting tags when url is av vid; Zero padding for date & time (#381)"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
@@ -690,11 +829,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-01-16 20:16:46 +0800",
         "message": "修复普通视频无法抓取tag"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2023-12-14 13:54:36 +0800",
-        "message": "更新测试用例"
       }
     ]
   },
