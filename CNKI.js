@@ -2,14 +2,14 @@
 	"translatorID": "5c95b67b-41c5-4f55-b71a-48d5d7183063",
 	"label": "CNKI",
 	"creator": "Aurimas Vinckevicius, Xingzhong Lin, jiaojiaodubai",
-	"target": "https?://.*?(cnki\\.net)?/(kns8?s?|kcms2?|KNavi|KX?Reader)",
+	"target": "https?://.*?(cnki\\.net)?/(kns8?s?|kcms2?|KNavi|xmlRead)/",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 150,
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-09-12 10:08:09"
+	"lastUpdated": "2024-09-12 14:41:19"
 }
 
 /*
@@ -537,6 +537,9 @@ async function scrape(doc, itemKey = { url: '', cite: '', cookieName: '', downlo
 		await translator.translate();
 	}
 	else {
+		if (/\/xmlRead\//i.test(url)) {
+			doc = await requestDocument(strChild(doc, 'a.details', 'href'));
+		}
 		try {
 			// During debugging, may manually throw an error to guide the program to run inward
 			// throw new Error('debug');
@@ -800,7 +803,7 @@ async function scrapeDoc(doc, itemKey) {
 		case 'journalArticle': {
 			const pubInfo = ZU.trimInternal(innerText(doc, '.top-tip'));
 			newItem.publicationTitle = tryMatch(pubInfo, /^(.+?)\./, 1).trim().replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
-			newItem.volume = tryMatch(pubInfo, /,\s?0*([1-9]\d*)\(/, 1);
+			newItem.volume = tryMatch(pubInfo, /,\s?0*([1-9]\d*)\s*\(/, 1);
 			newItem.issue = tryMatch(pubInfo, /\(([A-Z]?\d*)\)/i, 1).replace(/0*(\d+)/, '$1');
 			newItem.pages = labels.get(['页码', '頁碼', 'Page$']);
 			newItem.date = tryMatch(pubInfo, /\.\s?(\d{4})/, 1);
@@ -1503,38 +1506,30 @@ function addAttachments(item, doc, url, itemKey) {
 	// 如果你想将PDF文件替换为CAJ文件，将下面一行 keepPDF 设为 false
 	let keepPDF = Z.getHiddenPref('CNKIPDF');
 	if (keepPDF === undefined) keepPDF = true;
-	if (/KX?Reader/.test(url)) {
+	// The legal status of patent is shown in the picture on webpage.
+	if (item.itemType == 'patent') {
 		item.attachments.push({
 			title: 'Snapshot',
 			document: doc
 		});
 	}
-	else {
-		// The legal status of patent is shown in the picture on webpage.
-		if (item.itemType == 'patent') {
-			item.attachments.push({
-				title: 'Snapshot',
-				document: doc
-			});
-		}
-		const pdfLink = strChild(doc, 'a[id^="pdfDown"]', 'href');
-		Z.debug(`get PDF Link:\n${pdfLink}`);
-		const cajLink = strChild(doc, 'a#cajDown', 'href') || itemKey.downloadlink || strChild(doc, 'a[href*="bar/download"]', 'href');
-		Z.debug(`get CAJ link:\n${cajLink}`);
-		if (keepPDF && pdfLink) {
-			item.attachments.push({
-				title: 'Full Text PDF',
-				mimeType: 'application/pdf',
-				url: pdfLink
-			});
-		}
-		else if (cajLink) {
-			item.attachments.push({
-				title: 'Full Text CAJ',
-				mimeType: 'application/caj',
-				url: cajLink
-			});
-		}
+	const pdfLink = strChild(doc, 'a[id^="pdfDown"]', 'href');
+	Z.debug(`get PDF Link:\n${pdfLink}`);
+	const cajLink = strChild(doc, 'a#cajDown', 'href') || itemKey.downloadlink || strChild(doc, 'a[href*="bar/download"]', 'href');
+	Z.debug(`get CAJ link:\n${cajLink}`);
+	if (keepPDF && pdfLink) {
+		item.attachments.push({
+			title: 'Full Text PDF',
+			mimeType: 'application/pdf',
+			url: pdfLink
+		});
+	}
+	else if (cajLink) {
+		item.attachments.push({
+			title: 'Full Text CAJ',
+			mimeType: 'application/caj',
+			url: cajLink
+		});
 	}
 }
 
