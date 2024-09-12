@@ -5003,14 +5003,14 @@
       "translatorID": "5c95b67b-41c5-4f55-b71a-48d5d7183063",
       "label": "CNKI",
       "creator": "Aurimas Vinckevicius, Xingzhong Lin, jiaojiaodubai",
-      "target": "https?://.*?(cnki\\.net)?/(kns8?s?|kcms2?|KNavi|KX?Reader)",
+      "target": "https?://.*?(cnki\\.net)?/(kns8?s?|kcms2?|KNavi|xmlRead)/",
       "minVersion": "3.0",
       "maxVersion": "",
       "priority": 150,
       "inRepository": true,
       "translatorType": 12,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-09-12 10:08:09"
+      "lastUpdated": "2024-09-12 14:41:19"
     },
     "testCases": [
       {
@@ -6424,6 +6424,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-09-12 22:42:58 +0800",
+        "message": "支持新版全文阅读、修复文档抓取时丢失volume"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-09-12 18:15:01 +0800",
         "message": "修复繁体版年鉴条目类型识别错误、专利国别匹配本地化、更新API、修复期刊名有分割错误、支持报纸副标题、适配会议论文页面更改、升级 Labels类、优先采用 DOI 链接"
       },
@@ -6431,11 +6436,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-08-25 21:44:17 +0800",
         "message": "更新双语文献的DOI案例"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-08-24 21:13:35 +0800",
-        "message": "支持双语文章的DOI解析"
       }
     ]
   },
