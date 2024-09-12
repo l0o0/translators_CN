@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-08-25 13:42:51"
+	"lastUpdated": "2024-09-12 10:08:09"
 }
 
 /*
@@ -523,7 +523,7 @@ async function scrape(doc, itemKey = { url: '', cite: '', cookieName: '', downlo
 		cs.typeKey = text(doc, '.top-tip-scholar > span:first-child');
 		await cs.scrape(doc, url);
 	}
-	else if (ids.toItemtype() == 'videoRecording' || /^https:\/\/oversea\.cnki\.net/i.test(url)) {
+	else if (ids.toItemtype() == 'videoRecording') {
 		await scrapeDoc(doc, itemKey);
 	}
 	else if (url.includes('thinker.cnki')) {
@@ -605,16 +605,16 @@ async function scrapeWithGetExport(doc, ids, itemKey) {
 	// During debugging, may manually throw an error to guide the program to run inward.
 	// throw new Error('debug');
 
-	// e.g. https://ras.cdutcm.lib4s.com:7080/s/net/cnki/kns/G.https/dm/API/GetExport?uniplatform=NZKPT
 	const postUrl = inMainland
-		? `https://kns.cnki.net/dm/API/GetExport?uniplatform=${exports.platform}`
-		: `${doc.querySelector('.logo > a, a.cnki-logo').href}/kns8/manage/APIGetExport`;
+		? `https://kns.cnki.net/dm8/API/GetExport?uniplatform=${exports.platform}`
+		: '/kns8/manage/APIGetExport';
 	// "1": row's sequence in search result page, defualt 1; "0": index of page in search result pages, defualt 0.
-	const postData = `filename=${ids.dbname}!${ids.filename}!${ids.toItemtype() == 'bookSection' ? 'ALMANAC_LM' : '1!0'}`
-		+ `${inMainland ? `&uniplatform=${exports.platform}` : ''}`
-		// Although there are two data formats that are redundant,
-		// it can make the request more "ordinary" to server.
-		+ '&displaymode=GBTREFER%2Celearning%2CEndNote';
+	let postData = inMainland
+		? `filename=${attr(doc, '#export-id', 'value')}&uniplatform=${exports.platform}`
+		: `filename=${ids.dbname}!${ids.filename}!1!0`;
+	// Although there are two data formats that are redundant,
+	// it can make the request more "ordinary" to server.
+	postData += '&displaymode=GBTREFER%2Celearning%2CEndNote';
 	Z.debug(postUrl);
 	Z.debug(postData);
 	let referText = await requestJSON(
@@ -799,7 +799,7 @@ async function scrapeDoc(doc, itemKey) {
 	switch (newItem.itemType) {
 		case 'journalArticle': {
 			const pubInfo = ZU.trimInternal(innerText(doc, '.top-tip'));
-			newItem.publicationTitle = tryMatch(pubInfo, /^(.+?)\./, 1).replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
+			newItem.publicationTitle = tryMatch(pubInfo, /^(.+?)\./, 1).trim().replace(/\(([\u4e00-\u9fff]*)\)$/, '（$1）');
 			newItem.volume = tryMatch(pubInfo, /,\s?0*([1-9]\d*)\(/, 1);
 			newItem.issue = tryMatch(pubInfo, /\(([A-Z]?\d*)\)/i, 1).replace(/0*(\d+)/, '$1');
 			newItem.pages = labels.get(['页码', '頁碼', 'Page$']);
@@ -831,18 +831,24 @@ async function scrapeDoc(doc, itemKey) {
 		case 'conferencePaper': {
 			newItem.abstractNote = labels.get(['摘要', 'Abstract']).replace(/^[〈⟨<＜]正[＞>⟩〉]/, '');
 			newItem.date = ZU.strToISO(labels.get(['会议时间', '會議時間', 'ConferenceTime']));
-			newItem.proceedingsTitle = attr(doc, '.top-tip > span:first-child', 'title');
+			newItem.proceedingsTitle = attr(doc, '.top-tip > :first-child', 'title');
 			newItem.conferenceName = labels.get(['会议名称', '會議名稱', 'ConferenceName']);
 			newItem.place = labels.get(['会议地点', '會議地點', 'ConferencePlace']);
 			newItem.pages = labels.get(['页码', '頁碼', 'Page$']);
 			break;
 		}
-		case 'newspaperArticle':
+		case 'newspaperArticle': {
+			const subTitle = labels.get(['副标题', '副標題', 'Subtitle']);
+			if (subTitle) {
+				newItem.shortTitle = newItem.title;
+				newItem.title = `${newItem.title}：${subTitle}`;
+			}
 			newItem.abstractNote = text(doc, '.abstract-text');
 			newItem.publicationTitle = text(doc, '.top-tip > a');
 			newItem.date = ZU.strToISO(labels.get(['报纸日期', '報紙日期', 'NewspaperDate']));
 			newItem.pages = labels.get(['版号', '版號', 'EditionCode']);
 			break;
+		}
 		case 'bookSection':
 			newItem.bookTitle = text(doc, '.book-info .book-tit');
 			newItem.date = tryMatch(labels.get(['来源年鉴', 'SourceYearbook']), /\d{4}/);
@@ -884,7 +890,7 @@ async function scrapeDoc(doc, itemKey) {
 		case 'patent':
 			newItem.patentNumber = labels.get(['申请公布号', '申請公佈號', 'PublicationNo']);
 			newItem.applicationNumber = labels.get(['申请\\(专利\\)号', '申請\\(專利\\)號', 'ApplicationNumber']);
-			newItem.place = newItem.country = patentCountry(newItem.patentNumber || newItem.applicationNumber);
+			newItem.place = newItem.country = patentCountry(newItem.patentNumber || newItem.applicationNumber, newItem.language);
 			newItem.filingDate = labels.get(['申请日', '申請日', 'ApplicationDate']);
 			newItem.issueDate = labels.get(['授权公告日', '授權公告日', 'IssuanceDate']);
 			newItem.rights = text(doc, '.claim > h5 + div');
@@ -962,7 +968,7 @@ async function parseRefer(referText, doc, url, itemKey) {
 	richTextTitle(item, doc);
 
 	/* url */
-	if (!item.url || !/filename=/i.test(item.url)) {
+	if (!item.url || /\/kcms2\//i.test(item.url)) {
 		item.url = 'https://kns.cnki.net/KCMS/detail/detail.aspx?'
 			+ `dbcode=${ids.dbcode}`
 			+ `&dbname=${ids.dbname}`
@@ -982,13 +988,20 @@ async function parseRefer(referText, doc, url, itemKey) {
 			extra.set('major', labels.get(['学科专业', '學科專業', 'Retraction']));
 			break;
 		case 'conferencePaper': {
-			item.proceedingsTitle = attr(doc, '.top-tip > span:first-child', 'title');
+			item.proceedingsTitle = attr(doc, '.top-tip > :first-child', 'title');
+			item.conferenceName = labels.get(['会议名称', '會議名稱', 'ConferenceName']);
 			break;
 		}
-		case 'newspaperArticle':
+		case 'newspaperArticle': {
+			const subTitle = labels.get(['副标题', '副標題', 'Subtitle']);
+			if (subTitle) {
+				item.shortTitle = item.title;
+				item.title = `${item.title}：${subTitle}`;
+			}
 			item.abstractNote = text(doc, '.abstract-text');
 			item.tags = labels.get(['关键词', '關鍵詞', 'keywords']).split(/[;，；]\s*/);
 			break;
+		}
 
 		/* yearbook */
 		case 'bookSection': {
@@ -1051,30 +1064,28 @@ class Labels {
 	constructor(doc, selector) {
 		this.data = [];
 		this.emptyElm = doc.createElement('div');
-		Array.from(doc.querySelectorAll(selector))
+		const nodes = doc.querySelectorAll(selector);
+		for (const node of nodes) {
 			// avoid nesting
-			.filter(element => !element.querySelector(selector))
 			// avoid empty
-			.filter(element => !/^\s*$/.test(element.textContent))
-			.forEach((element) => {
-				const elmCopy = element.cloneNode(true);
-				// avoid empty text
-				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
-					// Z.debug(elementCopy.firstChild.textContent);
-					elmCopy.removeChild(elmCopy.firstChild);
-					// Z.debug(elementCopy.firstChild.textContent);
-				}
-				if (elmCopy.childNodes.length > 1) {
-					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
-					this.data.push([key, elmCopy]);
-				}
-				else {
-					const text = ZU.trimInternal(elmCopy.textContent);
-					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
-					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
-					this.data.push([key, elmCopy]);
-				}
-			});
+			if (node.querySelector(selector) || !/\S/.test(node.textContent)) continue;
+			const elmCopy = node.cloneNode(true);
+			// avoid empty text
+			while (![1, 3, 4].includes(elmCopy.firstChild.nodeType) || !/\S$/.test(elmCopy.firstChild.textContent)) {
+				elmCopy.removeChild(elmCopy.firstChild);
+				if (!elmCopy.firstChild) break;
+			}
+			if (elmCopy.childNodes.length > 1) {
+				const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+				this.data.push([key, elmCopy]);
+			}
+			else {
+				const text = ZU.trimInternal(elmCopy.textContent);
+				const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+				elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+				this.data.push([key, elmCopy]);
+			}
+		}
 	}
 
 	get(label, element = false) {
@@ -1164,6 +1175,7 @@ function cleanName(string, creatorType) {
 }
 
 async function addPubDetail(item, extra, ids, doc) {
+	let url;
 	let pubDoc;
 	try {
 		if (!['journalArticle', 'conferencePaper', 'bookSection'].includes(item.itemType)) {
@@ -1171,65 +1183,62 @@ async function addPubDetail(item, extra, ids, doc) {
 		}
 		switch (item.itemType) {
 			case 'journalArticle': {
-				const url = inMainland
+				url = inMainland
 					? doc.querySelector('.top-tip > :first-child > a').href
 					: attr(doc, '.top-tip > :first-child > a', 'onclick').replace(
 						/^.+\('(.+?)',\s*'(.+?)'\).*$/,
-						doc.querySelector('.logo > a, a.cnki-logo').href + 'KNavi/JournalDetail?pcode=$1&pykm=$2'
+						'/KNavi/JournalDetail?pcode=$1&pykm=$2'
 					);
 				Z.debug(url);
 				pubDoc = await requestDocument(url);
 				break;
 			}
 			case 'conferencePaper': {
-				let url = '';
 				if (inMainland) {
-					url = doc.querySelector('.top-tip > :first-child > a').href;
-					let id = attr(
-						await requestDocument(
-							'https://navi.cnki.net/knavi/conferences/proceedings/catalog'
-							// “论文集”code
-							+ `?lwjcode=${tryMatch(url, /\/proceedings\/(\w+)\//, 1)}`
-							// “会议”code
-							+ `&hycode=${tryMatch(url, /conferences\/(\w+)\//, 1)}`
-							+ `&pIdx=0`
-						),
-						'li[id]',
-						'id'
-					);
+					url = doc.querySelector('.top-tip > a').href;
+					Z.debug(url);
+					url = 'https://kns.cnki.net/knavi/conferences/proceedings/catalog'
+						// “论文集”code
+						+ `?lwjcode=${tryMatch(url, /\/proceedings\/(\w+)\//, 1)}`
+						// “会议”code
+						+ `&hycode=&pIdx=0`;
+					Z.debug(url);
+					pubDoc = await requestDocument(url);
+					const id = attr(pubDoc, 'li[id]', 'id');
 					url = 'https://navi.cnki.net/knavi/conferences/baseinfo'
 						+ `?lwjcode=${id}`
 						+ '&pIdx=0';
+					Z.debug(url);
 				}
 				else {
 					url = attr(doc, '.top-tip > :first-child > a', 'onclick').replace(
 						/^.+\('(.+?)',\s*'(.+?)'\).*$/,
-						doc.querySelector('.logo > a, a.cnki-logo').href + 'knavi/DpaperDetail/CreateDPaperBaseInfo?pcode=$1&lwjcode=$2&pIdx=0'
+						'/knavi/DpaperDetail/CreateDPaperBaseInfo?pcode=$1&lwjcode=$2&pIdx=0'
 					);
+					Z.debug(url);
 				}
-				Z.debug(url);
 				pubDoc = await requestDocument(url);
 				break;
 			}
 			case 'bookSection': {
-				const url = doc.querySelector('.book-info a[href*="/issues/"], .container a[href*="/issues/"]').href;
-				Z.debug(url);
-				let id = attr(await requestDocument(url), '#hidYearbookBH', 'value');
-				Z.debug(id);
-				id = attr(
-					await requestDocument(
-						'https://navi.cnki.net/knavi/yearbookDetail/GetYearbooklYearAndPageList'
-						+ `?pcode=${ids.dbcode}`
-						+ `&pykm=${tryMatch(url, /\/yearbooks\/(\w+)\//, 1)}&`
-						+ 'pageIndex=0'
-						+ '&pageSize=10'),
-					`#${id}`,
-					'value'
-				);
-				Z.debug(id);
+				// Navigation
+				url = doc.querySelector('.brief a[href*="/issues/"], .book-info a[href*="/issues/"]').href;
+				pubDoc = await requestDocument(url);
+				const classid = attr(pubDoc, '#classid', 'value');
+				const pykm = attr(pubDoc, '#pykm', 'value');
+				const hidYearbookBH = attr(pubDoc, '#hidYearbookBH', 'value');
+				// Year List
+				url = 'https://kns.cnki.net/knavi/yearbookDetail/GetYearbooklYearAndPageList'
+					+ `?classid=${classid}`
+					+ `&pykm=${pykm}`
+					+ `&pageIndex=1&pageSize=10`;
+				pubDoc = await requestDocument(url);
+				const yearbookNumber = attr(pubDoc, `#${hidYearbookBH}`, 'value');
+				Z.debug(`yearbookNumber: ${yearbookNumber}`);
+				// Info
 				pubDoc = await requestDocument('https://navi.cnki.net/knavi/yearbookDetail/GetBaseInfo', {
 					method: 'POST',
-					body: `pcode=${ids.dbcode}&bh=${id}`,
+					body: `pcode=${ids.dbcode}&bh=${yearbookNumber}`,
 					headers: { Referer: url }
 				});
 			}
@@ -1296,17 +1305,196 @@ async function addPubDetail(item, extra, ids, doc) {
 /**
  * Return the country name according to the patent number or patent application number.
  */
-function patentCountry(idNumber) {
-	return {
-		AD: '安道尔', AE: '阿拉伯联合酋长国', AF: '阿富汗', AG: '安提瓜和巴布达', AI: '安圭拉', AL: '阿尔巴尼亚', AM: '亚美尼亚', AN: '菏属安的列斯群岛', AO: '安哥拉', AR: '阿根廷', AT: '奥地利', AU: '澳大利亚', AW: '阿鲁巴', AZ: '阿塞拜疆', BB: '巴巴多斯', BD: '孟加拉国', BE: '比利时', BF: '布莱基纳法索', BG: '保加利亚', BH: '巴林', BI: '布隆迪', BJ: '贝宁', BM: '百慕大', BN: '文莱', BO: '玻利维亚', BR: '巴西', BS: '巴哈马', BT: '不丹', BU: '缅甸', BW: '博茨瓦纳', BY: '白俄罗斯', BZ: '伯利兹', CA: '加拿大', CF: '中非共和国', CG: '刚果', CH: '瑞士', CI: '科特迪瓦', CL: '智利', CM: '喀麦隆', CN: '中国', CO: '哥伦比亚', CR: '哥斯达黎加', CS: '捷克斯洛伐克', CU: '古巴', CV: '怫得角', CY: '塞浦路斯',
-		DE: '联邦德国', DJ: '吉布提', DK: '丹麦', DM: '多米尼加岛', DO: '多米尼加共和国', DZ: '阿尔及利亚', EC: '厄瓜多尔', EE: '爱沙尼亚', EG: '埃及', EP: '欧洲专利局', ES: '西班牙', ET: '埃塞俄比亚', FI: '芬兰', FJ: '斐济', FK: '马尔维纳斯群岛', FR: '法国',
-		GA: '加蓬', GB: '英国', GD: '格林那达', GE: '格鲁吉亚', GH: '加纳', GI: '直布罗陀', GM: '冈比亚', GN: '几内亚', GQ: '赤道几内亚', GR: '希腊', GT: '危地马拉', GW: '几内亚比绍', GY: '圭亚那', HK: '香港', HN: '洪都拉斯', HR: '克罗地亚', HT: '海地', HU: '匈牙利', HV: '上沃尔特', ID: '印度尼西亚', IE: '爱尔兰', IL: '以色列', IN: '印度', IQ: '伊拉克', IR: '伊朗', IS: '冰岛', IT: '意大利',
-		JE: '泽西岛', JM: '牙买加', JO: '约旦', JP: '日本', KE: '肯尼亚', KG: '吉尔吉斯', KH: '柬埔寨', KI: '吉尔伯特群岛', KM: '科摩罗', KN: '圣克里斯托夫岛', KP: '朝鲜', KR: '韩国', KW: '科威特', KY: '开曼群岛', KZ: '哈萨克', LA: '老挝', LB: '黎巴嫩', LC: '圣卢西亚岛', LI: '列支敦士登', LK: '斯里兰卡', LR: '利比里亚', LS: '莱索托', LT: '立陶宛', LU: '卢森堡', LV: '拉脱维亚', LY: '利比亚',
-		MA: '摩洛哥', MC: '摩纳哥', MD: '莫尔多瓦', MG: '马达加斯加', ML: '马里', MN: '蒙古', MO: '澳门', MR: '毛里塔尼亚', MS: '蒙特塞拉特岛', MT: '马耳他', MU: '毛里求斯', MV: '马尔代夫', MW: '马拉维', MX: '墨西哥', MY: '马来西亚', MZ: '莫桑比克', NA: '纳米比亚', NE: '尼日尔', NG: '尼日利亚', NH: '新赫布里底', NI: '尼加拉瓜', NL: '荷兰', NO: '挪威', NP: '尼泊尔', NR: '瑙鲁', NZ: '新西兰', OA: '非洲知识产权组织', OM: '阿曼',
-		PA: '巴拿马', PC: 'PCT', PE: '秘鲁', PG: '巴布亚新几内亚', PH: '菲律宾', PK: '巴基斯坦', PL: '波兰', PT: '葡萄牙', PY: '巴拉圭', QA: '卡塔尔', RO: '罗马尼亚', RU: '俄罗斯联邦', RW: '卢旺达',
-		SA: '沙特阿拉伯', SB: '所罗门群岛', SC: '塞舌尔', SD: '苏丹', SE: '瑞典', SG: '新加坡', SH: '圣赫勒拿岛', SI: '斯洛文尼亚', SL: '塞拉利昂', SM: '圣马利诺', SN: '塞内加尔', SO: '索马里', SR: '苏里南', ST: '圣多美和普林西比岛', SU: '苏联', SV: '萨尔瓦多', SY: '叙利亚', SZ: '斯威士兰', TD: '乍得', TG: '多哥', TH: '泰国', TJ: '塔吉克', TM: '土库曼', TN: '突尼斯', TO: '汤加', TR: '土耳其', TT: '特立尼达和多巴哥', TV: '图瓦卢', TZ: '坦桑尼亚', UA: '乌克兰', UG: '乌干达', US: '美国', UY: '乌拉圭', UZ: '乌兹别克',
-		VA: '梵蒂冈', VC: '圣文森特岛和格林纳达', VE: '委内瑞拉', VG: '维尔京群岛', VN: '越南', VU: '瓦努阿图', WO: '世界知识产权组织', WS: '萨摩亚', YD: '民主也门', YE: '也门', YU: '南斯拉夫', ZA: '南非', ZM: '赞比亚', ZR: '扎伊尔', ZW: '津巴布韦'
-	}[idNumber.substring(0, 2).toUpperCase()] || '';
+function patentCountry(idNumber, lang = 'zh-CN') {
+	/* eslint-disable camelcase */
+	const country = {
+		AD: { zh_CN: '安道尔', en_US: 'Andorra', zh_TW: '安道爾' },
+		AE: { zh_CN: '阿拉伯联合酋长国', en_US: 'United Arab Emirates', zh_TW: '阿拉伯聯合酋長國' },
+		AF: { zh_CN: '阿富汗', en_US: 'Afghanistan', zh_TW: '阿富汗' },
+		AG: { zh_CN: '安提瓜和巴布达', en_US: 'Antigua and Barbuda', zh_TW: '安提瓜和巴布達' },
+		AI: { zh_CN: '安圭拉', en_US: 'Anguilla', zh_TW: '安圭拉' },
+		AL: { zh_CN: '阿尔巴尼亚', en_US: 'Albania', zh_TW: '阿爾巴尼亞' },
+		AM: { zh_CN: '亚美尼亚', en_US: 'Armenia', zh_TW: '亞美尼亞' },
+		AN: { zh_CN: '荷属安的列斯群岛', en_US: 'Netherlands Antilles', zh_TW: '荷屬安的列斯群島' },
+		AO: { zh_CN: '安哥拉', en_US: 'Angola', zh_TW: '安哥拉' },
+		AR: { zh_CN: '阿根廷', en_US: 'Argentina', zh_TW: '阿根廷' },
+		AT: { zh_CN: '奥地利', en_US: 'Austria', zh_TW: '奧地利' },
+		AU: { zh_CN: '澳大利亚', en_US: 'Australia', zh_TW: '澳大利亞' },
+		AW: { zh_CN: '阿鲁巴', en_US: 'Aruba', zh_TW: '阿魯巴' },
+		AZ: { zh_CN: '阿塞拜疆', en_US: 'Azerbaijan', zh_TW: '亞塞拜然' },
+		BB: { zh_CN: '巴巴多斯', en_US: 'Barbados', zh_TW: '巴貝多' },
+		BD: { zh_CN: '孟加拉国', en_US: 'Bangladesh', zh_TW: '孟加拉' },
+		BE: { zh_CN: '比利时', en_US: 'Belgium', zh_TW: '比利時' },
+		BF: { zh_CN: '布基纳法索', en_US: 'Burkina Faso', zh_TW: '布基納法索' },
+		BG: { zh_CN: '保加利亚', en_US: 'Bulgaria', zh_TW: '保加利亞' },
+		BH: { zh_CN: '巴林', en_US: 'Bahrain', zh_TW: '巴林' },
+		BI: { zh_CN: '布隆迪', en_US: 'Burundi', zh_TW: '布隆迪' },
+		BJ: { zh_CN: '贝宁', en_US: 'Benin', zh_TW: '貝寧' },
+		BM: { zh_CN: '百慕大', en_US: 'Bermuda', zh_TW: '百慕達' },
+		BN: { zh_CN: '文莱', en_US: 'Brunei', zh_TW: '汶萊' },
+		BO: { zh_CN: '玻利维亚', en_US: 'Bolivia', zh_TW: '玻利維亞' },
+		BR: { zh_CN: '巴西', en_US: 'Brazil', zh_TW: '巴西' },
+		BS: { zh_CN: '巴哈马', en_US: 'Bahamas', zh_TW: '巴哈馬' },
+		BT: { zh_CN: '不丹', en_US: 'Bhutan', zh_TW: '不丹' },
+		BW: { zh_CN: '博茨瓦纳', en_US: 'Botswana', zh_TW: '波札那' },
+		BY: { zh_CN: '白俄罗斯', en_US: 'Belarus', zh_TW: '白俄羅斯' },
+		BZ: { zh_CN: '伯利兹', en_US: 'Belize', zh_TW: '貝里斯' },
+		CA: { zh_CN: '加拿大', en_US: 'Canada', zh_TW: '加拿大' },
+		CF: { zh_CN: '中非共和国', en_US: 'Central African Republic', zh_TW: '中非共和國' },
+		CG: { zh_CN: '刚果', en_US: 'Congo', zh_TW: '剛果' },
+		CH: { zh_CN: '瑞士', en_US: 'Switzerland', zh_TW: '瑞士' },
+		CI: { zh_CN: '科特迪瓦', en_US: "Côte d'Ivoire", zh_TW: '科特迪瓦' },
+		CL: { zh_CN: '智利', en_US: 'Chile', zh_TW: '智利' },
+		CM: { zh_CN: '喀麦隆', en_US: 'Cameroon', zh_TW: '喀麥隆' },
+		CN: { zh_CN: '中国', en_US: 'China', zh_TW: '中國' },
+		CO: { zh_CN: '哥伦比亚', en_US: 'Colombia', zh_TW: '哥倫比亞' },
+		CR: { zh_CN: '哥斯达黎加', en_US: 'Costa Rica', zh_TW: '哥斯達黎加' },
+		CU: { zh_CN: '古巴', en_US: 'Cuba', zh_TW: '古巴' },
+		CV: { zh_CN: '佛得角', en_US: 'Cape Verde', zh_TW: '佛得角' },
+		CY: { zh_CN: '塞浦路斯', en_US: 'Cyprus', zh_TW: '塞浦路斯' },
+		DE: { zh_CN: '德国', en_US: 'Germany', zh_TW: '德國' },
+		DJ: { zh_CN: '吉布提', en_US: 'Djibouti', zh_TW: '吉布提' },
+		DK: { zh_CN: '丹麦', en_US: 'Denmark', zh_TW: '丹麥' },
+		DM: { zh_CN: '多米尼克', en_US: 'Dominica', zh_TW: '多米尼克' },
+		DO: { zh_CN: '多米尼加共和国', en_US: 'Dominican Republic', zh_TW: '多明尼加共和國' },
+		DZ: { zh_CN: '阿尔及利亚', en_US: 'Algeria', zh_TW: '阿爾及利亞' },
+		EC: { zh_CN: '厄瓜多尔', en_US: 'Ecuador', zh_TW: '厄瓜多爾' },
+		EE: { zh_CN: '爱沙尼亚', en_US: 'Estonia', zh_TW: '愛沙尼亞' },
+		EG: { zh_CN: '埃及', en_US: 'Egypt', zh_TW: '埃及' },
+		EP: { zh_CN: '欧洲专利局', en_US: 'European Patent Office', zh_TW: '歐洲專利局' },
+		ES: { zh_CN: '西班牙', en_US: 'Spain', zh_TW: '西班牙' },
+		ET: { zh_CN: '埃塞俄比亚', en_US: 'Ethiopia', zh_TW: '衣索比亞' },
+		FI: { zh_CN: '芬兰', en_US: 'Finland', zh_TW: '芬蘭' },
+		FJ: { zh_CN: '斐济', en_US: 'Fiji', zh_TW: '斐濟' },
+		FK: { zh_CN: '福克兰群岛', en_US: 'Falkland Islands', zh_TW: '福克蘭群島' },
+		FR: { zh_CN: '法国', en_US: 'France', zh_TW: '法國' },
+		GA: { zh_CN: '加蓬', en_US: 'Gabon', zh_TW: '加彭' },
+		GB: { zh_CN: '英国', en_US: 'United Kingdom', zh_TW: '英國' },
+		GD: { zh_CN: '格林纳达', en_US: 'Grenada', zh_TW: '格林納達' },
+		GE: { zh_CN: '格鲁吉亚', en_US: 'Georgia', zh_TW: '格魯吉亞' },
+		GH: { zh_CN: '加纳', en_US: 'Ghana', zh_TW: '迦納' },
+		GI: { zh_CN: '直布罗陀', en_US: 'Gibraltar', zh_TW: '直布羅陀' },
+		GM: { zh_CN: '冈比亚', en_US: 'Gambia', zh_TW: '甘比亞' },
+		GN: { zh_CN: '几内亚', en_US: 'Guinea', zh_TW: '幾內亞' },
+		GQ: { zh_CN: '赤道几内亚', en_US: 'Equatorial Guinea', zh_TW: '赤道幾內亞' },
+		GR: { zh_CN: '希腊', en_US: 'Greece', zh_TW: '希臘' },
+		GT: { zh_CN: '危地马拉', en_US: 'Guatemala', zh_TW: '瓜地馬拉' },
+		GW: { zh_CN: '几内亚比绍', en_US: 'Guinea-Bissau', zh_TW: '幾內亞比索' },
+		GY: { zh_CN: '圭亚那', en_US: 'Guyana', zh_TW: '蓋亞那' },
+		HK: { zh_CN: '香港特别行政区', en_US: 'Hong Kong', zh_TW: '香港' },
+		HN: { zh_CN: '洪都拉斯', en_US: 'Honduras', zh_TW: '宏都拉斯' },
+		HR: { zh_CN: '克罗地亚', en_US: 'Croatia', zh_TW: '克羅埃西亞' },
+		HT: { zh_CN: '海地', en_US: 'Haiti', zh_TW: '海地' },
+		HU: { zh_CN: '匈牙利', en_US: 'Hungary', zh_TW: '匈牙利' },
+		ID: { zh_CN: '印度尼西亚', en_US: 'Indonesia', zh_TW: '印尼' },
+		IE: { zh_CN: '爱尔兰', en_US: 'Ireland', zh_TW: '愛爾蘭' },
+		IL: { zh_CN: '以色列', en_US: 'Israel', zh_TW: '以色列' },
+		IN: { zh_CN: '印度', en_US: 'India', zh_TW: '印度' },
+		IQ: { zh_CN: '伊拉克', en_US: 'Iraq', zh_TW: '伊拉克' },
+		IR: { zh_CN: '伊朗', en_US: 'Iran', zh_TW: '伊朗' },
+		IS: { zh_CN: '冰岛', en_US: 'Iceland', zh_TW: '冰島' },
+		IT: { zh_CN: '意大利', en_US: 'Italy', zh_TW: '義大利' },
+		JM: { zh_CN: '牙买加', en_US: 'Jamaica', zh_TW: '牙買加' },
+		JO: { zh_CN: '约旦', en_US: 'Jordan', zh_TW: '約旦' },
+		JP: { zh_CN: '日本', en_US: 'Japan', zh_TW: '日本' },
+		KE: { zh_CN: '肯尼亚', en_US: 'Kenya', zh_TW: '肯亞' },
+		KG: { zh_CN: '吉尔吉斯斯坦', en_US: 'Kyrgyzstan', zh_TW: '吉爾吉斯' },
+		KH: { zh_CN: '柬埔寨', en_US: 'Cambodia', zh_TW: '柬埔寨' },
+		KI: { zh_CN: '基里巴斯', en_US: 'Kiribati', zh_TW: '基里巴斯' },
+		KM: { zh_CN: '科摩罗', en_US: 'Comoros', zh_TW: '科摩羅' },
+		KN: { zh_CN: '圣基茨和尼维斯', en_US: 'Saint Kitts and Nevis', zh_TW: '聖克里斯多福及尼維斯' },
+		KP: { zh_CN: '朝鲜', en_US: 'North Korea', zh_TW: '朝鮮' },
+		KR: { zh_CN: '韩国', en_US: 'South Korea', zh_TW: '韓國' },
+		KW: { zh_CN: '科威特', en_US: 'Kuwait', zh_TW: '科威特' },
+		KY: { zh_CN: '开曼群岛', en_US: 'Cayman Islands', zh_TW: '開曼群島' },
+		KZ: { zh_CN: '哈萨克斯坦', en_US: 'Kazakhstan', zh_TW: '哈薩克' },
+		LA: { zh_CN: '老挝', en_US: 'Laos', zh_TW: '寮國' },
+		LB: { zh_CN: '黎巴嫩', en_US: 'Lebanon', zh_TW: '黎巴嫩' },
+		LC: { zh_CN: '圣卢西亚', en_US: 'Saint Lucia', zh_TW: '聖露西亞' },
+		LI: { zh_CN: '列支敦士登', en_US: 'Liechtenstein', zh_TW: '列支敦斯登' },
+		LK: { zh_CN: '斯里兰卡', en_US: 'Sri Lanka', zh_TW: '斯里蘭卡' },
+		LR: { zh_CN: '利比里亚', en_US: 'Liberia', zh_TW: '賴比瑞亞' },
+		LS: { zh_CN: '莱索托', en_US: 'Lesotho', zh_TW: '賴索托' },
+		LT: { zh_CN: '立陶宛', en_US: 'Lithuania', zh_TW: '立陶宛' },
+		LU: { zh_CN: '卢森堡', en_US: 'Luxembourg', zh_TW: '盧森堡' },
+		LV: { zh_CN: '拉脱维亚', en_US: 'Latvia', zh_TW: '拉脫維亞' },
+		LY: { zh_CN: '利比亚', en_US: 'Libya', zh_TW: '利比亞' },
+		MA: { zh_CN: '摩洛哥', en_US: 'Morocco', zh_TW: '摩洛哥' },
+		MC: { zh_CN: '摩纳哥', en_US: 'Monaco', zh_TW: '摩納哥' },
+		MD: { zh_CN: '摩尔多瓦', en_US: 'Moldova', zh_TW: '摩爾多瓦' },
+		MG: { zh_CN: '马达加斯加', en_US: 'Madagascar', zh_TW: '馬達加斯加' },
+		ML: { zh_CN: '马里', en_US: 'Mali', zh_TW: '馬里' },
+		MN: { zh_CN: '蒙古', en_US: 'Mongolia', zh_TW: '蒙古' },
+		MO: { zh_CN: '澳门特别行政区', en_US: 'Macau', zh_TW: '澳門' },
+		MR: { zh_CN: '毛里塔尼亚', en_US: 'Mauritania', zh_TW: '毛里塔尼亞' },
+		MS: { zh_CN: '蒙特塞拉特', en_US: 'Montserrat', zh_TW: '蒙特塞拉特' },
+		MT: { zh_CN: '马耳他', en_US: 'Malta', zh_TW: '馬爾他' },
+		MU: { zh_CN: '毛里求斯', en_US: 'Mauritius', zh_TW: '毛里求斯' },
+		MV: { zh_CN: '马尔代夫', en_US: 'Maldives', zh_TW: '馬爾地夫' },
+		MW: { zh_CN: '马拉维', en_US: 'Malawi', zh_TW: '馬拉維' },
+		MX: { zh_CN: '墨西哥', en_US: 'Mexico', zh_TW: '墨西哥' },
+		MY: { zh_CN: '马来西亚', en_US: 'Malaysia', zh_TW: '馬來西亞' },
+		MZ: { zh_CN: '莫桑比克', en_US: 'Mozambique', zh_TW: '莫桑比克' },
+		NA: { zh_CN: '纳米比亚', en_US: 'Namibia', zh_TW: '納米比亞' },
+		NE: { zh_CN: '尼日尔', en_US: 'Niger', zh_TW: '尼日' },
+		NG: { zh_CN: '尼日利亚', en_US: 'Nigeria', zh_TW: '奈及利亞' },
+		NI: { zh_CN: '尼加拉瓜', en_US: 'Nicaragua', zh_TW: '尼加拉瓜' },
+		NL: { zh_CN: '荷兰', en_US: 'Netherlands', zh_TW: '荷蘭' },
+		NO: { zh_CN: '挪威', en_US: 'Norway', zh_TW: '挪威' },
+		NP: { zh_CN: '尼泊尔', en_US: 'Nepal', zh_TW: '尼泊爾' },
+		NR: { zh_CN: '瑙鲁', en_US: 'Nauru', zh_TW: '諾魯' },
+		NZ: { zh_CN: '新西兰', en_US: 'New Zealand', zh_TW: '紐西蘭' },
+		OM: { zh_CN: '阿曼', en_US: 'Oman', zh_TW: '阿曼' },
+		PA: { zh_CN: '巴拿马', en_US: 'Panama', zh_TW: '巴拿馬' },
+		PE: { zh_CN: '秘鲁', en_US: 'Peru', zh_TW: '秘魯' },
+		PG: { zh_CN: '巴布亚新几内亚', en_US: 'Papua New Guinea', zh_TW: '巴布亞紐幾內亞' },
+		PH: { zh_CN: '菲律宾', en_US: 'Philippines', zh_TW: '菲律賓' },
+		PK: { zh_CN: '巴基斯坦', en_US: 'Pakistan', zh_TW: '巴基斯坦' },
+		PL: { zh_CN: '波兰', en_US: 'Poland', zh_TW: '波蘭' },
+		PT: { zh_CN: '葡萄牙', en_US: 'Portugal', zh_TW: '葡萄牙' },
+		PY: { zh_CN: '巴拉圭', en_US: 'Paraguay', zh_TW: '巴拉圭' },
+		QA: { zh_CN: '卡塔尔', en_US: 'Qatar', zh_TW: '卡達' },
+		RO: { zh_CN: '罗马尼亚', en_US: 'Romania', zh_TW: '羅馬尼亞' },
+		RU: { zh_CN: '俄罗斯', en_US: 'Russia', zh_TW: '俄羅斯聯邦' },
+		RW: { zh_CN: '卢旺达', en_US: 'Rwanda', zh_TW: '盧安達' },
+		SA: { zh_CN: '沙特阿拉伯', en_US: 'Saudi Arabia', zh_TW: '沙烏地阿拉伯' },
+		SB: { zh_CN: '所罗门群岛', en_US: 'Solomon Islands', zh_TW: '索羅門群島' },
+		SC: { zh_CN: '塞舌尔', en_US: 'Seychelles', zh_TW: '塞席爾' },
+		SD: { zh_CN: '苏丹', en_US: 'Sudan', zh_TW: '蘇丹' },
+		SE: { zh_CN: '瑞典', en_US: 'Sweden', zh_TW: '瑞典' },
+		SG: { zh_CN: '新加坡', en_US: 'Singapore', zh_TW: '新加坡' },
+		SH: { zh_CN: '圣赫勒拿', en_US: 'Saint Helena', zh_TW: '聖赫勒拿島' },
+		SI: { zh_CN: '斯洛文尼亚', en_US: 'Slovenia', zh_TW: '斯洛維尼亞' },
+		SL: { zh_CN: '塞拉利昂', en_US: 'Sierra Leone', zh_TW: '塞拉利昂' },
+		SM: { zh_CN: '圣马力诺', en_US: 'San Marino', zh_TW: '聖馬利諾' },
+		SN: { zh_CN: '塞内加尔', en_US: 'Senegal', zh_TW: '塞內加爾' },
+		SO: { zh_CN: '索马里', en_US: 'Somalia', zh_TW: '索馬利亞' },
+		SR: { zh_CN: '苏里南', en_US: 'Suriname', zh_TW: '蘇里南' },
+		ST: { zh_CN: '圣多美和普林西比', en_US: 'São Tomé and Príncipe', zh_TW: '聖多美和普林西比' },
+		SV: { zh_CN: '萨尔瓦多', en_US: 'El Salvador', zh_TW: '薩爾瓦多' },
+		SY: { zh_CN: '叙利亚', en_US: 'Syria', zh_TW: '敘利亞' },
+		SZ: { zh_CN: '斯威士兰', en_US: 'Eswatini', zh_TW: '史瓦濟蘭' },
+		TD: { zh_CN: '乍得', en_US: 'Chad', zh_TW: '查德' },
+		TG: { zh_CN: '多哥', en_US: 'Togo', zh_TW: '多哥' },
+		TH: { zh_CN: '泰国', en_US: 'Thailand', zh_TW: '泰國' },
+		TJ: { zh_CN: '塔吉克斯坦', en_US: 'Tajikistan', zh_TW: '塔吉克' },
+		TM: { zh_CN: '土库曼斯坦', en_US: 'Turkmenistan', zh_TW: '土庫曼' },
+		TN: { zh_CN: '突尼斯', en_US: 'Tunisia', zh_TW: '突尼西亞' },
+		TO: { zh_CN: '汤加', en_US: 'Tonga', zh_TW: '東加' },
+		TR: { zh_CN: '土耳其', en_US: 'Turkey', zh_TW: '土耳其' },
+		TT: { zh_CN: '特立尼达和多巴哥', en_US: 'Trinidad and Tobago', zh_TW: '千里達及托巴哥' },
+		TV: { zh_CN: '图瓦卢', en_US: 'Tuvalu', zh_TW: '圖瓦盧' },
+		TZ: { zh_CN: '坦桑尼亚', en_US: 'Tanzania', zh_TW: '坦尚尼亞' },
+		UA: { zh_CN: '乌克兰', en_US: 'Ukraine', zh_TW: '烏克蘭' },
+		UG: { zh_CN: '乌干达', en_US: 'Uganda', zh_TW: '烏干達' },
+		US: { zh_CN: '美国', en_US: 'United States', zh_TW: '美國' },
+		UY: { zh_CN: '乌拉圭', en_US: 'Uruguay', zh_TW: '烏拉圭' },
+		UZ: { zh_CN: '乌兹别克斯坦', en_US: 'Uzbekistan', zh_TW: '烏茲別克' }
+	}[idNumber.substring(0, 2).toUpperCase()];
+	/* eslint-enable camelcase */
+	return country
+		? country[lang]
+		: '';
 }
 
 /** add pdf or caj to attachments, default is pdf */
@@ -1329,7 +1517,7 @@ function addAttachments(item, doc, url, itemKey) {
 				document: doc
 			});
 		}
-		const pdfLink = strChild(doc, 'a[id^="pdfDown"],.btn-dlpdf > a', 'href');
+		const pdfLink = strChild(doc, 'a[id^="pdfDown"]', 'href');
 		Z.debug(`get PDF Link:\n${pdfLink}`);
 		const cajLink = strChild(doc, 'a#cajDown', 'href') || itemKey.downloadlink || strChild(doc, 'a[href*="bar/download"]', 'href');
 		Z.debug(`get CAJ link:\n${cajLink}`);
@@ -1350,15 +1538,6 @@ function addAttachments(item, doc, url, itemKey) {
 	}
 }
 
-/**
- * For elements specified with selector and index,
- * return the value specified by key.
- * @param {Element} docOrElem
- * @param {String} selector
- * @param {String} key
- * @param {Number} index
- * @returns
- */
 function strChild(docOrElem, selector, key, index) {
 	const element = index
 		? docOrElem.querySelector(selector)
@@ -1368,14 +1547,6 @@ function strChild(docOrElem, selector, key, index) {
 		: '';
 }
 
-/**
- * Attempts to get the part of the pattern described from the character,
- * and returns an empty string if not match.
- * @param {String} string
- * @param {RegExp} pattern
- * @param {Number} index
- * @returns
- */
 function tryMatch(string, pattern, index = 0) {
 	if (!string) return '';
 	const match = string.match(pattern);
@@ -1432,7 +1603,7 @@ var testCases = [
 				"date": "2020",
 				"ISSN": "0258-4646",
 				"abstractNote": "目的利用生物信息学方法探索2型糖尿病发病的相关基因,并研究这些基因与阿尔茨海默病的关系。方法基因表达汇编(GEO)数据库下载GSE85192、GSE95849、GSE97760、GSE85426数据集,获得健康人和2型糖尿病患者外周血的差异基因,利用加权基因共表达网络(WGCNA)分析差异基因和临床性状的关系。使用DAVID数据库分析与2型糖尿病有关的差异基因的功能与相关通路,筛选关键蛋白。根据结果将Toll样受体4 (TLR4)作为关键基因,利用基因集富集分析(GSEA)分析GSE97760中与高表达TLR4基因相关的信号通路。通过GSE85426验证TLR4的表达量。结果富集分析显示,差异基因主要参与的生物学过程包括炎症反应、Toll样受体(TLR)信号通路、趋化因子产生的正向调节等。差异基因主要参与的信号通路有嘧啶代谢通路、TLR信号通路等。ILF2、TLR4、POLR2G、MMP9为2型糖尿病的关键基因。GSEA显示,TLR4上调可通过影响嘧啶代谢及TLR信号通路而导致2型糖尿病及阿尔茨海默病的发生。TLR4在阿尔茨海默病外周血中高表达。结论 ILF2、TLR4、POLR2G、MMP9为2型糖尿病发病的关键基因,TLR4基因上调与2型糖尿病、阿尔茨海默病发生有关。",
-				"extra": "original-container-title: Journal of China Medical University\ndownload: 400\nalbum: 医药卫生科技\nCLC: R587.2;R749.16\nCNKICite: 3\ndbcode: CJFD\ndbname: CJFDLAST2020\nfilename: zgyk202012011\nCIF: 1.156\nAIF: 0.890",
+				"extra": "original-container-title: Journal of China Medical University\ndownload: 407\nalbum: 医药卫生科技\nCLC: R587.2;R749.16\nCNKICite: 3\ndbcode: CJFD\ndbname: CJFDLAST2020\nfilename: zgyk202012011\nCIF: 1.156\nAIF: 0.890",
 				"issue": "12",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
@@ -1504,7 +1675,7 @@ var testCases = [
 				"date": "2012",
 				"ISSN": "1000-0054",
 				"abstractNote": "經濟全球化和新一輪產業升級為電子商務服務產業發展帶來了新的機遇和挑戰。無法全程、及時、有效監管電子商務市場的主體及其相關行為是電子商務發展過程中面臨的主要問題。尤其對于互聯網藥品市場,電子商務主體資質的審核備案是營造電子商務可信交易環境的一項重要工作。該文通過系統網絡結構分析的方法描述了公共審核備案服務模式和分立審核備案模式的基本原理;建立了兩種模式下的總體交易費用模型,分析了公共模式比分立模式節約總體交易費用的充要條件,以及推廣該公共模式的必要條件。研究發現:市場規模越大、集成成本越小,公共模式越容易推廣。應用案例分析驗證了模型,證實了公共審核備案服務模式節約了總體交易費用的結論。",
-				"extra": "original-container-title: Journal of Tsinghua University(Science and Technology)\ndownload: 601\nalbum: 理工C(機電航空交通水利建筑能源); 醫藥衛生科技; 經濟與管理科學\nCLC: R95;F724.6\nCNKICite: 7\ndbcode: CJFD\ndbname: CJFD2012\nfilename: qhxb201211002\nCIF: 3.010\nAIF: 1.884",
+				"extra": "original-container-title: Journal of Tsinghua University(Science and Technology)\ndownload: 657\nalbum: 理工C(機電航空交通水利建筑能源); 醫藥衛生科技; 經濟與管理科學\nCLC: R95;F724.6\nCNKICite: 7\ndbcode: CJFD\ndbname: CJFD2012\nfilename: qhxb201211002\nCIF: 3.010\nAIF: 1.884",
 				"issue": "11",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
@@ -1563,7 +1734,7 @@ var testCases = [
 				],
 				"date": "2016-12",
 				"abstractNote": "北京铁路局是以铁路客货运输为主的特大型国有企业,是全国铁路网的中枢。全局共有职工19.1万人,管内铁路营业里程全长6246公里,其中高速铁路营业里程为1143.3公里。近年来,北京铁路局始终坚持\"主要行车工种做实、高技能人才做精、工班长队伍做强\"工作主线,积极构建并实施由教育培训规范、教育培训组织管理、实训基地及现代化设施、专兼职教育培训师资、",
-				"extra": "download: 79\nalbum: (H) Education ＆ Social Sciences\nCLC: G726\nCNKICite: 0\ndbcode: CPFD\ndbname: CPFDLAST2017\nfilename: zgpx201612002005",
+				"extra": "download: 80\nalbum: (H) Education ＆ Social Sciences\nCLC: G726\nCNKICite: 0\ndbcode: CPFD\ndbname: CPFDLAST2017\nfilename: zgpx201612002005",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "8",
@@ -1636,7 +1807,7 @@ var testCases = [
 				"date": "2024-04-12",
 				"ISSN": "1673-1905",
 				"abstractNote": "A reversible operation protocol is provided for a weak-measured quantum entanglement state. The evolution of weak values is studied under different parameter conditions. The weak values can be extracted from the entanglement state and the weak-measured quantum entanglement state can be revived to its initial state theoretically by weak measurement and reversibility operation respectively. We demonstrate the reversible operation protocol by taking Bell’s state as an example. The negativity is used to analyze the initial state， the weak-measured state and the reversed state in order to describe the evolution of quantum entanglement degree. Weak values is detected from the quantum entanglement state by weak measurement and the degree of the weak-measured quantum entanglement state can be revived to its initial state through reversible operation. The information of quantum entanglement state would be extracted from weak values detected in the process of the scheme.",
-				"extra": "original-container-title: Optoelectronics Letters\nStatus: advance online publication\nalbum: (A) Mathematics/ Physics/ Mechanics/ Astronomy\nCLC: O413\nCNKICite: 0\ndbcode: CJFQ\ndbname: CAPJLAST\nfilename: oelj20240407003\nCIF: 0.330\nAIF: 0.197",
+				"extra": "original-container-title: Optoelectronics Letters\nStatus: advance online publication\ndownload: 10\nalbum: (A) Mathematics/ Physics/ Mechanics/ Astronomy\nCLC: O413\nCNKICite: 0\ndbcode: CJFQ\ndbname: CAPJLAST\nfilename: oelj20240407003\nCIF: 0.330\nAIF: 0.197",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "1-6",
@@ -1660,7 +1831,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=UeijT_GnegCGVXOQlhOpSPEw2k2ZPKi4acW5KCvfKej0zITknmIIPE8j1janIJ5J1XwS_G_uyb1toYfYhT_f_B6CqzGHxIgAXrC5JOSkWp14jSk5qlF_q37uTUtRjU3X0_ozQi9KABOVUWg1-Ms8horQPm3hjGhDvzaRQKRaDU9z5NK19ZpSJMWvXsL1Ndsw&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=sMQVub3UVPhGILJpAKOGh83AcRhGYSRgjDgy9nM13TOCVZF0pSJkEnbjmfB8tUhTS8LJ_RWzlJgcRv1RRK9Jq50xK24Omz1rh-UUpYJcNcDJTfmD9jOvQu1ZFbmeOLLTuuoZMm8XMBCoN6lWvYEhWWAp2BCB2ehojp96uYDdRf1ekk3Okjq_46zCyrqJKzNx&uniplatform=NZKPT",
 		"items": [
 			{
 				"itemType": "journalArticle",
@@ -1700,7 +1871,7 @@ var testCases = [
 				"date": "2024-04",
 				"DOI": "10.1016/j.bioadv.2024.213780",
 				"ISSN": "27729508",
-				"abstractNote": "Tissue engineered skin equivalents are increasingly recognized as potential alternatives to traditional skin models such as human ex vivo skin or animal skin models. However, most of the currently investigated human skin equivalents (HSEs) are constructed using mammalian collagen which can be expensive and difficult to extract. Fish skin is a waste product produced by fish processing industries and identified as a cost-efficient and sustainable source of type I collagen. In this work, we describ...",
+				"abstractNote": "Tissue engineered skin equivalents are increasingly recognized as potential alternatives to traditional skin models such as human ex vivo skin or animal skin models. However, most of the currently investigated human skin equivalents (HSEs) are constructed using mammalian collagen which can be expensive and difficult to extract. Fish skin is a waste product produced by fish processing industries and identified as a cost-efficient and sustainable source ...",
 				"journalAbbreviation": "Biomaterials Advances",
 				"language": "en-US",
 				"libraryCatalog": "DOI.org (Crossref)",
@@ -1782,6 +1953,35 @@ var testCases = [
 		]
 	},
 	{
+		"type": "web",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHiery8DXkT083oAvbAx9rgOEcigOFI2MZ_13Vw2PvRBKFn_YSqpi2fcEeJvp73BHlsXABqmXA-6JrgNRrOobwH-TLFr-W-2HLJmq-79RHQxS-bYacMxTadx9jyVX3P1Qojx90fWItiKLTJOEp94azAwKweOUqGKlPFS2Rzm8OTCSg==&uniplatform=NZKPT&language=CHS",
+		"items": [
+			{
+				"itemType": "book",
+				"title": "IMF Terminology Bulletin:Climate &amp; the Environment, Fintech, Gender, and Related Acronyms: English to Arabic",
+				"creators": [],
+				"date": "10/2023",
+				"ISBN": "9798400251245",
+				"extra": "DOI: 10.5089/9798400251245.073",
+				"language": "ar",
+				"libraryCatalog": "DOI.org (Crossref)",
+				"place": "Washington, D.C.",
+				"publisher": "International Monetary Fund",
+				"shortTitle": "IMF Terminology Bulletin",
+				"url": "https://elibrary.imf.org/openurl?genre=book&isbn=9798400251245&cid=537460-com-dsp-crossref",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
 		"type": "search",
 		"input": {
 			"DOI": "10.13374/j.issn2095-9389.2022.11.11.005"
@@ -1832,13 +2032,13 @@ var testCases = [
 				"DOI": "10.13374/j.issn2095-9389.2022.11.11.005",
 				"ISSN": "2095-9389",
 				"abstractNote": "生物质属于可再生资源，在我国含量丰富，生物质材料炭化后的产物在储能、吸附等领域得到了广泛应用.研究生物质材料的炭化过程，有利于生物质炭的有效利用.总结了生物质材料炭化过程中，生物质的种类和炭化条件（包括炭化温度、预处理等）对炭化产物中碳的结构、形态、性质的影响，期望为生物质炭化产物的有效利用提供理论基础.同时总结了在催化剂作用下，利用生物质材料炭化来制备碳纳米管，并分析了生物质材料中木质素和纤维素等组分对碳纳米管制备的影响.在此基础上，展望了生物质材料在含碳耐火材料中的应用前景，以期为制备低成本和高性能的新型含碳耐火材料提供思路.",
-				"extra": "original-container-title: Chinese Journal of Engineering\nfoundation: 国家自然科学基金资助项目（51872266,52172031）；\ndownload: 831\nalbum: 工程科技Ⅰ辑;工程科技Ⅱ辑\nCLC: TB383.1;TQ175.7;TK6\nCNKICite: 0\ndbcode: CJFQ\ndbname: CJFDLAST2023\nfilename: BJKD202312004\npublicationTag: 北大核心, JST, Pж(AJ), EI, CSCD, WJCI\nCIF: 3.295\nAIF: 2.29",
+				"extra": "original-container-title: Chinese Journal of Engineering\nfoundation: 国家自然科学基金资助项目（51872266,52172031）；\ndownload: 1164\nalbum: 工程科技Ⅱ辑;工程科技Ⅰ辑\nCLC: TB383.1;TQ175.7;TK6\ndbcode: CJFQ\ndbname: CJFDLAST2023\nfilename: BJKD202312004\npublicationTag: 北大核心, CA, JST, Pж(AJ), EI, CSCD, WJCI\nCIF: 3.295\nAIF: 2.29",
 				"issue": "12",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "2026-2036",
 				"publicationTitle": "工程科学学报",
-				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFQ&dbname=CJFDLAST2023&filename=BJKD202312004",
+				"url": "https://link.cnki.net/doi/10.13374/j.issn2095-9389.2022.11.11.005",
 				"volume": "45",
 				"attachments": [
 					{
@@ -1907,13 +2107,13 @@ var testCases = [
 				"DOI": "10.19655/j.cnki.1005-4642.2020.09.009",
 				"ISSN": "1005-4642",
 				"abstractNote": "通过CAD软件建立几何模型,通过COMSOL软件建立数值模型并求解,与实验结果进行对比,并通过数值模拟讨论相关参量对阀门单向流通性的影响.研究结果表明:特斯拉阀门适用于低粘度高密度流体;本文所设计的特斯拉阀门在四阀门情况下dedicatee数能达到3.414;单阀门特斯拉阀的性能相较于多阀门更佳.",
-				"extra": "original-container-title: Physics Experimentation\ndownload: 1974\nalbum: 基础科学;工程科技Ⅱ辑\nCLC: TH134\nCNKICite: 13\ndbcode: CJFQ\ndbname: CJFDLAST2020\nfilename: WLSL202009009\npublicationTag: JST\nCIF: 0.755\nAIF: 0.562",
+				"extra": "original-container-title: Physics Experimentation\ndownload: 2111\nalbum: 基础科学;工程科技Ⅱ辑\nCLC: TH134\ndbcode: CJFQ\ndbname: CJFDLAST2020\nfilename: WLSL202009009\npublicationTag: JST\nCIF: 0.755\nAIF: 0.562",
 				"issue": "9",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "44-50",
 				"publicationTitle": "物理实验",
-				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFQ&dbname=CJFDLAST2020&filename=WLSL202009009",
+				"url": "https://link.cnki.net/doi/10.19655/j.cnki.1005-4642.2020.09.009",
 				"volume": "40",
 				"attachments": [
 					{
@@ -1984,14 +2184,14 @@ var testCases = [
 				"date": "2022",
 				"DOI": "10.13198/j.issn.1001-6929.2021.12.09",
 				"ISSN": "1001-6929",
-				"abstractNote": "我国电力行业CO<sub>2</sub>排放量巨大，约占全国CO<sub>2</sub>排放总量的50%.有效降低电力行业的碳排放，对我国按时实现“3060”碳达峰与碳中和的目标将起到有力支撑.石油和天然气开采过程中产生的油基岩屑因含有较高的热值可作为锅炉煤炭燃料的替代燃料使用.为探明利用燃煤锅炉协同处置油基岩屑的碳减排效果，选取某电站600 MW循环流化床锅炉，以30%的比例掺烧油基岩屑，并参照《温室气体排放核算与报告要求第1部分：发电企业》和《企业温室气体排放核算方法与报告指南发电设施（征求意见稿）》两种核算方法计算协同处置前后锅炉CO<sub>2</sub>的排放量.结果表明：（1）在30%的掺加比下，油基岩屑协同处置具有碳减排效果.两种核算方法计算的降碳量分别为159.2和157.7 t，降碳比分别为0.543和0.538.（2）油基岩屑焚烧产生的CO<sub>2</sub>排放量小于被替代的煤炭燃烧产生的碳排放量，是协同处置具有碳减排效益的主要原因.（3）核算法与检测法CO<sub>2</sub>排放量的差异表明，企业源评估模型碳核算法最主要的不确定性来源于检测数据的精准度.研究显示，燃煤锅炉协同处置油基岩屑具有一定的CO<sub>2</sub>减排效果，单位热值含碳量和消耗量是影响碳减排效果的两个关键因素，建议开展油基岩屑掺加比与碳减排量间的相关性研究，为规模化开展燃煤锅炉协同处置降碳工作提供参考.",
-				"extra": "original-container-title: Research of Environmental Sciences\nfoundation: 国家重点研发计划项目(No.2018YFC1900100)； 中央级公益性科研院所基本科研业务专项(No.2019YSKY-016)~~；\ndownload: 510\nalbum: 工程科技Ⅰ辑;工程科技Ⅱ辑\nCLC: X773;X741\ndbcode: CJFQ\ndbname: CJFDLAST2022\nfilename: HJKX202202025\npublicationTag: 北大核心, CA, JST, CSCD, WJCI, AMI扩展\nCIF: 4.747\nAIF: 3.657",
+				"abstractNote": "我国电力行业CO_2排放量巨大，约占全国CO_2排放总量的50%.有效降低电力行业的碳排放，对我国按时实现“3060”碳达峰与碳中和的目标将起到有力支撑.石油和天然气开采过程中产生的油基岩屑因含有较高的热值可作为锅炉煤炭燃料的替代燃料使用.为探明利用燃煤锅炉协同处置油基岩屑的碳减排效果，选取某电站600 MW循环流化床锅炉，以30%的比例掺烧油基岩屑，并参照《温室气体排放核算与报告要求第1部分：发电企业》和《企业温室气体排放核算方法与报告指南发电设施(征求意见稿)》两种核算方法计算协同处置前后锅炉CO_2的排放量.结果表明：(1)在30%的掺加比下，油基岩屑协同处置具有碳减排效果.两种核算方法计算的降碳量分别为159.2和157.7 t，降碳比分别为0.543和0.538.(2)油基岩屑焚烧产生的CO_2排放量小于被替代的煤炭燃烧产生的碳排放量，是协同处置具有碳减排效益的主要原因.(3)核算法与检测法CO_2排放量的差异表明，企业源评估模型碳核算法最主要的不确定性来源于检测数据的精准度.研究显示，燃煤锅炉协同处置油基岩屑具有一定的CO_2减排效果，单位热值含碳量和消耗量是影响碳减排效果的两个关键因素，建议开展油基岩屑掺加比与碳减排量间的相关性研究，为规模化开展燃煤锅炉协同处置降碳工作提供参考.",
+				"extra": "original-container-title: Research of Environmental Sciences\nfoundation: 国家重点研发计划项目(No.2018YFC1900100)； 中央级公益性科研院所基本科研业务专项(No.2019YSKY-016)~~；\ndownload: 511\nalbum: 工程科技Ⅰ辑;工程科技Ⅱ辑\nCLC: X773;X741\ndbcode: CJFQ\ndbname: CJFDLAST2022\nfilename: HJKX202202025\npublicationTag: 北大核心, CA, JST, CSCD, WJCI, AMI扩展\nCIF: 4.747\nAIF: 3.657",
 				"issue": "2",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "540-546",
 				"publicationTitle": "环境科学研究",
-				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFQ&dbname=CJFDLAST2022&filename=HJKX202202025",
+				"url": "https://link.cnki.net/doi/10.13198/j.issn.1001-6929.2021.12.09",
 				"volume": "35",
 				"attachments": [
 					{
@@ -2023,7 +2223,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHiJfPd1-3LeRj-WKnQqUbImgyRoJSUXvw06sJxr4HxTgaTY5RlyN-OIqHx_mNjyHY2VSmZdnwR_XQmg3dzHFGkmtgUtIEiBUrxSubRrXN75GIPXIWiptn0-uKS1IS2Mx6f-oEZwMAlkBF_QAa_Waa_8&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=sMQVub3UVPjIvOHHlcF3SNXEUHFPMOg2tYIxi0BfNKtiobSiU1R05at2q-ybyvO63iCJxYjXYt7Ypj6VZ0s9UXo0YEZxqJ8ZFIm_isJNaR-ynyDcFSxXe_3dOb5Jb0RHpgIZhZD72qxNWgLUa-Gw2rU6ln5dCCag&uniplatform=NZKPT",
 		"items": [
 			{
 				"itemType": "journalArticle",
@@ -2058,13 +2258,13 @@ var testCases = [
 				"DOI": "10.13287/j.1001-9332.2000.0212",
 				"ISSN": "1001-9332",
 				"abstractNote": "分别对 30 0mmol·L-1NaCl和 10 0mmol·L-1Na2 CO3 盐碱胁迫下的羊草苗进行以不同方式施加Ca2 +、ABA和H3PO4 等缓解胁迫处理 .结果表明 ,外施Ca2 +、ABA和H3PO4 明显缓解了盐碱对羊草生长的抑制作用 .叶面喷施效果好于根部处理 ;施用Ca(NO3) 2 效果好于施用CaCl2 效果 ;混合施用CaCl2 和ABA的效果比单独施用ABA或CaCl2 的效果好 .",
-				"extra": "original-container-title: Chinese Journal of Applied Ecology\nfoundation: 国家自然科学基金资助项目!(39670 0 83) .；\ndownload: 464\nalbum: 基础科学;农业科技\nCLC: Q945\nCNKICite: 82\ndbcode: CJFQ\ndbname: CJFD2000\nfilename: YYSB200006019\npublicationTag: 北大核心, CA, JST, Pж(AJ), CSCD, WJCI\nCIF: 4.949\nAIF: 3.435",
+				"extra": "original-container-title: Chinese Journal of Applied Ecology\nfoundation: 国家自然科学基金资助项目!(39670 0 83) .；\ndownload: 472\nalbum: 基础科学;农业科技\nCLC: Q945\ndbcode: CJFQ\ndbname: CJFD2000\nfilename: YYSB200006019\npublicationTag: 北大核心, CA, JST, Pж(AJ), CSCD, WJCI\nCIF: 4.949\nAIF: 3.435",
 				"issue": "6",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "889-892",
 				"publicationTitle": "应用生态学报",
-				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CJFQ&dbname=CJFD2000&filename=YYSB200006019",
+				"url": "https://link.cnki.net/doi/10.13287/j.1001-9332.2000.0212",
 				"attachments": [
 					{
 						"title": "Full Text PDF",
@@ -2073,7 +2273,7 @@ var testCases = [
 				],
 				"tags": [
 					{
-						"tag": "Ca<sup>2+</sup>"
+						"tag": "Ca~(2+)"
 					},
 					{
 						"tag": "盐胁迫"
@@ -2088,10 +2288,10 @@ var testCases = [
 						"tag": "胁迫缓解"
 					},
 					{
-						"tag": "脯氨酸（Pro）"
+						"tag": "脯氨酸(Pro)"
 					},
 					{
-						"tag": "脱落酸（ABA）"
+						"tag": "脱落酸(ABA)"
 					}
 				],
 				"notes": [],
@@ -2101,7 +2301,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHgNsCevk3J33XvFPtx4G2gHTHYt4nWyQPuSN3_N3h_fu53F2pTHv8KUe5Wlo50Obu55zdIOJf7H4SG2wnx53Wv3yOAhaQaxkASpXlrfjF25yXShFh2WJ7ktvHWYBM8y9mS0AIe2X4fRmtNieFe2na0Y&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=sMQVub3UVPhcux9kLv3dlu3HqEnj6v7rkox2d22uoocSttonwOgx_NcK5r9Ri45_5JpY5LDDClDUm7F2zO2qh7tFrxe7CYKah4xjD0RYAGrQvCtgL9iJ9b4EQCE9aW3p6TamVKZUWrsu85jhkHeqVODJOFE3IG05&uniplatform=NZKPT",
 		"items": [
 			{
 				"itemType": "journalArticle",
@@ -2148,13 +2348,13 @@ var testCases = [
 				"DOI": "10.13207/j.cnki.jnwafu.2024.07.011",
 				"ISSN": "1671-9387",
 				"abstractNote": "【目的】对黄瓜胚性愈伤组织的诱导保存和再生进行研究,为黄瓜高频率遗传转化奠定基础。【方法】以欧洲温室型黄瓜自交系14-1子叶节为外植体,在MS培养基上附加1.5 mg/L 2,4-D,进行25 d的胚性愈伤组织诱导培养后,取胚性愈伤组织在添加30,60,90,100,110,120,130,140和150 g/L蔗糖及1.5 mg/L 2,4-D的MS培养基进行继代培养,每30 d继代1次,观察胚性愈伤组织的褐变情况及胚性分化能力,并用电子天平在超净工作台中记录胚性愈伤组织质量的变化。继代培养60 d后,将保存的胚性愈伤组织和体细胞胚移至含1.5 mg/L 2,4-D的MS培养基上,待出现体细胞胚后移至MS培养基进行萌发,观察再生小植株的生长情况。【结果】将欧洲温室型黄瓜自交系14-1的子叶节,接种到附加1.5 mg/L 2,4-D的MS培养基上进行诱导培养后,子叶节一端的愈伤组织集中聚集于下胚轴处,之后有黄色胚性愈伤组织产生。在继代培养过程中,当培养基中添加的蔗糖为60～150 g/L时,胚性愈伤组织能保持胚性愈伤状态达60 d。之后将继代培养60 d后的胚性愈伤组织转接至附加1.5 mg/L 2,4-D的MS培养基上,在蔗糖质量浓度为60 g/L条件下保存的胚性愈伤组织可诱导出正常胚状体,且能形成健康小植株。【结论】由黄瓜子叶节诱导出的胚性愈伤组织可在MS+60 g/L蔗糖的培养基上保存达60 d,之后能正常萌发形成胚状体,进而形成正常小植株。",
-				"extra": "original-container-title: Journal of Northwest A & F University(Natural Science Edition)\nStatus: advance online publication\nfoundation: 国家自然科学基金项目(32072562； 32272748；\ndownload: 288\nalbum: 农业科技\nCLC: S642.2\nCNKICite: 0\ndbcode: CAPJ\ndbname: CAPJLAST\nfilename: XBNY20240104006\npublicationTag: 北大核心, JST, Pж(AJ), CSCD, WJCI\nCIF: 2.343\nAIF: 1.657",
+				"extra": "original-container-title: Journal of Northwest A & F University(Natural Science Edition)\nStatus: advance online publication\nfoundation: 国家自然科学基金项目(32072562;32272748；\ndownload: 422\nalbum: 农业科技\nCLC: S642.2\ndbcode: CAPJ\ndbname: CAPJLAST\nfilename: XBNY20240104006\npublicationTag: 北大核心, JST, Pж(AJ), CSCD, WJCI\nCIF: 2.343\nAIF: 1.657",
 				"issue": "7",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "1-7",
 				"publicationTitle": "西北农林科技大学学报（自然科学版）",
-				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CAPJ&dbname=CAPJLAST&filename=XBNY20240104006",
+				"url": "https://doi.org/10.13207/j.cnki.jnwafu.2024.07.011",
 				"attachments": [
 					{
 						"title": "Full Text PDF",
@@ -2182,7 +2382,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHhgV8yB3UWCXBZSBjUeApZd4K3N5dRJVSbZlmbo38Lrk1lUwAovAfa5rwr2WAlNqwvutlPMuaClCxE89Iga_HukBRLqp0RnX_MKe0_kRMOMxK84JO7y1DFyEf7kUcmug_4YvOl6cr7rCqDP6Qbasa8lyF3mUOqMHhw=&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=sMQVub3UVPi709MgKyniiJ79ODC3KCFRV10Zq5RZGXXIfHj6BnzFrn-E3M0m12TLotEiKyxahikirQYncVv4zCW0ZtQdfHiTYfEIFVPt8oIXQ23Tokv19roGS3t-Fr-9Tnnx4A0dALUfFdvhF6DN3lHC5M5oUdg2N-_TcfODVmk=&uniplatform=NZKPT",
 		"items": [
 			{
 				"itemType": "thesis",
@@ -2207,9 +2407,9 @@ var testCases = [
 						"fieldMode": 1
 					}
 				],
-				"date": "2017",
+				"date": "2015",
 				"abstractNote": "黄瓜(Cucumis sativus L.)是我国最大的保护地栽培蔬菜作物,也是植物性别发育和维管束运输研究的重要模式植物。黄瓜基因组序列图谱已经构建完成,并且在此基础上又完成了全基因组SSR标记开发和涵盖330万个变异位点变异组图谱,成为黄瓜功能基因研究的重要平台和工具,相关转录组研究也有很多报道,不过共表达网络研究还是空白。本实验以温室型黄瓜9930为研究对象,选取10个不同组织,进行转录组测序,获得10份转录组原始数据。在对原始数据去除接头与低质量读段后,将高质量读段用Tophat2回贴到已经发表的栽培黄瓜基因组序列上。用Cufflinks对回贴后的数据计算FPKM值,获得10份组织的24274基因的表达量数据。计算结果中的回贴率比较理想,不过有些基因的表达量过低。为了防止表达量低的基因对结果的影响,将10份组织中表达量最大小于5的基因去除,得到16924个基因,进行下一步分析。共表达网络的构建过程是将上步获得的表达量数据,利用R语言中WGCNA(weighted gene co-expression network analysis)包构建共表达网络。结果得到的共表达网络包括1134个模块。这些模块中的基因表达模式类似,可以认为是共表达关系。不过结果中一些模块内基因间相关性同其他模块相比比较低,在分析过程中,将模块中基因相关性平均值低于0.9的模块都去除,最终得到839个模块,一共11,844个基因。共表达的基因因其表达模式类似而聚在一起,这些基因可能与10份组织存在特异性关联。为了计算模块与组织间的相关性,首先要对每个模块进行主成分分析(principle component analysis,PCA),获得特征基因(module eigengene,ME),特征基因可以表示这个模块所有基因共有的表达趋势。通过计算特征基因与组织间的相关性,从而挑选出组织特异性模块,这些模块一共有323个。利用topGO功能富集分析的结果表明这些特异性模块所富集的功能与组织相关。共表达基因在染色体上的物理位置经常是成簇分布的。按照基因间隔小于25kb为标准。分别对839个模块进行分析,结果发现在71个模块中共有220个cluster,这些cluster 一般有2～5个基因,cluster中的基因在功能上也表现出一定的联系。共表达基因可能受到相同的转录调控,这些基因在启动子前2kb可能会存在有相同的motif以供反式作用元...",
-				"extra": "major: 生物化学与分子生物学\ndownload: 302\nalbum: 基础科学;农业科技\nCLC: S642.2;Q943.2\nCNKICite: 1\ndbcode: CMFD\ndbname: CMFD201701\nfilename: 1017045605.nh",
+				"extra": "major: 生物化学与分子生物学\ndownload: 306\nalbum: 基础科学;农业科技\nCLC: S642.2;Q943.2\ndbcode: CMFD\ndbname: CMFD201701\nfilename: 1017045605.nh",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"numPages": "69",
@@ -2243,7 +2443,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHj6Gayxo8L6fbVE09XgFLEEcf6cQsNi_FxXLO9nipcciMN3_FwQyLgo9ieYMdBGu1Xk6EqEYwRjsYZf3GvEVojk7uR6DhDX2ciH3OcSRfGpARqQ_BXkw_Mql2zaz0ybPTsvmw96vsDwsrfhocinx52z&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=sMQVub3UVPjLdnZQK0WmJ8u2192HTQIX3W_0-LF2_Hgj0ZNubzv0vrUbvuc58qkLIBNJXHzuM2ZwWyPsoZgrYAuZLhUAFADQPamzJwsK4-dXpgf_XtshP9fFt2D63LRNwTnGsg0OL3hHuBEkQaNFn3ocuvUjBH2s&uniplatform=NZKPT",
 		"items": [
 			{
 				"itemType": "thesis",
@@ -2263,8 +2463,8 @@ var testCases = [
 					}
 				],
 				"date": "2012",
-				"abstractNote": "随着微电子集成技术和组装技术的快速发展，电子元器件和逻辑电路的体积越来越小，而工作频率急剧增加，半导体的环境温度向高温方向变化，为保证电子元器件长时间可靠地正常工作，及时散热能力就成为其使用寿命长短的制约因素。高导热聚合物基复合材料在微电子、航空、航天、军事装备、电机电器等诸多制造业及高科技领域发挥着重要的作用。所以研制综合性能优异的高导热聚合物基复合材料成为了目前研究热点。本论文分别以氧化铝（Al<sub>2</sub>O<sub>3</sub>）、石墨烯和氮化硼（BN）纳米片为导热填料，以环氧树脂和聚偏氟乙烯（PVDF）为基体，制备了新型的高导热聚合物基复合材料。首先，采用两步法将超支化聚芳酰胺接枝到纳米Al<sub>2</sub>O<sub>3</sub>粒子表面：纳米颗粒先进行硅烷偶联剂处理引入氨基基团，在改性后的纳米粒子上接枝超支化聚合物；再利用X射线衍射、傅立叶红外光谱、核磁共振氢谱和热失重等方法对纳米Al<sub>2</sub>O<sub>3</sub>粒子的表面改性进行表征；然后分别将未改性的纳米Al<sub>2</sub>O<sub>3</sub>粒子、硅烷接枝的纳米Al<sub>2</sub>O<sub>3</sub>粒子（Al<sub>2</sub>O<sub>3</sub>-APS）和超支化聚芳酰胺接枝的纳米Al<sub>2</sub>O<sub>3</sub>粒子（Al<sub>2</sub>O<sub>3</sub>-HBP）与环氧树脂复合，并对三种复合材料的热性能和介电性能进行比较研究。结果表明：（1）从SEM、TEM和动态光散射的实验结果表明，三种纳米颗粒相比之下，Al<sub>2</sub>O<sub>3</sub>-HBP纳米粒子在有机溶剂乙醇和环氧树脂中显示出最好的分散性。（2）三种复合材料的导热系数都是随着纳米颗粒含量的增加而增大；在添加相同含量的纳米颗粒时，其导热系数遵循着如下的规律：环氧树脂/Al<sub>2</sub>O<sub>3</sub>-HBP复合材料>环氧树脂/Al<sub>2</sub>O<sub>3</sub>-APS复合材料>环氧树脂/Al<sub>2</sub>O<sub>3</sub>复合材料。而且从DSC、TGA和DMA的实验结果可以得出，与未改性Al<sub>2</sub>O<sub>3</sub>和Al<sub>2</sub>O<s...",
-				"extra": "major: 材料学\nfoundation: 国家自然基金；\ndownload: 15299\nalbum: 工程科技Ⅰ辑\nCLC: TB332\nCNKICite: 197\ndbcode: CDFD\ndbname: CDFD1214\nfilename: 1012034749.nh",
+				"abstractNote": "随着微电子集成技术和组装技术的快速发展，电子元器件和逻辑电路的体积越来越小，而工作频率急剧增加，半导体的环境温度向高温方向变化，为保证电子元器件长时间可靠地正常工作，及时散热能力就成为其使用寿命长短的制约因素。高导热聚合物基复合材料在微电子、航空、航天、军事装备、电机电器等诸多制造业及高科技领域发挥着重要的作用。所以研制综合性能优异的高导热聚合物基复合材料成为了目前研究热点。本论文分别以氧化铝（Al_2O_3）、石墨烯和氮化硼（BN）纳米片为导热填料，以环氧树脂和聚偏氟乙烯（PVDF）为基体，制备了新型的高导热聚合物基复合材料。首先，采用两步法将超支化聚芳酰胺接枝到纳米Al_2O_3粒子表面：纳米颗粒先进行硅烷偶联剂处理引入氨基基团，在改性后的纳米粒子上接枝超支化聚合物；再利用X射线衍射、傅立叶红外光谱、核磁共振氢谱和热失重等方法对纳米Al_2O_3粒子的表面改性进行表征；然后分别将未改性的纳米Al_2O_3粒子、硅烷接枝的纳米Al_2O_3粒子(Al_2O_3-APS)和超支化聚芳酰胺接枝的纳米Al_2O_3粒子(Al_2O_3-HBP)与环氧树脂复合，并对三种复合材料的热性能和介电性能进行比较研究。结果表明：(1)从SEM、TEM和动态光散射的实验结果表明，三种纳米颗粒相比之下，Al_2O_3-HBP纳米粒子在有机溶剂乙醇和环氧树脂中显示出最好的分散性。(2)三种复合材料的导热系数都是随着纳米颗粒含量的增加而增大；在添加相同含量的纳米颗粒时，其导热系数遵循着如下的规律：环氧树脂/Al_2O_3-HBP复合材料>环氧树脂/Al_2O_3-APS复合材料>环氧树脂/Al_2O_3复合材料。而且从DSC、TGA和DMA的实验结果可以得出，与未改性Al_2O_3和Al_2O_3-APS纳米颗粒相比，添加Al_2O_3-HBP纳米颗粒能很好提高复合材料的耐热性。(3)对三种复合材料的介电性能（体积电阻率、介电常数、介电损耗和击穿强度）的研究比较发现，环氧树脂/Al_2O_3-HBP复合材料显示出优异的综合介电性能。其次，采用改进的Hummers法和超声剥离法制备氧化石墨烯，再使用热还原的方法制备石墨烯。系统地研究了石墨烯含量对PVDF复合材料的导热、热稳定和介电性能的影响，阐述了其石墨烯提高PVDF复合材料的导热性能的机理；最后还研究了低石墨烯掺量下对PVDF复合材料热稳定、动态热力学、结晶行为、透...",
+				"extra": "major: 材料学\nfoundation: 国家自然基金;；\ndownload: 15683\nalbum: 工程科技Ⅰ辑\nCLC: TB332\ndbcode: CDFD\ndbname: CDFD1214\nfilename: 1012034749.nh",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"numPages": "148",
@@ -2310,7 +2510,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHh5T13ZNlvftCS5W7lFLaFxrjyYI6gVOQP3L5rywG5-Di5tsOpbfZTa5CCqJefAfcM_Ayf-FEXB3lj67b9ruzE7Ps14A5QcB2pTnsLUd5fkowwl0uVTMz6cnj4o2RA_OAAxz-UyrZx6cDEOWCk81A50aEHZX0w_isQ=&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=sMQVub3UVPigDNftdOsKqRLYk606CWR4iKpMAydUwHAvlH8L01z2V5V5PNgdjglAwSLEPF8heJUfvw8Bcywfp-HkXBqojIwPInE3MrVQq2SJNY1TcrUVDCWowJRGRmuR9uaHzlD2ZaFsDG7crRtb-u3iPVCCs4vjZfe9H4K15f4=&uniplatform=NZKPT",
 		"items": [
 			{
 				"itemType": "conferencePaper",
@@ -2332,13 +2532,12 @@ var testCases = [
 				"date": "1991-09",
 				"abstractNote": "辽西区的范围从大兴安岭南缘到渤海北岸,西起燕山西段,东止辽河平原,基本上包括内蒙古的赤峰市(原昭乌达盟)、哲里木盟西半部,辽宁省西部和河北省的承德、唐山、廊坊及其邻近的北京、天津等地区。这一地区的古人类遗存自旧石器时代晚期起,就与同属东北的辽东区有着明显的不同,在后来的发展中,构成自具特色的一个考古学文化区,对我国东北部起过不可忽视的作用。以下就辽西地区新石器时代的考古学文化序列、编年、谱系及有关问题简要地谈一下自己的认识。",
 				"conferenceName": "内蒙古东部地区考古学术研讨会",
-				"extra": "organizer: 中国社会科学院考古研究所、内蒙古文物考古研究所、赤峰市文化局\ndownload: 605\nalbum: 哲学与人文科学\nCLC: K872\nCNKICite: 56\ndbcode: CPFD\ndbname: CPFD9908\nfilename: OYDD199010001004",
+				"extra": "organizer: 中国社会科学院考古研究所、内蒙古文物考古研究所、赤峰市文化局\ndownload: 638\nalbum: 哲学与人文科学\nCLC: K872\ndbcode: CPFD\ndbname: CPFD9908\nfilename: OYDD199010001004",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
-				"pages": "6",
+				"pages": "6, 13-18",
 				"place": "中国内蒙古赤峰",
 				"proceedingsTitle": "内蒙古东部区考古学文化研究文集",
-				"publisher": "海洋出版社",
 				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CPFD&dbname=CPFD9908&filename=OYDD199010001004",
 				"attachments": [
 					{
@@ -2388,11 +2587,11 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHjJaaUXP2deH7u_E6LIrSZ0d44EaLI0f3uWzHlCytIWirQ-FCMuNtBAfvbqDp9yvzokQinx4AbvzT3uDxBFFavqHMeUGqHrChnRn04dOgGEcnL6EjkjBxbzF_tujbFoNmdpq4qJY17KLP60V3meZEujQ2HtF9Ul4cE=&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=8oX70opUeL9Sz6TMDobD54WY2iAv_7oc4EzA0EtCVBtRKS8rH086TmPI_zoEuk0Sr2lJdMsuSEk7qtwhzrhB-jyr-kbcD2lK7S0Xf1-kwkX7ulr9ql3sLhOB-EabHSGkMhP4xipN26g1xB7z7bd4XfVID9f5PVTJ0h4Py2oxZg8=&uniplatform=NZKPT",
 		"items": [
 			{
 				"itemType": "newspaperArticle",
-				"title": "灭绝物种RNA首次分离测序",
+				"title": "灭绝物种RNA首次分离测序：为复活物种或研究RNA病毒开创新方向",
 				"creators": [
 					{
 						"firstName": "",
@@ -2403,12 +2602,13 @@ var testCases = [
 				],
 				"date": "2023-09-21",
 				"abstractNote": "科技日报北京9月20日电 （记者刘霞）瑞典国家分子生物科学中心科学家首次分离和测序了一个已灭绝物种的RNA分子，从而重建了该灭绝物种（塔斯马尼亚虎）的皮肤和骨骼肌转录组。该项成果对复活塔斯马尼亚虎和毛猛犸象等灭绝物种，以及研究如新冠病毒等RNA病毒具有重要意义。相......",
-				"extra": "DOI: 10.28502/n.cnki.nkjrb.2023.005521\ndownload: 19\nalbum: 基础科学\nCLC: Q343.1\nCNKICite: 0\ndbcode: CCND\ndbname: CCNDLAST2023\nfilename: KJRB202309210044",
+				"extra": "DOI: 10.28502/n.cnki.nkjrb.2023.005521\nalbum: 基础科学\nCLC: Q343.1\ndbcode: CCND\ndbname: CCNDLAST2023\nfilename: KJRB202309210044",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "4",
 				"publicationTitle": "科技日报",
-				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CCND&dbname=CCNDLAST2023&filename=KJRB202309210044",
+				"shortTitle": "灭绝物种RNA首次分离测序",
+				"url": "https://link.cnki.net/doi/10.28502/n.cnki.nkjrb.2023.005521",
 				"attachments": [
 					{
 						"title": "Full Text PDF",
@@ -2430,7 +2630,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHhYwfUOQkiiROc25goQviQYf_8e6_V0gRtSy-IOCOv-RtNJKQRSWFe_2aQ9FUrPSbZgyTHJcSQltSFIucYSN5-E8Lt2bZqQORfiheWS7osCintOXKh_V0nNfmqtUxSC3_Q=&uniplatform=NZKPT",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=sMQVub3UVPh-Ko_j7TrAPDx9LWbcQaN5YkzQpO6PAqVJLgbmo5o3J7ksKEqqsQZN6P0YxslnWf9-Gr-_3iIVf99dBJvHvgEzhnLw4lywSVBekJFTwDz2wqrZLwSW-z_kmRUw8_wZEfE=&uniplatform=NZKPT",
 		"items": [
 			{
 				"itemType": "bookSection",
@@ -2443,14 +2643,12 @@ var testCases = [
 						"fieldMode": 1
 					}
 				],
-				"ISBN": "9787514445008",
 				"bookTitle": "山西年鉴",
-				"extra": "original-container-title: SHAN XI YEARBOOK\nDOI: 10.41842/y.cnki.ysxnj.2022.000050\ndownload: 24\nCLC: Z9\nCNKICite: 0\ndbcode: CYFD\ndbname: CYFD2022\nfilename: N2022040061000062",
+				"extra": "DOI: 10.41842/y.cnki.ysxnj.2022.000050\ndownload: 26\nCLC: Z9\ndbcode: CYFD\ndbname: CYFD2022\nfilename: N2022040061000062",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"pages": "6-23",
-				"publisher": "方志出版社",
-				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=CYFD&dbname=CYFD2022&filename=N2022040061000062",
+				"url": "https://link.cnki.net/doi/10.41842/y.cnki.ysxnj.2022.000050",
 				"attachments": [
 					{
 						"title": "Full Text PDF",
@@ -2474,7 +2672,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHirgXoXDiPipUsry_6qazwhXD76CAFEYQF73bknVpNZIYVKvgGFkNOjQcggV_UucsN4sQAWPUq4iPYlCrFtL8pcd4mcdRyaQLwwy71gJGFhCZ_erWb3f_AMQvR8thZJNEvdh__gjbT_iA==&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=sMQVub3UVPiG5mbP5BFYgsf2GVM4Pb3FAJPTQmmkT0VLgqYEWZjuffqXQSO25fYGRR6b8ap_q6BUEx9SorUDJIFGfoVhymByxCHw0NUHnC7Tgk_wHttZ89pJUbGhe_8Uw_i-UKZZWukatGvVDO884g==&uniplatform=NZKPT",
 		"items": [
 			{
 				"itemType": "patent",
@@ -2523,9 +2721,10 @@ var testCases = [
 				"extra": "Genre: 发明公开\nalbum: 工程科技Ⅰ辑\nCLC: B22D13/02\ndbcode: SCPD\ndbname: SCPD0407\nfilename: CN101091984",
 				"filingDate": "2007-08-03",
 				"language": "zh-CN",
+				"pages": "6",
 				"patentNumber": "CN101091984",
 				"place": "中国",
-				"rights": "1.不锈钢管的制造方法,其特征是包括下述步骤：①、将不锈钢液 在熔炼炉中进行熔炼；②、不锈钢液熔清后进行去渣及脱氧处理；③、将不锈钢液浇入旋转 的离心浇铸机型筒中进行离心浇铸后在离心力作用下冷却凝固成型为不锈钢管坯料。",
+				"rights": "1.不锈钢管的制造方法,其特征是包括下述步骤：①、将不锈钢液\n\n\n\n在熔炼炉中进行熔炼；②、不锈钢液熔清后进行去渣及脱氧处理；③、将不锈钢液浇入旋转\n\n\n\n的离心浇铸机型筒中进行离心浇铸后在离心力作用下冷却凝固成型为不锈钢管坯料。",
 				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=SCPD&dbname=SCPD0407&filename=CN101091984",
 				"attachments": [
 					{
@@ -2545,7 +2744,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHisDDh3Jbev6bLKM4uZ4zdkHhUKUvu33K3UKhirS0mZ6_0I3ccNw8wZCZpNtFIu56hjZb3BAgFWF9mo2OZ6ZgiV_wB6SBonTcIav-nIFXbZzV1agS7F6sL4YtGYiK6XmR11KS0DBHQb1A==&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=sMQVub3UVPhUJgjC7Qa3I7KM9s9y0tpUeTk1TET0hGqCKwXmGEGJN6c25phYC4UVUOKqFs3LEMuE9HV0i_Q1tfpzYj_mbePzidRWSnNm2iIFBLqthVpUEGEhIrGePFl7zmn7dmm_nEgoIrEN2-lbjg==&uniplatform=NZKPT",
 		"items": [
 			{
 				"itemType": "standard",
@@ -2559,14 +2758,19 @@ var testCases = [
 					}
 				],
 				"date": "2019-05-10",
-				"extra": "applyDate: 2019-12-01\noriginal-title: Inspection of grain and oils—Swelling properties test of wheat flour\nalbum: 工程科技Ⅰ辑\nCLC: X04 食品-食品综合-基础标准与通用方法\nCNKICite: 0\ndbcode: SCSF\ndbname: SCSF\nfilename: SCSF00058274",
+				"extra": "applyDate: 2019-12-01\noriginal-title: Inspection of grain and oils—Swelling properties test of wheat flour\nalbum: 工程科技Ⅰ辑\nCLC: X04 食品-食品综合-基础标准与通用方法\ndbcode: SCSF\ndbname: SCSF\nfilename: SCSF00058274",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"numPages": "16",
 				"number": "GB/T 37510—2019",
 				"status": "现行",
-				"url": "https://kns.cnki.net/KCMS/detail/detail.aspx?dbcode=SCSF&dbname=SCSF&filename=SCSF00058274",
-				"attachments": [],
+				"url": "https://kns.cnki.net/kcms2/article/abstract?v=sMQVub3UVPiowb17CydvU4D0OeNa6fUyv5OBL9DI3IKZep1tneGNFO3SiqiJX0C9QI46GsqnSbarj1Gh0nDUorgpzMyC9aHtNzSNNHSigLTtPdNmeAnZKPRSou_UYz4QUozez_3W_ZMjhu22CZrxYcr0-DCeyvHXObqSHurt7Ym8NNqaBc_J_5jesB75KM3I&uniplatform=NZKPT&language=CHS",
+				"attachments": [
+					{
+						"title": "Full Text CAJ",
+						"mimeType": "application/caj"
+					}
+				],
 				"tags": [
 					{
 						"tag": "粮油检验"
@@ -2579,7 +2783,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHhIQnFHOAYBu_AWGLk-KxuOPHbIodNrllD3-G2sYVXgNLca6cAArRjysadqkuvXTnpLHgWov1Ov0nhTWE2pFTviopsk0NyAZtsRNq3bJJ83cUMRAiJpniProBQx_Wnrc2DKmM5biiR49YDIiMElHUvq&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=sMQVub3UVPgHKxUaqGeje4eBG31tefk-g1t1m5K2GD2Nmt1rgXe195otbojRwrL97hQfCLDwMAHfQn9e5Kj_RsCw59sBjBTrO_v5cPjiBVTrkpabiEDeTzlvU4yvtFZ2GdCMFb5eu9_BJDOUH39JWseZru4qhhB9&uniplatform=NZKPT",
 		"items": [
 			{
 				"itemType": "report",
@@ -2714,7 +2918,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHhA4oXrQG6Lpqx_vq6kcgTNS4oD2bJVzODP7EqGXfjDg5WMeS8mhDO1sk3y2zLje6VBtd3YG_W67GdiRgsXDLA4u0D1tgwJqvyykWK1VEnTor88f6t5NF_tBrPfve4_5t-rW5QQFp6-Fw==&uniplatform=NZKPT&language=CHS",
+		"url": "https://kns.cnki.net/kcms2/article/abstract?v=sMQVub3UVPiU0UZfLTdyfrPRSQiI4UbF8G-kxDspb8r4gBh2WY2zIfacmt1UliZdUVXJHOLplkC7UXsu94MxnAHopj7BIhIxmu2yL8YraQ6F6TnWewIC1X5SZDx1zPubVXqEjhpmEIXjY6pU9XMWxA==&uniplatform=NZKPT",
 		"items": [
 			{
 				"itemType": "videoRecording",
@@ -2734,8 +2938,8 @@ var testCases = [
 					}
 				],
 				"date": "2020-07-23",
-				"abstractNote": "【中国资本市场50人论坛携手中国知网联合出品】 议 程 贾 康 华夏新供给经济学研究院 院长 财政部原财政科学研究所所长 贺 铿 北京民营经济发展促进会会长 十一届全国人大常委、财经委员会副主任 九三学社第十二届中央委员会副主席 王广宇 华夏新供给经济学研究院 理事长 华软资本创始人、董事长 孔泾源 北京民营经济发展促进会理事长 国家发展改革委经济体制综合改革司原司长 姚余栋 大成基金副总经理 兼 首席经济学家 中国 人民银行金融研究所 前 所长 魏加宁 国务院发展研究中心宏观研究部 研究员 中国新供给经济学 50 人论坛成员 黄剑辉 华夏新供给经济学研究院 首席经济学家 中国 民生银行研究院院长 冯俏彬 华夏新供给经济学研究院学术委员会委员 ……",
-				"extra": "organizer: 中国资本市场50人论坛; 中国知网;\ndbcode: CCVD\ndbname: CCVD\nfilename: 542618070256",
+				"abstractNote": "【中国资本市场50人论坛携手中国知网联合出品】 议 程 更多 还原",
+				"extra": "organizer: 中国资本市场50人论坛;中国知网\ndbcode: CCVD\ndbname: CCVD\nfilename: 542618070256",
 				"language": "zh-CN",
 				"libraryCatalog": "CNKI",
 				"runningTime": "03:46:14",
@@ -2768,35 +2972,6 @@ var testCases = [
 		"type": "web",
 		"url": "https://kns.cnki.net/kns/search?dbcode=SCDB",
 		"items": "multiple"
-	},
-	{
-		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=S8jPpdFxNHiery8DXkT083oAvbAx9rgOEcigOFI2MZ_13Vw2PvRBKFn_YSqpi2fcEeJvp73BHlsXABqmXA-6JrgNRrOobwH-TLFr-W-2HLJmq-79RHQxS-bYacMxTadx9jyVX3P1Qojx90fWItiKLTJOEp94azAwKweOUqGKlPFS2Rzm8OTCSg==&uniplatform=NZKPT&language=CHS",
-		"items": [
-			{
-				"itemType": "book",
-				"title": "IMF Terminology Bulletin:Climate &amp; the Environment, Fintech, Gender, and Related Acronyms: English to Arabic",
-				"creators": [],
-				"date": "10/2023",
-				"ISBN": "9798400251245",
-				"extra": "DOI: 10.5089/9798400251245.073",
-				"language": "ar",
-				"libraryCatalog": "DOI.org (Crossref)",
-				"place": "Washington, D.C.",
-				"publisher": "International Monetary Fund",
-				"shortTitle": "IMF Terminology Bulletin",
-				"url": "https://elibrary.imf.org/openurl?genre=book&isbn=9798400251245&cid=537460-com-dsp-crossref",
-				"attachments": [
-					{
-						"title": "Snapshot",
-						"mimeType": "text/html"
-					}
-				],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
 	}
 ]
 /** END TEST CASES **/

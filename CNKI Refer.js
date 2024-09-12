@@ -8,7 +8,7 @@
 	"priority": 99,
 	"inRepository": true,
 	"translatorType": 1,
-	"lastUpdated": "2024-06-14 12:45:46"
+	"lastUpdated": "2024-09-12 07:27:03"
 }
 
 /*
@@ -62,7 +62,7 @@ async function doImport() {
 	translator.setHandler('itemDone', (_obj, item) => {
 		const extra = new Extra();
 		Z.debug(item.itemType);
-		if (/年鉴/.test(item.type)) {
+		if (/年鉴|年鑒/.test(item.type)) {
 			item.itemType = 'bookSection';
 			item.date = ZU.strToISO(item.date);
 			delete item.type;
@@ -109,7 +109,7 @@ async function doImport() {
 					extra.set('Genre', item.type, true);
 				}
 				delete item.type;
-				item.place = patentCountry(item.patentNumber);
+				item.place = patentCountry(item.patentNumber, item.language);
 				item.country = item.place;
 				break;
 			case 'statute':
@@ -249,14 +249,6 @@ class Extra {
 	}
 }
 
-/**
- * Attempts to get the part of the pattern described from the character,
- * and returns an empty string if not match.
- * @param {String} string
- * @param {RegExp} pattern
- * @param {Number} index
- * @returns
- */
 function tryMatch(string, pattern, index = 0) {
 	if (!string) return '';
 	let match = string.match(pattern);
@@ -265,17 +257,196 @@ function tryMatch(string, pattern, index = 0) {
 		: '';
 }
 
-function patentCountry(idNumber) {
-	return {
-		AD: '安道尔', AE: '阿拉伯联合酋长国', AF: '阿富汗', AG: '安提瓜和巴布达', AI: '安圭拉', AL: '阿尔巴尼亚', AM: '亚美尼亚', AN: '菏属安的列斯群岛', AO: '安哥拉', AR: '阿根廷', AT: '奥地利', AU: '澳大利亚', AW: '阿鲁巴', AZ: '阿塞拜疆', BB: '巴巴多斯', BD: '孟加拉国', BE: '比利时', BF: '布莱基纳法索', BG: '保加利亚', BH: '巴林', BI: '布隆迪', BJ: '贝宁', BM: '百慕大', BN: '文莱', BO: '玻利维亚', BR: '巴西', BS: '巴哈马', BT: '不丹', BU: '缅甸', BW: '博茨瓦纳', BY: '白俄罗斯', BZ: '伯利兹', CA: '加拿大', CF: '中非共和国', CG: '刚果', CH: '瑞士', CI: '科特迪瓦', CL: '智利', CM: '喀麦隆', CN: '中国', CO: '哥伦比亚', CR: '哥斯达黎加', CS: '捷克斯洛伐克', CU: '古巴', CV: '怫得角', CY: '塞浦路斯',
-		DE: '联邦德国', DJ: '吉布提', DK: '丹麦', DM: '多米尼加岛', DO: '多米尼加共和国', DZ: '阿尔及利亚', EC: '厄瓜多尔', EE: '爱沙尼亚', EG: '埃及', EP: '欧洲专利局', ES: '西班牙', ET: '埃塞俄比亚', FI: '芬兰', FJ: '斐济', FK: '马尔维纳斯群岛', FR: '法国',
-		GA: '加蓬', GB: '英国', GD: '格林那达', GE: '格鲁吉亚', GH: '加纳', GI: '直布罗陀', GM: '冈比亚', GN: '几内亚', GQ: '赤道几内亚', GR: '希腊', GT: '危地马拉', GW: '几内亚比绍', GY: '圭亚那', HK: '香港', HN: '洪都拉斯', HR: '克罗地亚', HT: '海地', HU: '匈牙利', HV: '上沃尔特', ID: '印度尼西亚', IE: '爱尔兰', IL: '以色列', IN: '印度', IQ: '伊拉克', IR: '伊朗', IS: '冰岛', IT: '意大利',
-		JE: '泽西岛', JM: '牙买加', JO: '约旦', JP: '日本', KE: '肯尼亚', KG: '吉尔吉斯', KH: '柬埔寨', KI: '吉尔伯特群岛', KM: '科摩罗', KN: '圣克里斯托夫岛', KP: '朝鲜', KR: '韩国', KW: '科威特', KY: '开曼群岛', KZ: '哈萨克', LA: '老挝', LB: '黎巴嫩', LC: '圣卢西亚岛', LI: '列支敦士登', LK: '斯里兰卡', LR: '利比里亚', LS: '莱索托', LT: '立陶宛', LU: '卢森堡', LV: '拉脱维亚', LY: '利比亚',
-		MA: '摩洛哥', MC: '摩纳哥', MD: '莫尔多瓦', MG: '马达加斯加', ML: '马里', MN: '蒙古', MO: '澳门', MR: '毛里塔尼亚', MS: '蒙特塞拉特岛', MT: '马耳他', MU: '毛里求斯', MV: '马尔代夫', MW: '马拉维', MX: '墨西哥', MY: '马来西亚', MZ: '莫桑比克', NA: '纳米比亚', NE: '尼日尔', NG: '尼日利亚', NH: '新赫布里底', NI: '尼加拉瓜', NL: '荷兰', NO: '挪威', NP: '尼泊尔', NR: '瑙鲁', NZ: '新西兰', OA: '非洲知识产权组织', OM: '阿曼',
-		PA: '巴拿马', PC: 'PCT', PE: '秘鲁', PG: '巴布亚新几内亚', PH: '菲律宾', PK: '巴基斯坦', PL: '波兰', PT: '葡萄牙', PY: '巴拉圭', QA: '卡塔尔', RO: '罗马尼亚', RU: '俄罗斯联邦', RW: '卢旺达',
-		SA: '沙特阿拉伯', SB: '所罗门群岛', SC: '塞舌尔', SD: '苏丹', SE: '瑞典', SG: '新加坡', SH: '圣赫勒拿岛', SI: '斯洛文尼亚', SL: '塞拉利昂', SM: '圣马利诺', SN: '塞内加尔', SO: '索马里', SR: '苏里南', ST: '圣多美和普林西比岛', SU: '苏联', SV: '萨尔瓦多', SY: '叙利亚', SZ: '斯威士兰', TD: '乍得', TG: '多哥', TH: '泰国', TJ: '塔吉克', TM: '土库曼', TN: '突尼斯', TO: '汤加', TR: '土耳其', TT: '特立尼达和多巴哥', TV: '图瓦卢', TZ: '坦桑尼亚', UA: '乌克兰', UG: '乌干达', US: '美国', UY: '乌拉圭', UZ: '乌兹别克',
-		VA: '梵蒂冈', VC: '圣文森特岛和格林纳达', VE: '委内瑞拉', VG: '维尔京群岛', VN: '越南', VU: '瓦努阿图', WO: '世界知识产权组织', WS: '萨摩亚', YD: '民主也门', YE: '也门', YU: '南斯拉夫', ZA: '南非', ZM: '赞比亚', ZR: '扎伊尔', ZW: '津巴布韦'
-	}[idNumber.substring(0, 2).toUpperCase()] || '';
+function patentCountry(idNumber, lang = 'zh-CN') {
+	/* eslint-disable camelcase */
+	const country = {
+		AD: { zh_CN: '安道尔', en_US: 'Andorra', zh_TW: '安道爾' },
+		AE: { zh_CN: '阿拉伯联合酋长国', en_US: 'United Arab Emirates', zh_TW: '阿拉伯聯合酋長國' },
+		AF: { zh_CN: '阿富汗', en_US: 'Afghanistan', zh_TW: '阿富汗' },
+		AG: { zh_CN: '安提瓜和巴布达', en_US: 'Antigua and Barbuda', zh_TW: '安提瓜和巴布達' },
+		AI: { zh_CN: '安圭拉', en_US: 'Anguilla', zh_TW: '安圭拉' },
+		AL: { zh_CN: '阿尔巴尼亚', en_US: 'Albania', zh_TW: '阿爾巴尼亞' },
+		AM: { zh_CN: '亚美尼亚', en_US: 'Armenia', zh_TW: '亞美尼亞' },
+		AN: { zh_CN: '荷属安的列斯群岛', en_US: 'Netherlands Antilles', zh_TW: '荷屬安的列斯群島' },
+		AO: { zh_CN: '安哥拉', en_US: 'Angola', zh_TW: '安哥拉' },
+		AR: { zh_CN: '阿根廷', en_US: 'Argentina', zh_TW: '阿根廷' },
+		AT: { zh_CN: '奥地利', en_US: 'Austria', zh_TW: '奧地利' },
+		AU: { zh_CN: '澳大利亚', en_US: 'Australia', zh_TW: '澳大利亞' },
+		AW: { zh_CN: '阿鲁巴', en_US: 'Aruba', zh_TW: '阿魯巴' },
+		AZ: { zh_CN: '阿塞拜疆', en_US: 'Azerbaijan', zh_TW: '亞塞拜然' },
+		BB: { zh_CN: '巴巴多斯', en_US: 'Barbados', zh_TW: '巴貝多' },
+		BD: { zh_CN: '孟加拉国', en_US: 'Bangladesh', zh_TW: '孟加拉' },
+		BE: { zh_CN: '比利时', en_US: 'Belgium', zh_TW: '比利時' },
+		BF: { zh_CN: '布基纳法索', en_US: 'Burkina Faso', zh_TW: '布基納法索' },
+		BG: { zh_CN: '保加利亚', en_US: 'Bulgaria', zh_TW: '保加利亞' },
+		BH: { zh_CN: '巴林', en_US: 'Bahrain', zh_TW: '巴林' },
+		BI: { zh_CN: '布隆迪', en_US: 'Burundi', zh_TW: '布隆迪' },
+		BJ: { zh_CN: '贝宁', en_US: 'Benin', zh_TW: '貝寧' },
+		BM: { zh_CN: '百慕大', en_US: 'Bermuda', zh_TW: '百慕達' },
+		BN: { zh_CN: '文莱', en_US: 'Brunei', zh_TW: '汶萊' },
+		BO: { zh_CN: '玻利维亚', en_US: 'Bolivia', zh_TW: '玻利維亞' },
+		BR: { zh_CN: '巴西', en_US: 'Brazil', zh_TW: '巴西' },
+		BS: { zh_CN: '巴哈马', en_US: 'Bahamas', zh_TW: '巴哈馬' },
+		BT: { zh_CN: '不丹', en_US: 'Bhutan', zh_TW: '不丹' },
+		BW: { zh_CN: '博茨瓦纳', en_US: 'Botswana', zh_TW: '波札那' },
+		BY: { zh_CN: '白俄罗斯', en_US: 'Belarus', zh_TW: '白俄羅斯' },
+		BZ: { zh_CN: '伯利兹', en_US: 'Belize', zh_TW: '貝里斯' },
+		CA: { zh_CN: '加拿大', en_US: 'Canada', zh_TW: '加拿大' },
+		CF: { zh_CN: '中非共和国', en_US: 'Central African Republic', zh_TW: '中非共和國' },
+		CG: { zh_CN: '刚果', en_US: 'Congo', zh_TW: '剛果' },
+		CH: { zh_CN: '瑞士', en_US: 'Switzerland', zh_TW: '瑞士' },
+		CI: { zh_CN: '科特迪瓦', en_US: "Côte d'Ivoire", zh_TW: '科特迪瓦' },
+		CL: { zh_CN: '智利', en_US: 'Chile', zh_TW: '智利' },
+		CM: { zh_CN: '喀麦隆', en_US: 'Cameroon', zh_TW: '喀麥隆' },
+		CN: { zh_CN: '中国', en_US: 'China', zh_TW: '中國' },
+		CO: { zh_CN: '哥伦比亚', en_US: 'Colombia', zh_TW: '哥倫比亞' },
+		CR: { zh_CN: '哥斯达黎加', en_US: 'Costa Rica', zh_TW: '哥斯達黎加' },
+		CU: { zh_CN: '古巴', en_US: 'Cuba', zh_TW: '古巴' },
+		CV: { zh_CN: '佛得角', en_US: 'Cape Verde', zh_TW: '佛得角' },
+		CY: { zh_CN: '塞浦路斯', en_US: 'Cyprus', zh_TW: '塞浦路斯' },
+		DE: { zh_CN: '德国', en_US: 'Germany', zh_TW: '德國' },
+		DJ: { zh_CN: '吉布提', en_US: 'Djibouti', zh_TW: '吉布提' },
+		DK: { zh_CN: '丹麦', en_US: 'Denmark', zh_TW: '丹麥' },
+		DM: { zh_CN: '多米尼克', en_US: 'Dominica', zh_TW: '多米尼克' },
+		DO: { zh_CN: '多米尼加共和国', en_US: 'Dominican Republic', zh_TW: '多明尼加共和國' },
+		DZ: { zh_CN: '阿尔及利亚', en_US: 'Algeria', zh_TW: '阿爾及利亞' },
+		EC: { zh_CN: '厄瓜多尔', en_US: 'Ecuador', zh_TW: '厄瓜多爾' },
+		EE: { zh_CN: '爱沙尼亚', en_US: 'Estonia', zh_TW: '愛沙尼亞' },
+		EG: { zh_CN: '埃及', en_US: 'Egypt', zh_TW: '埃及' },
+		EP: { zh_CN: '欧洲专利局', en_US: 'European Patent Office', zh_TW: '歐洲專利局' },
+		ES: { zh_CN: '西班牙', en_US: 'Spain', zh_TW: '西班牙' },
+		ET: { zh_CN: '埃塞俄比亚', en_US: 'Ethiopia', zh_TW: '衣索比亞' },
+		FI: { zh_CN: '芬兰', en_US: 'Finland', zh_TW: '芬蘭' },
+		FJ: { zh_CN: '斐济', en_US: 'Fiji', zh_TW: '斐濟' },
+		FK: { zh_CN: '福克兰群岛', en_US: 'Falkland Islands', zh_TW: '福克蘭群島' },
+		FR: { zh_CN: '法国', en_US: 'France', zh_TW: '法國' },
+		GA: { zh_CN: '加蓬', en_US: 'Gabon', zh_TW: '加彭' },
+		GB: { zh_CN: '英国', en_US: 'United Kingdom', zh_TW: '英國' },
+		GD: { zh_CN: '格林纳达', en_US: 'Grenada', zh_TW: '格林納達' },
+		GE: { zh_CN: '格鲁吉亚', en_US: 'Georgia', zh_TW: '格魯吉亞' },
+		GH: { zh_CN: '加纳', en_US: 'Ghana', zh_TW: '迦納' },
+		GI: { zh_CN: '直布罗陀', en_US: 'Gibraltar', zh_TW: '直布羅陀' },
+		GM: { zh_CN: '冈比亚', en_US: 'Gambia', zh_TW: '甘比亞' },
+		GN: { zh_CN: '几内亚', en_US: 'Guinea', zh_TW: '幾內亞' },
+		GQ: { zh_CN: '赤道几内亚', en_US: 'Equatorial Guinea', zh_TW: '赤道幾內亞' },
+		GR: { zh_CN: '希腊', en_US: 'Greece', zh_TW: '希臘' },
+		GT: { zh_CN: '危地马拉', en_US: 'Guatemala', zh_TW: '瓜地馬拉' },
+		GW: { zh_CN: '几内亚比绍', en_US: 'Guinea-Bissau', zh_TW: '幾內亞比索' },
+		GY: { zh_CN: '圭亚那', en_US: 'Guyana', zh_TW: '蓋亞那' },
+		HK: { zh_CN: '香港特别行政区', en_US: 'Hong Kong', zh_TW: '香港' },
+		HN: { zh_CN: '洪都拉斯', en_US: 'Honduras', zh_TW: '宏都拉斯' },
+		HR: { zh_CN: '克罗地亚', en_US: 'Croatia', zh_TW: '克羅埃西亞' },
+		HT: { zh_CN: '海地', en_US: 'Haiti', zh_TW: '海地' },
+		HU: { zh_CN: '匈牙利', en_US: 'Hungary', zh_TW: '匈牙利' },
+		ID: { zh_CN: '印度尼西亚', en_US: 'Indonesia', zh_TW: '印尼' },
+		IE: { zh_CN: '爱尔兰', en_US: 'Ireland', zh_TW: '愛爾蘭' },
+		IL: { zh_CN: '以色列', en_US: 'Israel', zh_TW: '以色列' },
+		IN: { zh_CN: '印度', en_US: 'India', zh_TW: '印度' },
+		IQ: { zh_CN: '伊拉克', en_US: 'Iraq', zh_TW: '伊拉克' },
+		IR: { zh_CN: '伊朗', en_US: 'Iran', zh_TW: '伊朗' },
+		IS: { zh_CN: '冰岛', en_US: 'Iceland', zh_TW: '冰島' },
+		IT: { zh_CN: '意大利', en_US: 'Italy', zh_TW: '義大利' },
+		JM: { zh_CN: '牙买加', en_US: 'Jamaica', zh_TW: '牙買加' },
+		JO: { zh_CN: '约旦', en_US: 'Jordan', zh_TW: '約旦' },
+		JP: { zh_CN: '日本', en_US: 'Japan', zh_TW: '日本' },
+		KE: { zh_CN: '肯尼亚', en_US: 'Kenya', zh_TW: '肯亞' },
+		KG: { zh_CN: '吉尔吉斯斯坦', en_US: 'Kyrgyzstan', zh_TW: '吉爾吉斯' },
+		KH: { zh_CN: '柬埔寨', en_US: 'Cambodia', zh_TW: '柬埔寨' },
+		KI: { zh_CN: '基里巴斯', en_US: 'Kiribati', zh_TW: '基里巴斯' },
+		KM: { zh_CN: '科摩罗', en_US: 'Comoros', zh_TW: '科摩羅' },
+		KN: { zh_CN: '圣基茨和尼维斯', en_US: 'Saint Kitts and Nevis', zh_TW: '聖克里斯多福及尼維斯' },
+		KP: { zh_CN: '朝鲜', en_US: 'North Korea', zh_TW: '朝鮮' },
+		KR: { zh_CN: '韩国', en_US: 'South Korea', zh_TW: '韓國' },
+		KW: { zh_CN: '科威特', en_US: 'Kuwait', zh_TW: '科威特' },
+		KY: { zh_CN: '开曼群岛', en_US: 'Cayman Islands', zh_TW: '開曼群島' },
+		KZ: { zh_CN: '哈萨克斯坦', en_US: 'Kazakhstan', zh_TW: '哈薩克' },
+		LA: { zh_CN: '老挝', en_US: 'Laos', zh_TW: '寮國' },
+		LB: { zh_CN: '黎巴嫩', en_US: 'Lebanon', zh_TW: '黎巴嫩' },
+		LC: { zh_CN: '圣卢西亚', en_US: 'Saint Lucia', zh_TW: '聖露西亞' },
+		LI: { zh_CN: '列支敦士登', en_US: 'Liechtenstein', zh_TW: '列支敦斯登' },
+		LK: { zh_CN: '斯里兰卡', en_US: 'Sri Lanka', zh_TW: '斯里蘭卡' },
+		LR: { zh_CN: '利比里亚', en_US: 'Liberia', zh_TW: '賴比瑞亞' },
+		LS: { zh_CN: '莱索托', en_US: 'Lesotho', zh_TW: '賴索托' },
+		LT: { zh_CN: '立陶宛', en_US: 'Lithuania', zh_TW: '立陶宛' },
+		LU: { zh_CN: '卢森堡', en_US: 'Luxembourg', zh_TW: '盧森堡' },
+		LV: { zh_CN: '拉脱维亚', en_US: 'Latvia', zh_TW: '拉脫維亞' },
+		LY: { zh_CN: '利比亚', en_US: 'Libya', zh_TW: '利比亞' },
+		MA: { zh_CN: '摩洛哥', en_US: 'Morocco', zh_TW: '摩洛哥' },
+		MC: { zh_CN: '摩纳哥', en_US: 'Monaco', zh_TW: '摩納哥' },
+		MD: { zh_CN: '摩尔多瓦', en_US: 'Moldova', zh_TW: '摩爾多瓦' },
+		MG: { zh_CN: '马达加斯加', en_US: 'Madagascar', zh_TW: '馬達加斯加' },
+		ML: { zh_CN: '马里', en_US: 'Mali', zh_TW: '馬里' },
+		MN: { zh_CN: '蒙古', en_US: 'Mongolia', zh_TW: '蒙古' },
+		MO: { zh_CN: '澳门特别行政区', en_US: 'Macau', zh_TW: '澳門' },
+		MR: { zh_CN: '毛里塔尼亚', en_US: 'Mauritania', zh_TW: '毛里塔尼亞' },
+		MS: { zh_CN: '蒙特塞拉特', en_US: 'Montserrat', zh_TW: '蒙特塞拉特' },
+		MT: { zh_CN: '马耳他', en_US: 'Malta', zh_TW: '馬爾他' },
+		MU: { zh_CN: '毛里求斯', en_US: 'Mauritius', zh_TW: '毛里求斯' },
+		MV: { zh_CN: '马尔代夫', en_US: 'Maldives', zh_TW: '馬爾地夫' },
+		MW: { zh_CN: '马拉维', en_US: 'Malawi', zh_TW: '馬拉維' },
+		MX: { zh_CN: '墨西哥', en_US: 'Mexico', zh_TW: '墨西哥' },
+		MY: { zh_CN: '马来西亚', en_US: 'Malaysia', zh_TW: '馬來西亞' },
+		MZ: { zh_CN: '莫桑比克', en_US: 'Mozambique', zh_TW: '莫桑比克' },
+		NA: { zh_CN: '纳米比亚', en_US: 'Namibia', zh_TW: '納米比亞' },
+		NE: { zh_CN: '尼日尔', en_US: 'Niger', zh_TW: '尼日' },
+		NG: { zh_CN: '尼日利亚', en_US: 'Nigeria', zh_TW: '奈及利亞' },
+		NI: { zh_CN: '尼加拉瓜', en_US: 'Nicaragua', zh_TW: '尼加拉瓜' },
+		NL: { zh_CN: '荷兰', en_US: 'Netherlands', zh_TW: '荷蘭' },
+		NO: { zh_CN: '挪威', en_US: 'Norway', zh_TW: '挪威' },
+		NP: { zh_CN: '尼泊尔', en_US: 'Nepal', zh_TW: '尼泊爾' },
+		NR: { zh_CN: '瑙鲁', en_US: 'Nauru', zh_TW: '諾魯' },
+		NZ: { zh_CN: '新西兰', en_US: 'New Zealand', zh_TW: '紐西蘭' },
+		OM: { zh_CN: '阿曼', en_US: 'Oman', zh_TW: '阿曼' },
+		PA: { zh_CN: '巴拿马', en_US: 'Panama', zh_TW: '巴拿馬' },
+		PE: { zh_CN: '秘鲁', en_US: 'Peru', zh_TW: '秘魯' },
+		PG: { zh_CN: '巴布亚新几内亚', en_US: 'Papua New Guinea', zh_TW: '巴布亞紐幾內亞' },
+		PH: { zh_CN: '菲律宾', en_US: 'Philippines', zh_TW: '菲律賓' },
+		PK: { zh_CN: '巴基斯坦', en_US: 'Pakistan', zh_TW: '巴基斯坦' },
+		PL: { zh_CN: '波兰', en_US: 'Poland', zh_TW: '波蘭' },
+		PT: { zh_CN: '葡萄牙', en_US: 'Portugal', zh_TW: '葡萄牙' },
+		PY: { zh_CN: '巴拉圭', en_US: 'Paraguay', zh_TW: '巴拉圭' },
+		QA: { zh_CN: '卡塔尔', en_US: 'Qatar', zh_TW: '卡達' },
+		RO: { zh_CN: '罗马尼亚', en_US: 'Romania', zh_TW: '羅馬尼亞' },
+		RU: { zh_CN: '俄罗斯', en_US: 'Russia', zh_TW: '俄羅斯聯邦' },
+		RW: { zh_CN: '卢旺达', en_US: 'Rwanda', zh_TW: '盧安達' },
+		SA: { zh_CN: '沙特阿拉伯', en_US: 'Saudi Arabia', zh_TW: '沙烏地阿拉伯' },
+		SB: { zh_CN: '所罗门群岛', en_US: 'Solomon Islands', zh_TW: '索羅門群島' },
+		SC: { zh_CN: '塞舌尔', en_US: 'Seychelles', zh_TW: '塞席爾' },
+		SD: { zh_CN: '苏丹', en_US: 'Sudan', zh_TW: '蘇丹' },
+		SE: { zh_CN: '瑞典', en_US: 'Sweden', zh_TW: '瑞典' },
+		SG: { zh_CN: '新加坡', en_US: 'Singapore', zh_TW: '新加坡' },
+		SH: { zh_CN: '圣赫勒拿', en_US: 'Saint Helena', zh_TW: '聖赫勒拿島' },
+		SI: { zh_CN: '斯洛文尼亚', en_US: 'Slovenia', zh_TW: '斯洛維尼亞' },
+		SL: { zh_CN: '塞拉利昂', en_US: 'Sierra Leone', zh_TW: '塞拉利昂' },
+		SM: { zh_CN: '圣马力诺', en_US: 'San Marino', zh_TW: '聖馬利諾' },
+		SN: { zh_CN: '塞内加尔', en_US: 'Senegal', zh_TW: '塞內加爾' },
+		SO: { zh_CN: '索马里', en_US: 'Somalia', zh_TW: '索馬利亞' },
+		SR: { zh_CN: '苏里南', en_US: 'Suriname', zh_TW: '蘇里南' },
+		ST: { zh_CN: '圣多美和普林西比', en_US: 'São Tomé and Príncipe', zh_TW: '聖多美和普林西比' },
+		SV: { zh_CN: '萨尔瓦多', en_US: 'El Salvador', zh_TW: '薩爾瓦多' },
+		SY: { zh_CN: '叙利亚', en_US: 'Syria', zh_TW: '敘利亞' },
+		SZ: { zh_CN: '斯威士兰', en_US: 'Eswatini', zh_TW: '史瓦濟蘭' },
+		TD: { zh_CN: '乍得', en_US: 'Chad', zh_TW: '查德' },
+		TG: { zh_CN: '多哥', en_US: 'Togo', zh_TW: '多哥' },
+		TH: { zh_CN: '泰国', en_US: 'Thailand', zh_TW: '泰國' },
+		TJ: { zh_CN: '塔吉克斯坦', en_US: 'Tajikistan', zh_TW: '塔吉克' },
+		TM: { zh_CN: '土库曼斯坦', en_US: 'Turkmenistan', zh_TW: '土庫曼' },
+		TN: { zh_CN: '突尼斯', en_US: 'Tunisia', zh_TW: '突尼西亞' },
+		TO: { zh_CN: '汤加', en_US: 'Tonga', zh_TW: '東加' },
+		TR: { zh_CN: '土耳其', en_US: 'Turkey', zh_TW: '土耳其' },
+		TT: { zh_CN: '特立尼达和多巴哥', en_US: 'Trinidad and Tobago', zh_TW: '千里達及托巴哥' },
+		TV: { zh_CN: '图瓦卢', en_US: 'Tuvalu', zh_TW: '圖瓦盧' },
+		TZ: { zh_CN: '坦桑尼亚', en_US: 'Tanzania', zh_TW: '坦尚尼亞' },
+		UA: { zh_CN: '乌克兰', en_US: 'Ukraine', zh_TW: '烏克蘭' },
+		UG: { zh_CN: '乌干达', en_US: 'Uganda', zh_TW: '烏干達' },
+		US: { zh_CN: '美国', en_US: 'United States', zh_TW: '美國' },
+		UY: { zh_CN: '乌拉圭', en_US: 'Uruguay', zh_TW: '烏拉圭' },
+		UZ: { zh_CN: '乌兹别克斯坦', en_US: 'Uzbekistan', zh_TW: '烏茲別克' }
+	}[idNumber.substring(0, 2).toUpperCase()];
+	/* eslint-enable camelcase */
+	return country
+		? country[lang]
+		: '';
 }
 
 function detectLanguage(text) {
