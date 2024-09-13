@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-08-17 03:05:34"
+	"lastUpdated": "2024-09-13 04:10:25"
 }
 
 /*
@@ -37,6 +37,7 @@
 
 const typeMap = {
 	journal: 'journalArticle',
+	qk: 'journalArticle',
 	degree: 'thesis',
 	conference: 'conferencePaper',
 	report: 'report',
@@ -50,7 +51,7 @@ function detectWeb(doc, url) {
 		Z.monitorDOMChanges(mainWidget, { childList: true, subtree: true });
 	}
 	for (const key in typeMap) {
-		if (url.includes(`/doc/${key}/`)) {
+		if (url.includes(`/${key}/`)) {
 			return typeMap[key];
 		}
 	}
@@ -101,7 +102,7 @@ async function scrape(doc, url = doc.location.href) {
 			Z.debug(error);
 		}
 	}
-	const ids = url.match(/\/doc\/[a-z]+\/(\d+)/)[1];
+	const ids = tryMatch(url, /\/doc\/[a-z]+\/(\d+)/, 1) || tryMatch(ZU.xpathText(doc, '//script[contains(.,"__NUXT__")]'), /vipdc:(\d+)/, 1);
 	Z.debug(`ids: ${ids}`);
 	const refURL = `https://wwwv3.cqvip.com/website/literature/base/ref/download?ids=${ids}&types=1&style=RefMan`;
 	let refText = await requestText(refURL);
@@ -653,6 +654,58 @@ var testCases = [
 		"type": "web",
 		"url": "https://www.cqvip.com/journal/1022577/column",
 		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://www.cqvip.com/qk/90024x/2002s1/1000445202.html",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "柑橘类胡萝卜素合成关键基因研究进展",
+				"creators": [
+					{
+						"lastName": "徐昌杰",
+						"firstName": "",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"lastName": "张上隆",
+						"firstName": "",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2002",
+				"ISSN": "0513-353X",
+				"abstractNote": "类胡萝卜素是柑橘成熟果实的主要色素 ,其含量和组成影响果实外观及营养价值。柑橘类胡萝卜素合成及调控研究已开始深入到分子水平 ,本研究小组现已成功分离柑橘类胡萝卜素合成主链上的所有 9个基因 (同源基因 )。介绍作者分离这些基因的过程和国内外对这些基因特性研究的最新进展 ,并展望今后研究的热点和趋势。",
+				"extra": "citation: 18\nCLC: Q943 [植物细胞遗传学]",
+				"issue": "S1",
+				"language": "zh-CN",
+				"libraryCatalog": "CQVIP",
+				"pages": "619-623",
+				"publicationTitle": "园艺学报",
+				"url": "https://wwwv3.cqvip.com/doc/journal/987138118",
+				"volume": "29",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "合成"
+					},
+					{
+						"tag": "基因"
+					},
+					{
+						"tag": "柑橘"
+					},
+					{
+						"tag": "类胡萝卜素"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
 	}
 ]
 /** END TEST CASES **/
