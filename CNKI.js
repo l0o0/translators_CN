@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-09-12 14:41:19"
+	"lastUpdated": "2024-09-13 11:59:26"
 }
 
 /*
@@ -1513,7 +1513,7 @@ function addAttachments(item, doc, url, itemKey) {
 			document: doc
 		});
 	}
-	const pdfLink = strChild(doc, 'a[id^="pdfDown"]', 'href');
+	const pdfLink = strChild(doc, 'a[id^="pdfDown"], .btn-dlpdf > a', 'href');
 	Z.debug(`get PDF Link:\n${pdfLink}`);
 	const cajLink = strChild(doc, 'a#cajDown', 'href') || itemKey.downloadlink || strChild(doc, 'a[href*="bar/download"]', 'href');
 	Z.debug(`get CAJ link:\n${cajLink}`);
