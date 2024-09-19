@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-09-13 04:10:25"
+	"lastUpdated": "2024-09-19 07:09:20"
 }
 
 /*
@@ -51,7 +51,7 @@ function detectWeb(doc, url) {
 		Z.monitorDOMChanges(mainWidget, { childList: true, subtree: true });
 	}
 	for (const key in typeMap) {
-		if (url.includes(`/${key}/`)) {
+		if (new RegExp(`/${key}/`, 'i').tets(url)) {
 			return typeMap[key];
 		}
 	}
