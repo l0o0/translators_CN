@@ -1,7 +1,7 @@
 {
 	"translatorID": "3ab06b2e-5cfa-4561-9770-4f76710a32ab",
 	"label": "Publications Data Center - China",
-	"creator": "jiaojiaodubai23",
+	"creator": "jiaojiaodubai",
 	"target": "^https?://m?pdc\\.capub\\.cn/search\\.html",
 	"minVersion": "5.0",
 	"maxVersion": "",
@@ -9,13 +9,12 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-03-28 09:16:05"
+	"lastUpdated": "2024-09-20 03:34:24"
 }
 
 /*
 	***** BEGIN LICENSE BLOCK *****
-	Publications Data Center - China Translator
-	Copyright © 2023 jiaojiaodubai23 <jiaojiaodubai23@gmail.com>
+	Copyright © 2023 jiaojiaodubai<jiaojiaodubai23@gmail.com>
 
 	This file is part of Zotero.
 
@@ -364,7 +363,7 @@ function tryMatch(string, pattern, index = 0) {
 function addFileds(item, extra, manager, arg) {
 	for (let field in fieldMap) {
 		let recipe = fieldMap[field];
-		let result = manager.getWith(recipe[arg]);
+		let result = manager.get(recipe[arg]);
 		if (recipe.callback) {
 			result = recipe.callback(result);
 		}
