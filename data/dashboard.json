@@ -13683,7 +13683,7 @@
     "header": {
       "translatorID": "3ab06b2e-5cfa-4561-9770-4f76710a32ab",
       "label": "Publications Data Center - China",
-      "creator": "jiaojiaodubai23",
+      "creator": "jiaojiaodubai",
       "target": "^https?://m?pdc\\.capub\\.cn/search\\.html",
       "minVersion": "5.0",
       "maxVersion": "",
@@ -13691,7 +13691,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-03-28 09:16:05"
+      "lastUpdated": "2024-09-20 03:34:24"
     },
     "testCases": [
       {
@@ -13890,6 +13890,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-09-20 11:36:28 +0800",
+        "message": "close #382"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -13897,11 +13902,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-03-28 17:16:56 +0800",
-        "message": "更新extra；简化部分代码；fix  #331"
       }
     ]
   },
