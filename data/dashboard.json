@@ -1055,7 +1055,7 @@
     "header": {
       "translatorID": "bb0d0e84-66b4-46e3-9089-ebc975a86111",
       "label": "CNBKSY",
-      "creator": "jiaojiaodubai23",
+      "creator": "jiaojiaodubai",
       "target": "^https?://.*(www\\.)?cnbksy\\.(cn|com)",
       "minVersion": "5.0",
       "maxVersion": "",
@@ -1063,7 +1063,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2023-12-15 18:58:08"
+      "lastUpdated": "2024-09-21 08:00:45"
     },
     "testCases": [
       {
@@ -1075,13 +1075,15 @@
             "title": "我们为什么不了解苏联?",
             "creators": [
               {
+                "firstName": "",
                 "lastName": "斯诺",
                 "creatorType": "author",
                 "fieldMode": 1
               },
               {
+                "firstName": "",
                 "lastName": "钱华",
-                "creatorType": "author",
+                "creatorType": "contributor",
                 "fieldMode": 1
               }
             ],
@@ -1090,6 +1092,7 @@
             "libraryCatalog": "CNBKSY",
             "pages": "13-18",
             "publicationTitle": "文萃",
+            "url": "https://www.cnbksy.cn/search/detail/25b6c69a90d8c868d26d34432adf0a14/7/65632869f74f7f47007f6262",
             "volume": "2",
             "attachments": [],
             "tags": [],
@@ -1107,6 +1110,7 @@
             "title": "记念刘和珍君",
             "creators": [
               {
+                "firstName": "",
                 "lastName": "鲁迅",
                 "creatorType": "author",
                 "fieldMode": 1
@@ -1115,79 +1119,19 @@
             "date": "1996",
             "issue": "2",
             "libraryCatalog": "CNBKSY",
-            "pages": "40-41.60",
-            "publicationTitle": "名作欣赏(太原)",
-            "attachments": [],
-            "tags": [],
-            "notes": [],
-            "seeAlso": []
-          }
-        ]
-      },
-      {
-        "type": "web",
-        "url": "https://www.cnbksy.cn/search/detail/6352bccafc25f907edbed671da67097a/7/65632869f74f7f47007f6262",
-        "items": [
-          {
-            "itemType": "journalArticle",
-            "title": "走向自由祖国:歌曲",
-            "creators": [
-              {
-                "lastName": "许幸之",
-                "creatorType": "author",
-                "fieldMode": 1
-              },
-              {
-                "lastName": "余森强",
-                "creatorType": "author",
-                "fieldMode": 1
-              }
-            ],
-            "date": "1946",
-            "issue": "36",
-            "libraryCatalog": "CNBKSY",
-            "pages": "23",
-            "publicationTitle": "文萃",
-            "shortTitle": "走向自由祖国",
-            "attachments": [],
-            "tags": [],
-            "notes": [],
-            "seeAlso": []
-          }
-        ]
-      },
-      {
-        "type": "web",
-        "url": "https://www.cnbksy.cn/search/detail/79d1aa3b33a678c39fc0e5b135771ebf/8/65632cd923b0997d8ad78b38",
-        "items": [
-          {
-            "itemType": "journalArticle",
-            "title": "青年“无所谓”心态探微",
-            "creators": [
-              {
-                "lastName": "唐美云",
-                "creatorType": "author",
-                "fieldMode": 1
-              },
-              {
-                "lastName": "华静",
-                "creatorType": "author",
-                "fieldMode": 1
-              }
-            ],
-            "date": "2004",
-            "abstractNote": "青年无所谓心态是青年试图解决问题时产生的两难境地时选择的第三条道路,有着其深厚的社会原因.然而青年自身在接受社会纪过程中产生的“自我意识”误读、价值失衡、责任薄弱、信仰却是其更为本质原因.针对这些原因和根据的青年的特点,对无所谓心态应加以引导.",
-            "issue": "1",
-            "libraryCatalog": "CNBKSY",
-            "pages": "52-56",
-            "publicationTitle": "当代青年研究(上海)",
+            "pages": "40-41, 60",
+            "publicationTitle": "名作欣赏（太原）",
+            "url": "https://www.cnbksy.cn/search/detail/31f4a4381418a4f24a341dea6e355fa0/8/656326927fa00c4f558f5dfe",
             "attachments": [],
             "tags": [
               {
-                "tag": " 青年特点"
+                "tag": " 中国"
               },
               {
-                "tag": "青年"
+                "tag": " 现代"
+              },
+              {
+                "tag": "散文"
               }
             ],
             "notes": [],
@@ -1202,18 +1146,64 @@
           {
             "itemType": "artwork",
             "title": "孙总理肖像浮雕",
-            "creators": [],
-            "date": "1930 年",
-            "archive": "良友",
-            "archiveLocation": "孫總理肖像浮雕-第52 期",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "鄭可",
+                "creatorType": "author"
+              }
+            ],
+            "date": "1930",
             "artworkMedium": "雕塑",
-            "artworkSize": "1230*1611像素",
+            "artworkSize": "20.8*27.3cm",
             "libraryCatalog": "CNBKSY",
             "url": "https://www.cnbksy.cn/search/picDetail/bcce04512712dd6ee0d457bfdd2ed8de/15/null",
             "attachments": [
               {
                 "title": "Snapshot",
                 "mimeType": "text/html"
+              },
+              {
+                "title": "Snapshot",
+                "mimeType": "text/html"
+              }
+            ],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://www.cnbksy.cn/search/detail/fcdd0275178d1f37f83d329b23d7d0988f1b14e82d679da1b36927b0f1651e0e/12/66ee7a5523b099099b774e3c",
+        "items": [
+          {
+            "itemType": "newspaperArticle",
+            "title": "自然辯證法和形式邏輯（上）",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "日本岡邦雄",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "陳伯陶",
+                "creatorType": "translator",
+                "fieldMode": 1
+              }
+            ],
+            "date": "1934",
+            "libraryCatalog": "CNBKSY",
+            "pages": "11",
+            "publicationTitle": "大公报（天津）",
+            "url": "https://www.cnbksy.cn/search/detail/fcdd0275178d1f37f83d329b23d7d0988f1b14e82d679da1b36927b0f1651e0e/12/66ee7a5523b099099b774e3c",
+            "attachments": [
+              {
+                "title": "Full Text PDF",
+                "mimeType": "application/pdf"
               }
             ],
             "tags": [],
@@ -1227,6 +1217,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-09-23 13:53:49 +0800",
+        "message": "修复期刊日期缺失；增加报纸测试案例；支持全文下载；艺术品字段优化；Lint"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
       },
@@ -1234,11 +1229,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-02-11 12:38:50 +0800",
-        "message": "更新内部函数"
       }
     ]
   },
