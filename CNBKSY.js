@@ -1,7 +1,7 @@
 {
 	"translatorID": "bb0d0e84-66b4-46e3-9089-ebc975a86111",
 	"label": "CNBKSY",
-	"creator": "jiaojiaodubai23",
+	"creator": "jiaojiaodubai",
 	"target": "^https?://.*(www\\.)?cnbksy\\.(cn|com)",
 	"minVersion": "5.0",
 	"maxVersion": "",
@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-12-15 18:58:08"
+	"lastUpdated": "2024-09-21 08:00:45"
 }
 
 /*
@@ -85,74 +85,96 @@ async function doWeb(doc, url) {
 	}
 }
 
-function matchCreator(creator) {
-	creator = {
-		lastName: creator,
-		creatorType: 'author',
-		fieldMode: 1
-	};
-	return creator;
-}
-
 async function scrape(doc, url = doc.location.href) {
-	let labels = new Labels(doc, '.detailContainer tbody > tr');
+	const labels = new Labels(doc, '.detailContainer tbody > tr');
 	// Z.debug(data);
-	let type = detectWeb(doc, url);
-	var newItem = new Z.Item(type);
+	const type = detectWeb(doc, url);
+	const newItem = new Z.Item(type);
 	switch (type) {
 		case 'journalArticle':
 			newItem.title = labels.get('题名');
-			newItem.creators = labels.get('作者').split(/\s/)
-				.filter(element => !element.match(/[著作译譯词詞曲]$/))
-				.map(element => matchCreator(element));
-			newItem.publicationTitle = labels.get('文献来源').replace(/^《|》$/g, '');
-			newItem.date = labels.get('出版时间').replace(/年$/, '');
-			newItem.volume = tryMatch(labels.get('卷期(页)'), /(\d*)卷/, 1);
-			newItem.issue = tryMatch(labels.get('卷期(页)'), /(\d*)期/, 1);
-			newItem.pages = tryMatch(labels.get('卷期(页)'), /([\d-.+]*)页/, 1);
+			labels.get('作者', true).querySelectorAll('a').forEach((elm) => {
+				newItem.creators.push(cleanAuthorElm(elm));
+			});
+			newItem.publicationTitle = labels.get('文献来源').replace(/^《|》$/g, '').replace(/\((\W+?)\)/g, '（$1）');
+			newItem.date = ZU.strToISO(labels.get('出版时间'));
+			newItem.volume = tryMatch(labels.get('卷期'), /0*(\d+)卷/, 1);
+			newItem.issue = tryMatch(labels.get('卷期'), /(\w*)期/, 1).replace(/0*(\d+)/, '$1');
+			newItem.pages = tryMatch(labels.get('卷期'), /([\d-.+]*)页/, 1).replace(/[+.]\s?/g, ', ');
 			newItem.abstractNote = labels.get('摘要');
 			newItem.tags = labels.get('主题词').slice(1, -1).split(/[,;，；]/)
 				.map(element => ({ tag: element }));
 			break;
 		case 'newspaperArticle':
-			newItem.title = labels.get('标题');
-			newItem.shortTitle = labels.get('标题2');
-			newItem.publicationTitle = labels.get('文献来源').replace(/^《|》$/g, '');
+			newItem.title = labels.get('标题').replace(/\((\W+?)\)/g, '（$1）');
+			newItem.shortTitle = labels.get('标题2').replace(/\((\W+?)\)/g, '（$1）');
+			newItem.publicationTitle = labels.get('文献来源').replace(/^《|》$/g, '').replace(/\((\W+?)\)/g, '（$1）');
 			newItem.place = labels.get('新闻发布地');
-			newItem.data = labels.get('出版时间')
-				.replace(/(^\D*)|(\D*$)/g, '')
-				.replace(/\D+/g, '-')
-				.replace(/-(\d)(?:\D|$)/g, '-0$1');
+			newItem.date = ZU.strToISO(labels.get('出版时间'));
 			newItem.pages = labels.get('版次').replace(/^0*/, '');
-			newItem.creators = matchCreator(labels.get('新闻来源'));
-			newItem.extra += `\n类别: ${labels.get('类别')}`;
+			labels.get('作者', true).querySelectorAll('a').forEach((elm) => {
+				newItem.creators.push(cleanAuthorElm(elm));
+			});
 			break;
 		case 'artwork':
 			newItem.title = labels.get('图片标题');
 			newItem.abstractNote = labels.get('图片描述');
-			newItem.creators = labels.get('图片责任者').split(/\s/).map(element => matchCreator(element));
-			newItem.date = labels.get('出版年份');
+			newItem.creators = labels.get('图片责任者').split(/\s/).map(name => ZU.cleanAuthor(name, 'author'));
+			newItem.date = ZU.strToISO(labels.get('出版年份'));
 			newItem.artworkMedium = labels.get('图片类型');
-			newItem.artworkSize = labels.get('图片尺寸');
-			newItem.archive = labels.get('图片来源');
-			newItem.archiveLocation = `${labels.get('收录卷期')} ${labels.get('所属正文篇名')}`;
-			newItem.url = url;
+			newItem.artworkSize = labels.get(['厘米尺寸', '图片尺寸']).toLowerCase();
 			newItem.attachments.push({
 				title: 'Snapshot',
 				document: doc
 			});
-			newItem.complete();
-			break;
-		default:
 			break;
 	}
+	addAttachment(doc, newItem);
 	newItem.url = url;
 	newItem.complete();
 }
 
+function cleanAuthorElm(elm) {
+	// https://www.cnbksy.cn/search/detail/6352bccafc25f907edbed671da67097a/7/65632869f74f7f47007f6262
+	let creatorType = 'author';
+	if (elm.nextSibling && elm.nextSibling.nodeName == '#text') {
+		if (/^[译譯]$/.test(elm.nextSibling.textContent.trim())) {
+			creatorType = 'translator';
+		}
+		else if (/^[记記]$/.test(elm.nextSibling.textContent.trim())) {
+			creatorType = 'contributor';
+		}
+	}
+	const creator = ZU.cleanAuthor(elm.textContent, creatorType);
+	if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
+		creator.fieldMode = 1;
+	}
+	return creator;
+}
+
+function addAttachment(doc, item) {
+	if (item.itemType == 'artwork') {
+		item.attachments.push({
+			title: 'Snapshot',
+			document: doc
+		});
+	}
+	else {
+		let args = attr(doc, 'a[onclick^="confirmDownload"]', 'onclick').match(/'[^']*'/g);
+		if (args && args.length) {
+			args = args.map(arg => arg.slice(1, -1));
+			item.attachments.push({
+				title: 'Full Text PDF',
+				mimeType: 'application/pdf',
+				url: `https://${doc.location.host}/literature/downloadPiece?eid=${args[0]}&bcId=${args[1]}&pieceId=${args[2]}&ltid=${args[3]}&activeId=${args[4]}&source=2&downloadSource=${args[5]}`
+			});
+		}
+	}
+}
+
 function tryMatch(string, pattern, index = 0) {
 	if (!string) return '';
-	let match = string.match(pattern);
+	const match = string.match(pattern);
 	return (match && match[index])
 		? match[index]
 		: '';
@@ -162,30 +184,28 @@ class Labels {
 	constructor(doc, selector) {
 		this.data = [];
 		this.emptyElm = doc.createElement('div');
-		Array.from(doc.querySelectorAll(selector))
+		const nodes = doc.querySelectorAll(selector);
+		for (const node of nodes) {
 			// avoid nesting
-			.filter(element => !element.querySelector(selector))
 			// avoid empty
-			.filter(element => !/^\s*$/.test(element.textContent))
-			.forEach((element) => {
-				const elmCopy = element.cloneNode(true);
-				// avoid empty text
-				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
-					// Z.debug(elementCopy.firstChild.textContent);
-					elmCopy.removeChild(elmCopy.firstChild);
-					// Z.debug(elementCopy.firstChild.textContent);
-				}
-				if (elmCopy.childNodes.length > 1) {
-					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
-					this.data.push([key, elmCopy]);
-				}
-				else {
-					const text = ZU.trimInternal(elmCopy.textContent);
-					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
-					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
-					this.data.push([key, elmCopy]);
-				}
-			});
+			if (node.querySelector(selector) || !/\S/.test(node.textContent)) continue;
+			const elmCopy = node.cloneNode(true);
+			// avoid empty text
+			while (![1, 3, 4].includes(elmCopy.firstChild.nodeType) || !/\S$/.test(elmCopy.firstChild.textContent)) {
+				elmCopy.removeChild(elmCopy.firstChild);
+				if (!elmCopy.firstChild) break;
+			}
+			if (elmCopy.childNodes.length > 1) {
+				const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+				this.data.push([key, elmCopy]);
+			}
+			else {
+				const text = ZU.trimInternal(elmCopy.textContent);
+				const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+				elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+				this.data.push([key, elmCopy]);
+			}
+		}
 	}
 
 	get(label, element = false) {
@@ -224,13 +244,15 @@ var testCases = [
 				"title": "我们为什么不了解苏联?",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "斯诺",
 						"creatorType": "author",
 						"fieldMode": 1
 					},
 					{
+						"firstName": "",
 						"lastName": "钱华",
-						"creatorType": "author",
+						"creatorType": "contributor",
 						"fieldMode": 1
 					}
 				],
@@ -239,6 +261,7 @@ var testCases = [
 				"libraryCatalog": "CNBKSY",
 				"pages": "13-18",
 				"publicationTitle": "文萃",
+				"url": "https://www.cnbksy.cn/search/detail/25b6c69a90d8c868d26d34432adf0a14/7/65632869f74f7f47007f6262",
 				"volume": "2",
 				"attachments": [],
 				"tags": [],
@@ -256,6 +279,7 @@ var testCases = [
 				"title": "记念刘和珍君",
 				"creators": [
 					{
+						"firstName": "",
 						"lastName": "鲁迅",
 						"creatorType": "author",
 						"fieldMode": 1
@@ -264,79 +288,19 @@ var testCases = [
 				"date": "1996",
 				"issue": "2",
 				"libraryCatalog": "CNBKSY",
-				"pages": "40-41.60",
-				"publicationTitle": "名作欣赏(太原)",
-				"attachments": [],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://www.cnbksy.cn/search/detail/6352bccafc25f907edbed671da67097a/7/65632869f74f7f47007f6262",
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "走向自由祖国:歌曲",
-				"creators": [
-					{
-						"lastName": "许幸之",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"lastName": "余森强",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"date": "1946",
-				"issue": "36",
-				"libraryCatalog": "CNBKSY",
-				"pages": "23",
-				"publicationTitle": "文萃",
-				"shortTitle": "走向自由祖国",
-				"attachments": [],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://www.cnbksy.cn/search/detail/79d1aa3b33a678c39fc0e5b135771ebf/8/65632cd923b0997d8ad78b38",
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "青年“无所谓”心态探微",
-				"creators": [
-					{
-						"lastName": "唐美云",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"lastName": "华静",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"date": "2004",
-				"abstractNote": "青年无所谓心态是青年试图解决问题时产生的两难境地时选择的第三条道路,有着其深厚的社会原因.然而青年自身在接受社会纪过程中产生的“自我意识”误读、价值失衡、责任薄弱、信仰却是其更为本质原因.针对这些原因和根据的青年的特点,对无所谓心态应加以引导.",
-				"issue": "1",
-				"libraryCatalog": "CNBKSY",
-				"pages": "52-56",
-				"publicationTitle": "当代青年研究(上海)",
+				"pages": "40-41, 60",
+				"publicationTitle": "名作欣赏（太原）",
+				"url": "https://www.cnbksy.cn/search/detail/31f4a4381418a4f24a341dea6e355fa0/8/656326927fa00c4f558f5dfe",
 				"attachments": [],
 				"tags": [
 					{
-						"tag": " 青年特点"
+						"tag": " 中国"
 					},
 					{
-						"tag": "青年"
+						"tag": " 现代"
+					},
+					{
+						"tag": "散文"
 					}
 				],
 				"notes": [],
@@ -351,18 +315,64 @@ var testCases = [
 			{
 				"itemType": "artwork",
 				"title": "孙总理肖像浮雕",
-				"creators": [],
-				"date": "1930 年",
-				"archive": "良友",
-				"archiveLocation": "孫總理肖像浮雕-第52 期",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "鄭可",
+						"creatorType": "author"
+					}
+				],
+				"date": "1930",
 				"artworkMedium": "雕塑",
-				"artworkSize": "1230*1611像素",
+				"artworkSize": "20.8*27.3cm",
 				"libraryCatalog": "CNBKSY",
 				"url": "https://www.cnbksy.cn/search/picDetail/bcce04512712dd6ee0d457bfdd2ed8de/15/null",
 				"attachments": [
 					{
 						"title": "Snapshot",
 						"mimeType": "text/html"
+					},
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.cnbksy.cn/search/detail/fcdd0275178d1f37f83d329b23d7d0988f1b14e82d679da1b36927b0f1651e0e/12/66ee7a5523b099099b774e3c",
+		"items": [
+			{
+				"itemType": "newspaperArticle",
+				"title": "自然辯證法和形式邏輯（上）",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "日本岡邦雄",
+						"creatorType": "author",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "陳伯陶",
+						"creatorType": "translator",
+						"fieldMode": 1
+					}
+				],
+				"date": "1934",
+				"libraryCatalog": "CNBKSY",
+				"pages": "11",
+				"publicationTitle": "大公报（天津）",
+				"url": "https://www.cnbksy.cn/search/detail/fcdd0275178d1f37f83d329b23d7d0988f1b14e82d679da1b36927b0f1651e0e/12/66ee7a5523b099099b774e3c",
+				"attachments": [
+					{
+						"title": "Full Text PDF",
+						"mimeType": "application/pdf"
 					}
 				],
 				"tags": [],
