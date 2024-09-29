@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-09-13 11:59:26"
+	"lastUpdated": "2024-09-29 12:30:28"
 }
 
 /*
@@ -609,7 +609,7 @@ async function scrapeWithGetExport(doc, ids, itemKey) {
 	// throw new Error('debug');
 
 	const postUrl = inMainland
-		? `https://kns.cnki.net/dm8/API/GetExport?uniplatform=${exports.platform}`
+		? '/dm8/API/GetExport'
 		: '/kns8/manage/APIGetExport';
 	// "1": row's sequence in search result page, defualt 1; "0": index of page in search result pages, defualt 0.
 	let postData = inMainland
