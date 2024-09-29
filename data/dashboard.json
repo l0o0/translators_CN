@@ -5000,7 +5000,7 @@
       "inRepository": true,
       "translatorType": 12,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-09-13 11:59:26"
+      "lastUpdated": "2024-09-29 12:30:28"
     },
     "testCases": [
       {
@@ -6414,6 +6414,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-09-29 20:31:25 +0800",
+        "message": "fix extra 'uniplatform'"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-09-13 11:59:55 +0800",
         "message": "兼容学位论文代码手误"
       },
@@ -6421,11 +6426,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-09-12 22:42:58 +0800",
         "message": "支持新版全文阅读、修复文档抓取时丢失volume"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-09-12 18:15:01 +0800",
-        "message": "修复繁体版年鉴条目类型识别错误、专利国别匹配本地化、更新API、修复期刊名有分割错误、支持报纸副标题、适配会议论文页面更改、升级 Labels类、优先采用 DOI 链接"
       }
     ]
   },
