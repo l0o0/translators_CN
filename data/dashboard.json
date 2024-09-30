@@ -8868,15 +8868,15 @@
     "header": {
       "translatorID": "d611008a-850d-4860-b607-54e1ecbcc592",
       "label": "E-Tiller",
-      "creator": "jiaojiaodubai23",
-      "target": "^https?://.*(/ch/)?.*(\\.aspx)?",
+      "creator": "jiaojiaodubai",
+      "target": "",
       "minVersion": "5.0",
       "maxVersion": "",
       "priority": 200,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-06-20 16:34:51"
+      "lastUpdated": "2024-09-30 10:33:44"
     },
     "testCases": [
       {
@@ -8998,8 +8998,9 @@
                 "fieldMode": 1
               }
             ],
-            "date": "20231211",
+            "date": "2023-12-11",
             "DOI": "10.13506/j.cnki.jpr.2023.11.005",
+            "abstractNote": "目的 采用正交设计综合加权评分和层次分析法相结合的方法，优化黄芩微波酒制工艺。方法 采用单因素试验优选加酒量、闷润时间、微波功率、微波时间，然后以微波酒制工艺中的加酒量、闷润时间、微波功率、微波时间为考察因素，采用层次分析法确定各指标权重系数，以黄芩苷、汉黄芩苷、黄芩素、汉黄芩素含量进行综合加权评分为评价指标，优化黄芩微波酒制工艺。结果 取生黄芩饮片适量，加入10%辅料酒，置密闭容器内闷润60 min，在300 W功率下微波5 min，经三次验证实验，各指标成分的平均含量分别为15.65%，5.94%，3.00%，0.33%，平均评分98.24分，RSD为0.99%（n=3）。结论 优化所得微波炮制酒工艺稳定，重复性良好，可应用于微波酒黄芩的炮制。",
             "extra": "creatorsExt: [{\"firstName\":\"\",\"lastName\":\"李利华\",\"creatorType\":\"author\",\"fieldMode\":1,\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"王巍\",\"creatorType\":\"author\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"张一美\",\"creatorType\":\"author\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"赵梦辉\",\"creatorType\":\"author\",\"fieldMode\":1},{\"firstName\":\"\",\"lastName\":\"鞠成国\",\"creatorType\":\"author\",\"fieldMode\":1}]",
             "issue": "11",
             "language": "zh-CN",
@@ -9042,6 +9043,74 @@
       },
       {
         "type": "web",
+        "url": "http://hkfdj.ijournals.cn/hkfdj/ch/reader/view_abstract.aspx?file_no=20160403&flag=1",
+        "items": [
+          {
+            "itemType": "journalArticle",
+            "title": "基于模型的系统工程概述",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "朱静",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "杨晖",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "高亚辉",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "姚太克",
+                "creatorType": "author",
+                "fieldMode": 1
+              }
+            ],
+            "date": "2016",
+            "abstractNote": "由于航空领域涉及的系统日益高度复杂，为更好推进基于模型的系统工程（Model Based System Engineering ,MBSE）研发体系，通过从当前遇到的问题、推行基于模型的系统工程的必要性、优势、未来的挑战等方面进行了较为详细地阐述。基于模型的系统工程研发体系具有知识表示的无二义、系统设计的一体化、沟通交流的高效率等优势，是未来发展的大趋势。",
+            "extra": "original-title: Summary of Model Based System Engineering\nview: 9490\ndownload: #PDFClickNum",
+            "issue": "4",
+            "language": "zh-CN",
+            "libraryCatalog": "E-Tiller",
+            "pages": "12-16",
+            "publicationTitle": "航空发动机",
+            "url": "http://hkfdj.ijournals.cn/hkfdj/ch/reader/view_abstract.aspx?file_no=20160403&flag=1",
+            "volume": "42",
+            "attachments": [
+              {
+                "title": "Full Text PDF",
+                "mimeType": "application/pdf"
+              }
+            ],
+            "tags": [
+              {
+                "tag": "模型"
+              },
+              {
+                "tag": "研发体系"
+              },
+              {
+                "tag": "系统工程"
+              },
+              {
+                "tag": "航空发动机"
+              }
+            ],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
         "url": "http://www.stae.com.cn/jsygc/home",
         "items": "multiple"
       },
@@ -9075,6 +9144,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-09-30 18:35:05 +0800",
+        "message": "close #365"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
       },
@@ -9082,11 +9156,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-02-09 17:13:34 +0800",
         "message": "按照官方指南更改优先级"
-      },
-      {
-        "author": "Zeping Lee",
-        "date": "2024-02-06 20:55:11 +0800",
-        "message": "修复网络首发日期：不再使用 available-date"
       }
     ]
   },
