@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-09-21 08:00:45"
+	"lastUpdated": "2024-10-04 22:36:52"
 }
 
 /*
@@ -191,7 +191,7 @@ class Labels {
 			if (node.querySelector(selector) || !/\S/.test(node.textContent)) continue;
 			const elmCopy = node.cloneNode(true);
 			// avoid empty text
-			while (![1, 3, 4].includes(elmCopy.firstChild.nodeType) || !/\S$/.test(elmCopy.firstChild.textContent)) {
+			while (![1, 3, 4].includes(elmCopy.firstChild.nodeType) || !/\S/.test(elmCopy.firstChild.textContent)) {
 				elmCopy.removeChild(elmCopy.firstChild);
 				if (!elmCopy.firstChild) break;
 			}
