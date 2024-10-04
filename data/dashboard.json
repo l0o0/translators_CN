@@ -1063,7 +1063,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-09-21 08:00:45"
+      "lastUpdated": "2024-10-04 22:36:52"
     },
     "testCases": [
       {
@@ -1217,6 +1217,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-10-04 22:37:03 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-09-23 13:53:49 +0800",
         "message": "修复期刊日期缺失；增加报纸测试案例；支持全文下载；艺术品字段优化；Lint"
       },
@@ -1224,11 +1229,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-06-20 17:04:42 +0800",
-        "message": "clean EOL, fix #351, fix #352"
       }
     ]
   },
@@ -5000,7 +5000,7 @@
       "inRepository": true,
       "translatorType": 12,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-09-29 12:30:28"
+      "lastUpdated": "2024-10-04 22:36:27"
     },
     "testCases": [
       {
@@ -6414,6 +6414,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-10-04 22:37:03 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-09-29 20:31:25 +0800",
         "message": "fix extra 'uniplatform'"
       },
@@ -6421,11 +6426,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-09-13 11:59:55 +0800",
         "message": "兼容学位论文代码手误"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-09-12 22:42:58 +0800",
-        "message": "支持新版全文阅读、修复文档抓取时丢失volume"
       }
     ]
   },
@@ -7923,7 +7923,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-09-20 05:05:44"
+      "lastUpdated": "2024-10-04 22:35:42"
     },
     "testCases": [
       {
@@ -8430,6 +8430,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-10-04 22:37:03 +0800",
+        "message": "fix typo"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-09-20 13:11:05 +0800",
         "message": "close #383"
       },
@@ -8437,11 +8442,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-08-20 13:31:03 +0800",
         "message": "innerData -> data; getWith -> get"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-08-20 13:22:33 +0800",
-        "message": "fix typo"
       }
     ]
   },
