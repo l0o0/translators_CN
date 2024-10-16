@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-08-17 03:23:36"
+	"lastUpdated": "2024-10-16 13:14:05"
 }
 
 /*
@@ -92,6 +92,7 @@ async function scrape(doc, url = doc.location.href) {
 		const parser = new DOMParser();
 		const xmlDoc = parser.parseFromString(xmlText, "application/xml");
 		newItem.title = text(xmlDoc, 'Titles > Title > Text');
+		richTextTitle(newItem, doc);
 		newItem.abstractNote = text(xmlDoc, 'Abstracts > Abstract > Text');
 		newItem.publicationTitle = text(xmlDoc, 'Periodical > Name');
 		newItem.volume = text(xmlDoc, 'Volum');
@@ -106,7 +107,8 @@ async function scrape(doc, url = doc.location.href) {
 	}
 	catch (error) {
 		Z.debug(error);
-		newItem.title = text(doc, '.article-title > h1').replace(/\s*认领$/, '');
+		newItem.title = text(doc, '.article-title > h1').replace(/\s*认领\s*(被引量：\d+)?$/, '');
+		richTextTitle(newItem, doc);
 		newItem.abstractNote = (text(doc, '.abstract:nth-of-type(3)') || text(doc, '.abstract:nth-of-type(2)'))
 			.replace(/\s*收起$/, '')
 			.replace(/&quot；/g, '"');
@@ -135,8 +137,9 @@ async function scrape(doc, url = doc.location.href) {
 	// .user-more for personal
 	const isLogin = !!doc.querySelector('.app-reg > a,.user-more > a');
 	Z.debug(`isLogin: ${isLogin}`);
-	const key = tryMatch(attr(doc, '.article-source > a[onclick^="showdown"]', 'onclick'), /'(.+?)'/g, 1);
+	const key = tryMatch(attr(doc, '.article-source > a[onclick^="showdown"]', 'onclick'), /'([^']+)'\)$/, 1);
 	Z.debug(`key: ${key}`);
+	Z.debug(`id=${id}&info=${key}&ts=${(new Date).getTime()}`);
 	if (isLogin && key) {
 		const pdfLink = await getPDF(id, key);
 		if (pdfLink) {
@@ -204,6 +207,19 @@ async function getPDF(id, key) {
 		body: postData
 	});
 	return respond.url;
+}
+
+function richTextTitle(item, doc) {
+	let title = doc.querySelector('.article-title > h1');
+	if (title) {
+		title = title.cloneNode(true);
+		while (title.querySelector(':not(sup):not(sub):not(i):not(b)')) {
+			title.removeChild(title.querySelector(':not(sup):not(sub):not(i):not(b)'));
+		}
+		item.title = title.innerHTML
+			.replace(/<(sup|sub|i|b)[^>]+>/g, '<$1>')
+			.replace(/<(sup|sub|i|b)><\/(sup|sub|i|b)>/g, '');
+	}
 }
 
 function tryMatch(string, pattern, index = 0) {
