@@ -2,14 +2,14 @@
 	"translatorID": "c198059a-3e3a-4ee5-adc0-c3011351365c",
 	"label": "Duxiu",
 	"creator": "Bo An, jiaojiaodubai",
-	"target": ".*duxiu\\..*(getPage|search|bookDetail|JourDetail|NPDetail|thesisDetail|CPDetail|patentDetail|StdDetail|\\/base)",
+	"target": ".*\\.duxiu\\..*(getPage|search|bookDetail|JourDetail|NPDetail|thesisDetail|CPDetail|patentDetail|StdDetail|\\/base)",
 	"minVersion": "6.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-13 10:22:39"
+	"lastUpdated": "2024-10-19 14:59:24"
 }
 
 /*
@@ -47,7 +47,7 @@ function detectWeb(doc, url) {
 		patentDetail: 'patent',
 		StdDetail: 'standard'
 	};
-	let subUrl = Object.keys(pageMap).find(key => url.includes(key));
+	const subUrl = Object.keys(pageMap).find(key => url.includes(key));
 	if (subUrl) {
 		return pageMap[subUrl];
 	}
@@ -58,14 +58,12 @@ function detectWeb(doc, url) {
 }
 
 function getSearchResults(doc, checkOnly) {
-	var items = {};
-	var found = false;
-	var rows = doc.querySelectorAll('ul dt a');
-	for (let row of rows) {
-		let href = row.href;
-		Z.debug(href);
-		let title = ZU.trimInternal(row.textContent);
-		Z.debug(title);
+	const items = {};
+	let found = false;
+	const rows = doc.querySelectorAll('ul dt a');
+	for (const row of rows) {
+		const href = row.href;
+		const title = ZU.trimInternal(row.textContent);
 		if (!href || !title) continue;
 		if (checkOnly) return true;
 		found = true;
@@ -75,7 +73,6 @@ function getSearchResults(doc, checkOnly) {
 }
 
 async function doWeb(doc, url) {
-	Z.debug(doc.body.innerText);
 	const itemType = detectWeb(doc, url);
 	if (itemType == 'multiple') {
 		let items = await Zotero.selectItems(getSearchResults(doc, false));
@@ -98,63 +95,93 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url = doc.location.href) {
-	// Z.debug(doc.body.innerText);
-	let labels = new Labels(doc, 'dl > dd');
-	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].textContent)]));
-	var newItem = new Z.Item(detectWeb(doc, url));
-	newItem.title = text(doc, 'dl > dt');
-	newItem.extra = '';
-	newItem.abstractNote = labels.get(['摘要', '内容提要', '简介']).replace(/\s*隐藏更多$/, '');
-	labels.get(['作者', '发明人']).split(/[;；]\s*/)
+	const fields = {};
+	const rows = doc.querySelectorAll('.card_text > dl > dd');
+	for (const row of rows) {
+		const elmCopy = row.cloneNode(true);
+		const label = elmCopy.querySelector('.card_text-dd-label,span:first-child');
+		if (!label) continue;
+		const labelText = ZU.trimInternal(label.textContent).replace(/\s|:$/g, '');
+		const colon = elmCopy.querySelector('.card_text-dd-label+span');
+		label.parentNode.removeChild(label);
+		colon && colon.parentNode.removeChild(colon);
+		if (/\S/.test(labelText)) fields[labelText] = elmCopy;
+	}
+	function getField(labels, element = false) {
+		if (!Array.isArray(labels)) labels = [labels];
+		for (const label of labels) {
+			const value = fields[label];
+			if (value) return element ? value : ZU.trimInternal(value.textContent);
+		}
+		return '';
+	}
+	Z.debug(Object.keys(fields).map(key => [key, getField(key)]));
+	const extra = new Extra();
+	const newItem = new Z.Item(detectWeb(doc, url));
+	newItem.title = ZU.trimInternal(text(doc, '.card_text > dl > dt'));
+	newItem.abstractNote = getField(['摘要', '内容提要', '简介']).replace(/\s*隐藏更多$/, '');
+	const creatorsExt = [];
+	getField(['作者', '发明人']).split(/[;；]\s*/)
 		.forEach((group) => {
-			let creators = group.split(/[,，]\s*/);
-			let creatorType = /翻?译$/.test(creators[creators.length - 1])
+			const creators = group.split(/[,，]\s*/);
+			const creatorType = /翻?译$/.test(creators[creators.length - 1])
 				? 'translator'
 				: 'author';
 			creators.forEach((creator) => {
 				creator = creator
 					.replace(/^：/, '')
 					.replace(/[主编著翻译\d\s]*$/g, '');
+				const country = tryMatch(creator, /^（(.+?)）/, 1);
+				creator = creator.replace(/^（.+?）/, '');
+				const original = tryMatch(creator, /（(.+?)）$/, 1);
+				creator = creator.replace(/（.+?）$/, '');
+				if (original) extra.push('original-author', ZU.capitalizeName(original), true);
 				creator = ZU.cleanAuthor(creator, creatorType);
-				if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+				if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
+					creator.lastName = (creator.firstName + creator.lastName).replace(/([\u4e00-\u9fff])\s?([A-Z])/g, '$1·$2').replace(/([A-Z])\.(\S)/g, '$1. $2');
+					creator.firstName = '';
 					creator.fieldMode = 1;
 				}
-				newItem.creators.push(creator);
+				newItem.creators.push(JSON.parse(JSON.stringify(creator)));
+				creator.country = country;
+				creator.original = original;
+				creatorsExt.push(creator);
 			});
 		});
+	if (creatorsExt.some(creator => creator.country || creator.original)) extra.set('creatorsExt', JSON.stringify(creatorsExt));
 	switch (newItem.itemType) {
 		case 'book': {
-			newItem.series = labels.get('丛书名');
-			let pubInfo = labels.get('出版发行');
-			// newItem.edition = 版本;
+			newItem.series = getField('丛书名');
+			let pubInfo = getField('出版发行');
+			newItem.edition = tryMatch(newItem.title, /\b.+?版$/);
 			newItem.place = tryMatch(pubInfo, /(.+?)：/, 1);
 			// 有时pubInfo仅含出版社：https://book.duxiu.com/bookDetail.jsp?dxNumber=000007798830&d=84337FB71A1ED5917061A4BB4C3610AF
 			newItem.publisher = /[：，]/.test(pubInfo)
-				? tryMatch(pubInfo, /：(.+?)(?:，|\s*,\s*)/, 1)
+				? tryMatch(pubInfo, /：(.+?)\s?[,，]\s?/, 1)
 				: pubInfo;
 			newItem.date = ZU.strToISO(tryMatch(pubInfo, /[\d.-]*$/));
-			newItem.numPages = labels.get('页数');
-			newItem.ISBN = labels.get('ISBN');
+			newItem.numPages = getField('页数');
+			newItem.ISBN = getField('I S B N');
 			// newItem.shortTitle = 短标题;
 			break;
 		}
 		case 'journalArticle':
-			newItem.publicationTitle = labels.get('刊名, 来源');
-			newItem.issue = tryMatch(labels.get('期号'), /0*(\d+)/, 1);
-			newItem.pages = labels.get('页码');
-			newItem.date = labels.get('出版日期');
-			newItem.ISSN = labels.get('ISSN');
+			newItem.publicationTitle = getField(['刊名', '来源']);
+			newItem.issue = tryMatch(getField('期号'), /0*(\d+)/, 1);
+			newItem.pages = getField('页码');
+			newItem.date = getField('出版日期');
+			newItem.ISSN = getField('ISSN');
 			break;
 		case 'newspaperArticle':
-			newItem.publicationTitle = labels.get('来源');
-			newItem.date = ZU.strToISO(labels.get('日期'));
-			newItem.pages = tryMatch(labels.get('版次'), /0*(\d+)/, 1);
+			newItem.publicationTitle = getField('来源');
+			newItem.date = ZU.strToISO(getField('日期'));
+			newItem.pages = tryMatch(getField('版次'), /0*(\d+)/, 1);
 			break;
 		case 'thesis': {
-			newItem.university = labels.get('学位授予单位');
-			newItem.date = labels.get('学位年度');
-			newItem.thesisType = `${labels.get('学位名称')}学位论文`;
-			let tutors = labels.get('导师姓名');
+			newItem.university = getField('学位授予单位');
+			newItem.date = getField('学位年度');
+			newItem.thesisType = `${getField('学位名称')}学位论文`;
+			let tutors = getField('导师姓名');
 			if (tutors) {
 				tutors.split(/[,;，；]\s*/).forEach((tutor) => {
 					newItem.creators.push(ZU.cleanAuthor(tutor, 'contributor'));
@@ -163,17 +190,17 @@ async function scrape(doc, url = doc.location.href) {
 			break;
 		}
 		case 'conferencePaper':
-			newItem.date = labels.get('日期');
-			newItem.proceedingsTitle = labels.get('会议录名称');
-			newItem.conferenceName = labels.get('会议名称');
+			newItem.date = getField('日期');
+			newItem.proceedingsTitle = getField('会议录名称');
+			newItem.conferenceName = getField('会议名称');
 			// "place": "地点",
 			// "publisher": "出版社",
 			// "pages": "页码",
 			break;
 		case 'patent': {
-			newItem.place = labels.get('地址');
-			newItem.filingDate = ZU.strToISO(labels.get('申请日期'));
-			newItem.applicationNumber = labels.get('申请号');
+			newItem.place = getField('地址');
+			newItem.filingDate = ZU.strToISO(getField('申请日期'));
+			newItem.applicationNumber = getField('申请号');
 			let patentDetail = attr(doc, 'dd > a[href*="pat.hnipo"]', 'href');
 			if (patentDetail) {
 				let detailDoc = await requestDocument(patentDetail);
@@ -192,25 +219,26 @@ async function scrape(doc, url = doc.location.href) {
 			break;
 		}
 		case 'standard':
-			newItem.number = labels.get('标准号').replace('-', '—');
+			newItem.number = getField('标准号').replace('-', '—');
 			break;
 	}
 	newItem.url = tryMatch(url, /^.+dxNumber=\w+/i) || url;
-	newItem.extra += addExtra('original-title', labels.get(['外文题名', '标准英文名']));
-	newItem.extra += addExtra('Genre', labels.get('专利类型'));
-	newItem.extra += addExtra('price', labels.get('原书定价'));
-	newItem.extra += addExtra('IF', labels.get('影响因子'));
-	newItem.extra += addExtra('fund', labels.get('基金'));
-	newItem.extra += addExtra('cite as', labels.get('参考文献格式'));
-	newItem.extra += addExtra('CLC', labels.get('中图法分类号'));
-	newItem.extra += addExtra('contact', labels.get('作者联系方式'));
-	newItem.extra += addExtra('IPC', labels.get('IPC'));
-	newItem.extra += addExtra('ICS', labels.get('ICS'));
-	newItem.extra += addExtra('reference', labels.get('引用标准'));
+	extra.set('original-title', ZU.capitalizeTitle(getField(['外文题名', '标准英文名'])), true);
+	extra.set('genre', getField('专利类型'), true);
+	extra.set('price', getField('原书定价'));
+	extra.set('IF', getField('影响因子'));
+	extra.set('fund', getField('基金'));
+	extra.set('citeAs', getField('参考文献格式'));
+	extra.set('CLC', getField('中图法分类号'));
+	extra.set('contact', getField('作者联系方式'));
+	extra.set('IPC', getField('IPC'));
+	extra.set('ICS', getField('ICS'));
+	extra.set('reference', getField('引用标准'));
 	// https://book.duxiu.com/StdDetail.jsp?dxid=320151549195&d=443146B469770278DD217B9CF31D9D84
-	newItem.extra += addExtra('replacement', labels.get('替代情况'));
-	newItem.extra += addExtra('CCS', labels.get('中标分类号'));
-	labels.get(['关键词', '主题词']).split(/[;，；]/).forEach(tag => newItem.tags.push(tag));
+	extra.set('replacement', getField('替代情况'));
+	extra.set('CCS', getField('中标分类号'));
+	getField(['关键词', '主题词']).split(/[;，；]/).forEach(tag => newItem.tags.push(tag));
+	newItem.extra = extra.toString();
 	return newItem;
 }
 
@@ -250,68 +278,41 @@ async function scrapeBookSection(doc, url = doc.location.href) {
 	sectionItem.complete();
 }
 
-/* Util */
-class Labels {
-	constructor(doc, selector) {
-		this.data = [];
-		this.emptyElm = doc.createElement('div');
-		Array.from(doc.querySelectorAll(selector))
-			// avoid nesting
-			.filter(element => !element.querySelector(selector))
-			// avoid empty
-			.filter(element => !/^\s*$/.test(element.textContent))
-			.forEach((element) => {
-				const elmCopy = element.cloneNode(true);
-				// avoid empty text
-				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
-					// Z.debug(elementCopy.firstChild.textContent);
-					elmCopy.removeChild(elmCopy.firstChild);
-					// Z.debug(elementCopy.firstChild.textContent);
-				}
-				if (elmCopy.childNodes.length > 1) {
-					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
-					this.data.push([key, elmCopy]);
-				}
-				else {
-					const text = ZU.trimInternal(elmCopy.textContent);
-					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
-					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
-					this.data.push([key, elmCopy]);
-				}
-			});
+class Extra {
+	constructor() {
+		this.fields = [];
 	}
 
-	get(label, element = false) {
-		if (Array.isArray(label)) {
-			const results = label
-				.map(aLabel => this.get(aLabel, element));
-			const keyVal = element
-				? results.find(element => !/^\s*$/.test(element.textContent))
-				: results.find(string => string);
-			return keyVal
-				? keyVal
-				: element
-					? this.emptyElm
-					: '';
+	push(key, val, csl = false) {
+		this.fields.push({ key: key, val: val, csl: csl });
+	}
+
+	set(key, val, csl = false) {
+		const target = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		if (target) {
+			target.val = val;
 		}
-		const pattern = new RegExp(label, 'i');
-		const keyVal = this.data.find(arr => pattern.test(arr[0]));
-		return keyVal
-			? element
-				? keyVal[1]
-				: ZU.trimInternal(keyVal[1].textContent)
-			: element
-				? this.emptyElm
-				: '';
+		else {
+			this.push(key, val, csl);
+		}
+	}
+
+	get(key) {
+		const result = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		return result
+			? result.val
+			: '';
+	}
+
+	toString(history = '') {
+		this.fields = this.fields.filter(obj => obj.val);
+		return [
+			this.fields.filter(obj => obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n'),
+			history,
+			this.fields.filter(obj => !obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n')
+		].filter(obj => obj).join('\n');
 	}
 }
-
-function addExtra(key, value) {
-	return value
-		? `${key}: ${value}\n`
-		: '';
-}
-
 
 function tryMatch(string, pattern, index = 0) {
 	if (!string) return '';
@@ -325,53 +326,63 @@ function tryMatch(string, pattern, index = 0) {
 var testCases = [
 	{
 		"type": "web",
-		"url": "https://book.duxiu.com/bookDetail.jsp?dxNumber=000030156491&d=E232D717765DD7E60641F94C0D55032C",
+		"url": "https://book.duxiu.com/views/specific/4010/bookDetail.jsp?dxNumber=000030591379&d=AAB0ABB8D0C543BFF26956EE9601E809",
 		"items": [
 			{
 				"itemType": "book",
-				"title": "海德格尔文集  尼采  下",
+				"title": "计算机组成与设计 硬件/软件接口 MIPS版 原书第6版",
 				"creators": [
 					{
 						"firstName": "",
-						"lastName": "（德）海德格尔",
+						"lastName": "戴维·A. 帕特森",
 						"creatorType": "author",
 						"fieldMode": 1
 					},
 					{
 						"firstName": "",
-						"lastName": "孙周兴",
+						"lastName": "约翰·L. 亨尼斯",
 						"creatorType": "author",
 						"fieldMode": 1
 					},
 					{
 						"firstName": "",
-						"lastName": "王庆节",
-						"creatorType": "author",
+						"lastName": "王党辉",
+						"creatorType": "translator",
 						"fieldMode": 1
 					},
 					{
 						"firstName": "",
-						"lastName": "孙周兴",
+						"lastName": "安建峰",
+						"creatorType": "translator",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "张萌",
+						"creatorType": "translator",
+						"fieldMode": 1
+					},
+					{
+						"firstName": "",
+						"lastName": "王继禾",
 						"creatorType": "translator",
 						"fieldMode": 1
 					}
 				],
-				"date": "2015-11",
-				"ISBN": "9787100094313",
-				"abstractNote": "本书分上、下两册，是作者1936至1940年间在弗莱堡大学做的讲座，又附加了若干篇论文，意在审视作者从1930年以来直至“关于人道主义的书信”（发表于1947年）所走过的思想道路。",
-				"extra": "price: 268.00（全2卷）\noriginal-title: ：Martin Heidegger Nietzsche\ncite as: （德）海德格尔著；孙周兴，王庆节主编；孙周兴译. 海德格尔文集 尼采 下[M]. 北京：商务印书馆, 2015.11.\nCLC: B516.47 ( 哲学、宗教->欧洲哲学->欧洲各国哲学->德国哲学 )",
+				"date": "2022-07",
+				"abstractNote": "： 本书由2017年图灵奖的两位得主撰写，是计算机体系结构领域的经典教材。第6版在保留计算机组成方面传统论题并延续前5版特点的基础上，引入了许多近几年计算机领域发展中的新论题，如领域专用体系结构（DSA）、硬件安全攻击等。另外，在实例方面也与时俱进地采用新的ARMCortex-A53微体系结构和IntelCorei76700Skylake微体系结构等现代设计对计算机组成的基本原理进行说明。在关于处理器的一章中，在单周期处理器和流水线处理器之间增加了对多周期处理器的介绍，使读者更易理解流水线处理器产生的必然性。",
+				"edition": "MIPS版 原书第6版",
+				"extra": "original-author: David A. Patterson\noriginal-author: John L. Hennessy\noriginal-title: COMPUTER ORGANNIZATION AND DESIGN THE HARDWARE/SOFTWARE INTERFACE，MIPS EDITION，SIXTH EDITION\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"戴维·A. 帕特森\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"David A. Patterson\"},{\"firstName\":\"\",\"lastName\":\"约翰·L. 亨尼斯\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"John L. Hennessy\"},{\"firstName\":\"\",\"lastName\":\"王党辉\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"安建峰\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"张萌\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"王继禾\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]\nprice: 149.00\nciteAs: （美）戴维·A.帕特森（David A. Patterson），（美）约翰 L.亨尼斯（John L. Hennessy）著；王党辉，安建峰，张萌，王继禾译. 计算机组成与设计 硬件/软件接口 MIPS版 原书第6版[M]. 北京：机械工业出版社, 2022.07.\nCLC: TP301 ( 工业技术->自动化技术、计算机技术->计算技术、计算机技术->一般性问题 )",
 				"libraryCatalog": "Duxiu",
-				"numPages": "1235",
+				"numPages": "580",
 				"place": "北京",
-				"publisher": "商务印书馆",
-				"url": "https://book.duxiu.com/bookDetail.jsp?dxNumber=000030156491",
+				"publisher": "机械工业出版社",
+				"series": "计算机科学丛书 华章教育",
+				"url": "https://book.duxiu.com/views/specific/4010/bookDetail.jsp?dxNumber=000030591379",
 				"attachments": [],
 				"tags": [
 					{
-						"tag": "F.W.（1844-1900）-哲学思想-研究"
-					},
-					{
-						"tag": "尼采"
+						"tag": "计算机组成原理"
 					}
 				],
 				"notes": [],
