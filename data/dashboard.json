@@ -8450,65 +8450,75 @@
       "translatorID": "c198059a-3e3a-4ee5-adc0-c3011351365c",
       "label": "Duxiu",
       "creator": "Bo An, jiaojiaodubai",
-      "target": ".*duxiu\\..*(getPage|search|bookDetail|JourDetail|NPDetail|thesisDetail|CPDetail|patentDetail|StdDetail|\\/base)",
+      "target": ".*\\.duxiu\\..*(getPage|search|bookDetail|JourDetail|NPDetail|thesisDetail|CPDetail|patentDetail|StdDetail|\\/base)",
       "minVersion": "6.0",
       "maxVersion": "",
       "priority": 100,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-01-13 10:22:39"
+      "lastUpdated": "2024-10-19 14:59:24"
     },
     "testCases": [
       {
         "type": "web",
-        "url": "https://book.duxiu.com/bookDetail.jsp?dxNumber=000030156491&d=E232D717765DD7E60641F94C0D55032C",
+        "url": "https://book.duxiu.com/views/specific/4010/bookDetail.jsp?dxNumber=000030591379&d=AAB0ABB8D0C543BFF26956EE9601E809",
         "items": [
           {
             "itemType": "book",
-            "title": "海德格尔文集  尼采  下",
+            "title": "计算机组成与设计 硬件/软件接口 MIPS版 原书第6版",
             "creators": [
               {
                 "firstName": "",
-                "lastName": "（德）海德格尔",
+                "lastName": "戴维·A. 帕特森",
                 "creatorType": "author",
                 "fieldMode": 1
               },
               {
                 "firstName": "",
-                "lastName": "孙周兴",
+                "lastName": "约翰·L. 亨尼斯",
                 "creatorType": "author",
                 "fieldMode": 1
               },
               {
                 "firstName": "",
-                "lastName": "王庆节",
-                "creatorType": "author",
+                "lastName": "王党辉",
+                "creatorType": "translator",
                 "fieldMode": 1
               },
               {
                 "firstName": "",
-                "lastName": "孙周兴",
+                "lastName": "安建峰",
+                "creatorType": "translator",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "张萌",
+                "creatorType": "translator",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "王继禾",
                 "creatorType": "translator",
                 "fieldMode": 1
               }
             ],
-            "date": "2015-11",
-            "ISBN": "9787100094313",
-            "abstractNote": "本书分上、下两册，是作者1936至1940年间在弗莱堡大学做的讲座，又附加了若干篇论文，意在审视作者从1930年以来直至“关于人道主义的书信”（发表于1947年）所走过的思想道路。",
-            "extra": "price: 268.00（全2卷）\noriginal-title: ：Martin Heidegger Nietzsche\ncite as: （德）海德格尔著；孙周兴，王庆节主编；孙周兴译. 海德格尔文集 尼采 下[M]. 北京：商务印书馆, 2015.11.\nCLC: B516.47 ( 哲学、宗教->欧洲哲学->欧洲各国哲学->德国哲学 )",
+            "date": "2022-07",
+            "abstractNote": "： 本书由2017年图灵奖的两位得主撰写，是计算机体系结构领域的经典教材。第6版在保留计算机组成方面传统论题并延续前5版特点的基础上，引入了许多近几年计算机领域发展中的新论题，如领域专用体系结构（DSA）、硬件安全攻击等。另外，在实例方面也与时俱进地采用新的ARMCortex-A53微体系结构和IntelCorei76700Skylake微体系结构等现代设计对计算机组成的基本原理进行说明。在关于处理器的一章中，在单周期处理器和流水线处理器之间增加了对多周期处理器的介绍，使读者更易理解流水线处理器产生的必然性。",
+            "edition": "MIPS版 原书第6版",
+            "extra": "original-author: David A. Patterson\noriginal-author: John L. Hennessy\noriginal-title: COMPUTER ORGANNIZATION AND DESIGN THE HARDWARE/SOFTWARE INTERFACE，MIPS EDITION，SIXTH EDITION\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"戴维·A. 帕特森\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"David A. Patterson\"},{\"firstName\":\"\",\"lastName\":\"约翰·L. 亨尼斯\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"John L. Hennessy\"},{\"firstName\":\"\",\"lastName\":\"王党辉\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"安建峰\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"张萌\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"王继禾\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]\nprice: 149.00\nciteAs: （美）戴维·A.帕特森（David A. Patterson），（美）约翰 L.亨尼斯（John L. Hennessy）著；王党辉，安建峰，张萌，王继禾译. 计算机组成与设计 硬件/软件接口 MIPS版 原书第6版[M]. 北京：机械工业出版社, 2022.07.\nCLC: TP301 ( 工业技术->自动化技术、计算机技术->计算技术、计算机技术->一般性问题 )",
             "libraryCatalog": "Duxiu",
-            "numPages": "1235",
+            "numPages": "580",
             "place": "北京",
-            "publisher": "商务印书馆",
-            "url": "https://book.duxiu.com/bookDetail.jsp?dxNumber=000030156491",
+            "publisher": "机械工业出版社",
+            "series": "计算机科学丛书 华章教育",
+            "url": "https://book.duxiu.com/views/specific/4010/bookDetail.jsp?dxNumber=000030591379",
             "attachments": [],
             "tags": [
               {
-                "tag": "F.W.（1844-1900）-哲学思想-研究"
-              },
-              {
-                "tag": "尼采"
+                "tag": "计算机组成原理"
               }
             ],
             "notes": [],
@@ -8849,6 +8859,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-10-19 23:01:30 +0800",
+        "message": "紧急兼容新布局，fix #391"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-20 13:22:33 +0800",
         "message": "fix typo"
       },
@@ -8856,11 +8871,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-06-20 17:04:42 +0800",
-        "message": "clean EOL, fix #351, fix #352"
       }
     ]
   },
