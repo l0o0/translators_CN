@@ -113,9 +113,15 @@ module.exports = {
 						});
 					}
 					else if (testCase.type === 'search') {
-						const expected = ['DOI', 'ISBN', 'PMID', 'identifiers', 'contextObject', 'adsBibcode', 'ericNumber', 'openAlex'];
-						const keys = Array.isArray(testCase.input) ? testCase.input.flatMap(Object.keys) : Object.keys(testCase.input);
-
+						// console.log(JSON.stringify(testCase.input))
+						const expected = ['DOI', 'ISBN', 'PMID', 'arXiv', 'identifiers', 'contextObject', 'adsBibcode', 'ericNumber', 'openAlex'];
+						let keys;
+						if (Array.isArray(testCase.input)) {
+							keys = testCase.input.flatMap(Object.keys);
+						}
+						else {
+							keys = Object.keys(testCase.input);
+						}
 						if (!keys.every(key => expected.includes(key))) {
 							const invalidKey = keys.find(key => !expected.includes(key));
 							context.report({
