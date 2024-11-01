@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-10-16 13:14:05"
+	"lastUpdated": "2024-11-01 22:32:09"
 }
 
 /*
@@ -137,10 +137,11 @@ async function scrape(doc, url = doc.location.href) {
 	// .user-more for personal
 	const isLogin = !!doc.querySelector('.app-reg > a,.user-more > a');
 	Z.debug(`isLogin: ${isLogin}`);
-	const key = tryMatch(attr(doc, '.article-source > a[onclick^="showdown"]', 'onclick'), /'([^']+)'\)$/, 1);
+	const key = encodeURIComponent(tryMatch(attr(doc, '.article-source > a[onclick^="showdown"]', 'onclick'), /'([^']+)'\)$/, 1));
 	Z.debug(`key: ${key}`);
 	Z.debug(`id=${id}&info=${key}&ts=${(new Date).getTime()}`);
-	if (isLogin && key) {
+	// blocked by CORS policy
+	/* if (isLogin && key) {
 		const pdfLink = await getPDF(id, key);
 		if (pdfLink) {
 			newItem.attachments = [{
@@ -149,7 +150,7 @@ async function scrape(doc, url = doc.location.href) {
 				url: pdfLink
 			}];
 		}
-	}
+	} */
 	newItem.extra = extra.toString();
 	newItem.complete();
 }
