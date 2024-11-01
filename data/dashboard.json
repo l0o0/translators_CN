@@ -20287,7 +20287,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-10-16 13:14:05"
+      "lastUpdated": "2024-11-01 22:32:09"
     },
     "testCases": [
       {
@@ -20474,6 +20474,11 @@
     ],
     "zhLabel": "维普期刊",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-11-01 22:33:35 +0800",
+        "message": "不再尝试下载PDF；close #410"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2024-10-16 21:17:16 +0800",
