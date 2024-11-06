@@ -21,15 +21,15 @@ function exec(cmd) {
 	return childProcess.execSync(cmd, { cwd: repo, encoding: 'utf8' });
 }
 
-// have to pre-load evertyhing to test for conflicting headers
-const cache = {};
-for (let filename of fs.readdirSync(repo).sort()) {
-	if (!filename.endsWith('.js')) continue;
-	filename = path.join(repo, filename);
+// have to pre-load everything to test for conflicting headers
+const cache = new Map();
 
-	const text = fs.readFileSync(filename, 'utf-8');
-
-	if (text[0] !== '{') continue;
+function updateCache(text, filename) {
+	if (text[0] !== '{') return;
+	if (cache.has(filename) && cache.get(filename).text === text) {
+		// No change - no need to re-parse
+		return;
+	}
 
 	// detect header
 	const prefix = `const ZoteroTranslator${Date.now()} = `;
@@ -59,18 +59,30 @@ for (let filename of fs.readdirSync(repo).sort()) {
 		};
 	};
 
-	cache[filename] = {
+	const entry = {
+		text,
 		header: extract(header),
 		testcases: extract(testcases),
 		FW: ast.comments.find(comment => comment.type === 'Block' && comment.value.trim === 'FW LINE 59:b820c6d')
 	};
 
 	try {
-		cache[filename].header.fields = JSON.parse(cache[filename].header.text);
+		entry.header.fields = JSON.parse(entry.header.text);
 	}
 	catch (err) {
 		// ignore
 	}
+
+
+	cache.set(filename, entry);
+}
+
+for (let filename of fs.readdirSync(repo).sort()) {
+	if (!filename.endsWith('.js')) continue;
+	filename = path.join(repo, filename);
+
+	const text = fs.readFileSync(filename, 'utf-8');
+	updateCache(text, filename);
 }
 
 for (const lu of exec(`git grep '"lastUpdated"' HEAD~1`).split('\n')) {
@@ -78,7 +90,7 @@ for (const lu of exec(`git grep '"lastUpdated"' HEAD~1`).split('\n')) {
 	if (!m) continue;
 	const [, translator, lastUpdated] = m;
 	const filename = path.join(repo, translator);
-	if (cache[filename]) cache[filename].lastUpdated = lastUpdated;
+	if (cache.has(filename)) cache.get(filename).lastUpdated = lastUpdated;
 }
 
 function tryJSON(json, offset) {
@@ -145,9 +157,9 @@ function header(program) {
 }
 
 function conflict(filename) {
-	const translatorID = (((cache[filename] || {}).header || {}).fields || {}).translatorID;
+	const translatorID = (((cache.get(filename) || {}).header || {}).fields || {}).translatorID;
 	if (!translatorID) return null;
-	for (const [other, header] of Object.entries(cache)) {
+	for (const [other, header] of cache.entries()) {
 		if (other !== filename && header.translatorID === translatorID) {
 			return header.fields;
 		}
@@ -159,7 +171,7 @@ const junk = new RegExp(`${path.sep}0_`.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$
 module.exports = {
 	support: {
 		repo,
-		parsed: filename => cache[filename.replace(junk, '')],
+		parsed: filename => cache.get(filename.replace(junk, '')),
 		header,
 		IDconflict: conflict,
 		json: {
@@ -171,7 +183,11 @@ module.exports = {
 	supportsAutofix: true,
 
 	preprocess: function (text, filename) {
-		const parsed = cache[filename];
+		// We might be running on an in-memory version of the translator newer
+		// than what we read from disk earlier, so update the cache
+		updateCache(text, filename);
+
+		const parsed = cache.get(filename);
 		if (text[0] !== '{' || !parsed) return [{ text, filename }];
 
 		if (parsed.header.text) {
@@ -185,7 +201,7 @@ module.exports = {
 	postprocess: function (messages, filename) {
 		messages = [].concat(...messages);
 
-		const parsed = cache[filename];
+		const parsed = cache.get(filename);
 
 		if (parsed) {
 			const header = parsed.header;
