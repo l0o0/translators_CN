@@ -1,6 +1,7 @@
 {
   "Baidu Baike": "百度百科",
   "Baidu Scholar": "百度学术",
+  "Belt and Road Database": "“一带一路”数据库",
   "BiliBili": "Bilibili视频",
   "CCPINFO": "国家出版发行信息公共服务平台",
   "chaoxingqikan": "超星期刊",
@@ -36,6 +37,7 @@
   "GFSOSO": "谷粉搜搜",
   "gov.cn Policy": "国务院政策文件库",
   "Jd": "京东",
+  "Jikan Full Text Database": "集刊全文数据库",
   "MagTech": "玛格泰克",
   "Modern History": "抗日战争与近代中日关系文献数据平台",
   "National Public Service Platform for Standards Information - China": "全国标准信息公共服务平台",
@@ -59,6 +61,7 @@
   "QStheory": "求是网",
   "RDFYBK": "人大复印报刊",
   "RHHZ": "仁和汇智",
+  "Rural Studies Database": "乡村研究数据库",
   "Science Reading": "科学文库",
   "Sina Weibo": "新浪微博",
   "SKCTK": "中国社会科学词条库",
@@ -77,8 +80,5 @@
   "Yiigle": "中华医学期刊全文数据库",
   "zhangqiaokeyan": " 掌桥科研",
   "Zhihu": "知乎",
-  "Zhihuiya": "智慧芽",
-  "Belt and Road Database": "“一带一路”数据库",
-  "Rural Studies Database": "乡村研究数据库",
-  "Jikan Full Text Database": "集刊全文数据库"
+  "Zhihuiya": "智慧芽"
 }

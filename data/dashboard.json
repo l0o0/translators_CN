@@ -21650,5 +21650,753 @@
         "message": "add SciEngien, resolve #369"
       }
     ]
+  },
+  "Belt and Road Database.js": {
+    "header": {
+      "translatorID": "c43bec1b-ba31-4a34-a0dd-4f25aeac04ad",
+      "label": "Belt and Road Database",
+      "creator": "jiaojiaodubai",
+      "target": "^https://www\\.ydylcn\\.com",
+      "minVersion": "5.0",
+      "maxVersion": "",
+      "priority": 100,
+      "inRepository": true,
+      "translatorType": 4,
+      "browserSupport": "gcsibv",
+      "lastUpdated": "2024-11-05 13:44:06"
+    },
+    "testCases": [
+      {
+        "type": "web",
+        "url": "https://www.ydylcn.com/skwx_ydyl/bookdetail?SiteID=1&ID=11626340",
+        "items": [
+          {
+            "itemType": "book",
+            "title": "世界能源发展报告（2023）",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "中国社会科学院大学（研究生院）国际能源安全研究中心",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "黄晓勇",
+                "creatorType": "editor",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "陈卫东",
+                "creatorType": "editor",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "王永中",
+                "creatorType": "editor",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "王炜",
+                "creatorType": "editor",
+                "fieldMode": 1
+              }
+            ],
+            "date": "2023-09",
+            "ISBN": "9787522825625",
+            "abstractNote": "《世界能源发展报告（2023）》聚焦2022年世界石油、天然气、煤炭、电力市场和可再生能源的整体发展情况，着重对其发展过程中呈现的特点，从影响因素、各相关表现和未来变化趋势等方面进行梳理，并对影响能源市场发展的重要事件和区域进行了深入探究和分析，在此基础上对2023年世界能源供需和价格走势进行预测，同时对中国能源发展现状进行分析，对中国能源各领域的发展战略提出有针对性的建议。回顾2022年，全球新冠疫情反复、俄乌冲突爆发、中美关系更加错综复杂、能源绿色低碳转型进程提速等事件或因素对全球能源市场都有重大影响，能源商品的政治属性进一步凸显。数十年以来形成的全球能源生产和消费格局、市场供需形势和价格、贸易走向和渠道受到前所未有的冲击。欧美制裁导致俄罗斯国内石油和天然气供应下降，大量外资企业撤资，石油和天然气外输通道受阻，区域性油气供需失衡，并进一步拉高了国际油气价格。同时，欧洲从全球其他地区“寻油找气”打破了能源市场既有的平衡，欧盟对俄罗斯的油气限价扭曲了市场机制，地缘政治局势的持续演进将推动全球油气格局进入深度调整期。2022年3月布伦特油价冲高至123美元/桶。从全年平均收盘价格看，2022年布伦特原油期货均价为98.86美元/桶，WTI原油期货均价为94.33美元/桶，分别比2021年的70.95美元/桶和68.01美元/桶高27.91美元/桶和26.32美元/桶，涨幅近40%。俄乌冲突对全球能源市场造成很大冲击，欧洲天然气市场首当其冲。欧洲对俄罗斯管道天然气的高度依赖、西方对俄能源制裁和俄罗斯的反制措施，使欧洲天然气供给严重短缺，2022年8月26日欧洲TTF天然气价格冲高至339欧元/兆瓦时（约100美元/百万英热单位）的历史高点。总体上看，相对于区域化的天然气和煤炭市场，全球化、金融化程度更高的国际原油市场贸易流向调整相对容易，这使国际原油价格虽出现较大波动，但涨幅远小于天然气、煤炭。2022年部分国家鼓励重返煤炭利用。受风力发电不足、核电机组关闭、天然气价格暴涨等因素影响，全球煤炭价格持续上涨，不断创出新的纪录，并全年维持在高位。2022年，全球煤炭消费量增长1.2%，年度消费量首次超过80亿吨，全球煤炭产量增长至83.18亿吨，同比增长1.77%。全球电力需求在2020年经历小幅下降之后，呈现连续两年恢复态势。2022年全球电力需求同比增长约2%，与新冠疫情前5年平均增长率（2.4%）基本持平，但明显低于2021年的增长率（6%）。2022年可再生能源发电仍以创纪录的水平增长。截至2022年底，全球可再生能源总发电装机容量达到3372吉瓦，较上年增加295吉瓦，增幅达9.6%。其中，2022年新增发电装机容量的83%来自可再生能源，高于2021年的78%，可再生能源装机容量占总发电装机的比例由2021年的38.3%提升至40.2%。除风电和光伏等可再生能源快速发展外，全球核电也迎来了新的发展期。部分国家鼓励核能启用与新建，欧盟不仅重新将核能定义为清洁能源，而且认为核能将作为一种稳定型的能源长期存在。展望2023年，俄乌冲突导致世界各国对能源安全的关注度进一步提高，不少国家通过采取提高能源自给率和推动能源结构绿色低碳转型的方式保障能源供给安全，从而减弱了世界进口石油和天然气的需求。俄乌冲突对全球能源供应的影响正不断递减，全球能源市场波动将逐步缓和。国际能源署的预测认为，2023年全球石油需求将增加200万桶/日，升至创纪录的10190万桶/日，其中中国等发展中国家将贡献90%的增长份额，发达国家的石油需求将因制造业疲软而下降，而OPEC+的额外自动减产计划预计导致2023年全球原油产量比上年下降40万桶/日。欧洲冬季天然气和能源供应脆弱性大，不排除天然气供应短缺会导致国际油价上涨。总体上看，在2023年下半年至2024年，国际原油价格将总体上维持波动行情，中枢价格将维持在80美元/桶左右。全球LNG供应短缺状态将继续维持，欧洲天然气价格将显著低于2022年水平，但仍高位波动，且欧洲的LNG价格将有可能继续高于亚洲，但价差将大幅缩窄。国际能源署预计，2023年煤炭需求仍将保持强劲，全球煤炭产量将达到峰值。电力方面，随着以中国、印度和东南亚国家为首的新兴市场和发展中经济体电力消费的增加，2023年全球电力需求将加速增长，年增幅预计3%。在全球能源危机、化石燃料价格飙升、气候目标提高的大背景下，核能迎来了复兴的机会。国际能源署预测，至少有30个国家将扩大核能的使用。随着可再生能源在成本方面竞争力的提高，以及鼓励能源绿色低碳转型政策的普及，可再生能源规模迅速扩大，其在全球一次能源中的占比从2019年10%左右提升至2050年的35%～65%。2022年中国能源行业发展取得了积极成效。2019年正式实施油气增储上产“七年行动计划”以来，中国油气企业持续加大勘探开发资金和科技投入力度，高质量完成各年度计划目标，增储上产成果密集显现，持续助力中国油气对外依存度的降低。在化石能源安全保障水平稳步提高的同时，我国可再生能源发展取得举世瞩目的成就。一是非化石能源发电装机占总装机容量的比重接近50%。2022年，全国新增发电装机容量2.0亿千瓦，其中新增非化石能源发电装机容量1.6亿千瓦，均创历史新高。截至2022年底，全国全口径发电装机容量25.6亿千瓦，其中非化石能源发电装机容量12.7亿千瓦，同比增长13.8%，占总装机容量的比重上升至49.6%，同比提高2.6个百分点，电力发展延续绿色低碳转型趋势。二是可再生能源发电量达2.7万亿千瓦时，占全国总发电量的31.3%；可再生能源新增发电量占全国新增发电量的81%，已成为我国新增发电量的主要来源。其中，风电、光伏发电量达到1.19万亿千瓦时。热点篇深入阐述和分析了亚太地区能源转型所需关键矿物供应链的现状及各国制定的相关战略，以及人民币油气贸易的发展。前沿篇聚焦能源行业前瞻性问题，从多个维度深入分析了可再生能源比例上升对电力系统稳定性的影响、世界储能技术和节能市场的现状与发展前景、世界锂市场的现状等可再生能源发展的行业热点问题。前沿篇还对中国新型能源体系的政策内涵与构建路径、“十四五”时期中国天然气市场发展趋势、中国城市碳达峰指数与市场动量进行了独到的分析，对中国区域发展与能源消费转型体系进行了深入研究。",
+            "extra": "original-title: ANNUAL DEVELOPMENT REPORT ON WORLD ENERGY (2023)",
+            "language": "zh-CN",
+            "libraryCatalog": "“一带一路”数据库",
+            "place": "北京",
+            "publisher": "社会科学文献出版社",
+            "series": "世界能源蓝皮书",
+            "url": "https://www.ydylcn.com/skwx_ydyl/bookdetail?SiteID=1&ID=11626340",
+            "attachments": [],
+            "tags": [
+              {
+                "tag": "世界"
+              },
+              {
+                "tag": "研究报告"
+              },
+              {
+                "tag": "能源工业"
+              }
+            ],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://www.ydylcn.com/skwx_ydyl/initDatabaseDetail?siteId=1&contentId=11626398&contentType=literature",
+        "items": [
+          {
+            "itemType": "bookSection",
+            "title": "2022年能源安全新挑战背景下的全球核电复兴",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "尹向勇",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "周杰",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "尹智鹏",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "尹舒引",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "中国社会科学院大学（研究生院）国际能源安全研究中心",
+                "creatorType": "bookAuthor",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "黄晓勇",
+                "creatorType": "editor",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "陈卫东",
+                "creatorType": "editor",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "王永中",
+                "creatorType": "editor",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "王炜",
+                "creatorType": "editor",
+                "fieldMode": 1
+              }
+            ],
+            "date": "2023-09",
+            "ISBN": "9787522825625",
+            "abstractNote": "文章摘要：2022年，俄乌冲突加剧了国际局势的紧张和对立，地缘政治成为影响国际能源市场和各国能源战略调整的重要因素。为应对大国军事冲突引发的能源危机和重构能源安全环境，各国和地区纷纷进行了能源战略调整。从供给侧来说，核电不仅能凭借其高能量密度和高可靠性确保安全稳定出力，而且可以通过核燃料循环实现铀资源高效利用，特别是在储运环节，还可发挥燃料战略储备的安全保障优势，又可避免海上通道运输风险；从需求侧来说，核电与火电、可再生能源发电相比具有明显的经济性...  展开",
+            "bookTitle": "世界能源发展报告（2023）",
+            "extra": "original-title: ANNUAL DEVELOPMENT REPORT ON WORLD ENERGY (2023)",
+            "language": "zh-CN",
+            "libraryCatalog": "“一带一路”数据库",
+            "pages": "93-114",
+            "place": "北京",
+            "publisher": "社会科学文献出版社",
+            "series": "世界能源蓝皮书",
+            "url": "https://www.ydylcn.com/skwx_ydyl/expertsDetail?authorID=",
+            "attachments": [],
+            "tags": [
+              {
+                "tag": "Energy Strategy"
+              },
+              {
+                "tag": "Geopolitics"
+              },
+              {
+                "tag": "Nuclear Power"
+              },
+              {
+                "tag": "Security"
+              },
+              {
+                "tag": "地缘政治"
+              },
+              {
+                "tag": "核能"
+              },
+              {
+                "tag": "能源安全"
+              },
+              {
+                "tag": "能源战略"
+              }
+            ],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://www.ydylcn.com/skwx_ydyl/search?query=%25E5%25B9%25BF%25E8%25A5%25BF&resourceType=Book,Literature,ImageTable,News&field=All&search=1&SiteID=1",
+        "items": "multiple"
+      },
+      {
+        "type": "web",
+        "url": "https://www.ydylcn.com/skwx_ydyl/competitiveReportDetail?SiteID=1&contentId=10273944&contentType=literature&subLibID=8730&mediaID=10576885",
+        "items": [
+          {
+            "itemType": "book",
+            "title": "“一带一路”建设发展报告（2020）",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "柴瑜",
+                "creatorType": "editor",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "王晓泉",
+                "creatorType": "editor",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "任晶晶",
+                "creatorType": "editor",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "王晨星",
+                "creatorType": "editor",
+                "fieldMode": 1
+              }
+            ],
+            "date": "2020-08",
+            "ISBN": "9787520168847",
+            "abstractNote": "《“一带一路”建设发展报告（2020）》分为总报告、分报告、国际合作篇、国内区域篇、专题篇五部分。总报告指出，共建“一带一路”以开放为导向，以推动共建国家经济发展为目标。“一带一路”倡议不同于既有的国际经贸合作机制，其开放性是加强参与国家经贸联系、推动国际经济合作与发展的基本力量。“一带一路”的开放性有助于参与地区和国家的经济发展，满足经济发展的差异化需求，促进经济的内生性发展，实现互利共赢的目标，对推动经济全球化、构建开放型世界经济具有重要意义，并为高质量共建“一带一路”提供了新的路径模式。分报告重点介绍和分析了中国与“一带一路”共建国家在贸易、投资、产能、科技、安全等领域的合作。在贸易合作领域，中国与共建国家的贸易规模不断扩大，区域贸易结构得到进一步优化，以自贸区建设为基础的贸易便利化水平持续提升。在投资合作领域，中国在共建国家投资规模整体呈增长趋势，投资地区分布邻近化特征明显，且分布较为集中，投资行业结构进一步优化。在产能合作领域，中国与共建国家产能合作在地域上越来越广，境外经贸合作区稳步推进，第三方合作伙伴进一步增多，产能合作政策环境进一步优化。在科技合作领域，中国加强与各国在科技创新领域的务实合作，推动共建“一带一路”创新共同体，不断提升各国发展动力与活力，逐渐形成区域创新发展合作新格局。在安全合作领域，中国与“一带一路”共建国家安全合作不断充实，共同、综合、合作、可持续的新安全观得到越来越多国家的认同，中国在维护国际安全中发挥的积极作用得到越来越多国家的认可。国际合作篇介绍和分析了中国与俄罗斯、中亚、西亚、南亚、非洲及日本等国家和地区在“一带一路”建设中的合作现状。六年来，中俄两国在经贸、能源、金融、地方、航空航天、互联互通、人文等领域的合作取得了丰硕成果，积极推动欧亚区域一体化进程，促进了区域经济融合发展。中国与中亚国家在“一带一路”框架下的合作有序推进，金融合作实现突破，经贸合作稳步发展，民心相通继续推进。中国与西亚国家在“一带一路”建设中的合作平台愈加成熟完善，平台运转更加流畅高效。中国在南亚地区推进“一带一路”建设取得重要进展，但风险与挑战依然存在。中非合作共建“一带一路”进入绘制“工笔画”新阶段，取得了一系列重要成果，成为“一带一路”国际合作的新亮点。中日两国在“一带一路”建设框架下积极开展第三方市场合作，共同推进高质量、高标准、高水平基础设施建设，在推动实现多方共赢的同时也促进了双边关系的改善与发展。国内区域篇着重介绍和分析了广东、吉林、辽宁、安徽四省参与“一带一路”建设规划和实施的情况。广东省立足自身优势领域，紧密围绕将粤港澳大湾区打造成为“一带一路”建设重要支撑区的要求，制定有关实施行动方案，推动各领域重点工作取得实质性进展。作为“一带一路”建设向北开放的重要窗口，吉林省对外合作稳步推进，在对外通道、合作平台、先行先试等方面取得显著成效，规划实施了“一主、六双”产业空间布局，推动“一带一路”建设取得了积极成果。辽宁省在全国率先提出在省级层面探索全域创建“一带一路”综合试验区，构建“一体两翼”对外开放新格局，聚焦五大重点领域，推动“一带一路”国际合作在具体化、项目化上取得新突破。安徽省针对自身基础设施薄弱、外向型经济总体规模偏小等实际情况，结合本省若干重要部署，提出并实施了完善交通运输基础设施建设、拓宽“一带一路”国际通道等若干举措，在积极打造内陆开放新高地上取得了新进展。专题篇研究了中国与“一带一路”共建国家在重大规划及项目风险、国际舆情等领域的合作现状与未来前景。资金融通是“一带一路”建设的重要支撑和保障，中国与共建国家通过开展资金融通开发，能够便利贸易结算和降低汇率风险，推动人民币国际化，助力中国企业海外资产配置，推动“一带一路”共建国家经济增长。要构建多元主体参与的风险防控体系，解决“一带一路”重大规划及项目投资面临的风险。应推动“一带一路”民心工程建设，继续夯实政治互信、做实媒体影响、积极引导文化旅游，为更广泛的人文交流创造条件。近年来，“一带一路”建设的国际舆论环境明显改善。第二届“一带一路”国际合作高峰论坛的成功举办获得国际舆论广泛赞誉，使“一带一路”国际舆论环境出现稳中向好的积极变化，国际社会对继续推进和加强“一带一路”国际合作普遍抱以更高期待，希望实现更好愿景。",
+            "extra": "original-title: ANNUAL REPORT ON DEVELOPMENT OF “THE BELT AND ROAD” CONSTRUCTION (2020)",
+            "language": "zh-CN",
+            "libraryCatalog": "“一带一路”数据库",
+            "place": "北京",
+            "publisher": "社会科学文献出版社",
+            "series": "“一带一路”蓝皮书",
+            "url": "https://www.ydylcn.com/skwx_ydyl/competitiveReportDetail?SiteID=1&contentId=10273944&contentType=literature&subLibID=8730&mediaID=10576885",
+            "attachments": [],
+            "tags": [
+              {
+                "tag": "“一带一路”"
+              },
+              {
+                "tag": "国际合作"
+              },
+              {
+                "tag": "国际经济合作"
+              },
+              {
+                "tag": "经贸合作"
+              }
+            ],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      }
+    ],
+    "zhLabel": "“一带一路”数据库",
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-11-07 04:50:05 +0800",
+        "message": "resolve #362"
+      }
+    ]
+  },
+  "Jikan Full Text Database.js": {
+    "header": {
+      "translatorID": "a8eaa2c8-4ed6-44f5-8532-b7e8ad8aeb83",
+      "label": "Jikan Full Text Database",
+      "creator": "jiaojiaodubai",
+      "target": "^https://www\\.jikan\\.com\\.cn",
+      "minVersion": "5.0",
+      "maxVersion": "",
+      "priority": 100,
+      "inRepository": true,
+      "translatorType": 4,
+      "browserSupport": "gcsibv",
+      "lastUpdated": "2024-11-06 20:43:54"
+    },
+    "testCases": [
+      {
+        "type": "web",
+        "url": "https://www.jikan.com.cn/aD/a?id=2703546",
+        "items": [
+          {
+            "itemType": "bookSection",
+            "title": "关于民族志、历史及法律的几点思考",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "劳伦斯·M. 弗里德曼",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "王伟臣",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "吴婷",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "里赞",
+                "creatorType": "editor",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "刘昕杰",
+                "creatorType": "editor",
+                "fieldMode": 1
+              }
+            ],
+            "date": "2021-10-01",
+            "ISBN": "9787520192743",
+            "abstractNote": "古典民族志有两大贡献，一是局外人的视角，二是文化相对性的论断。除此之外，民族志还是一种观察研究对象的技术或方法，可以弥补定量研究的缺陷。几乎关于人类社会的每一项重要研究都使用或暗含了民族志的研究方法。司法档案确实说明了一些案件事实，但我们必须学会批判式地解读。研究人员应该成为这些档案文件语言的解读者。档案研究、历史研究、司法档案的解读分析，归根结底都是民族志研究。",
+            "bookTitle": "法律史评论",
+            "extra": "creatorsExt: [{\"firstName\":\"\",\"lastName\":\"劳伦斯·M. 弗里德曼\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"美\"},{\"firstName\":\"\",\"lastName\":\"王伟臣\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"\"},{\"firstName\":\"\",\"lastName\":\"吴婷\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"\"}]",
+            "language": "zh-CN",
+            "libraryCatalog": "集刊全文数据库",
+            "pages": "181-186",
+            "publisher": "社会科学文献出版社",
+            "url": "https://www.jikan.com.cn/aD/a?id=2703546",
+            "volume": "17",
+            "attachments": [],
+            "tags": [
+              {
+                "tag": "司法档案"
+              },
+              {
+                "tag": "定性研究"
+              },
+              {
+                "tag": "民族志"
+              },
+              {
+                "tag": "法律史"
+              }
+            ],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      }
+    ],
+    "zhLabel": "集刊全文数据库",
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-11-07 04:50:05 +0800",
+        "message": "resolve #362"
+      }
+    ]
+  },
+  "Pishu Database.js": {
+    "header": {
+      "translatorID": "8651aa89-eb54-47bc-9916-17720fe22a86",
+      "label": "Pishu Database",
+      "creator": "jiaojiaodubai",
+      "target": "^https?://.*(www|gf)\\.pishu\\.com\\.cn",
+      "minVersion": "5.0",
+      "maxVersion": "",
+      "priority": 100,
+      "inRepository": true,
+      "translatorType": 4,
+      "browserSupport": "gcsibv",
+      "lastUpdated": "2023-12-31 14:05:51"
+    },
+    "testCases": [
+      {
+        "type": "web",
+        "url": "https://gf.pishu.com.cn/skwx_ps/search?query=%25E6%2595%2599%25E8%2582%25B2&resourceType=all&field=All&search=1&SiteID=14&firstSublibID=",
+        "items": "multiple"
+      },
+      {
+        "type": "web",
+        "url": "https://www.pishu.com.cn/skwx_ps/literature/6334/14724751.html",
+        "items": [
+          {
+            "itemType": "bookSection",
+            "title": "以平台经济增加中低收入群体要素收入",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "端利涛",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "李雪松",
+                "creatorType": "bookAuthor",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "李海舰",
+                "creatorType": "bookAuthor",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "张友国",
+                "creatorType": "bookAuthor",
+                "fieldMode": 1
+              }
+            ],
+            "date": "2023-08",
+            "abstractNote": "按要素分配是中国特色社会主义市场经济分配制度的重要内容，探索多种渠道增加中低收入群体要素收入是当下推进共同富裕的重要任务。本文梳理了平台经济中的劳动要素收入分配情况，认为平台经济可以作为增加中低收入群体要素收入的重要途径。增加劳动就业、优化收入分配和改善公共服务是平台经济增加要素收入的三个着力点。在此基础上，本文提出平台经济增加中低收入群体要素收入的实现路径：第一，规范和保障零工经济发展；第二，加快推进平台经济均衡发展；第三，大力推广基于平台模式的共享经济。",
+            "bookTitle": "中国五年规划发展报告（2022～2023）",
+            "extra": "words: 17563 字\nnumpages: 17 页\nviews: 187\ndownloads: 134",
+            "libraryCatalog": "Pishu Data",
+            "pages": "597-613",
+            "place": "北京",
+            "publisher": "社会科学文献出版社",
+            "series": "发展规划蓝皮书",
+            "url": "https://www.pishu.com.cn/skwx_ps/literature/6334/14724751.html",
+            "attachments": [
+              {
+                "tittle": "Snapshot",
+                "mimeType": "text/html"
+              }
+            ],
+            "tags": [
+              {
+                "tag": "中低收入群体"
+              },
+              {
+                "tag": "平台经济"
+              },
+              {
+                "tag": "要素收入"
+              }
+            ],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://www.pishu.com.cn/skwx_ps/initDatabaseDetail?siteId=14&contentId=13484900&contentType=literature",
+        "items": [
+          {
+            "itemType": "bookSection",
+            "title": "从“无理论”的教育到“无教育”的理论",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "吴永胜",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "吴永胜",
+                "creatorType": "bookAuthor",
+                "fieldMode": 1
+              }
+            ],
+            "date": "2021-07",
+            "abstractNote": "正如杰克·古迪所说：“人类思维的细分能力，是与社会生活不断分化的进程相随发展的。”伴随着实践领域的日益细分，理论领域也日益走向专业化，各个实践领域都有相对应的理论类型。在教育领域中，“无理论”的教育现象与“无教育”的理论现象的普遍存在，造成了教育理论与实践之间的长期疏离。通过对教育理论的实践性问题的探讨，对这个老问题做出尝试性的新回答，既是学术之需，亦为个人之趣。文献和现实的双重阅读，要求在探讨教育理论的实践性问题时，改变从理论建设的立场去谈教育理论之实践性的原有研究套路。实践之于理论的框架或基底作用决定了有必要尝试彻底地转换思路，即教育实践到底需要什么样的教育理论，已有理论能否满足教育实践的需要，什么样的理论路径才能使之满足教育实践的需要。如此，不再是为理论而理论，而是为实践而理论。",
+            "bookTitle": "从批判到重构",
+            "extra": "words: 26208 字\nnumpages: 29 页\nviews: 65\ndownloads: 26",
+            "libraryCatalog": "Pishu Data",
+            "pages": "1-29",
+            "place": "北京",
+            "publisher": "社会科学文献出版社",
+            "url": "https://www.pishu.com.cn/skwx_ps/initDatabaseDetail?siteId=14&contentId=13484900&contentType=literature",
+            "attachments": [
+              {
+                "tittle": "Snapshot",
+                "mimeType": "text/html"
+              }
+            ],
+            "tags": [
+              {
+                "tag": "“无教育”"
+              },
+              {
+                "tag": "“无理论”"
+              },
+              {
+                "tag": "教育理论"
+              }
+            ],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://www.pishu.com.cn/skwx_ps/bookDetail?SiteID=14&ID=13395521",
+        "items": [
+          {
+            "itemType": "book",
+            "title": "上海合作组织20年",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "李进峰",
+                "creatorType": "author",
+                "fieldMode": 1
+              }
+            ],
+            "date": "2021-07",
+            "ISBN": "9787520178181",
+            "abstractNote": "2021年是上海合作组织成立20周年。20年来，上合组织经受了来自本地区和外部世界的种种考验，不断发展、壮大，自2017年扩员后，上合组织已成为全球人口最多、幅员最辽阔的地区组织，也成为维护世界和平与稳定的重要力量之一。本书对上合组织20年来的发展历程进行了全面回顾和梳理，总结了20年来上合组织在政治、安全、经济、人文和对外关系五大领域的合作成就，深入分析了上合组织在发展过程中存在的问题和面临的内、外部挑战，以及上合组织未来发展的机遇与前景，提出上合组织的理论基础有三个来源、上合组织发展经历了五次理论创新、上合组织未来发展壮大将取决于三个因素，并对上合组织未来发展预测了三种可能的模式，这些研究结论具有创新性。本书对上合组织20年发展状况的论述，既有实践分析，又有理论探讨；既有量化研究，也有定性研判；既有问题意识，也有政策建议。本书是上合组织研究领域非常重要也相当权威的一部参考书和工具书。",
+            "extra": "original-title: 20 YEARS OF SHANGHAI COOPERATION ORGANIZATION",
+            "libraryCatalog": "Pishu Data",
+            "place": "北京",
+            "publisher": "社会科学文献出版社",
+            "url": "https://www.pishu.com.cn/skwx_ps/bookDetail?SiteID=14&ID=13395521",
+            "attachments": [
+              {
+                "tittle": "Snapshot",
+                "mimeType": "text/html"
+              }
+            ],
+            "tags": [
+              {
+                "tag": "上海合作组织"
+              },
+              {
+                "tag": "人文合作"
+              },
+              {
+                "tag": "安全合作"
+              },
+              {
+                "tag": "政治合作"
+              },
+              {
+                "tag": "经济合作"
+              }
+            ],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      }
+    ],
+    "zhLabel": "皮书数据库",
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-11-07 04:50:05 +0800",
+        "message": "resolve #362"
+      }
+    ]
+  },
+  "Rural Studies Database.js": {
+    "header": {
+      "translatorID": "abb8e571-6776-474e-82fe-8133b22de997",
+      "label": "Rural Studies Database",
+      "creator": "jiaojiaodubai",
+      "target": "^https://www\\.ruralchina\\.cn",
+      "minVersion": "5.0",
+      "maxVersion": "",
+      "priority": 100,
+      "inRepository": true,
+      "translatorType": 4,
+      "browserSupport": "gcsibv",
+      "lastUpdated": "2024-11-05 15:11:47"
+    },
+    "testCases": [
+      {
+        "type": "web",
+        "url": "https://www.ruralchina.cn/xcyj/XCBookDetail?SubLibID=89&SiteID=18&ID=5051494",
+        "items": [
+          {
+            "itemType": "book",
+            "title": "中国民族发展报告（2017）",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "王延中",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "方勇",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "尹虎彬",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "陈建樾",
+                "creatorType": "author",
+                "fieldMode": 1
+              }
+            ],
+            "date": "2017-12-01",
+            "ISBN": "9787520118637",
+            "abstractNote": "党的十八大以来，我国民族地区认真贯彻落实五大发展理念，全面推进“五位一体”总体布局和“四个全面”战略布局，五大文明建设取得重大进展。但是，民族地区内生发展动力仍然不足、农村居民增收难度很大、扶持项目对劳动力的技能培训不足、城镇化进程阻力因素多、精准扶贫项目的效率有待持续增强、社会治理能力和治理效果相对薄弱、生态环境保护综合效果仍需改进、中华民族共有精神家园建设有待加强，民族地区人民日益增长的美好生活需要和不平衡不充分的发展之间的矛盾依然亟待解决。党的十九大报告提出要团结带领全国各族人民决胜全面建成小康社会。为更好推动各族人民的全面发展、民族地区的全面进步，本书提出如下建议：加强劳动力技能培训、加强民族地区职业教育、进一步加强城乡基本公共服务均等化建设、加大深度贫困地区的精准扶贫与脱贫、构建多元主体供给的公共文化服务体系、兼顾民族因素和地区因素提升民族政策的公平性、妥善处理好民族地区生态保护与经济发展的关系。",
+            "extra": "original-title: ANNUAL REPORT ON THE DEVELOPMENT OF ETHNIC IN CHINA (2017)",
+            "language": "zh-CN",
+            "libraryCatalog": "乡村研究数据库",
+            "place": "北京",
+            "publisher": "社会科学文献出版社",
+            "series": "民族发展蓝皮书",
+            "url": "https://www.ruralchina.cn/xcyj/XCBookDetail?SubLibID=89&SiteID=18&ID=5051494",
+            "attachments": [],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://www.ruralchina.cn/xcyj/XCReport/previewPage?SiteID=18&ID=7929211",
+        "items": [
+          {
+            "itemType": "bookSection",
+            "title": "2023年新疆“三农”舆情分析",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "百扎提·包加克",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "蔡灿",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "虎啸飞",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "农业农村部信息中心",
+                "creatorType": "bookAuthor",
+                "fieldMode": 1
+              }
+            ],
+            "date": "2024-09-01",
+            "ISBN": "9787522841519",
+            "abstractNote": "摘要：2023年，新疆交出农业农村高质量发展亮眼成绩单，涉农舆论环境积极向好。新疆粮食产量再创新高，重要农产品供给能力稳步提升，巩固拓展脱贫攻坚成果、全面推进乡村振兴取得新进展，数字乡村建设和智慧农业发展引领农业生产经营方式革新，品牌建设与市场拓展提升“疆品”竞争力，深化农业农村改革增添动能，乡村建设绘就美丽新画卷等受到舆论广泛关注与认可。",
+            "bookTitle": "中国“三农”网络舆情报告（2024）",
+            "extra": "original-title: THE REPORT ON ONLINE PUBLIC OPINIONS ON CHINA’S AGRICULTURE，RURAL AREAS AND FARMERS (2024)",
+            "language": "zh-CN",
+            "libraryCatalog": "乡村研究数据库",
+            "pages": "297-311",
+            "place": "北京",
+            "publisher": "社会科学文献出版社",
+            "series": "“三农”舆情蓝皮书",
+            "url": "https://www.ruralchina.cn/xcyj/XCReport/previewPage?SiteID=18&ID=7929211",
+            "attachments": [],
+            "tags": [
+              {
+                "tag": "新疆“三农”舆情"
+              },
+              {
+                "tag": "粮食安全"
+              },
+              {
+                "tag": "防止返贫监测"
+              },
+              {
+                "tag": "高标准农田"
+              }
+            ],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://www.ruralchina.cn/xcyj/XCImageDetail?SiteID=18&type=ImageTable&ID=5533794",
+        "items": [
+          {
+            "itemType": "book",
+            "title": "中国农村经济形势分析与预测（2023～2024）",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "王贵荣",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "张海鹏",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "韩磊",
+                "creatorType": "author",
+                "fieldMode": 1
+              }
+            ],
+            "date": "2024-04-01",
+            "ISBN": "9787522835105",
+            "abstractNote": "2023年农业农村经济保持良好发展态势，对国民经济稳健运行发挥了“压舱石”作用。全年第一产业增加值89755亿元，比上年实际增长4.05%，第一产业增加值在GDP中的占比为7.12%，与上年基本持平。第一产业对GDP实际增长的贡献率为5.94%，拉动GDP实际增长0.31%。农林牧渔业固定资产投资增长1.2%，农副食品加工业和食品制造业固定资产投资分别增长7.7%和12.5%，农业农村经济结构进一步优化升级。乡村社会消费品零售总额64004.9亿元，比上年增长8.0%，在全社会消费品零售总额中的占比上升到13.6%。2023年粮食总产量69541万吨，比上年增长1.3%，再创历史新高。粮食播种面积11897万公顷，增长0.5%，粮食单产5845公斤/公顷，增长0.8%。其中，玉米产量涨幅最大，产量达到28884万吨，增长4.2%。大豆扩面积、提单产取得明显成效，全年大豆种植面积1047万公顷，增长2.2%，大豆产量2084万吨，增长2.8%。小麦产量13659万吨，减少0.8%；稻谷产量20660万吨，减少0.9%。粮食主产区对保障国家粮食安全的贡献进一步凸显。主产区粮食产量占粮食总产量的77.9%，对2023年粮食增产的贡献率达到51.0%。2023年肉、禽、蛋、奶和水产品产量继续保持稳定增长，油、棉、糖生产结构持续优化。全年猪牛羊禽肉产量9641万吨，增长4.5%。其中，猪肉产量5794万吨，增长4.6%；牛肉产量753万吨，增长4.8%；羊肉产量531万吨，增长1.3%；禽肉产量2563万吨，增长4.9%。禽蛋产量3563万吨，增长3.1%。牛奶产量4197万吨，增长6.7%。水产品产量7100万吨，增长3.4%。2023年油料作物种植面积迈上2亿亩台阶，油料总产量3864万吨，增长5.7%。糖料产量11376万吨，增长1.2%。茶叶产量355万吨，增长6.1%。棉花产量561.8万吨，减少6.1%。2023年农产品贸易逆差收窄，主要农产品进口结构性增长。全年农产品进口额2341.1亿美元，下降0.3%；出口额989.3亿美元，增长0.9%；贸易逆差1351.8亿美元，同比收窄1.2%。2023年粮食进口大幅上涨，进口16196万吨，增长11.7%。其中，小麦进口1210万吨，增长21.5%；玉米进口2713万吨，增长31.6%；大豆进口9941万吨，增长11.4%；稻米进口263万吨，下降57.5%。食用植物油进口981万吨，增长51.4%。食糖进口397万吨，下降24.7%。猪肉进口155万吨，下降11.7%；牛肉、羊肉和禽肉进口有不同程度增长。水产品进口501万吨，增长10.6%。2023年农产品与食品价格整体稳中有降。全年农产品生产者价格比上年下降2.3%，是近6年来最大降幅；食品类消费价格下降0.3%，是2010年以来最小降幅。畜牧业产品和蔬菜价格降幅较大，是推动全年农产品与食品价格下降的主要原因。猪、牛、羊价格整体下降，生猪生产者价格降幅最大，达到14%，推动畜肉消费价格下降7.3%。受产量与进口量增长叠加影响，玉米和大豆第四季度生产者价格有较大幅度下降。2023年居民人均食品烟酒支出7983元，增长6.7%，增速不及人均消费支出，带动恩格尔系数下降。2023年全国居民恩格尔系数为29.79%，比上年下降0.7个百分点；城镇居民和农村居民恩格尔系数分别为28.78%和32.35%。2023年涉农工业呈现低速增长态势，涉农服务业发展全面恢复。全年农副食品加工业、食品制造业增加值分别增长0.2%、3.3%。纺织业、木材加工业、医药制造业增加值分别下降0.6%、2.8%、5.8%，造纸业增加值增长3.1%。涉农工业产能利用率整体在75%警戒线附近。预制菜产业发展势头较好，市场规模进一步扩大，但存在市场监管不足和生产标准不统一问题。2023年，冷链物流需求总量为3.5亿吨，增长6.1%，但农产品产区冷链物流基础设施存在明显短板。食物流通渠道进一步多元化，全国农产品网络零售额5870.3亿元，增长12.5%。全国餐饮收入52890亿元，增长20.4%，首次突破5万亿元水平。2023年农村居民收入较快增长。全年农村居民人均可支配收入21691元，实际增长7.6%，涨幅比上年提高3.4个百分点。农村居民人均可支配收入实际增速比城镇居民高2.8个百分点，城乡居民收入比缩小到2.39，比上年下降0.06。工资性收入仍然是农村居民收入的最主要来源；农村居民财产净收入仍然偏低。农村高收入组家庭收入增长8.8%，低收入组家庭收入提升4.8%，收入分配不均衡状况加剧。2023年农民工总量29753万人，较上年增加191万人，增长0.6%；农民工月均收入4780元，增长3.6%。虽然农村劳动务工有序恢复，但农民工规模和收入增速尚未恢复到疫情前水平。2023年农村居民人均消费支出18175元，实际增长9.2%。农村居民消费领域不断拓展，食品烟酒、衣着、居住等生存型消费支出比重下降，交通通信、教育文化娱乐、医疗保健等发展型消费支出比重上升。展望2024年，国民经济回升向好面临有效需求不足、社会预期偏弱、外部环境复杂严峻等困难和挑战，给农业农村经济发展带来一定压力。但是，国家坚持农业农村优先发展，以加快建设农业强国、推进乡村全面振兴为主线，聚焦“两确保、三提升、两强化”方向重点，农业农村经济发展面临的有利条件仍然较为充足。农林牧渔业发展总体保持良好态势，第一产业投资有望恢复增长，乡村消费扩容升级，农产品和食品价格保持基本稳定，涉农产业延续恢复性增长态势，对国民经济稳健运行和高质量发展继续发挥支撑作用。粮食与重要农产品保持稳定安全供给，预计粮食总产量突破7亿吨。畜产品、水产品和蔬菜供应充足，预计全年生猪供应量整体有所下降，但仍高于正常保有量。农产品贸易规模基本持平，继续发挥保障供给和调剂余缺的功能。肉类、乳品、水产品和水果等高价值农产品进口增加，大豆进口增长速度放缓。重要农产品与食品价格在总体稳定的基础上发生结构性波动。全年大豆价格保持低位运行，玉米、猪肉价格有望在下半年企稳回升。食品制造业、冷链物流业、餐饮业等涉农产业规模继续扩大，但国内外市场需求恢复仍不及预期，整体将延续低速增长态势。在多项强化收入举措下，预计农村居民人均可支配收入继续增长，2024年农村居民人均可支配收入增加到2.3万元左右，城乡居民收入比进一步下降到2.35左右。",
+            "extra": "original-title: ANALYSIS AND FORECAST ON CHINA’S RURAL ECONOMY (2023-2024)",
+            "language": "zh-CN",
+            "libraryCatalog": "乡村研究数据库",
+            "place": "北京",
+            "publisher": "社会科学文献出版社",
+            "series": "农村绿皮书",
+            "url": "https://www.ruralchina.cn/xcyj/XCImageDetail?SiteID=18&type=ImageTable&ID=5533794",
+            "attachments": [],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://www.ruralchina.cn/xcyj/XCRetrievalResult/view?query=%25E7%258E%25B0%25E4%25BB%25A3%25E5%258C%2596&resourceType=all&field=All&search=1&SiteID=18",
+        "items": "multiple"
+      }
+    ],
+    "zhLabel": "乡村研究数据库",
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-11-07 04:50:05 +0800",
+        "message": "resolve #362"
+      }
+    ]
   }
 }
