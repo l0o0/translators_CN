@@ -50,7 +50,7 @@
   "People's Daily Database": "人民日报图文数据库",
   "People's Daily Epaper": "人民日报（电子版）",
   "People's Daily Online": "人民网",
-  "Pishu Data": "皮书数据库",
+  "Pishu Database": "皮书数据库",
   "PKULaw": "北大法宝",
   "ProQuestCN Thesis": "ProQuest学位论文(中国)",
   "Pss-System": "国家知识产权局专利检索及分析系统",
@@ -77,5 +77,8 @@
   "Yiigle": "中华医学期刊全文数据库",
   "zhangqiaokeyan": " 掌桥科研",
   "Zhihu": "知乎",
-  "Zhihuiya": "智慧芽"
+  "Zhihuiya": "智慧芽",
+  "Belt and Road Database": "“一带一路”数据库",
+  "Rural Studies Database": "乡村研究数据库",
+  "Jikan Full Text Database": "集刊全文数据库"
 }

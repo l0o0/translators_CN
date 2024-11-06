@@ -1,7 +1,7 @@
 {
 	"translatorID": "8651aa89-eb54-47bc-9916-17720fe22a86",
-	"label": "Pishu Data",
-	"creator": "jiaojiaodubai23",
+	"label": "Pishu Database",
+	"creator": "jiaojiaodubai",
 	"target": "^https?://.*(www|gf)\\.pishu\\.com\\.cn",
 	"minVersion": "5.0",
 	"maxVersion": "",
