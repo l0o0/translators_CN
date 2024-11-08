@@ -22398,5 +22398,29 @@
         "message": "resolve #362"
       }
     ]
+  },
+  "incoPat.js": {
+    "header": {
+      "translatorID": "987de44c-15a8-44c8-83ec-1cf03e9f6a32",
+      "label": "incoPat",
+      "creator": "jiaojiaodubai",
+      "target": "^https://www\\.incopat\\.com",
+      "minVersion": "5.0",
+      "maxVersion": "",
+      "priority": 100,
+      "inRepository": true,
+      "translatorType": 4,
+      "browserSupport": "gcsibv",
+      "lastUpdated": "2024-11-08 00:47:43"
+    },
+    "testCases": [],
+    "zhLabel": "合享",
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-11-08 09:11:21 +0800",
+        "message": "add incoPat,  resolve #135 resolve #408"
+      }
+    ]
   }
 }
