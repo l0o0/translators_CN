@@ -8861,6 +8861,11 @@
     "zhLabel": "读秀",
     "trends": [
       {
+        "author": "Amniotic3",
+        "date": "2024-11-12 14:17:23 +0800",
+        "message": "修复 读秀bookurl不可访问 (#413)"
+      },
+      {
         "author": "jiaojiaodubai",
         "date": "2024-10-28 16:37:52 +0800",
         "message": "优化声明语句；优化专利日期格式更新测试用例"
@@ -8869,11 +8874,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-10-19 23:01:30 +0800",
         "message": "紧急兼容新布局，fix #391"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-08-20 13:22:33 +0800",
-        "message": "fix typo"
       }
     ]
   },
