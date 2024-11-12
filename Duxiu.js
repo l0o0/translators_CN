@@ -222,7 +222,7 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.number = getField('标准号').replace('-', '—');
 			break;
 	}
-	newItem.url = tryMatch(url, /^.+dxNumber=\w+/i) || url;
+	newItem.url = tryMatch(url, /^.+dxNumber=\w+&d=\w+&fenle=\d+/i) || url;
 	extra.set('original-title', ZU.capitalizeTitle(getField(['外文题名', '标准英文名'])), true);
 	extra.set('genre', getField('专利类型'), true);
 	extra.set('price', getField('原书定价'));
