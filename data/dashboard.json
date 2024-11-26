@@ -844,7 +844,7 @@
       "inRepository": true,
       "translatorType": 12,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-03-08 09:49:44"
+      "lastUpdated": "2024-11-11 05:42:47"
     },
     "testCases": [
       {
@@ -865,9 +865,8 @@
             "date": "2022-07",
             "ISBN": "9787562866350",
             "abstractNote": "《朗文新编英语语法》由我社从培生教育出版公司引进，可供中学生、大学生以及英语学习者自学使用。本书由诊断测试、语法讲解和练习答案三部分组成。学习者可利用图书前面的诊断测试，在单元学习前，了解自己的薄弱项，从而进行有针对性的学习。语法知识点讲解部分共分为36个单元，包含一般语法书中的所有内容，语法解释详细，内容条理清晰。每个单元还配套丰富的练习题，学习者可通过练习巩固所学的语法点。本书所有例句均选自语料库，表达地道，是中高水平学习者巩固语法的不二之选。",
-            "extra": "CLC: H314\nprice: ￥ 80.00\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"马克·福利\",\"creatorType\":\"author\",\"country\":\"英\"},{\"firstName\":\"\",\"lastName\":\"\",\"creatorType\":\"translator\"}]",
-            "language": "zh-CN",
-            "libraryCatalog": "CCPINFO",
+            "extra": "CLC: H314\nprice: ￥ 80.00\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"马克·福利\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"英\"},{\"firstName\":\"\",\"lastName\":\"\",\"creatorType\":\"editor\",\"country\":\"\"},{\"firstName\":\"\",\"lastName\":\"\",\"creatorType\":\"translator\",\"country\":\"\"}]",
+            "libraryCatalog": "国家出版发行信息公共服务平台",
             "publisher": "郑州大学出版社有限公司",
             "url": "https://book.cppinfo.cn/Encyclopedias/home/index?id=4417147",
             "attachments": [],
@@ -927,8 +926,7 @@
             "ISBN": "9787214275707",
             "abstractNote": "本书全面、系统地梳理了330-610年拜占庭王朝历史以及帝国的崛起。上编为皇帝列传，介绍了君士坦丁王朝、瓦伦提尼安诸帝、塞奥多西王朝、利奥王朝、查士丁尼王朝历史。下编为拜占庭帝国的崛起，从世界地理观、宗教、种族与身份认同、自然灾害等方面加以论述，聚焦拜占庭帝国历史的第一黄金时代，对查士丁尼时代的司法改革、宗教思想和政策、制度、经济生活等方面进行系统论述，展现拜占庭帝国的崛起图景。本书是具有唯物史观特色的、有可靠依据的独立意见和系列研究成果，形成了我国学者对拜占庭历史发展和文化演化的话语体系。",
             "extra": "CLC: K134\nprice: ￥ 248.00",
-            "language": "zh-CN",
-            "libraryCatalog": "CCPINFO",
+            "libraryCatalog": "国家出版发行信息公共服务平台",
             "publisher": "江苏人民出版社",
             "url": "https://book.cppinfo.cn/Encyclopedias/home/index?id=4567148",
             "attachments": [],
@@ -980,7 +978,7 @@
             "abstractNote": "Since the 18th National Congress of the Communist Party of China in 2012， the drive to develop socialism with Chinese characteristics has entered a new era. The past decade has seen the country forging ahead and embracing historic changes， with remarkable achievements made by the Party and the state.\n  So how did China make these achievements? What are the secrets to the CPC's governance of China? What is the key to the success of China's governance in the new era?\n  This book covers such important topics as \"how to break the cycle of rise and fall\"， \"whole-process people's democracy\"， \"self-reform and social revolution\"， \"cyber governance\"， and \"Chinese-style modernization\"， reveals the secrets to the success of China's governance in the new era， and shares China's wisdom and solutions with the world.",
             "extra": "CLC: D616\nprice: ￥ 118.00",
             "language": "en-US",
-            "libraryCatalog": "CCPINFO",
+            "libraryCatalog": "国家出版发行信息公共服务平台",
             "publisher": "外文出版社",
             "url": "https://book.cppinfo.cn/Encyclopedias/home/index?id=4479822",
             "attachments": [],
@@ -1036,6 +1034,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-11-26 14:36:51 +0800",
+        "message": "fix #412"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-20 13:22:33 +0800",
         "message": "fix typo"
       },
@@ -1043,11 +1046,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-06-20 17:04:42 +0800",
-        "message": "clean EOL, fix #351, fix #352"
       }
     ]
   },
@@ -1820,7 +1818,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-03-29 10:58:26"
+      "lastUpdated": "2024-11-13 09:14:00"
     },
     "testCases": [
       {
@@ -1862,6 +1860,11 @@
     ],
     "zhLabel": "中国知网工具书总库",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-11-26 14:36:51 +0800",
+        "message": "fix #412"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2024-03-29 20:13:08 +0800",
@@ -4169,7 +4172,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-03-09 09:29:04"
+      "lastUpdated": "2024-11-14 03:02:44"
     },
     "testCases": [
       {
@@ -4852,6 +4855,11 @@
     ],
     "zhLabel": "中国知网科技创新知识服务平台",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-11-26 14:36:51 +0800",
+        "message": "fix #412"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2024-03-11 23:48:12 +0800",
@@ -7915,7 +7923,7 @@
     "header": {
       "translatorID": "fc353b26-8911-4c34-9196-f6f567c93901",
       "label": "Douban",
-      "creator": "不是船长<tanguangzhi@foxmail.com>, Ace Strong<acestrong@gmail.com>, Zeping Lee",
+      "creator": "不是船长<tanguangzhi@foxmail.com>, Ace Strong<acestrong@gmail.com>, Zeping Lee, jiaojiaodubai",
       "target": "^https?://\\w+\\.douban\\.com",
       "minVersion": "2.0rc1",
       "maxVersion": "",
@@ -7923,7 +7931,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-10-04 22:35:42"
+      "lastUpdated": "2024-11-15 03:16:28"
     },
     "testCases": [
       {
@@ -8430,6 +8438,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-11-26 14:36:51 +0800",
+        "message": "fix #412"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-10-04 22:37:03 +0800",
         "message": "fix typo"
       },
@@ -8437,11 +8450,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-09-20 13:11:05 +0800",
         "message": "close #383"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-08-20 13:31:03 +0800",
-        "message": "innerData -> data; getWith -> get"
       }
     ]
   },
@@ -8457,7 +8465,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-10-28 08:36:35"
+      "lastUpdated": "2024-11-15 03:30:15"
     },
     "testCases": [
       {
@@ -8514,7 +8522,7 @@
             "place": "北京",
             "publisher": "机械工业出版社",
             "series": "计算机科学丛书 华章教育",
-            "url": "https://book.duxiu.com/views/specific/4010/bookDetail.jsp?dxNumber=000030591379",
+            "url": "https://book.duxiu.com/views/specific/4010/bookDetail.jsp?dxNumber=000030591379&d=AAB0ABB8D0C543BFF26956EE9601E809",
             "attachments": [],
             "tags": [
               {
@@ -8861,6 +8869,11 @@
     "zhLabel": "读秀",
     "trends": [
       {
+        "author": "jiaojiaodubai",
+        "date": "2024-11-26 14:36:51 +0800",
+        "message": "fix #412"
+      },
+      {
         "author": "Amniotic3",
         "date": "2024-11-12 14:17:23 +0800",
         "message": "修复 读秀bookurl不可访问 (#413)"
@@ -8869,11 +8882,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-10-28 16:37:52 +0800",
         "message": "优化声明语句；优化专利日期格式更新测试用例"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-10-19 23:01:30 +0800",
-        "message": "紧急兼容新布局，fix #391"
       }
     ]
   },
@@ -9650,12 +9658,13 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-02-03 10:18:43"
+      "lastUpdated": "2024-11-26 00:52:50"
     },
     "testCases": [
       {
         "type": "web",
         "url": "https://www.modernhistory.org.cn/#/DocumentDetails_ts_da?fileCode=9999_ts_00553714&title=%E8%BE%A9%E8%AF%81%E5%94%AF%E7%89%A9%E4%B8%BB%E4%B9%89%E4%B8%8E%E5%8E%86%E5%8F%B2%E5%94%AF%E7%89%A9%E4%B8%BB%E4%B9%89&flag=false",
+        "defer": true,
         "items": [
           {
             "itemType": "book",
@@ -9682,8 +9691,13 @@
             "libraryCatalog": "抗日战争与近代中日关系文献数据平台",
             "numPages": "61",
             "place": "上海",
-            "url": "https://www.modernhistory.org.cn/#/DocumentDetails_ts_da?fileCode=9999_ts_00553714",
-            "attachments": [],
+            "url": "https://www.modernhistory.org.cn/#/DocumentDetails_ts_da?fileCode=9999_ts_00553714&title=%E8%BE%A9%E8%AF%81%E5%94%AF%E7%89%A9%E4%B8%BB%E4%B9%89%E4%B8%8E%E5%8E%86%E5%8F%B2%E5%94%AF%E7%89%A9%E4%B8%BB%E4%B9%89&flag=false",
+            "attachments": [
+              {
+                "title": "Snapshot",
+                "mimeType": "text/html"
+              }
+            ],
             "tags": [
               {
                 "tag": "历史唯物主义"
@@ -9703,6 +9717,7 @@
       {
         "type": "web",
         "url": "https://www.modernhistory.org.cn/#/Detailedreading?fileCode=9999_ts_00316571&treeId=145458905&contUrl=https%3A%2F%2Fkrwxk-prod.oss-cn-beijing.aliyuncs.com%2F9999_ts_00316571%2F9999_ts_00316571.json",
+        "defer": true,
         "items": [
           {
             "itemType": "bookSection",
@@ -9711,13 +9726,13 @@
               {
                 "firstName": "",
                 "lastName": "马克思",
-                "creatorType": "author",
+                "creatorType": "bookAuthor",
                 "fieldMode": 1
               },
               {
                 "firstName": "",
                 "lastName": "恩格斯",
-                "creatorType": "author",
+                "creatorType": "bookAuthor",
                 "fieldMode": 1
               },
               {
@@ -9730,13 +9745,18 @@
             "date": "1949-01-01",
             "archive": "社会来源",
             "bookTitle": "艺术的真实",
-            "extra": "creatorsExt: [{\"firstName\":\"\",\"lastName\":\"马克思\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"德国\"},{\"firstName\":\"\",\"lastName\":\"恩格斯\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"\"},{\"firstName\":\"\",\"lastName\":\"郭沫若\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\"}]",
+            "extra": "creatorsExt: [{\"firstName\":\"\",\"lastName\":\"马克思\",\"creatorType\":\"bookAuthor\",\"fieldMode\":1,\"country\":\"德国\"},{\"firstName\":\"\",\"lastName\":\"恩格斯\",\"creatorType\":\"bookAuthor\",\"fieldMode\":1,\"country\":\"\"},{\"firstName\":\"\",\"lastName\":\"郭沫若\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\"}]",
             "language": "zh-CN",
             "libraryCatalog": "抗日战争与近代中日关系文献数据平台",
             "pages": "9-16",
             "place": "上海",
-            "url": "https://www.modernhistory.org.cn/#/Detailedreading?fileCode=9999_ts_00316571",
-            "attachments": [],
+            "url": "https://www.modernhistory.org.cn/#/Detailedreading?fileCode=9999_ts_00316571&treeId=145458905&contUrl=https%3A%2F%2Fkrwxk-prod.oss-cn-beijing.aliyuncs.com%2F9999_ts_00316571%2F9999_ts_00316571.json",
+            "attachments": [
+              {
+                "title": "Snapshot",
+                "mimeType": "text/html"
+              }
+            ],
             "tags": [
               {
                 "tag": "具体与抽象"
@@ -9755,39 +9775,42 @@
       },
       {
         "type": "web",
-        "url": "https://www.modernhistory.org.cn/#/DocumentDetails_ysp_hc?fileCode=0002_sp_00000001&title=%E4%B8%9C%E4%BA%AC%E5%AE%A1%E5%88%A4&flag=false",
+        "url": "https://www.modernhistory.org.cn/#/Detailedreading?docType=qk&fileCode=9999_qk_05012&treeId=106127676&qkTitle=%E7%AC%AC%E4%BA%8C%E5%8D%B7%E7%AC%AC%E5%9B%9B%E5%8F%B7%285%E6%9C%8820%E6%97%A5%29&uniqTag=9999_qk_05012_0010&dirCode=c3dc322a36e74ec99019e5a9c1689994&contUrl=https%3A%2F%2Fkrwxk-prod.oss-cn-beijing.aliyuncs.com%2F9999_qk_05012%2F9999_qk_05012_0002%2F9999_qk_05012_0002.json",
+        "defer": true,
         "items": [
           {
-            "itemType": "videoRecording",
-            "title": "东京审判",
+            "itemType": "journalArticle",
+            "title": "新兴艺术概况",
             "creators": [
               {
                 "firstName": "",
-                "lastName": "东京国际军事法庭",
-                "creatorType": "author",
+                "lastName": "冯宪章",
+                "creatorType": "translator",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "冯宪章",
+                "creatorType": "editor",
                 "fieldMode": 1
               }
             ],
-            "date": "1946",
-            "abstractNote": "本数据经上海交通大学出版社授权发布，仅供学术研究使用用。以任何形式用于商业目的，请务必与版权方联系。",
-            "archive": "上海交通大学东京审判研究中心",
+            "date": "1930-05-20",
+            "archive": "社会来源",
+            "issue": 4,
             "language": "zh-CN",
             "libraryCatalog": "抗日战争与近代中日关系文献数据平台",
-            "runningTime": "6:43:31",
-            "url": "https://www.modernhistory.org.cn/#/DocumentDetails_ysp_hc?fileCode=0002_sp_00000001",
-            "videoRecordingFormat": "mp4",
-            "attachments": [],
-            "tags": [
+            "pages": "452",
+            "publicationTitle": "大众文艺",
+            "url": "https://www.modernhistory.org.cn/#/Detailedreading?docType=qk&fileCode=9999_qk_05012&treeId=106127676&qkTitle=%E7%AC%AC%E4%BA%8C%E5%8D%B7%E7%AC%AC%E5%9B%9B%E5%8F%B7%285%E6%9C%8820%E6%97%A5%29&uniqTag=9999_qk_05012_0010&dirCode=c3dc322a36e74ec99019e5a9c1689994&contUrl=https%3A%2F%2Fkrwxk-prod.oss-cn-beijing.aliyuncs.com%2F9999_qk_05012%2F9999_qk_05012_0002%2F9999_qk_05012_0002.json",
+            "volume": 2,
+            "attachments": [
               {
-                "tag": "东京审判"
-              },
-              {
-                "tag": "伪满洲国"
-              },
-              {
-                "tag": "关东军"
+                "title": "Snapshot",
+                "mimeType": "text/html"
               }
             ],
+            "tags": [],
             "notes": [],
             "seeAlso": []
           }
@@ -9796,6 +9819,7 @@
       {
         "type": "web",
         "url": "https://www.modernhistory.org.cn/#/DetailedreadingVideo?docType=yp&id=71729&fileCode=6666_yp_00000022&treeId=134",
+        "defer": true,
         "items": [
           {
             "itemType": "audioRecording",
@@ -9820,8 +9844,13 @@
             "label": "中国唱片深圳公司",
             "language": "zh-CN",
             "libraryCatalog": "抗日战争与近代中日关系文献数据平台",
-            "url": "https://www.modernhistory.org.cn/#/DetailedreadingVideo?docType=yp&id=71729&fileCode=6666_yp_00000022",
-            "attachments": [],
+            "url": "https://www.modernhistory.org.cn/#/DetailedreadingVideo?docType=yp&id=71729&fileCode=6666_yp_00000022&treeId=134",
+            "attachments": [
+              {
+                "title": "Snapshot",
+                "mimeType": "text/html"
+              }
+            ],
             "tags": [],
             "notes": [],
             "seeAlso": []
@@ -9830,11 +9859,12 @@
       },
       {
         "type": "web",
-        "url": "https://www.modernhistory.org.cn/#/DocumentDetails_tp?fileCode=9999_tp_00000006&title=%E9%A6%99%E6%B8%AF%E5%8D%8E%E8%8A%B3%E7%85%A7%E7%9B%B8%E9%A6%86%EF%BC%88AFong%EF%BC%89%E6%91%84%E5%BD%B1%E9%9B%86&flag=false",
+        "url": "https://www.modernhistory.org.cn/#/Detailedreading?fileCode=9999_tp_00000006&treeId=196970787&imageUrl=https%3A%2F%2Fkrwxk-prod.oss-cn-beijing.aliyuncs.com%2F9999_tp_00000006%2F9999_tp_00000006_00002.jpg&dirCode=1b5e6954e5204328bc849743600d66ec",
+        "defer": true,
         "items": [
           {
             "itemType": "artwork",
-            "title": "香港华芳照相馆（AFong）摄影集",
+            "title": "自南向北拍摄的通州码头",
             "creators": [
               {
                 "firstName": "",
@@ -9846,10 +9876,49 @@
             "date": "1879",
             "archive": "社会来源",
             "artworkMedium": "photography",
-            "extra": "amount: 95\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"香港华芳照相馆\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"中国\"},{\"firstName\":\"\",\"lastName\":\"\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\"}]",
+            "extra": "container-title: 香港华芳照相馆（AFong）摄影集\namount: 95\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"香港华芳照相馆\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"中国\"},{\"firstName\":\"\",\"lastName\":\"\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\"}]",
             "libraryCatalog": "抗日战争与近代中日关系文献数据平台",
-            "url": "https://www.modernhistory.org.cn/#/DocumentDetails_tp?fileCode=9999_tp_00000006",
-            "attachments": [],
+            "url": "https://www.modernhistory.org.cn/#/Detailedreading?fileCode=9999_tp_00000006&treeId=196970787&imageUrl=https%3A%2F%2Fkrwxk-prod.oss-cn-beijing.aliyuncs.com%2F9999_tp_00000006%2F9999_tp_00000006_00002.jpg&dirCode=1b5e6954e5204328bc849743600d66ec",
+            "attachments": [
+              {
+                "title": "Snapshot",
+                "mimeType": "text/html"
+              }
+            ],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://www.modernhistory.org.cn/#/Detailedreading?fileCode=9999_tp_00000005&treeId=196970737&imageUrl=https%3A%2F%2Fkrwxk-prod.oss-cn-beijing.aliyuncs.com%2F9999_tp_00000005%2F9999_tp_00000005_00002.jpg&dirCode=99435ef71d6640c689ec4886d96cd8d0",
+        "defer": true,
+        "items": [
+          {
+            "itemType": "artwork",
+            "title": "在雅宾利道自南向北拍摄维多利亚湾",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "威廉·普瑞尔·弗洛伊德",
+                "creatorType": "author",
+                "fieldMode": 1
+              }
+            ],
+            "date": "1873",
+            "archive": "社会来源",
+            "artworkMedium": "photography",
+            "extra": "container-title: 威廉·普瑞尔·弗洛伊德（William Pryor Floyd）摄影集\namount: 50\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"威廉·普瑞尔·弗洛伊德\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"英国\"},{\"firstName\":\"\",\"lastName\":\"\",\"creatorType\":\"contributor\",\"fieldMode\":1,\"country\":\"\"}]",
+            "libraryCatalog": "抗日战争与近代中日关系文献数据平台",
+            "url": "https://www.modernhistory.org.cn/#/Detailedreading?fileCode=9999_tp_00000005&treeId=196970737&imageUrl=https%3A%2F%2Fkrwxk-prod.oss-cn-beijing.aliyuncs.com%2F9999_tp_00000005%2F9999_tp_00000005_00002.jpg&dirCode=99435ef71d6640c689ec4886d96cd8d0",
+            "attachments": [
+              {
+                "title": "Snapshot",
+                "mimeType": "text/html"
+              }
+            ],
             "tags": [],
             "notes": [],
             "seeAlso": []
@@ -9859,6 +9928,7 @@
       {
         "type": "web",
         "url": "https://www.modernhistory.org.cn/#/DocumentDetails_ysp_hc?fileCode=0002_sp_00000001&title=%E4%B8%9C%E4%BA%AC%E5%AE%A1%E5%88%A4&flag=false",
+        "defer": true,
         "items": [
           {
             "itemType": "videoRecording",
@@ -9877,9 +9947,14 @@
             "language": "zh-CN",
             "libraryCatalog": "抗日战争与近代中日关系文献数据平台",
             "runningTime": "6:43:31",
-            "url": "https://www.modernhistory.org.cn/#/DocumentDetails_ysp_hc?fileCode=0002_sp_00000001",
+            "url": "https://www.modernhistory.org.cn/#/DocumentDetails_ysp_hc?fileCode=0002_sp_00000001&title=%E4%B8%9C%E4%BA%AC%E5%AE%A1%E5%88%A4&flag=false",
             "videoRecordingFormat": "mp4",
-            "attachments": [],
+            "attachments": [
+              {
+                "title": "Snapshot",
+                "mimeType": "text/html"
+              }
+            ],
             "tags": [
               {
                 "tag": "东京审判"
@@ -9898,17 +9973,30 @@
       },
       {
         "type": "web",
-        "url": "https://www.modernhistory.org.cn/#/DocumentDetails_da?fileCode=0017_da_0006&title=%E8%A5%BF%E5%8D%97%E5%A4%AA%E5%B9%B3%E6%B4%8B%E6%88%98%E5%8C%BA%E6%97%A5%E6%9C%AC%E6%88%98%E4%BA%89%E5%AB%8C%E7%8A%AF%E8%AE%AF%E9%97%AE%E6%A1%A3%E6%A1%88&flag=false",
+        "url": "https://www.modernhistory.org.cn/#/SearchResult_list?searchValue=%E6%B0%91%E4%BF%97&seniorType=&selectType=",
+        "defer": true,
         "items": "multiple"
       },
       {
         "type": "web",
-        "url": "https://www.modernhistory.org.cn/#/SearchResult_list?searchValue=%E6%B0%91%E4%BF%97&seniorType=&selectType=",
+        "url": "https://www.modernhistory.org.cn/#/DocumentDetails_tp?fileCode=9999_tp_00000006&title=%E9%A6%99%E6%B8%AF%E5%8D%8E%E8%8A%B3%E7%85%A7%E7%9B%B8%E9%A6%86%EF%BC%88AFong%EF%BC%89%E6%91%84%E5%BD%B1%E9%9B%86&flag=false",
+        "defer": true,
+        "items": "multiple"
+      },
+      {
+        "type": "web",
+        "url": "https://www.modernhistory.org.cn/#/DocumentDetails_da?fileCode=1003_da_0005&title=%E5%9F%83%E6%96%87%E6%96%AF%C2%B7%E5%8D%A1%E5%B0%94%E9%80%8A%E8%97%8F%E6%8A%97%E6%88%98%E5%8F%B2%E6%96%99%E6%A1%A3%E6%A1%88&flag=false",
+        "defer": true,
         "items": "multiple"
       }
     ],
     "zhLabel": "抗日战争与近代中日关系文献数据平台",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-11-26 14:36:51 +0800",
+        "message": "fix #412"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2024-02-03 18:20:25 +0800",
@@ -12660,7 +12748,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-07-23 14:21:25"
+      "lastUpdated": "2024-11-26 05:51:41"
     },
     "testCases": [
       {
@@ -12788,6 +12876,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2024-11-26 14:36:51 +0800",
+        "message": "fix #412"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-20 13:22:33 +0800",
         "message": "fix typo"
       },
@@ -12795,11 +12888,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-07-23 22:23:22 +0800",
-        "message": "feat: detect async loaded results"
       }
     ]
   },
