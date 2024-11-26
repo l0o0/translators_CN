@@ -1,7 +1,7 @@
 {
 	"translatorID": "fc353b26-8911-4c34-9196-f6f567c93901",
 	"label": "Douban",
-	"creator": "不是船长<tanguangzhi@foxmail.com>, Ace Strong<acestrong@gmail.com>, Zeping Lee",
+	"creator": "不是船长<tanguangzhi@foxmail.com>, Ace Strong<acestrong@gmail.com>, Zeping Lee, jiaojiaodubai",
 	"target": "^https?://\\w+\\.douban\\.com",
 	"minVersion": "2.0rc1",
 	"maxVersion": "",
@@ -9,13 +9,13 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-10-04 22:35:42"
+	"lastUpdated": "2024-11-15 03:16:28"
 }
 
 /*
 	***** BEGIN LICENSE BLOCK *****
 
-	Copyright © 2009-2022 Tao Cheng, Zeping Lee
+	Copyright © 2009-2022 Tao Cheng, Zeping Lee; 2024 jiaojiaodubai
 
 	This file is part of Zotero.
 
@@ -398,9 +398,10 @@ function processName(fullName, defaultType) {
 	Z.debug(fullName);
 	const creatorTypMap = {
 		// https://book.douban.com/subject/34659228/
-		author: /[编著绘]+/,
-		translator: /翻?译/,
-		contributor: /[审校注]+/
+		author: /[著绘]+$/,
+		editor: /编$/,
+		translator: /翻?译$/,
+		contributor: /[审校注]+$/
 	};
 	const remark = tryMatch(fullName, /[[(（【［](.+)[］】）)\]]$/, 1);
 	fullName = fullName.replace(/[[(（【［](.+)[］】）)\]]$/, '');

@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-03-08 09:49:44"
+	"lastUpdated": "2024-11-11 05:42:47"
 }
 
 /*
@@ -46,8 +46,8 @@ function filterQuery(items) {
 	if (typeof items == 'string' || !items.length) items = [items];
 
 	// filter out invalid queries
-	var isbns = [], isbn;
-	for (var i = 0, n = items.length; i < n; i++) {
+	let isbns = [], isbn;
+	for (let i = 0, n = items.length; i < n; i++) {
 		if (items[i].ISBN && (isbn = ZU.cleanISBN(items[i].ISBN))) {
 			isbns.push(isbn);
 		}
@@ -62,14 +62,14 @@ function filterQuery(items) {
 async function doSearch(items) {
 	Z.debug('get items:');
 	Z.debug(items);
-	for (let isbn of filterQuery(items)) {
+	for (const isbn of filterQuery(items)) {
 		await processISBN(isbn);
 	}
 }
 
 async function processISBN(isbn) {
 	Z.debug(`prosessing ISBN: ${isbn}`);
-	let search = await requestText(
+	const search = await requestText(
 		'https://book.cppinfo.cn/So/Search/Index',
 		{
 			method: 'POST',
@@ -81,14 +81,14 @@ async function processISBN(isbn) {
 			}
 		}
 	);
-	let href = 'https://book.cppinfo.cn' + tryMatch(search, /"p-text"><a href="(.+?)" onclick/, 1);
+	const href = 'https://book.cppinfo.cn' + tryMatch(search, /"p-text"><a href="(.+?)" onclick/, 1);
 	Z.debug(`get search resualt: ${href}`);
 	await scrape(await requestDocument(href));
 }
 
 
 function detectWeb(doc, url) {
-	if (new URL(url).searchParams.get('id')) {
+	if (/id=[^&]+/.test(url)) {
 		return 'book';
 	}
 	else if (getSearchResults(doc, true)) {
@@ -98,15 +98,12 @@ function detectWeb(doc, url) {
 }
 
 function getSearchResults(doc, checkOnly) {
-	var items = {};
-	var found = false;
-	var rows = doc.querySelectorAll('#tbinfo > span > div > div.p-text > a');
-	for (let row of rows) {
-		// Z.debug(row);
-		let href = row.href;
-		// Z.debug(href);
-		let title = ZU.trimInternal(row.title);
-		// Z.debug(title);
+	const items = {};
+	let found = false;
+	const rows = doc.querySelectorAll('#tbinfo > span > div > div.p-text > a');
+	for (const row of rows) {
+		const href = row.href;
+		const title = ZU.trimInternal(row.title);
 		if (!href || !title) continue;
 		if (checkOnly) return true;
 		found = true;
@@ -119,7 +116,7 @@ async function doWeb(doc, url) {
 	if (detectWeb(doc, url) == 'multiple') {
 		let items = await Zotero.selectItems(getSearchResults(doc, false));
 		if (!items) return;
-		for (let url of Object.keys(items)) {
+		for (const url of Object.keys(items)) {
 			await scrape(await requestDocument(url));
 		}
 	}
@@ -129,10 +126,9 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url = doc.location.href) {
-	// Z.debug(doc);
-	var newItem = new Zotero.Item('book');
+	const newItem = new Zotero.Item('book');
 	newItem.extra = '';
-	let labels = new Labels(doc, '.book_intro .fl.clearfix, .book_intro .fr.clearfix');
+	const labels = new Labels(doc, '.book_intro .fl.clearfix, .book_intro .fr.clearfix');
 	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	newItem.title = text(doc, '.book_intro > h2 > span');
 	newItem.abstractNote = text(doc, 'div.field_1 > p');
@@ -141,15 +137,14 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.ISBN = labels.get('ISBN');
 	if (newItem.ISBN) {
 		try {
-			let searchLang = await requestText(
+			const searchLang = await requestText(
 				'https://book.cppinfo.cn/So/Search/LangSearch',
 				{
 					method: 'POST',
 					body: `key=${newItem.ISBN}&offset=1&hasEbook=false`
 				}
 			);
-			// Z.debug(searchLang);
-			let langFlag = searchLang.split('\r\n')[1].match(/([a-z]+)(?=(&))/)[0];
+			const langFlag = searchLang.split('\r\n')[1].match(/([a-z]+)(?=(&))/)[0];
 			Z.debug(langFlag);
 			newItem.language = {
 				chi: 'zh-CN',
@@ -164,45 +159,35 @@ async function scrape(doc, url = doc.location.href) {
 		}
 	}
 	newItem.url = url;
+	newItem.libraryCatalog = '国家出版发行信息公共服务平台';
 	newItem.extra += addExtra('CLC', labels.get('中图分类'));
 	newItem.extra += addExtra('price', labels.get('定价'));
-	let authors = labels.get('著者').replace(/[等主编原著]*$/, '').split(/[;；,，]/g)
-		.filter(string => string != '暂无')
-		.map((creator) => {
-			// 方括号：https://book.cppinfo.cn/Encyclopedias/home/index?id=4483977
-			// 西文括号：https://book.cppinfo.cn/Encyclopedias/home/index?id=4616652
-			// 中文括号：https://book.cppinfo.cn/Encyclopedias/home/index?id=4557869
-			let country = tryMatch(creator, /^[[(（](.+?)[\])）]/, 1);
-			creator = creator.replace(/^[[(（].+?[\])）]/, '');
-			creator = ZU.cleanAuthor(creator, 'author');
-			creator.country = country;
-			return creator;
-		});
-	let translators = labels.get('译者').replace(/[翻译]*$/, '').split(/[;；,，]/g)
-		.filter(string => string != '暂无')
-		.map((translator) => {
-			return ZU.cleanAuthor(translator, 'translator');
-		});
-	// https://book.cppinfo.cn/Encyclopedias/home/index?id=4286780
-	let contributors = labels.get('编辑').replace(/[编校注]*$/, '').split(/[;；,，]/g)
-		.filter(string => string != '暂无')
-		.map((translator) => {
-			return ZU.cleanAuthor(translator, 'contributor');
-		});
-	let creators = [...authors, ...translators, ...contributors];
-	if (creators.some(creator => creator.country)) {
-		newItem.extra += addExtra('creatorsExt', JSON.stringify(creators));
+	function splitCreators(label, rolePattern, creatorType) {
+		return labels.get(label).replace(rolePattern, '').split(';')
+			.filter(string => string != '暂无')
+			.map((name) => {
+				// 方括号：https://book.cppinfo.cn/Encyclopedias/home/index?id=4483977
+				// 西文括号：https://book.cppinfo.cn/Encyclopedias/home/index?id=4616652
+				// 中文括号：https://book.cppinfo.cn/Encyclopedias/home/index?id=4557869
+				const country = tryMatch(name, /^[[(（](.+?)[\])）]/, 1);
+				const creator = ZU.cleanAuthor(name.replace(/^[[(（].+?[\])）]/, ''), creatorType);
+				if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
+					creator.fieldMode = 1;
+				}
+				newItem.creators.push(JSON.parse(JSON.stringify(creator)));
+				creator.country = country;
+				return creator;
+			});
 	}
-	creators.forEach((creator) => {
-		if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
-			creator.fieldMode = 1;
-		}
-		delete creator.country;
-		newItem.creators.push(creator);
-	});
-	Z.debug(creators);
-	let tags = doc.querySelectorAll('div.book_label > div.label_in > span');
-	tags.forEach(tag => newItem.tags.push(tag.innerText));
+	const creatorsExt = [
+		...splitCreators('著者', /[等主编原著]*$/, 'author'),
+		...splitCreators('编辑', /[等主总]*编$/, 'editor'),
+		...splitCreators('译者', /[等翻译]*$/, 'translator')
+	];
+	if (creatorsExt.some(creator => creator.country)) {
+		newItem.extra += addExtra('creatorsExt', JSON.stringify(creatorsExt));
+	}
+	doc.querySelectorAll('div.book_label > div.label_in > span').forEach(elm => newItem.tags.push(elm.innerText));
 	newItem.complete();
 }
 
@@ -268,14 +253,6 @@ function addExtra(key, value) {
 		: '';
 }
 
-/**
- * Attempts to get the part of the pattern described from the character,
- * and returns an empty string if not match.
- * @param {String} string
- * @param {RegExp} pattern
- * @param {Number} index
- * @returns
- */
 function tryMatch(string, pattern, index = 0) {
 	if (!string) return '';
 	let match = string.match(pattern);
@@ -304,9 +281,8 @@ var testCases = [
 				"date": "2022-07",
 				"ISBN": "9787562866350",
 				"abstractNote": "《朗文新编英语语法》由我社从培生教育出版公司引进，可供中学生、大学生以及英语学习者自学使用。本书由诊断测试、语法讲解和练习答案三部分组成。学习者可利用图书前面的诊断测试，在单元学习前，了解自己的薄弱项，从而进行有针对性的学习。语法知识点讲解部分共分为36个单元，包含一般语法书中的所有内容，语法解释详细，内容条理清晰。每个单元还配套丰富的练习题，学习者可通过练习巩固所学的语法点。本书所有例句均选自语料库，表达地道，是中高水平学习者巩固语法的不二之选。",
-				"extra": "CLC: H314\nprice: ￥ 80.00\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"马克·福利\",\"creatorType\":\"author\",\"country\":\"英\"},{\"firstName\":\"\",\"lastName\":\"\",\"creatorType\":\"translator\"}]",
-				"language": "zh-CN",
-				"libraryCatalog": "CCPINFO",
+				"extra": "CLC: H314\nprice: ￥ 80.00\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"马克·福利\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"英\"},{\"firstName\":\"\",\"lastName\":\"\",\"creatorType\":\"editor\",\"country\":\"\"},{\"firstName\":\"\",\"lastName\":\"\",\"creatorType\":\"translator\",\"country\":\"\"}]",
+				"libraryCatalog": "国家出版发行信息公共服务平台",
 				"publisher": "郑州大学出版社有限公司",
 				"url": "https://book.cppinfo.cn/Encyclopedias/home/index?id=4417147",
 				"attachments": [],
@@ -366,8 +342,7 @@ var testCases = [
 				"ISBN": "9787214275707",
 				"abstractNote": "本书全面、系统地梳理了330-610年拜占庭王朝历史以及帝国的崛起。上编为皇帝列传，介绍了君士坦丁王朝、瓦伦提尼安诸帝、塞奥多西王朝、利奥王朝、查士丁尼王朝历史。下编为拜占庭帝国的崛起，从世界地理观、宗教、种族与身份认同、自然灾害等方面加以论述，聚焦拜占庭帝国历史的第一黄金时代，对查士丁尼时代的司法改革、宗教思想和政策、制度、经济生活等方面进行系统论述，展现拜占庭帝国的崛起图景。本书是具有唯物史观特色的、有可靠依据的独立意见和系列研究成果，形成了我国学者对拜占庭历史发展和文化演化的话语体系。",
 				"extra": "CLC: K134\nprice: ￥ 248.00",
-				"language": "zh-CN",
-				"libraryCatalog": "CCPINFO",
+				"libraryCatalog": "国家出版发行信息公共服务平台",
 				"publisher": "江苏人民出版社",
 				"url": "https://book.cppinfo.cn/Encyclopedias/home/index?id=4567148",
 				"attachments": [],
@@ -419,7 +394,7 @@ var testCases = [
 				"abstractNote": "Since the 18th National Congress of the Communist Party of China in 2012， the drive to develop socialism with Chinese characteristics has entered a new era. The past decade has seen the country forging ahead and embracing historic changes， with remarkable achievements made by the Party and the state.\n  So how did China make these achievements? What are the secrets to the CPC's governance of China? What is the key to the success of China's governance in the new era?\n  This book covers such important topics as \"how to break the cycle of rise and fall\"， \"whole-process people's democracy\"， \"self-reform and social revolution\"， \"cyber governance\"， and \"Chinese-style modernization\"， reveals the secrets to the success of China's governance in the new era， and shares China's wisdom and solutions with the world.",
 				"extra": "CLC: D616\nprice: ￥ 118.00",
 				"language": "en-US",
-				"libraryCatalog": "CCPINFO",
+				"libraryCatalog": "国家出版发行信息公共服务平台",
 				"publisher": "外文出版社",
 				"url": "https://book.cppinfo.cn/Encyclopedias/home/index?id=4479822",
 				"attachments": [],
@@ -471,5 +446,4 @@ var testCases = [
 		]
 	}
 ]
-
 /** END TEST CASES **/

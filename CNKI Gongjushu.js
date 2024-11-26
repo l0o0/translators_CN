@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-03-29 10:58:26"
+	"lastUpdated": "2024-11-13 09:14:00"
 }
 
 /*
@@ -37,39 +37,143 @@
 
 
 function detectWeb(_doc, url) {
-	return url.includes('/detail?')
-		? 'encyclopediaArticle'
-		: false;
+	if (url.includes('/detail?')) {
+		return 'encyclopediaArticle';
+	}
+	else if (url.includes('/bookdetail?')) {
+		return 'book';
+	}
+	return false;
 }
 
 async function doWeb(doc, url) {
-	let newItem = new Z.Item('encyclopediaArticle');
-	let extra = new Extra();
-	newItem.title = text(doc, '.detailDesc  > h3 > .navi-search');
-	extra.set('original-title', text(doc, '.detailDesc  > h3 > :last-child'), true);
-	newItem.abstractNote = ZU.trimInternal(text(doc, '.detailDesc .image_box'));
-	let pubInfo = text(doc, '.descBox > .descDiv:last-child').substring(6).split('.');
-	Z.debug(pubInfo);
-	try {
-		newItem.encyclopediaTitle = pubInfo[1];
-		newItem.place = tryMatch(pubInfo[2], /^(.+):/, 1);
-		newItem.publisher = tryMatch(pubInfo[2], /:(.+)$/, 1);
-		newItem.date = pubInfo[3];
-		newItem.pages = tryMatch(pubInfo[4], /[\d,+-]+/);
-	}
-	catch (error) {
-		Z.debug(error);
-	}
-	newItem.url = url;
-	pubInfo[0].split(/[,;，；、]/).forEach((creator) => {
-		creator = ZU.cleanAuthor(creator.replace(/等?副?[总主参]?[编著]?$/, ''), 'author');
-		if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
-			creator.fieldMode = 1;
+	const extra = new Extra();
+	const newItem = new Z.Item(detectWeb(doc, url));
+	const creatorsExt = [];
+	function processNames(names, role = '') {
+		let creatorType = 'author';
+		if (role.endsWith('编')) {
+			creatorType = 'editor';
 		}
-		newItem.creators.push(creator);
-	});
+		else if (role.endsWith('译')) {
+			creatorType = 'translator';
+		}
+		names.forEach((name) => {
+			const country = tryMatch(name, /^\[(.+?)\]/, 1);
+			const original = tryMatch(name, /[(（](.+?)[）)]$/, 1).replace('，', ' ');
+			if (original) {
+				const originalCreator = cleanAuthor(ZU.capitalizeName(original), creatorType);
+				extra.set('original-author', `${originalCreator.firstName ? originalCreator.firstName + ' || ' : ''}${originalCreator.lastName}`, true);
+			}
+			const creator = cleanAuthor(name.replace(/^\[.+?\]/, '').replace(/[(（].+?[）)]$/, ''), creatorType);
+			newItem.creators.push(JSON.parse(JSON.stringify(creator)));
+			newItem.country = country;
+			newItem.original = original;
+			creatorsExt.push(creator);
+		});
+	}
+	switch (newItem.itemType) {
+		case 'encyclopediaArticle': {
+			newItem.title = text(doc, '.detailDesc  > h3 > .navi-search');
+			extra.set('original-title', text(doc, '.detailDesc  > h3 > :last-child'), true);
+			newItem.abstractNote = ZU.trimInternal(text(doc, '.detailDesc .image_box'));
+			const bookTitle = text(doc, '.el-tooltip', 1);
+			const pubInfoText = text(doc, '.descBox > .descDiv:last-child').substring(6);
+			const pubInfoList = tryMatch(pubInfoText, new RegExp(`${bookTitle}\\.(.+)`), 1).split('.');
+			newItem.encyclopediaTitle = bookTitle;
+			newItem.place = tryMatch(pubInfoList[0], /^(.+):/, 1);
+			newItem.publisher = tryMatch(pubInfoList[0], /:(.+)$/, 1);
+			newItem.date = pubInfoList[1];
+			newItem.pages = tryMatch(pubInfoList[2], /第([\d,+-]+)页/, 1);
+			tryMatch(pubInfoText, new RegExp(`^(.+)\\.${bookTitle}`), 1).split(';').forEach((group) => {
+				processNames(group.replace(/等?副?[总主参]?[编著]?$|翻?译$/g, '').split(','), tryMatch(group, /副?[总主参]?[编著]?$|翻?译$/));
+			});
+			break;
+		}
+		case 'book': {
+			const more = doc.querySelector('.leftBox > .moreBtn');
+			if (more) {
+				more.click();
+				await new Promise(resolve => setTimeout(resolve, 2000));
+			}
+			const labels = new Labels(doc, '.left_content > span,.moreMsg > span');
+			newItem.title = text(doc, '.rightTop > .left');
+			extra.set('original-author', ZU.capitalizeTitle(labels.get('并列正书名')));
+			newItem.abstractNote = labels.get('书目简介');
+			newItem.series = labels.get('分辑名');
+			newItem.place = labels.get('出版地');
+			newItem.publisher = labels.get('出版者');
+			newItem.date = labels.get('出版时间');
+			newItem.numPages = tryMatch(labels.get('页码'), /\d+$/);
+			const roles = labels.get('责任方式').split(';');
+			labels.get('主要责任者').split(';').forEach((group, index) => {
+				processNames(group.replace(/等$/, '').split(','), roles[index]);
+			});
+			if (creatorsExt.some(creator => creator.country || creator.original)) {
+				extra.set('creatorsExt', JSON.stringify(creatorsExt));
+			}
+			break;
+		}
+	}
+	newItem.language = 'zh-CN';
+	newItem.url = url;
 	newItem.extra = extra.toString();
 	newItem.complete();
+}
+
+class Labels {
+	constructor(doc, selector) {
+		this.data = [];
+		this.emptyElm = doc.createElement('div');
+		Array.from(doc.querySelectorAll(selector))
+			// avoid nesting
+			.filter(element => !element.querySelector(selector))
+			// avoid empty
+			.filter(element => !/^\s*$/.test(element.textContent))
+			.forEach((element) => {
+				const elmCopy = element.cloneNode(true);
+				// avoid empty text
+				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
+					// Z.debug(elementCopy.firstChild.textContent);
+					elmCopy.removeChild(elmCopy.firstChild);
+					// Z.debug(elementCopy.firstChild.textContent);
+				}
+				if (elmCopy.childNodes.length > 1) {
+					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+					this.data.push([key, elmCopy]);
+				}
+				else {
+					const text = ZU.trimInternal(elmCopy.textContent);
+					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+					this.data.push([key, elmCopy]);
+				}
+			});
+	}
+
+	get(label, element = false) {
+		if (Array.isArray(label)) {
+			const results = label
+				.map(aLabel => this.get(aLabel, element));
+			const keyVal = element
+				? results.find(element => !/^\s*$/.test(element.textContent))
+				: results.find(string => string);
+			return keyVal
+				? keyVal
+				: element
+					? this.emptyElm
+					: '';
+		}
+		const pattern = new RegExp(label, 'i');
+		const keyVal = this.data.find(arr => pattern.test(arr[0]));
+		return keyVal
+			? element
+				? keyVal[1]
+				: ZU.trimInternal(keyVal[1].textContent)
+			: element
+				? this.emptyElm
+				: '';
+	}
 }
 
 class Extra {
@@ -108,20 +212,21 @@ class Extra {
 	}
 }
 
-/**
- * Attempts to get the part of the pattern described from the character,
- * and returns an empty string if not match.
- * @param {String} string
- * @param {RegExp} pattern
- * @param {Number} index
- * @returns
- */
 function tryMatch(string, pattern, index = 0) {
 	if (!string) return '';
 	let match = string.match(pattern);
 	return (match && match[index])
 		? match[index]
 		: '';
+}
+
+function cleanAuthor(name, creatorType = 'author') {
+	const creator = ZU.cleanAuthor(name, creatorType);
+	creator.lastName = creator.lastName.replace(/\.\s*/g, '. ');
+	if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
+		creator.fieldMode = 1;
+	}
+	return creator;
 }
 
 /** BEGIN TEST CASES **/

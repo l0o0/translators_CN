@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-07-23 14:21:25"
+	"lastUpdated": "2024-11-26 05:51:41"
 }
 
 /*
@@ -50,12 +50,12 @@ function detectWeb(doc, url) {
 }
 
 function getSearchResults(doc, checkOnly) {
-	var items = {};
-	var found = false;
-	var rows = doc.querySelectorAll('label.title-color');
-	for (let row of rows) {
-		let ane = row.getAttribute('data-ane') || row.getAttribute('data-pne');
-		let title = ZU.trimInternal(row.getAttribute('title'));
+	const items = {};
+	let found = false;
+	const rows = doc.querySelectorAll('label.title-color');
+	for (const row of rows) {
+		const ane = row.getAttribute('data-ane') || row.getAttribute('data-pne');
+		const title = ZU.trimInternal(row.getAttribute('title'));
 		if (!ane || !title) continue;
 		if (checkOnly) return true;
 		found = true;
@@ -66,10 +66,10 @@ function getSearchResults(doc, checkOnly) {
 
 async function doWeb(doc, url) {
 	if (detectWeb(doc, url) == 'multiple') {
-		let items = await Zotero.selectItems(getSearchResults(doc, false));
+		const items = await Zotero.selectItems(getSearchResults(doc, false));
 		if (!items) return;
-		for (let ane of Object.keys(items)) {
-			let href = `/Search/Detail?ANE=${ane}`;
+		for (const ane of Object.keys(items)) {
+			const href = `/Search/Detail?ANE=${ane}`;
 			await scrape(await requestDocument(href), href);
 		}
 	}
@@ -119,7 +119,7 @@ async function scrape(doc, url) {
 			2: "实用新型专利",
 			3: "外观专利"
 		}[jsonData.PT];
-		jsonData.IN.split(/\s?;/).forEach(creator => newItem.creators.push(processName(creator)));
+		jsonData.IN.split(/\s?;/).forEach(creator => newItem.creators.push(cleanAuthor(creator)));
 	}
 	catch (error) {
 		Z.debug(error);
@@ -139,7 +139,7 @@ async function scrape(doc, url) {
 		newItem.legalStatus = labels.get('当前状态');
 		newItem.rights = text(doc, '.item-summary > p:nth-child(2) > strong+span');
 		labels.get('发明人', true).querySelectorAll('a').forEach((element) => {
-			newItem.creators.push(processName(ZU.trimInternal(element.textContent)));
+			newItem.creators.push(cleanAuthor(ZU.trimInternal(element.textContent)));
 		});
 	}
 	
@@ -242,10 +242,9 @@ function toISODate(str) {
 	return str.replace(/^(\d{4})(\d{2})/, "$1-$2-");
 }
 
-function processName(creator) {
-	let creatorType = creator.endsWith('指导') ? 'contributor' : 'inventor';
-	creator = ZU.cleanAuthor(creator.replace(/[等主编著;]*$/, ''), creatorType);
-	if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+function cleanAuthor(name) {
+	const creator = ZU.cleanAuthor(name.replace(/指导$/, ''), name.endsWith('指导') ? 'contributor' : 'inventor');
+	if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
 		creator.lastName = creator.firstName + creator.lastName;
 		creator.firstName = '';
 		creator.fieldMode = 1;

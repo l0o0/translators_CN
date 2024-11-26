@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-03-09 09:29:04"
+	"lastUpdated": "2024-11-14 03:02:44"
 }
 
 /*
@@ -35,7 +35,7 @@
 	***** END LICENSE BLOCK *****
 */
 
-var typeMAp = {
+const typeMAp = {
 	journalArticle: '刊名',
 	patent: '专利',
 	standard: '标准号',
@@ -48,9 +48,9 @@ var typeMAp = {
 };
 
 function detectWeb(doc, url) {
-	let result = doc.querySelector('.search-result, .main-view');
-	if (result) {
-		Z.monitorDOMChanges(result, { subtree: true, childList: true });
+	const results = doc.querySelector('.search-result, .main-view');
+	if (results) {
+		Z.monitorDOMChanges(results, { subtree: true, childList: true });
 	}
 	if (/\/article?.*id=/i.test(url)) {
 		return Object.keys(typeMAp).find(key => ZU.xpath(doc, `//span[@class="label"][contains(text(), "${typeMAp[key]}")]`).length);
@@ -62,12 +62,12 @@ function detectWeb(doc, url) {
 }
 
 function getSearchResults(doc, checkOnly) {
-	var items = {};
-	var found = false;
-	var rows = doc.querySelectorAll('[data-col-key="TI"] > span > a');
-	for (let row of rows) {
-		let href = row.href;
-		let title = ZU.trimInternal(row.textContent);
+	const items = {};
+	let found = false;
+	const rows = doc.querySelectorAll('[data-col-key="TI"] > span > a');
+	for (const row of rows) {
+		const href = row.href;
+		const title = ZU.trimInternal(row.textContent);
 		if (!href || !title) continue;
 		if (checkOnly) return true;
 		found = true;
@@ -78,9 +78,9 @@ function getSearchResults(doc, checkOnly) {
 
 async function doWeb(doc, url) {
 	if (detectWeb(doc, url) == 'multiple') {
-		let items = await Zotero.selectItems(getSearchResults(doc, false));
+		const items = await Zotero.selectItems(getSearchResults(doc, false));
 		if (!items) return;
-		for (let url of Object.keys(items)) {
+		for (const url of Object.keys(items)) {
 			await scrape(await requestDocument(url), url);
 		}
 	}
@@ -90,122 +90,9 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url = doc.location.href) {
-	var newItem = new Z.Item(detectWeb(doc, url));
-	let extra = new Extra();
+	let newItem = new Z.Item(detectWeb(doc, url));
+	const extra = new Extra();
 	newItem.title = text(doc, '.article-content > h3');
-	Z.debug(tryMatch(url, /id=([^&#]+)/i, 1));
-	// let info = {
-	// 	"code": 200,
-	// 	"data": {
-	// 		"title": "河南省人民政府关于印发河南省基本公共服务体系“十二五”规划的通知",
-	// 		"co": "",
-	// 		"fileName": "la201302250090",
-	// 		"authors": [],
-	// 		"aff": [
-	// 			{
-	// 				"no": "0",
-	// 				"value": "河南省人民政府",
-	// 				"url": "",
-	// 				"id": "",
-	// 				"afc": "",
-	// 				"favFlag": false
-	// 			}
-	// 		],
-	// 		"metadata": [
-	// 			{
-	// 				"key": "PBT",
-	// 				"name": "发布日期",
-	// 				"value": "2012-12-28",
-	// 				"sort": 20,
-	// 				"list": [],
-	// 				"itemType": ""
-	// 			},
-	// 			{
-	// 				"key": "OT",
-	// 				"name": "实施日期",
-	// 				"value": "2012-12-28",
-	// 				"sort": 30,
-	// 				"list": [],
-	// 				"itemType": ""
-	// 			},
-	// 			{
-	// 				"key": "FWZH",
-	// 				"name": "发文字号",
-	// 				"value": "豫政[2012]110号",
-	// 				"sort": 40,
-	// 				"list": [],
-	// 				"itemType": ""
-	// 			},
-	// 			{
-	// 				"key": "KY",
-	// 				"name": "关键词",
-	// 				"value": "公共服务",
-	// 				"sort": 50,
-	// 				"list": [
-	// 					{
-	// 						"type": null,
-	// 						"no": null,
-	// 						"value": "公共服务",
-	// 						"url": " https://kc.cnki.net/detail/keyword?sm=Po7fM/kIWbEg5t1I31Z5tbcvxfPwvuN0R8gT8121tlaBNqL6OBSlqE01+Uq2Su5j5bCWiJKrRVnsniW+22hq4DKxqI74YY0BPLiSI4ACXCQo/GRe+WbvcPI8NlPRNFgC",
-	// 						"aff": null,
-	// 						"id": null,
-	// 						"auc": null,
-	// 						"favFlag": null,
-	// 						"afc": null
-	// 					}
-	// 				],
-	// 				"itemType": "KEYWORD"
-	// 			},
-	// 			{
-	// 				"key": "ZWKZ",
-	// 				"name": "正文快照",
-	// 				"value": "各省辖市、省直管试点县（市）人民政府，省人民政府各部门:\r\n  现将《河南省基本公共服务体系“十二五”规划》印发给你们，请认真组织实施。\r\n  $R河南省人民政府\r\n  2012年12月28日$E\r\n  河南省基本公共服务体系“十二五”规划\r\n  序 言\r\n  基本公共服务，是指建立在一定社",
-	// 				"sort": 60,
-	// 				"list": [],
-	// 				"itemType": ""
-	// 			},
-	// 			{
-	// 				"key": "XLJB",
-	// 				"name": "效力级别",
-	// 				"value": "地方政府规章及文件",
-	// 				"sort": 70,
-	// 				"list": [],
-	// 				"itemType": ""
-	// 			},
-	// 			{
-	// 				"key": "SXX",
-	// 				"name": "时效性",
-	// 				"value": "已失效",
-	// 				"sort": 80,
-	// 				"list": [],
-	// 				"itemType": ""
-	// 			}
-	// 		],
-	// 		"relations": [
-	// 			{
-	// 				"scope": "CAJ",
-	// 				"url": "https://bar.cnki.net/bar/download/order?id=MC9UQPVl75WMiKxhvkw8DebjibTF1dwpzle6a8yEERreTzGpI5hC4n7cfxL%2FJ%2FSzeFJo%2BBtqMrelSyLIC0%2FI9gbmPY%2FyrVt4Xw1fMu3SqHpeFzmqFVUm9%2BBm6kiswzFo5H%2BL6Vp5BLneGY1hWS%2FJzjaAlNyXOUwlX4ITLKxQ7WmXFcmfT0IY8xNoyrMJ9frv%2BM7Qpio9P1dY87Zwtj6pW275c9isC0D7e1vHcsvJcd13Ez128zK8Y1WH9O9wYfeUqABKhnQUYWMQZGc8uXswgm87esHVP7Hf%2BkA%2BFJMtM8iTuyXne8tHwR8K%2FutpjJjU&source=EKRP"
-	// 			},
-	// 			{
-	// 				"scope": "PDF",
-	// 				"url": "https://bar.cnki.net/bar/download/order?id=MC9UQPVl75WMiKxhvkw8DebjibTF1dwpzle6a8yEERreTzGpI5hC4n7cfxL%2FJ%2FSzeFJo%2BBtqMrelSyLIC0%2FI9gbmPY%2FyrVt4Xw1fMu3SqHpeFzmqFVUm9%2BBm6kiswzFo5H%2BL6Vp5BLneGY1hWS%2FJzgcZfCOqkOuWSRg0GtlNeR%2BXFcmfT0IY8xNoyrMJ9frv%2BM7Qpio9P1dY87Zwtj6pW275c9isC0D7e1vHcsvJcd3eQJYladL2kkodK1iE4DfbqABKhnQUYWMQZGc8uXswgm87esHVP7Hf%2BkA%2BFJMtM8iTuyXne8tHwR8K%2FutpjJjU&source=EKRP"
-	// 			}
-	// 		],
-	// 		"favFlag": false,
-	// 		"repository": {
-	// 			"title": null,
-	// 			"type": "LAWS",
-	// 			"dataset": "EKR_CLKL0817",
-	// 			"resource": "EKRCLKL",
-	// 			"ccl1": null,
-	// 			"ccl2": null
-	// 		},
-	// 		"citationFormat": null,
-	// 		"wwResources": [],
-	// 		"patLawsStaList": []
-	// 	},
-	// 	"msg": "操作成功"
-	// }.data;
 	let info = await requestJSON('https://kc.cnki.net/api/articleabstract/info', {
 		method: 'POST',
 		headers: {
@@ -220,7 +107,7 @@ async function scrape(doc, url = doc.location.href) {
 	Z.debug(info);
 	info = info.data;
 	function metadata(mainKey, list = false) {
-		let result = info.metadata.find(obj => obj.key == mainKey);
+		const result = info.metadata.find(obj => obj.key == mainKey);
 		return result
 			? list
 				? result.list
@@ -231,15 +118,14 @@ async function scrape(doc, url = doc.location.href) {
 	}
 	try {
 		// throw new Error('debug');
-		let doi = attr(doc, 'span.doi > a', 'href') || metadata('DOI');
+		const doi = attr(doc, 'span.doi > a', 'href') || metadata('DOI');
 		Z.debug(`DOI: ${doi}`);
 		newItem = await scrapeSearch(doi);
-		extra.set('titleTranslation', metadata('MTTI'));
 	}
 	catch (error) {
 		Z.debug(`failed to use search translator.`);
 		Z.debug(error);
-		let citation = info.citationFormat
+		const citation = info.citationFormat
 			? info.citationFormat[Object.keys(info.citationFormat).find(key => key.includes('GB/T'))]
 			: '';
 		Z.debug(citation);
@@ -253,7 +139,7 @@ async function scrape(doc, url = doc.location.href) {
 				newItem.pages = metadata('PAGE');
 				newItem.date = metadata('YE');
 				info.authors.forEach((creator) => {
-					newItem.creators.push(processName(creator.value, 'author'));
+					newItem.creators.push(cleanAuthor(creator.value, 'author'));
 				});
 				break;
 			case 'patent':
@@ -265,7 +151,7 @@ async function scrape(doc, url = doc.location.href) {
 				newItem.filingDate = metadata('AD');
 				newItem.issueDate = metadata('PD');
 				metadata('AU', true).forEach((creator) => {
-					newItem.creators.push(processName(creator.value, 'inventor'));
+					newItem.creators.push(cleanAuthor(creator.value, 'inventor'));
 				});
 				newItem.rights = metadata('ZQX');
 				break;
@@ -283,7 +169,7 @@ async function scrape(doc, url = doc.location.href) {
 				newItem.institution = metadata('AF');
 				newItem.date = metadata('YE') || metadata('RKNF');
 				metadata('AU', true).forEach((creator) => {
-					newItem.creators.push(processName(creator.value));
+					newItem.creators.push(cleanAuthor(creator.value));
 				});
 				extra.set('achievementType', metadata('LBMC'));
 				break;
@@ -293,7 +179,7 @@ async function scrape(doc, url = doc.location.href) {
 				newItem.place = metadata('AD');
 				newItem.pages = metadata('PM');
 				info.authors.forEach((creator) => {
-					newItem.creators.push(processName(creator.value, 'author'));
+					newItem.creators.push(cleanAuthor(creator.value, 'author'));
 				});
 				break;
 			case 'thesis':
@@ -305,10 +191,10 @@ async function scrape(doc, url = doc.location.href) {
 				newItem.numPages = metadata('PAGEC');
 				extra.set('major', metadata('SN'));
 				info.authors.forEach((creator) => {
-					newItem.creators.push(processName(creator.value, 'author'));
+					newItem.creators.push(cleanAuthor(creator.value, 'author'));
 				});
 				metadata('TUS').split(/[;，；]\s?/).forEach((creator) => {
-					newItem.creators.push(processName(creator, 'contributor'));
+					newItem.creators.push(cleanAuthor(creator, 'contributor'));
 				});
 				break;
 			case 'newspaperArticle':
@@ -316,7 +202,7 @@ async function scrape(doc, url = doc.location.href) {
 				newItem.date = metadata('PT');
 				newItem.pages = metadata('PV').replace(/0*(\d+)/, '$1');
 				info.authors.forEach((creator) => {
-					newItem.creators.push(processName(creator.value, 'author'));
+					newItem.creators.push(cleanAuthor(creator.value, 'author'));
 				});
 				break;
 			case 'bookSection':
@@ -324,7 +210,7 @@ async function scrape(doc, url = doc.location.href) {
 				newItem.date = metadata('YE');
 				newItem.pages = metadata('PPM');
 				info.authors.forEach((creator) => {
-					newItem.creators.push(processName(creator.value.replace(/\s?[总主参]编$/, ''), 'author'));
+					newItem.creators.push(cleanAuthor(creator.value.replace(/\s?[总主参]编$/, ''), 'editor'));
 				});
 				break;
 			case 'statute':
@@ -338,7 +224,7 @@ async function scrape(doc, url = doc.location.href) {
 				if (!metadata('XLJB').includes('法律')) extra.set('Type', 'regulation', true);
 				if (metadata('SXX') == '已失效') extra.set('Status', '已废止');
 				info.aff.forEach((creator) => {
-					newItem.creators.push(processName(creator.value, 'author'));
+					newItem.creators.push(cleanAuthor(creator.value, 'author'));
 				});
 				break;
 		}
@@ -356,7 +242,7 @@ async function scrape(doc, url = doc.location.href) {
 	extra.set('filename', info.fileName);
 	extra.set('dbname', info.repository.resource.slice(-4));
 	extra.set('dbcode', info.repository.dataset.substring(4));
-	let attachment = info.relations.reverse().find(obj => ['PDF', 'CAJ'].includes(obj.scope));
+	const attachment = info.relations.reverse().find(obj => ['PDF', 'CAJ'].includes(obj.scope));
 	newItem.attachments.push(attachment
 		? {
 			url: attachment.url,
@@ -369,7 +255,7 @@ async function scrape(doc, url = doc.location.href) {
 		}
 	);
 	newItem.tags = metadata('KY', true).map(obj => obj.value);
-	let toc = info.co;
+	const toc = info.co;
 	if (toc) newItem.notes.push('<h1>Table of Contents</h1>' + toc);
 	newItem.extra = extra.toString(newItem.extra);
 	newItem.complete();
@@ -378,7 +264,7 @@ async function scrape(doc, url = doc.location.href) {
 async function scrapeSearch(doi) {
 	let item = {};
 	if (!doi) throw new ReferenceError('no identifier available');
-	let translator = Zotero.loadTranslator('search');
+	const translator = Zotero.loadTranslator('search');
 	translator.setSearch({ DOI: doi });
 	translator.setHandler('translators', (_, translators) => {
 		translator.setTranslator(translators);
@@ -428,14 +314,6 @@ class Extra {
 	}
 }
 
-/**
- * Attempts to get the part of the pattern described from the character,
- * and returns an empty string if not match.
- * @param {String} string
- * @param {RegExp} pattern
- * @param {Number} index
- * @returns
- */
 function tryMatch(string, pattern, index = 0) {
 	if (!string) return '';
 	let match = string.match(pattern);
@@ -444,7 +322,7 @@ function tryMatch(string, pattern, index = 0) {
 		: '';
 }
 
-function processName(creator, creatorType = 'author') {
+function cleanAuthor(creator, creatorType = 'author') {
 	creator = ZU.cleanAuthor(creator, creatorType);
 	if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
 		creator.lastName = creator.firstName + creator.lastName;
@@ -1147,5 +1025,4 @@ var testCases = [
 		]
 	}
 ]
-
 /** END TEST CASES **/

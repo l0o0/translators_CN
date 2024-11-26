@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-10-28 08:36:35"
+	"lastUpdated": "2024-11-15 03:30:15"
 }
 
 /*
@@ -119,18 +119,23 @@ async function scrape(doc, url = doc.location.href) {
 	const extra = new Extra();
 	const newItem = new Z.Item(detectWeb(doc, url));
 	newItem.title = ZU.trimInternal(text(doc, '.card_text > dl > dt'));
-	newItem.abstractNote = getField(['摘要', '内容提要', '简介']).replace(/\s*隐藏更多$/, '');
+	newItem.abstractNote = getField(['摘要', '内容提要', '简介']).replace(/^： |\s*隐藏更多$/g, '');
 	const creatorsExt = [];
 	getField(['作者', '发明人']).split(/[;；]\s*/)
 		.forEach((group) => {
 			const creators = group.split(/[,，]\s*/);
-			const creatorType = /翻?译$/.test(creators[creators.length - 1])
-				? 'translator'
-				: 'author';
+			const role = creators[creators.length - 1];
+			let creatorType = 'author';
+			if (/编纂?$/.test(role)) {
+				creatorType = 'editor';
+			}
+			else if (/翻?译$/.test(role)) {
+				creatorType = 'translator';
+			}
 			creators.forEach((creator) => {
 				creator = creator
 					.replace(/^：/, '')
-					.replace(/[主编著翻译\d\s]*$/g, '');
+					.replace(/[主副参][编纂著翻译]+[\d\s]*$/g, '');
 				const country = tryMatch(creator, /^（(.+?)）/, 1);
 				creator = creator.replace(/^（.+?）/, '');
 				const original = tryMatch(creator, /（(.+?)）$/, 1);
@@ -378,7 +383,7 @@ var testCases = [
 				"place": "北京",
 				"publisher": "机械工业出版社",
 				"series": "计算机科学丛书 华章教育",
-				"url": "https://book.duxiu.com/views/specific/4010/bookDetail.jsp?dxNumber=000030591379",
+				"url": "https://book.duxiu.com/views/specific/4010/bookDetail.jsp?dxNumber=000030591379&d=AAB0ABB8D0C543BFF26956EE9601E809",
 				"attachments": [],
 				"tags": [
 					{
