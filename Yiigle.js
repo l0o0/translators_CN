@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-04-05 09:22:53"
+	"lastUpdated": "2024-12-21 20:52:16"
 }
 
 /*
@@ -180,7 +180,7 @@ async function scrape(doc) {
 		extra.set('collect', text(doc, 'div[title*="收藏数"]'));
 		extra.set('share', text(doc, 'div[title*="分享数"]'));
 		doc.querySelectorAll('.contrib_group_en >  .contrib_group_item').forEach((element) => {
-			extra.push('original-creator', element.innerText, true);
+			extra.push('original-author', element.innerText, true);
 		});
 		if (pdfLink) {
 			Z.debug('pdfLink: ');
@@ -280,7 +280,7 @@ var testCases = [
 				"date": "2022-04-15",
 				"DOI": "10.35541/cjd.20210823",
 				"ISSN": "0412-4030",
-				"extra": "original-title: Expert consensus on clinical application of wet-wrap therapy for atopic dermatitis\noriginal-creator: Environmental and Occupational Skin Disease Research Group, Committee on Dermatology, Chinese Association of Integrative Medicine;\noriginal-creator: Group on Children, Chinese Society of Dermatology\noriginal-creator: Li Linfeng\noriginal-creator: Ma Lin\nview: 1655\ndownload: 589\ncomment: 0\nlike: 1\ncollect: 58\nshare: 11",
+				"extra": "original-title: Expert consensus on clinical application of wet-wrap therapy for atopic dermatitis\noriginal-author: Environmental and Occupational Skin Disease Research Group, Committee on Dermatology, Chinese Association of Integrative Medicine;\noriginal-author: Group on Children, Chinese Society of Dermatology\noriginal-author: Li Linfeng\noriginal-author: Ma Lin\nview: 1655\ndownload: 589\ncomment: 0\nlike: 1\ncollect: 58\nshare: 11",
 				"issue": "4",
 				"language": "zh",
 				"libraryCatalog": "rs.yiigle.com",
