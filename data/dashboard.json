@@ -14949,146 +14949,102 @@
     "header": {
       "translatorID": "441ffe59-2049-41b1-8ead-7a3a53f7d0bd",
       "label": "Soopat",
-      "creator": "Xingzhong Lin",
-      "target": "^https?://([^/]+\\.)?soopat\\.com",
+      "creator": "Xingzhong Lin, jiaojiaodubai",
+      "target": "^https?://(www|plus)\\.soopat\\.com",
       "minVersion": "1.0",
       "maxVersion": "",
       "priority": 100,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2023-03-28 03:27:19"
+      "lastUpdated": "2024-12-24 09:40:26"
     },
     "testCases": [
       {
         "type": "web",
-        "url": "http://www.soopat.com/Patent/201711256672",
+        "url": "https://www.soopat.com/patent/201711256672?lx=",
         "items": [
           {
             "itemType": "patent",
             "title": "一种提高类PSE鸡胸肉肌原纤维蛋白凝胶品质的糖基化方法",
             "creators": [
               {
+                "firstName": "",
                 "lastName": "徐幸莲",
-                "creatorType": "inventor"
+                "creatorType": "inventor",
+                "fieldMode": 1
               },
               {
+                "firstName": "",
                 "lastName": "卞光亮",
-                "creatorType": "inventor"
+                "creatorType": "inventor",
+                "fieldMode": 1
               },
               {
+                "firstName": "",
                 "lastName": "韩敏义",
-                "creatorType": "inventor"
+                "creatorType": "inventor",
+                "fieldMode": 1
               },
               {
+                "firstName": "",
                 "lastName": "王虎虎",
-                "creatorType": "inventor"
+                "creatorType": "inventor",
+                "fieldMode": 1
               },
               {
+                "firstName": "",
                 "lastName": "许玉娟",
-                "creatorType": "inventor"
+                "creatorType": "inventor",
+                "fieldMode": 1
               },
               {
+                "firstName": "",
                 "lastName": "周光宏",
-                "creatorType": "inventor"
+                "creatorType": "inventor",
+                "fieldMode": 1
               },
               {
+                "firstName": "",
                 "lastName": "邵士昌",
-                "creatorType": "inventor"
+                "creatorType": "inventor",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "李德溅",
+                "creatorType": "attorneyAgent",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "徐冬涛",
+                "creatorType": "attorneyAgent",
+                "fieldMode": 1
               }
             ],
-            "abstractNote": "摘要：本发明公开了一种提高类PSE鸡胸肉肌原纤维蛋白凝胶品质的糖基化方法，该方法的步骤如下：(1)原材料处理；(2)肌原纤维蛋白的提取；(3)糖基化处理；(4)除糖处理；(5)凝胶制备获得蛋白凝胶。本发明使用的非酶湿法糖基化法对类PSE鸡胸肉进行处理，处理条件温和、均匀、无害；糖基化技术能够通过共价结合的形式对PSE鸡肉的肌原纤维蛋白进行改性，改变蛋白质的结构和加工特性，通过提高鸡胸肉肌原纤维蛋白凝胶的保水性和凝胶硬度，提高其凝胶品质和经济效益。",
+            "issueDate": "2018-03-23",
+            "abstractNote": "本发明公开了一种提高类PSE鸡胸肉肌原纤维蛋白凝胶品质的糖基化方法，该方法的步骤如下：(1)原材料处理；(2)肌原纤维蛋白的提取；(3)糖基化处理；(4)除糖处理；(5)凝胶制备获得蛋白凝胶。本发明使用的非酶湿法糖基化法对类PSE鸡胸肉进行处理，处理条件温和、均匀、无害；糖基化技术能够通过共价结合的形式对PSE鸡肉的肌原纤维蛋白进行改性，改变蛋白质的结构和加工特性，通过提高鸡胸肉肌原纤维蛋白凝胶的保水性和凝胶硬度，提高其凝胶品质和经济效益。",
             "applicationNumber": "201711256672.9",
-            "assignee": "李德溅 徐冬涛",
+            "assignee": "南京农业大学",
+            "country": "中国",
+            "extra": "original-title: Glycosylation method for improving PSE chicken breast myofibrillar protein gel quality\noriginal-author: Xu || Xinglian\noriginal-author: Bian || Guangliang\noriginal-author: Han || Minyi\noriginal-author: Wang || Huhu\noriginal-author: Xu || Yujuan\noriginal-author: Zhou || Guanghong\noriginal-author: Shao || Shichang",
             "filingDate": "2017-12-04",
             "legalStatus": "有权",
-            "place": "南京农业大学",
-            "url": "http://www.soopat.com/Patent/201711256672",
-            "attachments": [],
-            "tags": [],
-            "notes": [
-              {
-                "note": " 一种提高类PSE鸡胸肉肌原纤维蛋白凝胶品质的糖基化方法，其特征在于：所述方法的步骤如下：(1)原材料处理：将类PSE鸡胸肉去除结缔组织和脂肪，切成小块并绞碎；(2)肌原纤维蛋白的提取：将处理后的类PSE鸡胸肉按质量体积比加入四倍的标准盐溶液中，匀浆、双层纱布过滤后，用2000×g、至少10min的离心条件洗脱；然后将获得的沉淀按质量体积比加入四倍的0.1mol/L的KCl溶液中，匀浆后用2000×g、至少10min的离心条件再次洗脱，获得肌原纤维蛋白；(3)糖基化处理：将获得的肌原纤维蛋白溶于0.6mol/L的KCl和20mmol/L的磷酸盐构成的混合溶液中，并调节肌原纤维蛋白浓度为2mg/ml～6mg/ml，再加入肌原纤维蛋白质量6倍的氨基葡萄糖，在20℃～45℃的环境下反应12h；(4)除糖处理：将反应结束的溶液加入5倍体积的冷蒸馏水，然后用2000×g、至少10min的离心条件洗脱；将洗脱获得的沉淀按质量体积比加入四倍的0.1mol/L的KCl溶液中，再用2000×g、至少10min的离心条件洗脱；再将洗脱后获得的沉淀溶于0.6mol/L的KCl和20mmol/L的磷酸盐构成的混合溶液中，并调节肌原纤维蛋白浓度为20mg/ml～40mg/ml；(5)凝胶制备：将除糖后的肌原纤维蛋白溶液从25℃升到80℃后保温至少20min，即制成蛋白凝胶。"
-              }
-            ],
-            "seeAlso": []
-          }
-        ]
-      },
-      {
-        "type": "web",
-        "url": "http://www.soopat.com/Patent/201510870162?lx=FMSQ",
-        "items": [
-          {
-            "itemType": "patent",
-            "title": "捕猎器",
-            "creators": [
-              {
-                "lastName": "李丹",
-                "creatorType": "inventor"
-              }
-            ],
-            "abstractNote": "摘要：一种捕猎器，包括驱赶通道和储物仓，驱赶通道与储物仓之间设置有隔离门，隔离门以平动或转动的方式设置在驱赶通道和储物仓之间，隔离门的平动或转动均位于驱赶通道和储物仓的分割面所在的平面或曲面内。该捕猎器能够使得隔离门可靠关闭，避免猎物返回到驱赶通道中。",
-            "applicationNumber": "201510870162.5",
-            "filingDate": "2015-12-01",
-            "legalStatus": "有权,权利转移",
-            "place": "深圳市丹明科技有限公司",
-            "url": "http://www.soopat.com/Patent/201510870162?lx=FMSQ",
-            "attachments": [],
-            "tags": [],
-            "notes": [
-              {
-                "note": " 1.一种捕猎器，包括驱赶通道和储物仓，其特征在于：所述驱赶通道与所述储物仓之间设置有隔离门，所述隔离门以平动或转动的方式设置在所述驱赶通道和所述储物仓之间，所述隔离门的平动或转动均位于所述驱赶通道和所述储物仓的分割面所在的平面或曲面内；所述驱赶通道内设置有驱赶板，在所述驱赶板运动到隔离门正下方后使隔离门回位。"
-              }
-            ],
-            "seeAlso": []
-          }
-        ]
-      },
-      {
-        "type": "web",
-        "url": "http://pro.soopat.com/Chinese/Patent?PN=CN108472894A",
-        "items": [
-          {
-            "itemType": "patent",
-            "title": "用于管理轮胎检查设备的方法和适于根据所述方法操作的轮胎检查设备",
-            "creators": [
-              {
-                "lastName": "V·波法",
-                "creatorType": "inventor"
-              },
-              {
-                "lastName": "F·雷戈利",
-                "creatorType": "inventor"
-              },
-              {
-                "lastName": "V·巴拉迪尼",
-                "creatorType": "inventor"
-              },
-              {
-                "lastName": "S·蒙蒂",
-                "creatorType": "inventor"
-              },
-              {
-                "lastName": "L·泰尔西",
-                "creatorType": "inventor"
-              }
-            ],
-            "abstractNote": "一种用于管理轮胎检查设备的方法，所述设备(1)包括：用于轮胎检查的光学结构(430)，所述光学结构(430)包括至少第一光学工具(43a)；适于移动所述第一光学工具(43a)的第一构件(40a)。所述轮胎检查包括在第一持续时间内对第一轮胎执行的至少第一检查序列，以及随后在第二持续时间内对第二轮胎执行的第二检查序列。所述方法包括：通过所述光学结构(430)对所述第一轮胎执行第一检查(C1)；通过所述光学结构(430)对所述第一轮胎或所述第二轮胎执行第二检查(C2)；其中所述第一检查(C1)和所述第二检查(C2)由时间间隔(T1)分开，所述时间间隔短于或等于所述第一持续时间和所述第二持续时间之和；其中所述第一光学工具(43a)在所述时间间隔(T1)期间不用于轮胎检查；其中所述方法包括在所述时间间隔(T1)期间验证所述第一光学工具(43a)。还描述了适于根据所述方法操作的轮胎检查设备(1)。",
-            "applicationNumber": "CN201680078688.2",
-            "country": "IT-国外",
-            "filingDate": "2016-12-21",
-            "legalStatus": "有权-有权",
-            "patentNumber": "CN108472894A",
-            "place": "倍耐力轮胎股份公司",
-            "url": "http://pro.soopat.com/Chinese/Patent?PN=CN108472894A",
+            "patentNumber": "CN107821989A",
+            "place": "中国",
+            "url": "https://www.soopat.com/patent/201711256672",
             "attachments": [
               {
-                "title": "PDF申请全文",
+                "title": "Snapshot",
+                "mimeType": "text/html"
+              },
+              {
+                "title": "申请公开",
                 "mimeType": "application/pdf"
               },
               {
-                "title": "PDF授权全文",
+                "title": "授权文本",
                 "mimeType": "application/pdf"
               }
             ],
@@ -15097,19 +15053,75 @@
             "seeAlso": []
           }
         ]
+      },
+      {
+        "type": "web",
+        "url": "https://www.soopat.com/Patent/201510870162?lx=FMSQ",
+        "items": [
+          {
+            "itemType": "patent",
+            "title": "捕猎器",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "李丹",
+                "creatorType": "inventor",
+                "fieldMode": 1
+              }
+            ],
+            "issueDate": "2018-08-10",
+            "abstractNote": "一种捕猎器，包括驱赶通道和储物仓，驱赶通道与储物仓之间设置有隔离门，隔离门以平动或转动的方式设置在驱赶通道和储物仓之间，隔离门的平动或转动均位于驱赶通道和储物仓的分割面所在的平面或曲面内。该捕猎器能够使得隔离门可靠关闭，避免猎物返回到驱赶通道中。",
+            "applicationNumber": "201510870162.5",
+            "assignee": "深圳市丹明科技有限公司",
+            "country": "中国",
+            "extra": "original-author:  ||",
+            "filingDate": "2015-12-01",
+            "legalStatus": "无权-未缴年费",
+            "patentNumber": "CN105325396B",
+            "place": "中国",
+            "url": "https://www.soopat.com/Patent/201510870162",
+            "attachments": [
+              {
+                "title": "Snapshot",
+                "mimeType": "text/html"
+              },
+              {
+                "title": "申请公开",
+                "mimeType": "application/pdf"
+              },
+              {
+                "title": "授权文本",
+                "mimeType": "application/pdf"
+              }
+            ],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://www.soopat.com/Home/Result?SearchWord=%E4%B8%89%E5%85%83&Country=CN&FMZL=Y&SYXX=Y&WGZL=Y&FMSQ=Y",
+        "items": "multiple"
       }
     ],
     "zhLabel": "Soopat专利",
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2024-06-20 17:04:42 +0800",
-        "message": "clean EOL, fix #351, fix #352"
+        "date": "2024-12-24 17:41:54 +0800",
+        "message": "update Soopat.js"
       },
       {
-        "author": "Linxzh",
-        "date": "2023-07-31 17:26:21 +0800",
-        "message": "refactor: reorganized the directory structure to use Zotero Translator eslint and ci test"
+        "author": "jiaojiaodubai",
+        "date": "2024-08-19 17:42:48 +0800",
+        "message": "lint"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2024-06-20 17:04:42 +0800",
+        "message": "clean EOL, fix #351, fix #352"
       }
     ]
   },
