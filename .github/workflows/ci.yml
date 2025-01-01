@@ -34,7 +34,7 @@ jobs:
       
       - name: Cache connector code
         id: connector-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: .ci/pull-request-check/connectors
           key: connectors-${{ hashFiles('.ci/pull-request-check/check-pull-request.sh') }}-${{ steps.get-connector-hash.outputs.hash }}
