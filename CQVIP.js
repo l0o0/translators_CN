@@ -51,7 +51,7 @@ function detectWeb(doc, url) {
 		Z.monitorDOMChanges(mainWidget, { childList: true, subtree: true });
 	}
 	for (const key in typeMap) {
-		if (new RegExp(`/${key}/`, 'i').tets(url)) {
+		if (new RegExp(`/${key}/`, 'i').test(url)) {
 			return typeMap[key];
 		}
 	}
