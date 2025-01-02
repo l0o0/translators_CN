@@ -30,6 +30,7 @@ jobs:
         cd this
         rm -rf .ci
         cp -rf ../official/.ci ./
+        sed -i 's/\btranslators\/translators\b/translators_CN\/translators_CN/g' ../official/.github/workflows/ci.yml
         cp -f ../official/.github/workflows/ci.yml ./.github/workflows/ci.yml
         cp -f ../official/.eslintrc ./.eslintrc
         cp -f ../official/index.d.ts ./index.d.ts
