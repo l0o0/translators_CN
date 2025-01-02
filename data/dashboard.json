@@ -7085,6 +7085,11 @@
     "zhLabel": "维普网",
     "trends": [
       {
+        "author": "seiuneko",
+        "date": "2025-01-02 09:41:04 +0800",
+        "message": "fix(CQVIP): typo in RegExp.test (#417)"
+      },
+      {
         "author": "jiaojiaodubai",
         "date": "2024-09-19 15:11:09 +0800",
         "message": "忽略url大小写"
@@ -7093,11 +7098,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-09-13 12:12:19 +0800",
         "message": "适配journalArticle的新案例"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-08-21 15:10:38 +0800",
-        "message": "WeiPu -> CQVIP Qikan; CQVIP -> CQVIP Knowledge; add CQVIP"
       }
     ]
   },
