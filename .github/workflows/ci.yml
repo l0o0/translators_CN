@@ -48,7 +48,7 @@ jobs:
       - name: Test pull request
         if: github.event_name == 'pull_request'
         env:
-          BROWSER_EXECUTABLE: /home/runner/work/translators/translators/.ci/pull-request-check/xvfb-run-chrome
+          BROWSER_EXECUTABLE: /home/runner/work/translators_CN/translators_CN/.ci/pull-request-check/xvfb-run-chrome
         run: ./check-pull-request.sh
         working-directory: .ci/pull-request-check
       

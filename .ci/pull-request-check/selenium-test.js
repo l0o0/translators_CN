@@ -62,7 +62,7 @@ function report(results) {
 		let padding = 2;
 		let output = translatorResults.message.split("\n");
 		for (let line of output) {
-			if (line.match(/^TranslatorTester: Running [^T]*Test [0-9]*$/) ||
+			if (line.match(/^TranslatorTester: Running .+ Test [0-9]*$/) ||
 				line.match(/^TranslatorTester: Running [0-9]* tests for .*$/)) {
 				console.log("  ".repeat(padding-1) + chalk.bgCyan(chalk.black(line)));
 			}
@@ -72,14 +72,14 @@ function report(results) {
 			else if (line.match(/^\+/)) {
 				console.log(chalk.green("+" + "  ".repeat(padding) + line.substr(1)));
 			}
-			else if (line.match(/^TranslatorTester: [^T]*Test [0-9]*: succeeded/)) {
+			else if (line.match(/^TranslatorTester: .+ Test [0-9]*: succeeded/)) {
 				console.log("  ".repeat(padding) + chalk.bgGreen(line));
 			}
-			else if (line.match(/^TranslatorTester: [^T]*Test [0-9]*: unknown/)) {
+			else if (line.match(/^TranslatorTester: .+ Test [0-9]*: unknown/)) {
 				console.log("  ".repeat(padding) + chalk.bgYellow(chalk.black(line)));
 				allPassed = false;
 			}
-			else if (line.match(/^TranslatorTester: [^T]*Test [0-9]*: failed/)) {
+			else if (line.match(/^TranslatorTester: .+ Test [0-9]*: failed/)) {
 				console.log("  ".repeat(padding) + chalk.bgRed(line));
 				allPassed = false;
 			}
