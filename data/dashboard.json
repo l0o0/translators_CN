@@ -23447,8 +23447,76 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-02-13 11:23:00 +0800",
+        "date": "2025-02-13 03:30:50 +0000",
         "message": "add Angle.js"
+      }
+    ]
+  },
+  "epaper.gmw.cn.js": {
+    "header": {
+      "translatorID": "c7f4a1df-1d53-433d-8c04-26fd55791459",
+      "label": "epaper.gmw.cn",
+      "creator": "jiaojiaodubai",
+      "target": "^https://epaper\\.gmw\\.cn/gmrb",
+      "minVersion": "5.0",
+      "maxVersion": "",
+      "priority": 100,
+      "inRepository": true,
+      "translatorType": 4,
+      "browserSupport": "gcsibv",
+      "lastUpdated": "2025-02-13 13:42:04"
+    },
+    "testCases": [
+      {
+        "type": "web",
+        "url": "https://epaper.gmw.cn/gmrb/html/2025-02/12/nw.D110000gmrb_20250212_4-01.htm",
+        "items": [
+          {
+            "itemType": "newspaperArticle",
+            "title": "浙江义乌：“世界超市”有了新“法宝”",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "陆健",
+                "creatorType": "author",
+                "fildMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "刘习",
+                "creatorType": "author",
+                "fildMode": 1
+              }
+            ],
+            "date": "2025-02-12",
+            "libraryCatalog": "epaper.gmw.cn",
+            "place": "北京",
+            "publicationTitle": "光明日报",
+            "url": "https://epaper.gmw.cn/gmrb/html/2025-02/12/nw.D110000gmrb_20250212_4-01.htm",
+            "attachments": [
+              {
+                "title": "Snapshot",
+                "mimeType": "text/html"
+              }
+            ],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://epaper.gmw.cn/gmrb/html/2025-02/13/nbs.D110000gmrb_01.htm",
+        "items": "multiple"
+      }
+    ],
+    "zhLabel": "光明网（电子版）",
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2025-02-13 21:53:25 +0800",
+        "message": "add epaper.gmw.cn, resolve #418"
       }
     ]
   }
