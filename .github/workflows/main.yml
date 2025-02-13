@@ -38,17 +38,10 @@ jobs:
       run: |
         node data/updateJSON.js
 
-    - name: Commit and push changes
-      uses: EndBug/add-and-commit@v9
-      with:
-          author_name: GitHub Actions Bot
-          author_email: actions@github.com
-          message: 'commit and push JSON files.'
-
-    - name: mirror
-      uses: wearerequired/git-mirror-action@master #开源actions包
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      with:
-        source-repo: "git@github.com:l0o0/translators_CN.git" # github仓库地址
-        destination-repo: "git@gitcode.net:goonback/translators_CN.git" # gitee仓库地址
+    - name: Amend to original commit
+      run: |
+        git config --global user.name "GitHub Actions Bot"
+        git config --global user.email "actions@github.com"
+        git add data/*.json
+        git commit --amend --no-edit
+        git push origin HEAD --force
