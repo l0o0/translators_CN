@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-01-16 10:45:34"
+	"lastUpdated": "2025-03-07 00:54:56"
 }
 
 /*
@@ -37,7 +37,7 @@
 
 
 function detectWeb(doc, url) {
-	if (/\/n.\/\d{4}\/\d{4}/.test(url)) {
+	if (/\/n\d?\/\d{4}\/\d{4}/.test(url)) {
 		if (doc.querySelector('#paper_num')) {
 			return 'newspaperArticle';
 		}
@@ -211,6 +211,41 @@ var testCases = [
 				"publicationTitle": "人民日报",
 				"shortTitle": "为强国建设、民族复兴提供坚强保证",
 				"url": "http://politics.people.com.cn/n1/2024/0108/c1001-40154267.html",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "http://world.people.com.cn/n/2015/0912/c1002-27574550.html",
+		"items": [
+			{
+				"itemType": "newspaperArticle",
+				"title": "要求在全国范围内用乌尔都语取代英语巴基斯坦欲换官方语言引争议",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "杨迅",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2015-09-12",
+				"ISSN": "1672-8386",
+				"abstractNote": "巴基斯坦最高法院9月9日作出决定，要求政府在全国范围内将国语乌尔都语设置为官方语言，以取代英语的地位，巴联邦政府和旁遮普、信德、俾路支、开伯尔—普什图4个省份需在3个月内完成这一变更。最高法院法官",
+				"language": "zh-CN",
+				"libraryCatalog": "人民网",
+				"publicationTitle": "人民日报",
+				"shortTitle": "巴基斯坦欲换官方语言引争议",
+				"url": "http://world.people.com.cn/n/2015/0912/c1002-27574550.html",
 				"attachments": [
 					{
 						"title": "Snapshot",
