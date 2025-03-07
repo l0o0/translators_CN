@@ -1,0 +1,74 @@
+name: 申请新转换器🙋‍♂️
+description: 申请新的转换器，使Zotero能够从新的网站或文献交换格式导入，或者导出为新的文献交换格式。
+title: "[New]: "
+labels: ["new translator"]
+assignees:
+  - jiaojiaodubai
+body:
+  - type: markdown
+    attributes:
+      value: |
+        - 这个模板仅用于为**尚未支持**的网站或文献交换格式申请转换器。
+        - 本仓库仅维护中文（含简体中文、繁体中文、少数民族文字）语言地区的转换器，其他语言的转换器请到[官方仓库](https://github.com/zotero/translators)申请。
+        - **请不要**用这个模板反馈bug，bug应使用[bug模板](https://github.com/l0o0/translators_CN/issues/new?template=T1_bug.yaml)。
+        - **更不要**误认为此模板可以“更新转换器”，当前茉莉花已经支持自动更新转换器，更新转换器的教程见[此处](https://zotero-chinese.com/user-guide/faqs/update-translators)。
+  - type: checkboxes
+    id: type
+    attributes:
+      label: 转换器类型
+      description: 请选择转换器的类型。
+      options:
+        - label: 网页转换器（用于从网页抓取条目）
+        - label: 导入转换器（用于将条目导出为某种文献交换格式）
+        - label: 导出转换器（用于从某种文献交换格式导入条目）
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: 链接
+      description: 网站的网址，或文献交换格式的文档地址。
+      placeholder: https://wwww.cnki.net/
+    validations:
+      required: true
+  - type: checkboxes
+    id: item-type
+    attributes:
+      label: 条目类型
+      description: 可抓取/导入/导出的条目类型
+      options:
+        - label: 期刊论文
+        - label: 报纸文章
+        - label: 会议论文
+        - label: 学位论文
+        - label: 图书
+        - label: 书籍章节
+        - label: 标准
+        - label: 专利
+        - label: 报告
+        - label: 法律法规
+        - label: 案件
+        - label: 论坛帖子
+        - label: 博客文章
+        - label: 视频
+        - label: 音频
+        - label: 图像
+        - label: 其他
+    validations:
+      required: true
+  - type: checkboxes
+    id: permissions
+    attributes:
+      label: 权限
+      description: 请描述访问相关资源（如网站）时需要的特殊权限。
+      options:
+        - label: 注册帐号
+        - label: 机构帐号
+        - label: 付费帐号
+        - label: IP认证
+        - label: 其他
+  - type: markdown
+    id: note
+    attributes:
+      value: |
+        注：如果网站需要特殊权限（如机构认证、会员帐号）才能打开详情页面，请联系邮箱 <jiaojiaodubai23@gmail.com> 帮助开发者访问网站，以便尽早完成开发。
