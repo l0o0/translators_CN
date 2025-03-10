@@ -13324,7 +13324,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-03-07 08:56:22 +0800",
+        "date": "2025-03-07 00:56:46 +0000",
         "message": "support new URL pattern"
       },
       {
@@ -23557,6 +23557,200 @@
         "author": "jiaojiaodubai",
         "date": "2025-02-13 13:53:50 +0000",
         "message": "add epaper.gmw.cn, resolve #418"
+      }
+    ]
+  },
+  "sharing.com.tw.js": {
+    "header": {
+      "translatorID": "5e4fd469-f673-4dbf-b00b-b43b9822f02a",
+      "label": "sharing.com.tw",
+      "creator": "jiaojiaodubai",
+      "target": "^https://sharing\\.com\\.tw",
+      "minVersion": "5.0",
+      "maxVersion": "",
+      "priority": 100,
+      "inRepository": true,
+      "translatorType": 4,
+      "browserSupport": "gcsibv",
+      "lastUpdated": "2025-03-10 20:24:36"
+    },
+    "testCases": [
+      {
+        "type": "web",
+        "url": "https://sharing.com.tw/product/index/U8CF10",
+        "items": [
+          {
+            "itemType": "book",
+            "title": "這個時候你怎麼說？戀愛華語（電子書）",
+            "creators": [
+              {
+                "lastName": "舒兆民",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "lastName": "宋怡南",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "lastName": "陳玉明",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "lastName": "歐喜強",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "Daniel S.",
+                "lastName": "Parilla",
+                "creatorType": "translator"
+              }
+            ],
+            "date": "2020-10-19",
+            "ISBN": "9789865532697",
+            "extra": "ISSN:",
+            "language": "zh-TW",
+            "libraryCatalog": "新學林網路書店",
+            "publisher": "新學林電子書",
+            "url": "https://sharing.com.tw/product/index/U8CF10",
+            "attachments": [],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://sharing.com.tw/product/index/ZZ5D683R",
+        "items": [
+          {
+            "itemType": "book",
+            "title": "數位轉型與公法變遷",
+            "creators": [
+              {
+                "lastName": "李建良",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "Jan",
+                "lastName": "Ziekow",
+                "creatorType": "author"
+              },
+              {
+                "firstName": "Bettina",
+                "lastName": "Engewald",
+                "creatorType": "author"
+              },
+              {
+                "lastName": "詹鎮榮",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "Meinhard",
+                "lastName": "Schröder",
+                "creatorType": "author"
+              },
+              {
+                "lastName": "陳錫平",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "lastName": "林昱梅",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "Matthias",
+                "lastName": "Knauff",
+                "creatorType": "author"
+              },
+              {
+                "lastName": "李長曄",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "lastName": "黃松茂",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "Stefan",
+                "lastName": "Korte",
+                "creatorType": "author"
+              },
+              {
+                "lastName": "陳陽升",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "Thorsten",
+                "lastName": "Siegel",
+                "creatorType": "author"
+              }
+            ],
+            "date": "2024-07-01",
+            "ISBN": "9786263691841",
+            "edition": "1",
+            "extra": "ISSN:",
+            "language": "zh-TW",
+            "libraryCatalog": "新學林網路書店",
+            "publisher": "元照",
+            "url": "https://sharing.com.tw/product/index/ZZ5D683R",
+            "attachments": [],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://sharing.com.tw/product/index/6J040",
+        "items": [
+          {
+            "itemType": "book",
+            "title": "台灣法律人",
+            "creators": [],
+            "date": "2025-01-10",
+            "extra": "ISSN: 2789-4908",
+            "language": "zh-TW",
+            "libraryCatalog": "新學林網路書店",
+            "publisher": "泰美斯法學雜誌股份有限公司",
+            "url": "https://sharing.com.tw/product/index/6J040",
+            "volume": "40",
+            "attachments": [],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://sharing.com.tw/",
+        "items": "multiple"
+      },
+      {
+        "type": "web",
+        "url": "https://sharing.com.tw/search/vname/0/%E8%8F%AF%E8%AA%9E",
+        "items": "multiple"
+      }
+    ],
+    "zhLabel": "新學林網路書店",
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2025-03-11 04:27:51 +0800",
+        "message": "add sharing.com.tw.js, resolve #445"
       }
     ]
   }
