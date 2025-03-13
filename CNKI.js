@@ -891,11 +891,11 @@ async function scrapeDoc(doc, itemKey) {
 			extra.set('applyDate', labels.get(['实施日期', '實施日期']), true);
 			break;
 		case 'patent':
-			newItem.patentNumber = labels.get(['申请公布号', '申請公佈號', 'PublicationNo']);
+			newItem.patentNumber = labels.get(['授权公告号', '授權公告號', '申请公布号', '申請公佈號', 'PublicationNo']);
 			newItem.applicationNumber = labels.get(['申请\\(专利\\)号', '申請\\(專利\\)號', 'ApplicationNumber']);
 			newItem.place = newItem.country = patentCountry(newItem.patentNumber || newItem.applicationNumber, newItem.language);
 			newItem.filingDate = labels.get(['申请日', '申請日', 'ApplicationDate']);
-			newItem.issueDate = labels.get(['授权公告日', '授權公告日', 'IssuanceDate']);
+			newItem.issueDate = labels.get(['授权公告日', '授權公告日', '申请公布日', '申請公佈日', 'IssuanceDate']);
 			newItem.rights = text(doc, '.claim > h5 + div');
 			extra.set('Genre', labels.get(['专利类型', '專利類型']), true);
 			labels.get(['发明人', '發明人', 'Inventor'])
@@ -1040,7 +1040,7 @@ async function parseRefer(referText, doc, url, itemKey) {
 			// item.place = labels.get('地址');
 			item.filingDate = labels.get(['申请日', '申請日', 'ApplicationDate']);
 			item.applicationNumber = labels.get(['申请\\(专利\\)号', '申請\\(專利\\)號', 'ApplicationNumber']);
-			item.issueDate = labels.get(['授权公告日', '授權公告日', 'IssuanceDate']);
+			item.issueDate = labels.get(['授权公告日', '授權公告日', '申请公布日', '申請公佈日', 'IssuanceDate']);
 			item.rights = text(doc, '.claim > h5+div');
 			break;
 	}
