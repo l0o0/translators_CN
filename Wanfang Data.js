@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2025-01-31 12:29:28"
+	"lastUpdated": "2025-03-24 12:04:39"
 }
 
 /*
@@ -71,7 +71,7 @@ const typeMap = {
 };
 
 function detectWeb(doc, url) {
-	const dynamic = doc.querySelector('.container-flex, .periodical');
+	const dynamic = doc.querySelector('body, .container-flex, .periodical');
 	if (dynamic) {
 		Z.monitorDOMChanges(dynamic, { childList: true });
 	}

@@ -15850,7 +15850,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2025-01-31 12:29:28"
+      "lastUpdated": "2025-03-24 12:04:39"
     },
     "testCases": [
       {
@@ -16409,6 +16409,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2025-03-24 13:11:42 +0800",
+        "message": "fix #461"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2025-02-12 22:50:23 +0800",
         "message": "resolve: #357"
       },
@@ -16416,11 +16421,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-08-20 13:22:33 +0800",
         "message": "fix typo"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-08-19 17:42:48 +0800",
-        "message": "lint"
       }
     ]
   },
@@ -23903,7 +23903,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-03-11 08:20:44 +0800",
+        "date": "2025-03-11 00:21:12 +0000",
         "message": "add sanmin.com.tw.js, resolve #446"
       }
     ]
