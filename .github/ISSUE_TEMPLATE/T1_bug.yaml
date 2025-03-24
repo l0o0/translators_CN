@@ -3,61 +3,73 @@ description: 使用转换器时遇到问题？请告诉我们！
 title: "[Bug] "
 labels: ["bug"]
 body:
-- type: checkboxes
-  id: what-happened
-  attributes:
-    label: 你遇到了什么问题？
-    description: 请选择你遇到的问题类型。
-    options:
-      - label: 无法识别条目（Zotero Connector显示蓝色空白图标）
-      - label: 无法保存条目（保存时显示“使用xxx保存时发生错误”）
-      - label: 无法下载附件
-      - label: 缺少字段、字段错误
-      - label: 其他
-  validations:
-    required: true
-- type: input
-  id: url
-  attributes:
-    label: 链接
-    description: 网站的网址，或文献交换格式的文档地址，请填写具体的链接，不要填网站主页。
-    placeholder: https://link.cnki.net/doi/10.16278/j.cnki.cn13-1260/d.2021.02.003
-  validations:
-    required: true
-- type: textarea
-  id: description
-  attributes:
-    label: 情况描述
-    description: 请提供详细的描述，包括你遇到的问题、你期望的结果、你尝试过的方法等。
-  validations:
-    required: true
-- type: checkboxes
-  id: browser
-  attributes:
-    label: 浏览器
-    description: 请选择你使用的浏览器。
-    options:
-    - label: Chrome（谷歌浏览器）
-    - label: Firefox（火狐浏览器）
-    - label: Safari
-    - label: Edge
-    - label: 其他
-  validations:
-    required: true
-- type: checkboxes
-  id: check-list
-  attributes:
-    label: 自查清单
-    description: 请确保你已经按照以下步骤进行了自查。
-    options:
-    - label: 我已经按照[教程](https://zotero-chinese.com/user-guide/faqs/update-translators.html)将转换器更新到最新版
+  - type: checkboxes
+    id: what-happened
+    attributes:
+      label: 你遇到了什么问题？
+      description: 请选择你遇到的问题类型。
+      options:
+        - label: 无法识别条目（Zotero Connector显示蓝色空白图标）
+        - label: 无法保存条目（保存时显示“使用xxx保存时发生错误”）
+        - label: 无法下载附件
+        - label: 缺少字段、字段错误
+        - label: 其他问题
+    validations:
       required: true
-    - label: 我尝试过重启浏览器、Zotero或电脑
+  - type: input
+    id: url
+    attributes:
+      label: 链接
+      description: 网站的网址，或文献交换格式的文档地址，请填写具体的链接，不要填网站主页。
+      placeholder: https://link.cnki.net/doi/10.16278/j.cnki.cn13-1260/d.2021.02.003
+    validations:
       required: true
-    - label: 我尝试过使用校园网直接访问网站
+  - type: textarea
+    id: description
+    attributes:
+      label: 情况描述
+      description: 请提供详细的描述，包括你遇到的问题、你期望的结果、你尝试过的方法等。
+    validations:
       required: true
-- type: textarea
-  id: attachments
-  attributes:
-    label: 附件
-    description: 请提供截图或Zotero Connector的报错日志。
+  - type: checkboxes
+    id: browser
+    attributes:
+      label: 浏览器
+      description: 请选择你使用的浏览器。
+      options:
+      - label: Chrome（谷歌浏览器）
+      - label: Firefox（火狐浏览器）
+      - label: Safari
+      - label: Edge
+      - label: 其他浏览器
+    validations:
+      required: true
+  - type: checkboxes
+    id: check-list
+    attributes:
+      label: 自查清单
+      description: 请确保你已经按照以下步骤进行了自查。
+      options:
+      - label: 我已经按照[教程](https://zotero-chinese.com/user-guide/faqs/update-translators.html)将转换器更新到最新版
+        required: true
+      - label: 我尝试过重启浏览器、Zotero或电脑
+        required: true
+      - label: 我尝试过使用校园网直接访问网站
+        required: true
+  - type: textarea
+    id: attachments
+    attributes:
+      label: 附件
+      description: 请提供截图或Zotero Connector的报错日志。
+  - type: checkboxes
+    id: report-check
+    attributes:
+      label: 提交前检查
+      description: 请确认你提交的issue满足以下要求。
+      options:
+        - label: 我填写了issue标题。
+          required: true
+        - label: 我反馈的转换器是本仓库维护的，可以在[转换器主页](https://zotero-chinese.com/translators/)中找到。
+          required: true
+        - label: 我已经搜索过现有issue，确认没有重复。
+          required: true
