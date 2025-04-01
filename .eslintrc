@@ -1,11 +1,14 @@
 {
 	"env": {
 		"browser": true,
-		"es2018": true
+		"es2021": true
 	},
 	"extends": [
 		"@zotero"
 	],
+	"parserOptions": {
+		"ecmaVersion": "2023"
+	},
 	"globals": {
 		"Zotero": "readonly",
 		"Z": "readonly",

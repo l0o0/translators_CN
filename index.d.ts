@@ -4,7 +4,7 @@ declare namespace Zotero {
 		function throttle<Type>(
 			fn: Type,
 			wait: number,
-			options?: { leading: boolean = true; trailing: boolean = true }
+			options?: { leading?: boolean; trailing?: boolean }
 		): Type;
 		function capitalizeName(s: string): string;
 		function cleanAuthor<T extends CreatorType>(
@@ -85,7 +85,7 @@ declare namespace Zotero {
 			xpath: string,
 			namespaces?: { [prefix: string]: string },
 			delimiter?: string
-		): string?;
+		): string | undefined;
 		function randomString(len?: number, chars?: string): string;
 		// varDump
 		function itemToCSLJSON(item: Zotero.Item): any | Promise<any>;
@@ -148,11 +148,11 @@ declare namespace Zotero {
 		): Zotero.Item[] | false;
 
 		type HTTPRequestParameters<T extends HTTPResponseType> = {
-			method?: string = "GET",
+			method?: string,
 			headers?: Record<string, string>,
 			body?: string,
 			responseCharset?: string,
-			responseType?: T = "text"
+			responseType?: T
 		};
 
 		type HTTPResponseType =
@@ -224,10 +224,10 @@ declare namespace Zotero {
 	}
 
 	interface Creator<T extends CreatorType> {
-		lastName: string?;
-		firstName: string?;
+		lastName?: string;
+		firstName?: string;
 		creatorType: T;
-		fieldMode: 1?;
+		fieldMode?: 1;
 	}
 
 	/* *** BEGIN GENERATED TYPES *** */
@@ -1599,13 +1599,13 @@ declare namespace Zotero {
 	const isBookmarklet: boolean;
 	const isConnector: boolean;
 	const isServer: boolean;
-	const parentTranslator: string?;
+	const parentTranslator: string | undefined;
 
 	// web
-	function selectItems(items: Record<string, string>): Promise<Record<string, string>?>;
+	function selectItems(items: Record<string, string>): Promise<Record<string, string> | null>;
 	function selectItems(
 		items: Record<string, string>,
-		callback: (items: Record<string, string>?) => void
+		callback: (items: Record<string, string> | null) => void
 	): void;
 	function monitorDOMChanges(target: Node, config: MutationObserverInit): void;
 
@@ -1613,8 +1613,8 @@ declare namespace Zotero {
 	function setProgress(value: number): void;
 
 	// export
-	function nextItem(): Zotero.Item?;
-	function nextCollection(): Zotero.Collection?;
+	function nextItem(): Zotero.Item | false;
+	function nextCollection(): Zotero.Collection | false;
 }
 
 import Z = Zotero;

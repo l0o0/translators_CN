@@ -36,7 +36,7 @@ function updateCache(text, filename) {
 	const decorated = `${prefix}${text}`;
 	let ast;
 	try {
-		ast = espree.parse(decorated, { comment: true, loc: true, ecmaVersion: 2018 });
+		ast = espree.parse(decorated, { comment: true, loc: true, ecmaVersion: 2023 });
 	}
 	catch (err) {
 		console.log(filename, err.message);
