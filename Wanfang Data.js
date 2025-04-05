@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2025-03-24 12:04:39"
+	"lastUpdated": "2025-04-05 13:27:58"
 }
 
 /*
@@ -175,7 +175,7 @@ async function scrapePage(doc, type, id) {
 	);
 	const extra = new Extra();
 	const newItem = new Zotero.Item(typeMap[type].itemType);
-	newItem.title = text(doc, '.detailTitleCN > span:first-child') || text(doc, '.detailTitleCN');
+	newItem.title = text(doc, '.detailTitleCN > :first-child') || text(doc, '.detailTitleCN');
 	extra.set('original-title', ZU.capitalizeTitle(text(doc, '.detailTitleEN')), true);
 	newItem.abstractNote = ZU.trimInternal(text(doc, '.summary > .item+*'));
 	doc.querySelectorAll('.author.detailTitle > .itemUrl > a').forEach((elm) => {
@@ -359,8 +359,7 @@ async function scrapeDetilApi(type, id) {
 		resBuffer[x] = respond.body.charCodeAt(x + headLength) & 0xff;
 	}
 	const resObject = DetailResponse.toObject(DetailResponse.decode(resBuffer), { defaults: true });
-	Z.debug(resObject);
-	parseJson(resObject.detail[0][type === 'cstad' ? 'cstadt' : type]);
+	parseJson(resObject.detail[0][type === 'cstad' ? 'cstadt' : type], type, id);
 }
 
 async function scrapeExportApi(type, id) {

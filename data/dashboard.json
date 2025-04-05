@@ -15850,7 +15850,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2025-03-24 12:04:39"
+      "lastUpdated": "2025-04-05 13:27:58"
     },
     "testCases": [
       {
@@ -16409,18 +16409,18 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-03-24 13:11:42 +0800",
+        "date": "2025-04-05 21:35:58 +0800",
+        "message": "fix lost parameter in parseJson; update title selector"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2025-03-24 05:12:05 +0000",
         "message": "fix #461"
       },
       {
         "author": "jiaojiaodubai",
         "date": "2025-02-12 22:50:23 +0800",
         "message": "resolve: #357"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-08-20 13:22:33 +0800",
-        "message": "fix typo"
       }
     ]
   },
