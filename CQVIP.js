@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-09-19 07:09:20"
+	"lastUpdated": "2025-04-08 06:34:25"
 }
 
 /*
@@ -46,7 +46,7 @@ const typeMap = {
 };
 
 function detectWeb(doc, url) {
-	const mainWidget = doc.querySelector('.search .main, .periodical-detail .main');
+	const mainWidget = doc.querySelector('.app .search, .periodical-detail .main');
 	if (mainWidget) {
 		Z.monitorDOMChanges(mainWidget, { childList: true, subtree: true });
 	}
@@ -91,8 +91,12 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url = doc.location.href) {
-	const labels = new Labels(doc, '.horizontalData-f, .mainContainerDataList-item');
-	const doi = labels.get('DOI');
+	const data = getLabeledData(
+		doc.querySelectorAll('.horizontalData-f, .mainContainerDataList-item'),
+		row => text(row, '.Container-item-title').replace(/\s/g, ''),
+		row => row.querySelector(':nth-child(2)')
+	);
+	const doi = data('DOI');
 	if (doi) {
 		try {
 			await scrapeSearch(doi);
@@ -110,9 +114,9 @@ async function scrape(doc, url = doc.location.href) {
 	refText = refText
 		.replace(/^{?([A-Z](\d|[A-Z]{1,4}))}?: /gm, '$1 ')
 		.replace(/^(A[1-6]|K1) .+/gm, (match, tag) => match.replace(/;/g, `\n${tag} `))
-		.replace(/^(IS|VO|SP) .+/gm, match => match.replace(/\b0*(\d*)/g, '$1'))
+		.replace(/^(IS|VO|SP) .+/gm, match => match.replace(/0*(\d+)/g, '$1'))
 		.replace(/^OP .+/m, match => match.replace(/\+/g, ', '));
-	let translator = Zotero.loadTranslator('import');
+	const translator = Zotero.loadTranslator('import');
 	// RefWorks Tagged
 	translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86');
 	translator.setString(refText);
@@ -121,8 +125,8 @@ async function scrape(doc, url = doc.location.href) {
 		const extra = new Extra();
 		extra.set('citation', text(doc, '.horizontalData-content'));
 		extra.set('download', text(doc, '.horizontalData-content', 2));
-		extra.set('CLC', labels.get('中图分类号'));
-		item.language = /[\u4e00-\u9fff]/.test(item.title)
+		extra.set('CLC', data('中图分类号'));
+		item.language = /\p{Unified_Ideograph}/u.test(item.title)
 			? 'zh-CN'
 			: 'en-US';
 		item.notes = [];
@@ -133,13 +137,13 @@ async function scrape(doc, url = doc.location.href) {
 			case 'thesis':
 				item.thesisType = `${item.edition}学位论文`;
 				delete item.edition;
-				labels.get('导师', true).querySelectorAll('.info-line > span').forEach((element) => {
+				data('导师', true).querySelectorAll('.info-line > span').forEach((element) => {
 					item.creators.push(ZU.cleanAuthor(element.textContent, 'contributor'));
 				});
 				break;
 			case 'conferencePaper':
-				item.conferenceName = labels.get('会议名称');
-				item.place = labels.get('会议地点');
+				item.conferenceName = data('会议名称');
+				item.place = data('会议地点');
 				extra.set('organizer', item.publisher, true);
 				delete item.publisher;
 				break;
@@ -148,30 +152,30 @@ async function scrape(doc, url = doc.location.href) {
 				// item.url = url;
 				break;
 			case 'patent':
-				extra.set('Genre', item.applicationNumber, true);
+				extra.set('genre', item.applicationNumber, true);
 				item.patentNumber = tryMatch(refText, /^ID (.+)/m, 1);
 				item.applicationNumber = tryMatch(refText, /^NO (.+)/m, 1);
 				item.place = item.country = patentCountry(item.patentNumber || item.applicationNumber);
 				item.assignee = item.issuingAuthority;
 				delete item.issuingAuthority;
-				item.filingDate = labels.get('申请日');
-				item.issueDate = labels.get('公开\\(公告\\)日');
+				item.filingDate = data('申请日');
+				item.issueDate = data('公开(公告)日');
 				item.legalStatus = text(doc, '.legalstatus .el-table__row:first-child > td:nth-child(2)');
-				extra.set('IPC', labels.get('IPC分类号'));
-				item.rights = labels.get('主权项');
+				extra.set('IPC', data('IPC分类号'));
+				item.rights = data('主权项');
 				break;
 			case 'standard':
 				item.title = item.title
-					.replace(/([\u4e00-\u9fff]) ([\u4e00-\u9fff])/, '$1　$2')
-					.replace(/([\u4e00-\u9fff]): ?([\u4e00-\u9fff])/, '$1：$2');
+					.replace(/(\p{Unified_Ideograph}) (\p{Unified_Ideograph})/u, '$1　$2')
+					.replace(/(\p{Unified_Ideograph}): ?(\p{Unified_Ideograph})/u, '$1：$2');
 				item.number = tryMatch(refText, /^ID (.+)/m, 1);
 				delete item.publisher;
-				extra.set('CSC', labels.get('中国标准分类号'));
-				extra.set('ICS', labels.get('国际标准分类号'));
+				extra.set('CSC', data('中国标准分类号'));
+				extra.set('ICS', data('国际标准分类号'));
 				break;
 		}
 		item.creators.forEach((creator) => {
-			if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
+			if (/\p{Unified_Ideograph}/u.test(creator.lastName)) {
 				creator.firstName = '';
 				creator.fieldMode = 1;
 			}
@@ -191,8 +195,8 @@ async function scrape(doc, url = doc.location.href) {
 }
 
 async function scrapeSearch(doi) {
-	if (!doi) throw new ReferenceError('no identifier available');
-	let translator = Zotero.loadTranslator('search');
+	if (!doi) throw new Error('no identifier available');
+	const translator = Z.loadTranslator('search');
 	translator.setSearch({ DOI: doi });
 	translator.setHandler('translators', (_, translators) => {
 		translator.setTranslator(translators);
@@ -205,59 +209,25 @@ async function scrapeSearch(doi) {
 	await translator.translate();
 }
 
-class Labels {
-	constructor(doc, selector) {
-		this.data = [];
-		this.emptyElm = doc.createElement('div');
-		Array.from(doc.querySelectorAll(selector))
-			// avoid nesting
-			.filter(element => !element.querySelector(selector))
-			// avoid empty
-			.filter(element => !/^\s*$/.test(element.textContent))
-			.forEach((element) => {
-				const elmCopy = element.cloneNode(true);
-				// avoid empty text
-				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
-					// Z.debug(elementCopy.firstChild.textContent);
-					elmCopy.removeChild(elmCopy.firstChild);
-					// Z.debug(elementCopy.firstChild.textContent);
-				}
-				if (elmCopy.childNodes.length > 1) {
-					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
-					this.data.push([key, elmCopy]);
-				}
-				else {
-					const text = ZU.trimInternal(elmCopy.textContent);
-					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
-					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
-					this.data.push([key, elmCopy]);
-				}
-			});
+function getLabeledData(rows, labelGetter, dataGetter, defaultElm) {
+	const labeledElm = {};
+	for (const row of rows) {
+		labeledElm[labelGetter(row, rows)] = dataGetter(row, rows);
 	}
-
-	get(label, element = false) {
-		if (Array.isArray(label)) {
-			const results = label
-				.map(aLabel => this.get(aLabel, element));
-			const keyVal = element
-				? results.find(element => !/^\s*$/.test(element.textContent))
-				: results.find(string => string);
-			return keyVal
-				? keyVal
-				: element
-					? this.emptyElm
-					: '';
+	const data = (labels, element = false) => {
+		if (Array.isArray(labels)) {
+			for (const label of labels) {
+				const result = data(label, element);
+				if (result) return result;
+			}
+			return element ? defaultElm : '';
 		}
-		const pattern = new RegExp(label, 'i');
-		const keyVal = this.data.find(arr => pattern.test(arr[0]));
-		return keyVal
-			? element
-				? keyVal[1]
-				: ZU.trimInternal(keyVal[1].textContent)
-			: element
-				? this.emptyElm
-				: '';
-	}
+		const targetElm = labeledElm[labels];
+		return targetElm
+			? element ? targetElm : ZU.trimInternal(targetElm.textContent)
+			: element ? defaultElm : '';
+	};
+	return data;
 }
 
 class Extra {
@@ -298,7 +268,7 @@ class Extra {
 
 function tryMatch(string, pattern, index = 0) {
 	if (!string) return '';
-	let match = string.match(pattern);
+	const match = string.match(pattern);
 	return (match && match[index])
 		? match[index]
 		: '';

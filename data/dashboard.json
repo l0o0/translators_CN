@@ -6690,7 +6690,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-09-19 07:09:20"
+      "lastUpdated": "2025-04-08 06:34:25"
     },
     "testCases": [
       {
@@ -7085,6 +7085,11 @@
     "zhLabel": "维普网",
     "trends": [
       {
+        "author": "jiaojiaodubai",
+        "date": "2025-04-08 14:38:50 +0800",
+        "message": "fix #465"
+      },
+      {
         "author": "seiuneko",
         "date": "2025-01-02 09:41:04 +0800",
         "message": "fix(CQVIP): typo in RegExp.test (#417)"
@@ -7093,11 +7098,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-09-19 15:11:09 +0800",
         "message": "忽略url大小写"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-09-13 12:12:19 +0800",
-        "message": "适配journalArticle的新案例"
       }
     ]
   },
@@ -16863,7 +16863,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-04-08 14:04:16 +0800",
+        "date": "2025-04-08 06:04:38 +0000",
         "message": "fix #464"
       },
       {
