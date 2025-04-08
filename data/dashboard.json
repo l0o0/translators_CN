@@ -7086,7 +7086,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-04-08 14:38:50 +0800",
+        "date": "2025-04-08 06:39:12 +0000",
         "message": "fix #465"
       },
       {
@@ -23499,14 +23499,14 @@
       "translatorID": "c7f4a1df-1d53-433d-8c04-26fd55791459",
       "label": "epaper.gmw.cn",
       "creator": "jiaojiaodubai",
-      "target": "^https://epaper\\.gmw\\.cn/gmrb",
+      "target": "^https://epaper\\.gmw\\.cn/(gmrb|zhdsb)",
       "minVersion": "5.0",
       "maxVersion": "",
       "priority": 100,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2025-02-13 13:42:04"
+      "lastUpdated": "2025-04-08 08:07:01"
     },
     "testCases": [
       {
@@ -23551,10 +23551,111 @@
         "type": "web",
         "url": "https://epaper.gmw.cn/gmrb/html/2025-02/13/nbs.D110000gmrb_01.htm",
         "items": "multiple"
+      },
+      {
+        "type": "web",
+        "url": "https://epaper.gmw.cn/zhdsb/html/2025-04/02/nw.D110000zhdsb_20250402_3-01.htm",
+        "items": [
+          {
+            "itemType": "newspaperArticle",
+            "title": "中国科幻正吸引着世界目光",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "张隽",
+                "creatorType": "author",
+                "fildMode": 1
+              }
+            ],
+            "date": "2025-04-02",
+            "libraryCatalog": "epaper.gmw.cn",
+            "place": "北京",
+            "publicationTitle": "中华读书报",
+            "url": "https://epaper.gmw.cn/zhdsb/html/2025-04/02/nw.D110000zhdsb_20250402_3-01.htm",
+            "attachments": [
+              {
+                "title": "Snapshot",
+                "mimeType": "text/html"
+              }
+            ],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://epaper.gmw.cn/zhdsb/html/2025-04/02/nw.D110000zhdsb_20250402_1-17.htm",
+        "items": [
+          {
+            "itemType": "newspaperArticle",
+            "title": "绵延百年的投龙故事",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "魏祝挺",
+                "creatorType": "author",
+                "fildMode": 1
+              }
+            ],
+            "date": "2025-04-02",
+            "libraryCatalog": "epaper.gmw.cn",
+            "place": "北京",
+            "publicationTitle": "中华读书报",
+            "url": "https://epaper.gmw.cn/zhdsb/html/2025-04/02/nw.D110000zhdsb_20250402_1-17.htm",
+            "attachments": [
+              {
+                "title": "Snapshot",
+                "mimeType": "text/html"
+              }
+            ],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://epaper.gmw.cn/zhdsb/html/2025-04/02/nw.D110000zhdsb_20250402_2-01.htm",
+        "items": [
+          {
+            "itemType": "newspaperArticle",
+            "title": "中国现代文学馆彰显新时代文化自信磅礴力量",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "夏琪",
+                "creatorType": "author",
+                "fildMode": 1
+              }
+            ],
+            "date": "2025-04-02",
+            "libraryCatalog": "epaper.gmw.cn",
+            "place": "北京",
+            "publicationTitle": "中华读书报",
+            "url": "https://epaper.gmw.cn/zhdsb/html/2025-04/02/nw.D110000zhdsb_20250402_2-01.htm",
+            "attachments": [
+              {
+                "title": "Snapshot",
+                "mimeType": "text/html"
+              }
+            ],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
       }
     ],
     "zhLabel": "光明网（电子版）",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2025-04-08 16:11:59 +0800",
+        "message": "resolve #479"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2025-02-13 13:53:50 +0000",

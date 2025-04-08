@@ -2,14 +2,14 @@
 	"translatorID": "c7f4a1df-1d53-433d-8c04-26fd55791459",
 	"label": "epaper.gmw.cn",
 	"creator": "jiaojiaodubai",
-	"target": "^https://epaper\\.gmw\\.cn/gmrb",
+	"target": "^https://epaper\\.gmw\\.cn/(gmrb|zhdsb)",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2025-02-13 13:42:04"
+	"lastUpdated": "2025-04-08 08:07:01"
 }
 
 /*
@@ -76,6 +76,15 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url = doc.location.href) {
+	if (url.includes('/gmrb/')) {
+		await scrapeGmrb(doc, url);
+	}
+	else if (url.includes('/zhdsb/')) {
+		await scrapeZhdsb(doc, url);
+	}
+}
+
+async function scrapeGmrb(doc, url) {
 	const newItem = new Z.Item('newspaperArticle');
 	newItem.title = text(doc, 'h1');
 	const pubInfo = text(doc, '.lai > b');
@@ -89,6 +98,28 @@ async function scrape(doc, url = doc.location.href) {
 	text(doc, '.lai > :first-child').substring(2).split(' ')
 		.filter(name => !name.includes('记者'))
 		.forEach(name => newItem.creators.push(cleanAuthor(name)));
+	newItem.url = url;
+	newItem.complete();
+}
+
+async function scrapeZhdsb(doc, url) {
+	const newItem = new Z.Item('newspaperArticle');
+	newItem.title = text(doc, 'h1');
+	const pubInfo = ZU.trimInternal(text(doc, '.lai'));
+	newItem.publicationTitle = tryMatch(pubInfo, /^《(.+)》/, 1);
+	newItem.place = '北京';
+	newItem.date = tryMatch(pubInfo, /\d{4}年\d{2}月\d{2}/).replace(/\D/g, '-');
+	newItem.attachments.push({
+		title: 'Snapshot',
+		document: doc
+	});
+	const content = text(doc, '#articleContent');
+	const names = tryMatch(content, /^本报讯（([^）]+)）/, 1)
+		|| tryMatch(content, /^■([\p{Unified_Ideograph} ·]+)/u, 1)
+		|| tryMatch(content, /（([\p{Unified_Ideograph} ·]+)）$/u, 1);
+	names.split(' ')
+		.filter(name => !/记者$/.test(name))
+		.forEach(name => newItem.creators.push(cleanAuthor(name.replace(/^记者/, ''))));
 	newItem.url = url;
 	newItem.complete();
 }
@@ -154,6 +185,102 @@ var testCases = [
 		"type": "web",
 		"url": "https://epaper.gmw.cn/gmrb/html/2025-02/13/nbs.D110000gmrb_01.htm",
 		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://epaper.gmw.cn/zhdsb/html/2025-04/02/nw.D110000zhdsb_20250402_3-01.htm",
+		"items": [
+			{
+				"itemType": "newspaperArticle",
+				"title": "中国科幻正吸引着世界目光",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "张隽",
+						"creatorType": "author",
+						"fildMode": 1
+					}
+				],
+				"date": "2025-04-02",
+				"libraryCatalog": "epaper.gmw.cn",
+				"place": "北京",
+				"publicationTitle": "中华读书报",
+				"url": "https://epaper.gmw.cn/zhdsb/html/2025-04/02/nw.D110000zhdsb_20250402_3-01.htm",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://epaper.gmw.cn/zhdsb/html/2025-04/02/nw.D110000zhdsb_20250402_1-17.htm",
+		"items": [
+			{
+				"itemType": "newspaperArticle",
+				"title": "绵延百年的投龙故事",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "魏祝挺",
+						"creatorType": "author",
+						"fildMode": 1
+					}
+				],
+				"date": "2025-04-02",
+				"libraryCatalog": "epaper.gmw.cn",
+				"place": "北京",
+				"publicationTitle": "中华读书报",
+				"url": "https://epaper.gmw.cn/zhdsb/html/2025-04/02/nw.D110000zhdsb_20250402_1-17.htm",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://epaper.gmw.cn/zhdsb/html/2025-04/02/nw.D110000zhdsb_20250402_2-01.htm",
+		"items": [
+			{
+				"itemType": "newspaperArticle",
+				"title": "中国现代文学馆彰显新时代文化自信磅礴力量",
+				"creators": [
+					{
+						"firstName": "",
+						"lastName": "夏琪",
+						"creatorType": "author",
+						"fildMode": 1
+					}
+				],
+				"date": "2025-04-02",
+				"libraryCatalog": "epaper.gmw.cn",
+				"place": "北京",
+				"publicationTitle": "中华读书报",
+				"url": "https://epaper.gmw.cn/zhdsb/html/2025-04/02/nw.D110000zhdsb_20250402_2-01.htm",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
 	}
 ]
 /** END TEST CASES **/
