@@ -23653,7 +23653,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-04-08 16:11:59 +0800",
+        "date": "2025-04-08 08:12:20 +0000",
         "message": "resolve #479"
       },
       {
@@ -24008,6 +24008,169 @@
         "author": "jiaojiaodubai",
         "date": "2025-03-11 00:21:12 +0000",
         "message": "add sanmin.com.tw.js, resolve #446"
+      }
+    ]
+  },
+  "CNKI e-Books.js": {
+    "header": {
+      "translatorID": "8ca3a3a4-708a-47b2-ac91-261148e0b822",
+      "label": "CNKI e-Books",
+      "creator": "jiaojiaodubai",
+      "target": "^https://book\\.oversea\\.cnki\\.net",
+      "minVersion": "5.0",
+      "maxVersion": "",
+      "priority": 100,
+      "inRepository": true,
+      "translatorType": 4,
+      "browserSupport": "gcsibv",
+      "lastUpdated": "2025-04-08 19:07:53"
+    },
+    "testCases": [
+      {
+        "type": "web",
+        "url": "https://book.oversea.cnki.net/chn/pubdetail?sysid=223&resid=6&pykm=OB200303075",
+        "items": [
+          {
+            "itemType": "book",
+            "title": "本草备要",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "汪昂",
+                "creatorType": "editor",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "郑金生",
+                "creatorType": "contributor",
+                "fieldMode": 1
+              }
+            ],
+            "ISBN": "9787117241755",
+            "abstractNote": "共八卷。汪昂撰，康熙三十三年（1694年）刊，本书可视为临床药物手册，亦为医学门径书。 主要取材于《本草纲目》和《神农本草经疏》。卷首为药性总义，统论药物性味，归经及炮制大要:卷一草部药191种，卷二木部药83种，卷三果部药31种，卷四谷菜部药40种，卷五金石水木部药58种，卷六禽兽部药25种，卷七鳞介鱼虫部药41种，卷八人部药9种，共计478种。每药先辨其气、味、形、色，次述所八经络、功用、主治，并根据药物所属之“十剂“，分记于该药之首。后世刊本又增附药图400余幅，更臻完善。",
+            "extra": "creatorsExt: [{\"country\":\"清\",\"firstName\":\"\",\"lastName\":\"汪昂\",\"creatorType\":\"editor\",\"fieldMode\":1},{\"country\":\"\",\"firstName\":\"\",\"lastName\":\"郑金生\",\"creatorType\":\"contributor\",\"fieldMode\":1}]",
+            "libraryCatalog": "CNKI e-Books",
+            "numPages": "432",
+            "publisher": "人民卫生出版社",
+            "attachments": [],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://book.oversea.cnki.net/chn/pubdetail?sysid=223&resid=6&pykm=OB170202076",
+        "items": [
+          {
+            "itemType": "book",
+            "title": "日本現代史",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "長谷川如是閑",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "彭信威",
+                "creatorType": "translator",
+                "fieldMode": 1
+              }
+            ],
+            "ISBN": "9787215104617",
+            "abstractNote": "本书以世界为背景叙述了日本自明治维新以来六十年间（1868-1928）的历史，详细论述了明治维新的意义和改革情况、启蒙时代的思想及运动、中日战后日本国民的变化、一战后世界各国思想和政治格局对日本的影响。",
+            "extra": "creatorsExt: [{\"country\":\"日\",\"firstName\":\"\",\"lastName\":\"長谷川如是閑\",\"creatorType\":\"author\",\"fieldMode\":1},{\"country\":\"\",\"firstName\":\"\",\"lastName\":\"彭信威\",\"creatorType\":\"translator\",\"fieldMode\":1}]",
+            "libraryCatalog": "CNKI e-Books",
+            "numPages": "275",
+            "publisher": "河南人民出版社",
+            "attachments": [],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://book.oversea.cnki.net/chn/pubdetail?sysid=223&resid=6&pykm=OB200303075",
+        "items": [
+          {
+            "itemType": "book",
+            "title": "本草备要",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "汪昂",
+                "creatorType": "editor",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "郑金生",
+                "creatorType": "contributor",
+                "fieldMode": 1
+              }
+            ],
+            "ISBN": "9787117241755",
+            "abstractNote": "共八卷。汪昂撰，康熙三十三年（1694年）刊，本书可视为临床药物手册，亦为医学门径书。 主要取材于《本草纲目》和《神农本草经疏》。卷首为药性总义，统论药物性味，归经及炮制大要:卷一草部药191种，卷二木部药83种，卷三果部药31种，卷四谷菜部药40种，卷五金石水木部药58种，卷六禽兽部药25种，卷七鳞介鱼虫部药41种，卷八人部药9种，共计478种。每药先辨其气、味、形、色，次述所八经络、功用、主治，并根据药物所属之“十剂“，分记于该药之首。后世刊本又增附药图400余幅，更臻完善。",
+            "extra": "creatorsExt: [{\"country\":\"清\",\"firstName\":\"\",\"lastName\":\"汪昂\",\"creatorType\":\"editor\",\"fieldMode\":1},{\"country\":\"\",\"firstName\":\"\",\"lastName\":\"郑金生\",\"creatorType\":\"contributor\",\"fieldMode\":1}]",
+            "libraryCatalog": "CNKI e-Books",
+            "numPages": "432",
+            "publisher": "人民卫生出版社",
+            "url": "https://book.oversea.cnki.net/chn/pubdetail?sysid=223&resid=6&pykm=OB200303075",
+            "attachments": [],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://book.oversea.cnki.net/chn/pubdetail?sysid=223&resid=6&pykm=OB170202076",
+        "items": [
+          {
+            "itemType": "book",
+            "title": "日本現代史",
+            "creators": [
+              {
+                "firstName": "",
+                "lastName": "長谷川如是閑",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "firstName": "",
+                "lastName": "彭信威",
+                "creatorType": "translator",
+                "fieldMode": 1
+              }
+            ],
+            "ISBN": "9787215104617",
+            "abstractNote": "本书以世界为背景叙述了日本自明治维新以来六十年间（1868-1928）的历史，详细论述了明治维新的意义和改革情况、启蒙时代的思想及运动、中日战后日本国民的变化、一战后世界各国思想和政治格局对日本的影响。",
+            "extra": "creatorsExt: [{\"country\":\"日\",\"firstName\":\"\",\"lastName\":\"長谷川如是閑\",\"creatorType\":\"author\",\"fieldMode\":1},{\"country\":\"\",\"firstName\":\"\",\"lastName\":\"彭信威\",\"creatorType\":\"translator\",\"fieldMode\":1}]",
+            "libraryCatalog": "CNKI e-Books",
+            "numPages": "275",
+            "publisher": "河南人民出版社",
+            "url": "https://book.oversea.cnki.net/chn/pubdetail?sysid=223&resid=6&pykm=OB170202076",
+            "attachments": [],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      }
+    ],
+    "zhLabel": "中国知网电子书",
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2025-04-09 03:10:19 +0800",
+        "message": "resolve #462"
       }
     ]
   }
