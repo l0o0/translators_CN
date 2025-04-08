@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-08-26 05:50:26"
+	"lastUpdated": "2025-04-08 06:03:31"
 }
 
 /*
@@ -35,35 +35,30 @@
 	***** END LICENSE BLOCK *****
 */
 
-
-class ID {
-	constructor(node, url) {
-		this.filename = tryMatch(url, /\/Detail(?:\/|\?id=)\w+[_/]([\w.% /-]+)/, 1) || attr(node, '.btn-export', 'data-id');
-		this.dbname = tryMatch(url, /\/Detail(?:\/|\?id=)(\w+)[_/][\w.% /-]+/, 1);
-		const dbType = {
-			PeriodicalPaper: 'journalArticle',
-			DegreePaper: 'thesis',
-			ConferencePaper: 'conferencePaper',
-			Patent: 'patent',
-			Cstad: 'report',
-			Law: 'statute',
-			// eslint-disable-next-line
-			Standard_YY: 'standard'
-		};
-		this.itemType = dbType[this.dbname];
-		this.url = url;
-	}
-}
+const typeMap = {
+	PeriodicalPaper: 'journalArticle',
+	DegreePaper: 'thesis',
+	ConferencePaper: 'conferencePaper',
+	Patent: 'patent',
+	Cstad: 'report',
+	Law: 'statute',
+	// eslint-disable-next-line
+	Standard_YY: 'standard'
+};
 
 function detectWeb(doc, url) {
 	const dynamic = doc.querySelector('#paper-content-wrap');
 	if (dynamic) {
 		Z.monitorDOMChanges(dynamic, { childList: true });
 	}
-	if (getSearchResults(doc, true)) return 'multiple';
-	const ids = new ID(doc, url);
-	Z.debug(ids);
-	return ids.itemType;
+	const itemType = typeMap[tryMatch(url, /\/Detail(?:\/|\?id=)(\w+)[_/][\w.% /-]+/, 1)];
+	if (itemType) {
+		return itemType;
+	}
+	else if (getSearchResults(doc, true)) {
+		return 'multiple';
+	}
+	return false;
 }
 
 function getSearchResults(doc, checkOnly) {
@@ -86,7 +81,7 @@ async function doWeb(doc, url) {
 	if (detectWeb(doc, url) == 'multiple') {
 		const items = await Zotero.selectItems(getSearchResults(doc, false));
 		if (!items) return;
-		for (const url of Object.keys(items)) {
+		for (const url in items) {
 			await scrape(await requestDocument(url));
 		}
 	}
@@ -96,86 +91,97 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url = doc.location.href) {
-	const ids = new ID(doc, url);
-	const labels = new Labels(doc, '.details .table > .table-tr');
-	const extra = new Extra();
-	const newItem = new Zotero.Item(ids.itemType);
+	const data = getLabeledData(
+		doc.querySelectorAll('.details > .table > .table-tr'),
+		row => text(row, '.table-th').replace(/：$/, ''),
+		row => row.querySelector('.table-td'),
+		doc.createElement('div')
+	);
+	const newItem = new Zotero.Item(detectWeb(doc, url));
 	newItem.title = text(doc, '.headline > h2');
-	extra.set('original-title', text(doc, '.headline > h3'), true);
-	newItem.abstractNote = text(doc, '.abstracts > p:first-of-type');
+	newItem.setExtra('original-title', text(doc, '.headline > h3'));
+	newItem.abstractNote = text(doc, '.abstracts > p:first-of-type').replace(/^摘要/, '');
 	newItem.url = url;
-	labels.get('作者', true).querySelectorAll('span > a').forEach((creator) => {
-		newItem.creators.push(cleanAuthor(creator.innerText, 'author'));
-	});
 	switch (newItem.itemType) {
 		case 'journalArticle': {
-			let pubInfo = labels.get('期刊');
-			newItem.publicationTitle = text(doc, '.breadcrumbs > *:nth-child(3)');
+			newItem.publicationTitle = text(doc, '#journals > .info > h1');
+			const pubInfo = ZU.trimInternal(text(doc, '#journals > .info > .type'));
 			newItem.volume = tryMatch(pubInfo, /0*(\d+)卷/, 1);
-			newItem.issue = tryMatch(pubInfo, /[A-Z]?0*\d+期/i, 1).replace(/([A-Z]?)0*(\d+)/, '$1$2');
-			newItem.pages = tryMatch(pubInfo, /([\d+,~-]+)页/, 1).replace('+', ',').replace('~', '-');
+			newItem.issue = tryMatch(pubInfo, /[A-Z]?0*(\d+)期/i, 1).replace(/0*(\d+)/, '$1');
+			newItem.pages = tryMatch(pubInfo, /([\d+,~-]+)页/, 1).replace(/\+/g, ',').replace(/~/g, '-');
 			newItem.date = tryMatch(pubInfo, /(\d+)年/, 1);
-			newItem.DOI = labels.get('DOI');
+			newItem.DOI = data('DOI');
+			doc.querySelectorAll('.authordata > * :where(em, a)').forEach((creator) => {
+				newItem.creators.push(cleanAuthor(creator.innerText, 'author'));
+			});
 			break;
 		}
 		case 'thesis':
 			newItem.university = text(doc, '.breadcrumbs > *:nth-child(3)');
 			// URL编码，解码为“专业=”
 			newItem.thesisType = `${tryMatch(text(doc, 'a[href*="%e4%b8%93%e4%b8%9a%3d"]'), /（(.*)）/, 1)}学位论文`;
-			newItem.date = tryMatch(labels.get('学位信息'), /(\d+)年/, 1);
-			labels.get('导师', true).querySelectorAll('a').forEach((creator) => {
+			Z.debug(data('学位信息'));
+			newItem.date = tryMatch(data('学位信息'), /(\d+)年/, 1);
+			doc.querySelectorAll('.authordata > * :where(em, a)').forEach((creator) => {
+				newItem.creators.push(cleanAuthor(creator.innerText, 'author'));
+			});
+			data('导师', true).querySelectorAll('a').forEach((creator) => {
 				newItem.creators.push(cleanAuthor(creator.innerText, 'contributor'));
 			});
 			break;
 		case 'conferencePaper': {
-			newItem.date = tryMatch(labels.get('会议名称'), /(\d+)年/, 1);
+			newItem.date = tryMatch(data('会议名称'), /(\d+)年/, 1);
 			newItem.conferenceName = text(doc, '.breadcrumbs > *:nth-child(3)');
-			newItem.proceedingsTitle = labels.get('母体文献');
-			newItem.place = text(labels.get('会议名称', true), 'a+em');
+			newItem.proceedingsTitle = data('母体文献');
+			newItem.place = text(data('会议名称', true), 'a+em');
+			doc.querySelectorAll('.authordata > * :where(em, a)').forEach((creator) => {
+				newItem.creators.push(cleanAuthor(creator.innerText, 'author'));
+			});
 			break;
 		}
 		case 'patent': {
-			labels.get('发明/设计人', true).querySelectorAll('span > a').forEach((creator) => {
+			data('发明/设计人', true).querySelectorAll('em').forEach((creator) => {
 				newItem.creators.push(cleanAuthor(creator.innerText, 'inventor'));
 			});
-			labels.get('代理人', true).querySelectorAll('span').forEach((creator) => {
+			Z.debug(data('代理人'));
+			data('代理人', true).querySelectorAll('em').forEach((creator) => {
 				newItem.creators.push(cleanAuthor(creator.innerText, 'attorneyAgent'));
 			});
-			extra.set('Genre', labels.get('专利类型'), true);
-			newItem.assignee = labels.get('申请/专利权人');
-			newItem.patentNumber = labels.get('公开/公告号');
-			newItem.applicationNumber = labels.get('申请/专利号');
+			newItem.setExtra('Genre', data('专利类型'), true);
+			newItem.assignee = data('申请/专利权人');
+			newItem.patentNumber = data('公开/公告号');
+			newItem.applicationNumber = data('申请/专利号');
 			newItem.place = patentCountry(newItem.patentNumber || newItem.applicationNumber);
 			newItem.country = newItem.place;
-			newItem.filingDate = labels.get('申请日期');
-			newItem.issueDate = labels.get('公开/公告日');
-			newItem.legalStatus = labels.get('法律状态');
-			newItem.rights = labels.get('主权项');
+			newItem.filingDate = data('申请日期');
+			newItem.issueDate = data('公开/公告日');
+			newItem.legalStatus = data('法律状态');
+			newItem.rights = data('主权项');
 			break;
 		}
 		case 'standard':
-			labels.get('发布单位', true).querySelectorAll('em').forEach((creator) => {
+			data('发布单位', true).querySelectorAll('em').forEach((creator) => {
 				newItem.creators.push(cleanAuthor(creator.innerText, 'author'));
 			});
-			newItem.number = labels.get('标准编号');
-			newItem.date = labels.get('发布日期');
-			newItem.status = labels.get('状态');
-			extra.set('applyDate', labels.get('实施日期'));
+			newItem.number = data('标准编号');
+			newItem.date = data('发布日期');
+			newItem.status = data('状态');
+			newItem.setExtra('applyDate', data('实施日期'));
 			break;
 		case 'statute':
 			newItem.nameOfAct = newItem.title;
 			delete newItem.title;
-			labels.get(' 颁布部门', true).querySelectorAll('span').forEach((creator) => {
+			data(' 颁布部门', true).querySelectorAll('span').forEach((creator) => {
 				newItem.creators.push(cleanAuthor(creator.innerText, 'author'));
 			});
-			newItem.codeNumber = labels.get('发文文号');
-			newItem.dateEnacted = labels.get('颁布日期');
+			newItem.codeNumber = data('发文文号');
+			newItem.dateEnacted = data('颁布日期');
 			break;
 	}
-	labels.get('关键词', true).querySelectorAll('a').forEach((tag) => {
+	data('关键词', true).querySelectorAll('a').forEach((tag) => {
 		newItem.tags.push(tag.innerText);
 	});
-	let pdfLink = doc.querySelector('a.lnk-download');
+	const pdfLink = doc.querySelector('a.lnk-download');
 	if (pdfLink) {
 		newItem.attachments.push({
 			url: pdfLink.href,
@@ -183,115 +189,44 @@ async function scrape(doc, url = doc.location.href) {
 			mimeType: 'application/pdf'
 		});
 	}
-	extra.set('citation', tryMatch(text(doc, '.statistics .ico-link'), /\d+/));
-	newItem.extra = extra.toString();
+	newItem.setExtra('citation', tryMatch(text(doc, '.statistics .ico-link'), /\d+/));
 	newItem.complete();
 }
 
 function cleanAuthor(name, creatorType = 'author') {
 	const creator = ZU.cleanAuthor(name, creatorType);
-	if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
+	if (/\p{Unified_Ideograph}/u.test(creator.lastName)) {
 		creator.fieldMode = 1;
 	}
 	return creator;
 }
 
 function tryMatch(string, pattern, index = 0) {
-	let match = string.match(pattern);
+	const match = string.match(pattern);
 	return match && match[index]
 		? match[index]
 		: '';
 }
 
-class Labels {
-	constructor(doc, selector) {
-		this.data = [];
-		this.emptyElm = doc.createElement('div');
-		Array.from(doc.querySelectorAll(selector))
-			// avoid nesting
-			.filter(element => !element.querySelector(selector))
-			// avoid empty
-			.filter(element => !/^\s*$/.test(element.textContent))
-			.forEach((element) => {
-				const elmCopy = element.cloneNode(true);
-				// avoid empty text
-				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
-					// Z.debug(elementCopy.firstChild.textContent);
-					elmCopy.removeChild(elmCopy.firstChild);
-					// Z.debug(elementCopy.firstChild.textContent);
-				}
-				if (elmCopy.childNodes.length > 1) {
-					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
-					this.data.push([key, elmCopy]);
-				}
-				else {
-					const text = ZU.trimInternal(elmCopy.textContent);
-					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
-					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
-					this.data.push([key, elmCopy]);
-				}
-			});
+function getLabeledData(rows, labelGetter, dataGetter, defaultElm) {
+	const labeledElm = {};
+	for (const row of rows) {
+		labeledElm[labelGetter(row, rows)] = dataGetter(row, rows);
 	}
-
-	get(label, element = false) {
-		if (Array.isArray(label)) {
-			const results = label
-				.map(aLabel => this.get(aLabel, element));
-			const keyVal = element
-				? results.find(element => !/^\s*$/.test(element.textContent))
-				: results.find(string => string);
-			return keyVal
-				? keyVal
-				: element
-					? this.emptyElm
-					: '';
+	const data = (labels, element = false) => {
+		if (Array.isArray(labels)) {
+			for (const label of labels) {
+				const result = data(label, element);
+				if (result) return result;
+			}
+			return element ? defaultElm : '';
 		}
-		const pattern = new RegExp(label, 'i');
-		const keyVal = this.data.find(arr => pattern.test(arr[0]));
-		return keyVal
-			? element
-				? keyVal[1]
-				: ZU.trimInternal(keyVal[1].textContent)
-			: element
-				? this.emptyElm
-				: '';
-	}
-}
-
-class Extra {
-	constructor() {
-		this.fields = [];
-	}
-
-	push(key, val, csl = false) {
-		this.fields.push({ key: key, val: val, csl: csl });
-	}
-
-	set(key, val, csl = false) {
-		const target = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
-		if (target) {
-			target.val = val;
-		}
-		else {
-			this.push(key, val, csl);
-		}
-	}
-
-	get(key) {
-		const result = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
-		return result
-			? result.val
-			: '';
-	}
-
-	toString(history = '') {
-		this.fields = this.fields.filter(obj => obj.val);
-		return [
-			this.fields.filter(obj => obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n'),
-			history,
-			this.fields.filter(obj => !obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n')
-		].filter(obj => obj).join('\n');
-	}
+		const targetElm = labeledElm[labels];
+		return targetElm
+			? element ? targetElm : ZU.trimInternal(targetElm.textContent)
+			: element ? defaultElm : '';
+	};
+	return data;
 }
 
 function patentCountry(idNumber) {
@@ -345,7 +280,8 @@ var testCases = [
 				"date": "2023",
 				"DOI": "10.13699/j.cnki.1001-6821.2023.06.005",
 				"abstractNote": "目的 探讨美沙拉嗪肠溶片联合保留灌肠治疗溃疡性结肠炎(UC)患者的疗效.方法 采用随机数字表法将UC患者分为对照组和试验组.用美沙拉嗪肠溶片给予对照组患者口服治疗,每次1.0 g,每天4次.试验组在对照组的基础上给予美沙拉嗪肠溶液保留灌肠,睡前把灌肠管插入距离患者肛门10～15 cm处,灌入美沙拉嗪灌肠液,每次4 g,每天一次.2组治疗时间均为1个月.比较2组治疗1个月后的临床疗效,治疗前、治疗1个月后的肠黏膜变化、炎症反应、细胞间黏附分子-1(ICAM-1)、血管细胞黏附分子(VCAM-1)、血小板计数(PLT)及血小板体积(MPV),治疗期间的药物不良反应.结果 试验过程中共脱落6例,最终试验组和对照组分别纳入40例,治疗1个月后,试验组及对照组的总有效率分别为92.50％和75.00％;溃疡的患者占比分别为7.50％和25.00％;充血水肿的患者占比分别为22.50％和45.00％;血清白细胞介素1(IL-1)含量分别为(14.65±5.87)和(12.54±4.23)pg·L-1;血清白细胞介素4(IL-4)含量分别为(32.65±4.76)和(29.65±4.54)pg·mL-1;血清C反应蛋白(CRP)含量分别为(5.32±0.43)和(6.54±0.54)mg·L-1;血清肿瘤坏死因子-α(TNF-α)含量分别为(0.12±0.04)和(0.23±0.05)μg·L-1;血清γ干扰素(IFN-γ)含量分别为(174.32±13.27)和(203.21±14.32)μg·L-1;血清ICAM-1含量分别为(44.76±3.29)和(54.32±4.38)ng·mL-1;血清VCAM-1含量分别为(45.32±3.29)和(60.54±3.76)ng·mL-1;外周血PLT数量分别为(170.25±34.64)和(211.54±37.45)×109 cell·L-1;MPV分别为(13.51±4.56)和(11.65±3.21)fL,组间比较,差异均有统计学意义(均P>0.05).试验组和对照组治疗期间的药物不良反应发生率比较,差异无统计学差异(12.50％vs.20.00％,P>0.05).结论 美沙拉嗪肠溶片联合保留灌肠能够有效促进UC患者肠黏膜的修复,减轻患者炎症反应,缓解病情,提高临床疗效,安全性良好.",
-				"extra": "original-title: Clinical trial of mesalazine enteric coated tablets combined with retention enema of patients with ulcerative colitis\ncitation: 10",
+				"extra": "original-title: Clinical trial of mesalazine enteric coated tablets combined with retention enema of patients with ulcerative colitis\ncitation: 20",
+				"issue": "6",
 				"libraryCatalog": "Wanfang Med",
 				"pages": "781-785",
 				"publicationTitle": "中国临床药理学杂志",
@@ -405,7 +341,7 @@ var testCases = [
 				],
 				"date": "2023",
 				"abstractNote": "目的：C-反应蛋白（CRP）是一种典型的急性期蛋白，在组织发生损伤、感染时其在血液中浓度迅速升高，是炎症反应的非特异性标志物。同时，CRP在固有免疫和后天免疫中起到关键的调节作用，直接参与了很多慢性或急性炎症相关疾病的调控。溃疡性结肠炎（UC）是一种炎症性肠病，发病率在世界范围内逐年升高，持续时间长并反复发作，严重影响患者正常生活。有报道发现， CRP 表达水平的高低与很多药物对 UC 治疗效果的好坏具有显著相关性，但是CRP是否直接参与调控 UC的进展缺乏有力报道。本研究旨在揭示 CRP在 UC小鼠模型中的作用，对今后UC的研究与治疗提供理论指导。<br>　　方法：采用葡聚糖硫酸钠（DSS）诱导C57BL/6J WT野生型与CRP完全敲除型小鼠构建UC小鼠模型，通过小鼠表型（体重、结肠长度与脾脏重量）及系列生理生化指标（疾病活动指数、结肠组织病理学、炎症因子表达、肠道黏液层屏障变化）等，评估CRP对UC小鼠的影响，以及通过外加CRP后测定WT野生型 UC 小鼠表型变化等指标加以确认。从整体、组织和分子三个水平研究CRP对UC小鼠的影响，进一步推断CRP是否直接参与UC进程及可能机制。<br>　　结果：（1）通过表型和组织病理学评价，发现小鼠口服 2%的DSS水溶液一周左右可以诱导UC的发生，成功构建UC小鼠模型（p均lt;0.001）；（2）与WT野生型UC小鼠相比，敲除CRP对UC小鼠表型（体重、结肠长度与脾脏重量）、DAI 评分、炎症因子表达、黏液层相关蛋白分泌及黏液层厚度均无显著性影响（p均gt;0.05），在HE染色分析结肠组织炎症程度的4次实验中仅有1次结果表明敲除CRP可以促进UC小鼠结肠损伤(plt;0.05)，同样在PAS染色中也仅有1次结果表明敲除CRP后UC小鼠的杯状细胞数量显著减少(plt;0.01)；（3）敲除CRP对UC小鼠没有显著影响，可能是小鼠体内CRP处于较低的表达水平，并且急性期仅有 2倍提高，而人急性肠炎中 CRP会高调 100-500倍，可能预示人体内 CRP对 UC的介导依赖于较高的作用浓度，因此我们在野生型小鼠中外加高浓度CRP，使小鼠血浆CRP达到人急性期水平。在WT野生型UC小鼠中外加CRP后发现高浓度CRP对小鼠的表型（体重、结肠长度与脾脏重量）亦无显著性影响（p 均gt;0.05）;（4）考虑到 CRP 的作用可能会被菌群效果所掩盖，因此尝试了抗生素处理，以排除肠道菌群的干扰，结果表明即便无肠道菌群干 扰，WT野生型与 CRP完全敲除型 UC小鼠的表型（体重、结肠长度与脾脏重量）也无显著性差异（p均gt;0.05）；（5）5%高浓度DSS诱导的CRP完全敲除型与WT野生型小鼠的生存率无显著性差异。<br>　　结论：虽然血液中 CRP 水平与 UC 的治愈显著相关，但我们的实验表明CRP 似乎并非是 UC 疾病的直接介导者，更可能是急性肠炎导致炎症因子表达升高，从而促使肝脏分泌更多CRP。我们的结果表明CRP可能仅是UC疾病下游的伴随产物，不具有明显的促炎作用或抑炎作用。但从进化的角度，任何事物的产生都不应该是多余的，考虑到小鼠与人体的巨大差异，对于人体中 CRP的准确功能还需今后的进一步研究。",
-				"extra": "citation: 0",
+				"extra": "original-title: \ncitation: 0",
 				"libraryCatalog": "Wanfang Med",
 				"thesisType": "硕士学位论文",
 				"university": "兰州大学",
@@ -450,7 +386,7 @@ var testCases = [
 				"date": "2023",
 				"abstractNote": "目的:探讨益脾祛湿理肠汤治疗溃疡性结肠炎疗效及对患者肠黏膜屏障功能的改善效果.    方法:从时间2017年02月至2021年02月之间我院收治的溃疡性结肠炎患者中随机抽取100例进行调查,按照双色球法将其分为两个不同小组,参比组50例应用单独西医药物进行治疗,试验组50例在西医药物基础上增加益脾祛湿理肠汤进行治疗,比较两组患者治疗后的中医症状积分、肠黏膜屏蔽功能、临床疗效、药物副作用发生率.    结果:在对溃疡性结肠炎患者进行治疗后,试验组患者的中医症状积分低于参比组(P＜0.05);试验组患者的肠黏膜屏蔽功能好于参比组(P＜0.05);试脸组患者的临床疗效高于参比组(P＜0.05);试验组患者的药物副作用发生率与参比组相比无明显差异性(P＞0.05).    结论:在对溃疡性结肠炎患者进行治疗时,应用益脾祛湿理肠汤治疗能够降低患者中医症状积分,改善肠黏膜屏蔽功能,提高临床疗效,推荐使用.",
 				"conferenceName": "健康医学论坛暨《国医经方年鉴》线上交流会",
-				"extra": "citation: 0",
+				"extra": "original-title: \ncitation: 0",
 				"libraryCatalog": "Wanfang Med",
 				"place": "线上",
 				"proceedingsTitle": "健康医学论坛暨《国医经方年鉴》线上交流会论文集",
@@ -506,9 +442,9 @@ var testCases = [
 				"applicationNumber": "CN202310400741.8",
 				"assignee": "临清市人民医院",
 				"country": "中国",
-				"extra": "Genre: 发明专利\ncitation: 0",
+				"extra": "original-title: \nGenre: 发明专利\ncitation: 0",
 				"filingDate": "2023-04-14",
-				"legalStatus": "在审",
+				"legalStatus": "撤回",
 				"patentNumber": "CN116327231A",
 				"place": "中国",
 				"rights": "1.一种肢体检测放射影像装置，其特征在于，包括底板(1)，所述底板(1)的一端顶侧固定有摆动座(2)，所述摆动座(2)上转动装配有第一升降液压缸(3)，所述第一升降液压缸(3)的顶端转动装配在支撑板(5)的一端底侧，所述支撑板(5)的顶侧为弧形面，所述支撑板(5)外侧套设有放射筒(8)，所述底板(1)的另一端顶侧固定有第二升降液压缸(4)，所述第二升降液压缸(4)顶端转动装配在支撑板(5)的另一端底侧，所述支撑板(5)上装配有托举组件(7)，所述托举组件(7)包括活动杆(74)，所述支撑板(5)的内部开设有杆孔，所述杆孔内竖直穿插有活动杆(74)，所述活动杆(74)的顶端固定有托板(72)，所述托板(72)与支撑板(5)之间固接有第一弹簧(73)，所述第一弹簧(73)套设在活动杆(74)的顶端，所述支撑板(5)的一侧固定有固定箱(71)，所述固定箱(71)的顶侧设置有安装座(711)，所述安装座(711)上配合装配有束缚板(712)。 2.根据权利要求1所述的一种肢体检测放射影像装置,其特征在于，所述固定箱(71)内开设有气腔(719)，所述气腔(719)内设置有第一活塞(720)，所述第一活塞(720)的底侧固定有第一活塞杆(77)，所述第一活塞杆(77)的底端固定有限位柱(78)。 3.根据权利要求2所述的一种肢体检测放射影像装置,其特征在于，所述固定箱(71)的底侧安装有固定座(76)，所述固定座(76)内部通过销轴配合装配有联动杆(75)，所述联动杆(75)的一端通过销轴配合与活动杆(74)的底端转动连接。 4.根据权利要求3所述的一种肢体检测放射影像装置,其特征在于，所述联动杆(75)的另一端内部开设有滑孔(79)，所述限位柱(78)穿插在滑孔(79)内。 5.根据权利要求4所述的一种肢体检测放射影像装置,其特征在于，所述束缚板(712)的底部内外两侧分别固定有线环和收卷筒(714)，所述收卷筒(714)内部通过发条配合装配有可旋转的线轴，所述束缚板(712)的顶部开设有安装孔，所述安装孔内通过轮轴配合装配有导向轮(713)，其中收卷筒(714)内部的线轴上缠绕有束缚带，所述束缚带的一端绑定在线环上，且束缚带外切环绕通过导向轮(713)。 6.根据权利要求5所述的一种肢体检测放射影像装置,其特征在于，所述束缚板(712)的外侧转动安装有第二活塞杆(716)，所述第二活塞杆(716)上固定有第二活塞(717)，所述固定箱(71)的顶侧转动安装有伸缩缸(715)，所述第二活塞(717)设置在伸缩缸(715)内，所述第二活塞(717)与伸缩缸(715)的缸底之间固接有第二弹簧(718)。 7.根据权利要求6所述的一种肢体检测放射影像装置,其特征在于，所述气腔(719)上连接有泄压管(710)，所述泄压管(710)上装配有泄压阀，所述气腔(719)与伸缩缸(715)的底部通过气管连接。 8.根据权利要求1所述的一种肢体检测放射影像装置,其特征在于，所述支撑板(5)的一侧开设有导向槽(6)，所述导向槽(6)内滑动卡设有滑板(9)，所述滑板(9)上安装有活动马达(10)，所述活动马达(10)的输出端安装有主动齿轮(11)，所述支撑板(5)的侧边固定有齿板(12)，所述主动齿轮(11)与齿板(12)相互啮合，所述滑板(9)上固定有放射筒(8)。",
@@ -598,7 +534,7 @@ var testCases = [
 				"creators": [],
 				"dateEnacted": "2023-01-29",
 				"codeNumber": "沪卫医[2023]第7号",
-				"extra": "citation: 0",
+				"extra": "original-title: \ncitation: 0",
 				"url": "https://med.wanfangdata.com.cn/Paper/Detail?id=Law_D462310887&dbid=WF_FG",
 				"attachments": [
 					{
@@ -660,7 +596,8 @@ var testCases = [
 				"date": "2024",
 				"DOI": "10.19540/j.cnki.cjcmm.20240410.501",
 				"abstractNote": "运用证据图系统检索和梳理中成药治疗失眠的临床研究证据,了解该领域证据分布特点,发现中成药治疗失眠相关研究存在的问题.检索3个国家药物目录中明确提及治疗失眠的中成药,检索建库至2023年8月的中、英文文献.采用图、表展示结果.最终纳入中成药23种,相关文献299篇,包括随机对照试验(RCTs)236篇,非随机对照试验(non-RCTs)35篇,回顾性研究7篇,系统评价/Meta分析17篇,指南和专家建议或共识4篇.文献占比较大的是百乐眠胶囊、乌灵胶囊、养血清脑颗粒;结局指标包括睡眠评定量表、临床有效率、安全性指标、焦虑抑郁评分等.结果表明,中成药治疗失眠研究整体呈增长趋势,但研究证据相对较少,研究以单中心、小样本和短周期为主;临床定位宽泛,中医优势不足;结局指标对生活质量、随访及复发率方面关注度不够;RCT整体偏倚风险偏高,系统评价/Meta分析整体质量较低,回顾性研究总体评分不高,non-RCT均未提及随访时间、失访率及样本量估算,结果可信度降低.建议以中医药临床研究规范来设计治疗失眠的中成药研究方案,将中医证候积分评价作为重要结局指标,多关注患者生活质量、随访及复发情况,提高有效治疗失眠中成药的可及性和经济性,加强医保政策与中成药政策的衔接,合理提升具有明确疗效和安全证据支持的中成药在医保甲类目录中的占比.",
-				"extra": "original-title: Evidence mapping of clinical studies on 23 commonly used Chinese patent medicines for treating insomnia\ncitation: 0",
+				"extra": "original-title: Evidence mapping of clinical studies on 23 commonly used Chinese patent medicines for treating insomnia\ncitation: 2",
+				"issue": "14",
 				"libraryCatalog": "Wanfang Med",
 				"pages": "3952-3962",
 				"publicationTitle": "中国中药杂志",
