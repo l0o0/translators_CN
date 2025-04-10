@@ -7086,7 +7086,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-04-10 16:17:26 +0800",
+        "date": "2025-04-10 08:17:53 +0000",
         "message": "update helper function"
       },
       {
@@ -11906,7 +11906,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-06-09 14:18:17"
+      "lastUpdated": "2025-04-10 14:56:17"
     },
     "testCases": [
       {
@@ -11944,7 +11944,7 @@
       },
       {
         "type": "web",
-        "url": "https://pkulaw.com/chl/e54c465cca59c137bdfb.html",
+        "url": "https://www.pkulaw.com/chl/e54c465cca59c137bdfb.html",
         "items": [
           {
             "itemType": "statute",
@@ -11958,11 +11958,11 @@
               }
             ],
             "dateEnacted": "2005-10-27",
-            "extra": "Edition: 2005年修订\n法宝引证码: CLI.1.60597",
+            "extra": "edition: 2005年修订\n法宝引证码: CLI.1.60597",
             "language": "zh-CN",
             "publicLawNumber": "中华人民共和国主席令第42号",
             "shortTitle": "公司法",
-            "url": "https://pkulaw.com/chl/e54c465cca59c137bdfb.html",
+            "url": "https://www.pkulaw.com/chl/e54c465cca59c137bdfb.html",
             "attachments": [
               {
                 "title": "Snapshot",
@@ -11997,7 +11997,7 @@
               }
             ],
             "dateEnacted": "1993-11-12",
-            "extra": "Type: regulation\nStatus: 已废止\n法宝引证码: CLI.3.8815",
+            "extra": "type: regulation\nstatus: 已废止\n法宝引证码: CLI.3.8815",
             "language": "zh-CN",
             "publicLawNumber": "法发〔1993〕36号",
             "url": "https://www.pkulaw.com/chl/98ef6bfbd5f5ecdebdfb.html",
@@ -12062,7 +12062,7 @@
               }
             ],
             "dateEnacted": "2007-07-11",
-            "extra": "Type: regulation\n法宝引证码: CLI.2.96270",
+            "extra": "type: regulation\n法宝引证码: CLI.2.96270",
             "language": "zh-CN",
             "publicLawNumber": "国发〔2007〕19号",
             "url": "https://www.pkulaw.com/chl/dc46bb66e13150b8bdfb.html",
@@ -12094,7 +12094,7 @@
               }
             ],
             "dateEnacted": "2018-02-06",
-            "extra": "Type: regulation\n法宝引证码: CLI.3.309904",
+            "extra": "type: regulation\n法宝引证码: CLI.3.309904",
             "language": "zh-CN",
             "publicLawNumber": "法释〔2018〕1号",
             "url": "https://www.pkulaw.com/chl/0a15442a31eb74f6bdfb.html",
@@ -12126,7 +12126,7 @@
               }
             ],
             "dateEnacted": "2018-06-27",
-            "extra": "Type: regulation\n法宝引证码: CLI.2.316828",
+            "extra": "type: regulation\n法宝引证码: CLI.2.316828",
             "language": "zh-CN",
             "publicLawNumber": "国发〔2018〕22号",
             "url": "https://www.pkulaw.com/chl/4a14adc2c14e5e68bdfb.html",
@@ -12158,7 +12158,7 @@
               }
             ],
             "dateEnacted": "2011-07-28",
-            "extra": "Type: regulation\n法宝引证码: CLI.11.518085",
+            "extra": "type: regulation\n法宝引证码: CLI.11.518085",
             "language": "zh-CN",
             "publicLawNumber": "山东省人民政府令第239号",
             "url": "https://www.pkulaw.com/lar/c74c0e82aa441b08e9ca1ea4cf401f45bdfb.html",
@@ -12190,7 +12190,7 @@
               }
             ],
             "dateEnacted": "2022-09-01",
-            "extra": "Type: regulation\n法宝引证码: CLI.12.5537956",
+            "extra": "type: regulation\n法宝引证码: CLI.12.5537956",
             "language": "zh-CN",
             "publicLawNumber": "德办规[2022]10号",
             "url": "https://www.pkulaw.com/lar/03e98798ef205f4a1faf9c788c472e25bdfb.html",
@@ -12222,7 +12222,7 @@
               }
             ],
             "dateEnacted": "2014-10-23",
-            "extra": "Type: regulation\n法宝引证码: CLI.16.237344",
+            "extra": "type: regulation\n法宝引证码: CLI.16.237344",
             "language": "zh-CN",
             "session": "中国共产党第十八届中央委员会第四次全体会议",
             "url": "https://www.pkulaw.com/chl/8e624467ca77636dbdfb.html",
@@ -12247,7 +12247,7 @@
             "nameOfAct": "中华人民共和国与美利坚合众国联合声明",
             "creators": [],
             "dateEnacted": "2011-01-19",
-            "extra": "Type: treaty\n法宝引证码: CLI.T.6998",
+            "extra": "type: treaty\n法宝引证码: CLI.T.6998",
             "language": "zh-CN",
             "url": "https://www.pkulaw.com/eagn/8e43a3c4e94eed58d5f18c2194e7b611bdfb.html",
             "attachments": [
@@ -12278,7 +12278,7 @@
               }
             ],
             "date": "2013-12-23",
-            "extra": "Edition: 2013年\nevent-title: 第十二届全国人民代表大会常务委员会第六次会议\n法宝引证码: CLI.DL.6311",
+            "extra": "edition: 2013年\nevent-title: 第十二届全国人民代表大会常务委员会第六次会议\n法宝引证码: CLI.DL.6311",
             "language": "zh-CN",
             "libraryCatalog": "北大法宝",
             "url": "https://www.pkulaw.com/protocol/e0c81a0878b582cddca4c85351d16972bdfb.html",
@@ -12309,7 +12309,7 @@
                 "fieldMode": 1
               }
             ],
-            "extra": "original-title: 中华人民共和国个人所得税法（2011修正）\nCLI Code: CLI.1.153700(EN)",
+            "extra": "original-title: 中华人民共和国个人所得税法（2011修正）\n法宝引证码: CLI.1.153700(EN)",
             "language": "en-US",
             "publicLawNumber": "Order No.48 of the President of the People's Republic of China",
             "url": "https://www.pkulaw.com/en_law/1fc5de53e239e30bbdfb.html",
@@ -12331,15 +12331,15 @@
         "items": [
           {
             "itemType": "case",
-            "caseName": "荣宝英诉王阳、永诚财产保险股份有限公司江阴支公司机动车交通事故责任纠纷案",
+            "caseName": "荣宝英诉***、永诚财产保险股份有限公司江阴支公司机动车交通事故责任纠纷案",
             "creators": [],
             "dateDecided": "2013-06-21",
             "court": "江苏省无锡市中级人民法院",
             "docketNumber": "（2013）锡民终字第497号",
-            "extra": "Series: 最高人民法院指导案例\nSeries Number: 24\navailable-date: 2014-01-26\nIssue: 8\nGenre: 民事判决书\n法宝引证码: CLI.C.2125100",
+            "extra": "series: 最高人民法院指导案例\nseries number: 24\navailable-date: 2014-01-26\nissue: 8\ngenre: 民事判决书\n法宝引证码: CLI.C.2125100",
             "language": "zh-CN",
             "reporter": "最高人民法院公报",
-            "shortTitle": "指导案例24号：荣宝英诉王阳、永诚财产保险股份有限公司江阴支公司机动车交通事故责任纠纷案",
+            "shortTitle": "指导案例24号：荣宝英诉***、永诚财产保险股份有限公司江阴支公司机动车交通事故责任纠纷案",
             "url": "https://www.pkulaw.com/gac/eee05e2473339b35799c78d539298795d5aa7be54a957fa0bdfb.html",
             "attachments": [
               {
@@ -12378,11 +12378,11 @@
         "items": [
           {
             "itemType": "case",
-            "caseName": "***诉***政府信息公开答复案",
+            "caseName": "陆红霞诉南通市发展和改革委员会政府信息公开答复案",
             "creators": [],
             "dateDecided": "2015-07-06",
             "court": "江苏省南通市中级人民法院",
-            "extra": "available-date: 2015\nIssue: 11\nGenre: 行政裁定书\n法宝引证码: CLI.C.7997435",
+            "extra": "available-date: 2015\nissue: 11\ngenre: 行政裁定书\n法宝引证码: CLI.C.7997435",
             "language": "zh-CN",
             "reporter": "最高人民法院公报",
             "url": "https://www.pkulaw.com/pfnl/a25051f3312b07f383ab74a250eadc412f753fb855fabeadbdfb.html",
@@ -12435,12 +12435,12 @@
         "items": [
           {
             "itemType": "case",
-            "caseName": "***与***合作勘查合同纠纷上诉案",
+            "caseName": "榆林市凯奇莱能源投资有限公司与西安地质矿产勘查开发院合作勘查合同纠纷上诉案",
             "creators": [],
             "dateDecided": "2017-12-16",
             "court": "最高人民法院",
             "docketNumber": "（2011）民一终字第81号",
-            "extra": "Genre: 民事判决书\n法宝引证码: CLI.C.10709337",
+            "extra": "genre: 民事判决书\n法宝引证码: CLI.C.10709337",
             "language": "zh-CN",
             "url": "https://www.pkulaw.com/pfnl/a25051f3312b07f33e89d5b6de18bc0a79dc89fed63cf848bdfb.html",
             "attachments": [
@@ -12662,7 +12662,7 @@
               }
             ],
             "dateEnacted": "2018-03-11",
-            "extra": "Edition: 2018年修正\n法宝引证码: CLI.1.311950",
+            "extra": "edition: 2018年修正\n法宝引证码: CLI.1.311950",
             "language": "zh-CN",
             "publicLawNumber": "中华人民共和国全国人民代表大会公告第1号",
             "shortTitle": "宪法",
@@ -12695,7 +12695,7 @@
               }
             ],
             "dateEnacted": "2024-05-24",
-            "extra": "Type: regulation\n法宝引证码: CLI.4.5193591",
+            "extra": "type: regulation\n法宝引证码: CLI.4.5193591",
             "language": "zh-CN",
             "publicLawNumber": "中国证券监督管理委员会令第224号",
             "url": "https://law.pkulaw.com/bugui/88f5f4c9b697f89bbdfb.html",
@@ -12721,6 +12721,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2025-04-10 23:00:42 +0800",
+        "message": "fix #485"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-20 13:22:33 +0800",
         "message": "fix typo"
       },
@@ -12728,11 +12733,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-06-09 22:22:21 +0800",
-        "message": "fix #346"
       }
     ]
   },
@@ -16409,7 +16409,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-04-10 16:17:26 +0800",
+        "date": "2025-04-10 08:17:53 +0000",
         "message": "update helper function"
       },
       {
@@ -16863,7 +16863,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-04-10 16:17:26 +0800",
+        "date": "2025-04-10 08:17:53 +0000",
         "message": "update helper function"
       },
       {
@@ -24006,7 +24006,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-04-10 16:17:26 +0800",
+        "date": "2025-04-10 08:17:53 +0000",
         "message": "update helper function"
       },
       {
@@ -24174,7 +24174,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-04-10 16:17:26 +0800",
+        "date": "2025-04-10 08:17:53 +0000",
         "message": "update helper function"
       },
       {

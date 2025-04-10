@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-06-09 14:18:17"
+	"lastUpdated": "2025-04-10 14:56:17"
 }
 
 /*
@@ -40,8 +40,8 @@ function detectWeb(doc, _url) {
 	if (list) {
 		Z.monitorDOMChanges(list, { childList: true, subtree: true });
 	}
-	let currentMenu = attr(doc, '#curMenu', 'value');
-	let databaseID = attr(doc, '#DbId', 'value');
+	const currentMenu = attr(doc, '#curMenu', 'value');
+	const databaseID = attr(doc, '#DbId', 'value');
 	if (currentMenu || databaseID) {
 		// 草案及其说明采用report，详见https://github.com/l0o0/translators_CN/pull/134#issuecomment-1296059381
 		if (['protocol'].includes(databaseID)) {
@@ -68,12 +68,12 @@ function detectWeb(doc, _url) {
 }
 
 function getSearchResults(doc, checkOnly) {
-	var items = {};
-	var found = false;
-	var rows = doc.querySelectorAll('.item h4 > a,li h4 > a:first-of-type');
-	for (let row of rows) {
-		let href = row.href;
-		let title = ZU.trimInternal(row.textContent);
+	const items = {};
+	let found = false;
+	const rows = doc.querySelectorAll('.item h4 > a,li h4 > a:first-of-type');
+	for (const row of rows) {
+		const href = row.href;
+		const title = ZU.trimInternal(row.textContent);
 		if (!href || !title) continue;
 		if (checkOnly) return true;
 		found = true;
@@ -84,9 +84,9 @@ function getSearchResults(doc, checkOnly) {
 
 async function doWeb(doc, url) {
 	if (detectWeb(doc, url) == 'multiple') {
-		let items = await Zotero.selectItems(getSearchResults(doc, false));
+		const items = await Z.selectItems(getSearchResults(doc, false));
 		if (!items) return;
-		for (let url of Object.keys(items)) {
+		for (const url of items) {
 			await scrape(await requestDocument(url));
 		}
 	}
@@ -96,18 +96,26 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url = doc.location.href) {
-	var newItem = new Z.Item(detectWeb(doc, url));
-	let currentMenu = attr(doc, '#curMenu', 'value');
-	let databaseID = attr(doc, '#DbId', 'value');
-	const labels = url.includes('law.pkulaw')
-		? new Labels(doc, '.fields li')
-		: new Labels(doc, '.fields li > .box');
-	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
-	let extra = new Extra();
-	let matches = text(doc, '.info').match(/[[【](.+)[】\]]\s*([0-9A-Z.()]+)/);
-	extra.set(matches[1], matches[2]);
+	const newItem = new Z.Item(detectWeb(doc, url));
+	const currentMenu = attr(doc, '#curMenu', 'value');
+	const databaseID = attr(doc, '#DbId', 'value');
+	const data = getLabeledData(
+		doc.querySelectorAll('.fields li'),
+		row => text(row, 'strong').slice(0, -1).replace(/\s/g, ''),
+		(row) => {
+			const copy = row.cloneNode(true);
+			const label = copy.querySelector('strong');
+			if (label) {
+				label.remove();
+			}
+			return copy;
+		},
+		doc.createElement('div')
+	);
+	const extra = new Extra();
+	extra.set('法宝引证码', text(doc, '.content .info a[href*="/fbm"]'));
 	Z.debug(databaseID);
-	extra.set('Type', { lar: 'regulation', eagn: 'treaty' }[databaseID], true);
+	extra.set('type', { lar: 'regulation', eagn: 'treaty' }[databaseID], true);
 	let title = pureText(doc.querySelector('h2.title'));
 	if (currentMenu == 'english') {
 		newItem.language = 'en-US';
@@ -115,16 +123,16 @@ async function scrape(doc, url = doc.location.href) {
 	}
 	else {
 		newItem.language = 'zh-CN';
-		let matched = title.match(/(.*)\((.*)\)$/);
-		if (matched) {
+		const matched = title.match(/(.*)\((.*)\)$/);
+		if (matched && matched[1] && matched[2]) {
 			let edition = matched[2];
 			if (edition.match(/^\d+/)) {
 				title = matched[1];
 				// 中华人民共和国公司法(2005修订)
-				extra.set('Edition', edition.replace(/^(\d+)年?\s*(.*)/, '$1年$2'), true);
+				extra.set('edition', edition.replace(/^(\d+)年?\s*(.*)/, '$1年$2'), true);
 			}
 		}
-		if (extra.get('Type') != 'treaty') {
+		if (extra.get('type') != 'treaty') {
 			newItem.shortTitle = title.replace(/^中华人民共和国/, '').replace(/\(/g, '（').replace(/\)/g, '）');
 		}
 		title = title.replace(/\(/g, '（').replace(/\)/g, '）');
@@ -134,84 +142,74 @@ async function scrape(doc, url = doc.location.href) {
 	switch (newItem.itemType) {
 		case 'statute': {
 			newItem.nameOfAct = title;
-			// newItem.code = 法典;
-			// newItem.codeNumber = 法典编号;
-			newItem.publicLawNumber = labels.get(['发文字号', 'DocumentNumber']);
+			newItem.publicLawNumber = data(['发文字号', 'DocumentNumber']);
 			// “签订日期”见于外交领域
-			newItem.dateEnacted = labels.get(['颁布日期', '公布日期', '发布日期', '签订日期']).replace(/\./g, '-')
-				|| ZU.strToISO(labels.get('Date Issued'));
-			// newItem.pages = 页码;
-			// newItem.section = 条文序号;
-			// newItem.history = 历史;
-			if (labels.get('时效性') == '失效') {
-				extra.set('Status', '已废止', true);
+			newItem.dateEnacted = data(['颁布日期', '公布日期', '发布日期', '签订日期']).replace(/\./g, '-')
+				|| ZU.strToISO(data('Date Issued'));
+			if (data('时效性') == '失效') {
+				extra.set('status', '已废止', true);
 			}
-			let rank = labels.get(['效力位阶', 'LevelofAuthority']);
+			const rank = data(['效力位阶', 'LevelofAuthority']);
 			if (!/宪法|法律|Law/i.test(rank)) {
-				extra.set('Type', extra.get('Type') || 'regulation', true);
+				extra.set('type', extra.get('type') || 'regulation', true);
 			}
 			if (['有关法律问题和重大问题的决定', '党内法规制度'].includes(rank)) {
-				Z.debug(rank);
 				newItem.session = tryMatch(text(doc, '#divFullText'), /(中国共产党)?第.*?届.*?第.*?次.*?会议/);
 			}
-			labels.get(['制定机关', '发布部门', 'IssuingAuthority'], true)
-				.querySelectorAll('a:first-child')
-				.forEach(element => newItem.creators.push(processName(element.textContent))
-				);
+			data(['制定机关', '发布部门', 'IssuingAuthority'], true)
+				.querySelectorAll('a')
+				.forEach(element => newItem.creators.push(cleanAuthor(element.textContent)));
 			break;
 		}
 		case 'report':
 			newItem.title = title;
-			newItem.date = labels.get('公布日期').replace(/\./g, '-');
-			labels.get(['制定机关', '发布部门', 'IssuingAuthority'], true).querySelectorAll('a:first-child').forEach((element) => {
-				newItem.creators.push(processName(element.textContent));
+			newItem.date = data('公布日期').replace(/\./g, '-');
+			data(['制定机关', '发布部门', 'IssuingAuthority'], true).querySelectorAll('a').forEach((element) => {
+				newItem.creators.push(cleanAuthor(element.textContent));
 			});
 			extra.set('event-title', tryMatch(text(doc, '#divFullText'), /第.*?届.*?第.*?次.*?会议/), true);
 			break;
 		case 'case': {
 			if (title.startsWith('指导案例')) {
 				title = title.replace(/.*?：/, '');
-				extra.set('Series', '最高人民法院指导案例', true);
-				extra.set('Series Number', tryMatch(labels.get('案例编号'), /(\d+)/, 1), true);
+				extra.set('series', '最高人民法院指导案例', true);
+				extra.set('series number', tryMatch(data('案例编号'), /(\d+)/, 1), true);
 			}
 			newItem.caseName = title;
-			newItem.court = text(labels.get(['裁决机构', '审理法院'], true), 'a[href*="Court="]');
-			newItem.dateDecided = labels.get(['裁决日期', '审结日期']).replace(/\./g, '-');
-			newItem.docketNumber = labels.get('案号').replace(/\(/g, '（').replace(/\)/g, '）');
-			let source = labels.get('来源');
+			newItem.court = text(data(['裁决机构', '审理法院'], true), 'a[href*="Court="]');
+			newItem.dateDecided = data(['裁决日期', '审结日期']).replace(/\./g, '-');
+			newItem.docketNumber = data('案号').replace(/\(/g, '（').replace(/\)/g, '）');
+			const source = data('来源');
 			newItem.reporter = tryMatch(source, /《(.+)》/, 1);
-			// "reporterVolume": "报告系统卷次";
-			// "firstPage": "起始页";
-			// "history": "历史";
-			extra.set('available-date', labels.get('发布日期').replace(/\./g, '-') || tryMatch(source, /(\d+)\s*年/, 1), true);
-			extra.set('Issue', tryMatch(source, /年第\s*(\d+)\s*期/, 1), true);
-			extra.set('Genre', labels.get('文书类型'), true);
-			let caseType = ['民事', '刑事', '行政'].find(type => labels.get('案由').startsWith(type));
+			extra.set('available-date', data('发布日期').replace(/\./g, '-') || tryMatch(source, /(\d+)\s*年/, 1), true);
+			extra.set('issue', tryMatch(source, /年第\s*(\d+)\s*期/, 1), true);
+			extra.set('genre', data('文书类型'), true);
+			const caseType = ['民事', '刑事', '行政'].find(type => data('案由').startsWith(type));
 			if (caseType) {
-				extra.set('Genre', caseType + extra.get('Genre'), true);
+				extra.set('genre', caseType + extra.get('genre'), true);
 			}
 			else if (!title.endsWith('裁决书')) {
-				extra.set('Genre', '民事判决书', true);
+				extra.set('genre', '民事判决书', true);
 			}
-			labels.get('发布部门', true).querySelectorAll('span').forEach((element) => {
-				newItem.creators.push(processName(element.textContent));
+			data('发布部门', true).querySelectorAll('span').forEach((element) => {
+				newItem.creators.push(cleanAuthor(element.textContent));
 			});
-			labels.get('权责关键词', true).querySelectorAll('a').forEach((element) => {
-				newItem.tags.push(element.textContent);
+			data('权责关键词', true).querySelectorAll('a').forEach((element) => {
+				newItem.tags.push(ZU.trimInternal(element.textContent));
 			});
 			break;
 		}
 		case 'journalArticle':
 			newItem.title = title;
-			newItem.abstractNote = [labels.get('摘要'), labels.get('英文摘要')].join('\n');
-			newItem.publicationTitle = tryMatch(labels.get('期刊名称'), /《(.+)》/, 1);
-			newItem.issue = labels.get('期号');
-			newItem.pages = labels.get('页码');
-			newItem.date = labels.get('期刊年份');
-			labels.get('作者', true).querySelectorAll('a').forEach((element) => {
-				newItem.creators.push(processName(element.textContent));
+			newItem.abstractNote = [data('摘要'), data('英文摘要')].join('\n');
+			newItem.publicationTitle = tryMatch(data('期刊名称'), /《(.+)》/, 1);
+			newItem.issue = data('期号');
+			newItem.pages = data('页码');
+			newItem.date = data('期刊年份');
+			data('作者', true).querySelectorAll('a').forEach((element) => {
+				newItem.creators.push(cleanAuthor(element.textContent));
 			});
-			labels.get('关键词', true).querySelectorAll('a').forEach((element) => {
+			data('关键词', true).querySelectorAll('a').forEach((element) => {
 				newItem.tags.push(element.textContent);
 			});
 			break;
@@ -224,59 +222,29 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.complete();
 }
 
-class Labels {
-	constructor(doc, selector) {
-		this.data = [];
-		this.emptyElm = doc.createElement('div');
-		Array.from(doc.querySelectorAll(selector))
-			// avoid nesting
-			.filter(element => !element.querySelector(selector))
-			// avoid empty
-			.filter(element => !/^\s*$/.test(element.textContent))
-			.forEach((element) => {
-				const elmCopy = element.cloneNode(true);
-				// avoid empty text
-				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
-					// Z.debug(elementCopy.firstChild.textContent);
-					elmCopy.removeChild(elmCopy.firstChild);
-					// Z.debug(elementCopy.firstChild.textContent);
-				}
-				if (elmCopy.childNodes.length > 1) {
-					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
-					this.data.push([key, elmCopy]);
-				}
-				else {
-					const text = ZU.trimInternal(elmCopy.textContent);
-					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
-					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
-					this.data.push([key, elmCopy]);
-				}
-			});
+function getLabeledData(rows, labelGetter, dataGetter, defaultElm) {
+	const labeledElm = {};
+	for (const row of rows) {
+		labeledElm[labelGetter(row, rows)] = dataGetter(row, rows);
 	}
-
-	get(label, element = false) {
-		if (Array.isArray(label)) {
-			const results = label
-				.map(aLabel => this.get(aLabel, element));
-			const keyVal = element
-				? results.find(element => !/^\s*$/.test(element.textContent))
-				: results.find(string => string);
-			return keyVal
-				? keyVal
-				: element
-					? this.emptyElm
-					: '';
+	const data = (labels, element = false) => {
+		if (Array.isArray(labels)) {
+			for (const label of labels) {
+				const result = data(label, element);
+				if (
+					(element && /\S/.test(result.textContent))
+					|| (!element && /\S/.test(result))) {
+					return result;
+				}
+			}
+			return element ? defaultElm : '';
 		}
-		const pattern = new RegExp(label, 'i');
-		const keyVal = this.data.find(arr => pattern.test(arr[0]));
-		return keyVal
-			? element
-				? keyVal[1]
-				: ZU.trimInternal(keyVal[1].textContent)
-			: element
-				? this.emptyElm
-				: '';
-	}
+		const targetElm = labeledElm[labels];
+		return targetElm
+			? element ? targetElm : ZU.trimInternal(targetElm.textContent)
+			: element ? defaultElm : '';
+	};
+	return data;
 }
 
 class Extra {
@@ -325,10 +293,10 @@ function pureText(element) {
 	return ZU.trimInternal(elementCopy.innerText);
 }
 
-function processName(creator, creatorType = 'author') {
+function cleanAuthor(name, creatorType = 'author') {
 	return {
 		firstName: '',
-		lastName: creator,
+		lastName: name,
 		creatorType: creatorType,
 		fieldMode: 1
 	};
@@ -379,7 +347,7 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://pkulaw.com/chl/e54c465cca59c137bdfb.html",
+		"url": "https://www.pkulaw.com/chl/e54c465cca59c137bdfb.html",
 		"items": [
 			{
 				"itemType": "statute",
@@ -393,11 +361,11 @@ var testCases = [
 					}
 				],
 				"dateEnacted": "2005-10-27",
-				"extra": "Edition: 2005年修订\n法宝引证码: CLI.1.60597",
+				"extra": "edition: 2005年修订\n法宝引证码: CLI.1.60597",
 				"language": "zh-CN",
 				"publicLawNumber": "中华人民共和国主席令第42号",
 				"shortTitle": "公司法",
-				"url": "https://pkulaw.com/chl/e54c465cca59c137bdfb.html",
+				"url": "https://www.pkulaw.com/chl/e54c465cca59c137bdfb.html",
 				"attachments": [
 					{
 						"title": "Snapshot",
@@ -432,7 +400,7 @@ var testCases = [
 					}
 				],
 				"dateEnacted": "1993-11-12",
-				"extra": "Type: regulation\nStatus: 已废止\n法宝引证码: CLI.3.8815",
+				"extra": "type: regulation\nstatus: 已废止\n法宝引证码: CLI.3.8815",
 				"language": "zh-CN",
 				"publicLawNumber": "法发〔1993〕36号",
 				"url": "https://www.pkulaw.com/chl/98ef6bfbd5f5ecdebdfb.html",
@@ -497,7 +465,7 @@ var testCases = [
 					}
 				],
 				"dateEnacted": "2007-07-11",
-				"extra": "Type: regulation\n法宝引证码: CLI.2.96270",
+				"extra": "type: regulation\n法宝引证码: CLI.2.96270",
 				"language": "zh-CN",
 				"publicLawNumber": "国发〔2007〕19号",
 				"url": "https://www.pkulaw.com/chl/dc46bb66e13150b8bdfb.html",
@@ -529,7 +497,7 @@ var testCases = [
 					}
 				],
 				"dateEnacted": "2018-02-06",
-				"extra": "Type: regulation\n法宝引证码: CLI.3.309904",
+				"extra": "type: regulation\n法宝引证码: CLI.3.309904",
 				"language": "zh-CN",
 				"publicLawNumber": "法释〔2018〕1号",
 				"url": "https://www.pkulaw.com/chl/0a15442a31eb74f6bdfb.html",
@@ -561,7 +529,7 @@ var testCases = [
 					}
 				],
 				"dateEnacted": "2018-06-27",
-				"extra": "Type: regulation\n法宝引证码: CLI.2.316828",
+				"extra": "type: regulation\n法宝引证码: CLI.2.316828",
 				"language": "zh-CN",
 				"publicLawNumber": "国发〔2018〕22号",
 				"url": "https://www.pkulaw.com/chl/4a14adc2c14e5e68bdfb.html",
@@ -593,7 +561,7 @@ var testCases = [
 					}
 				],
 				"dateEnacted": "2011-07-28",
-				"extra": "Type: regulation\n法宝引证码: CLI.11.518085",
+				"extra": "type: regulation\n法宝引证码: CLI.11.518085",
 				"language": "zh-CN",
 				"publicLawNumber": "山东省人民政府令第239号",
 				"url": "https://www.pkulaw.com/lar/c74c0e82aa441b08e9ca1ea4cf401f45bdfb.html",
@@ -625,7 +593,7 @@ var testCases = [
 					}
 				],
 				"dateEnacted": "2022-09-01",
-				"extra": "Type: regulation\n法宝引证码: CLI.12.5537956",
+				"extra": "type: regulation\n法宝引证码: CLI.12.5537956",
 				"language": "zh-CN",
 				"publicLawNumber": "德办规[2022]10号",
 				"url": "https://www.pkulaw.com/lar/03e98798ef205f4a1faf9c788c472e25bdfb.html",
@@ -657,7 +625,7 @@ var testCases = [
 					}
 				],
 				"dateEnacted": "2014-10-23",
-				"extra": "Type: regulation\n法宝引证码: CLI.16.237344",
+				"extra": "type: regulation\n法宝引证码: CLI.16.237344",
 				"language": "zh-CN",
 				"session": "中国共产党第十八届中央委员会第四次全体会议",
 				"url": "https://www.pkulaw.com/chl/8e624467ca77636dbdfb.html",
@@ -682,7 +650,7 @@ var testCases = [
 				"nameOfAct": "中华人民共和国与美利坚合众国联合声明",
 				"creators": [],
 				"dateEnacted": "2011-01-19",
-				"extra": "Type: treaty\n法宝引证码: CLI.T.6998",
+				"extra": "type: treaty\n法宝引证码: CLI.T.6998",
 				"language": "zh-CN",
 				"url": "https://www.pkulaw.com/eagn/8e43a3c4e94eed58d5f18c2194e7b611bdfb.html",
 				"attachments": [
@@ -713,7 +681,7 @@ var testCases = [
 					}
 				],
 				"date": "2013-12-23",
-				"extra": "Edition: 2013年\nevent-title: 第十二届全国人民代表大会常务委员会第六次会议\n法宝引证码: CLI.DL.6311",
+				"extra": "edition: 2013年\nevent-title: 第十二届全国人民代表大会常务委员会第六次会议\n法宝引证码: CLI.DL.6311",
 				"language": "zh-CN",
 				"libraryCatalog": "北大法宝",
 				"url": "https://www.pkulaw.com/protocol/e0c81a0878b582cddca4c85351d16972bdfb.html",
@@ -744,7 +712,7 @@ var testCases = [
 						"fieldMode": 1
 					}
 				],
-				"extra": "original-title: 中华人民共和国个人所得税法（2011修正）\nCLI Code: CLI.1.153700(EN)",
+				"extra": "original-title: 中华人民共和国个人所得税法（2011修正）\n法宝引证码: CLI.1.153700(EN)",
 				"language": "en-US",
 				"publicLawNumber": "Order No.48 of the President of the People's Republic of China",
 				"url": "https://www.pkulaw.com/en_law/1fc5de53e239e30bbdfb.html",
@@ -766,15 +734,15 @@ var testCases = [
 		"items": [
 			{
 				"itemType": "case",
-				"caseName": "荣宝英诉王阳、永诚财产保险股份有限公司江阴支公司机动车交通事故责任纠纷案",
+				"caseName": "荣宝英诉***、永诚财产保险股份有限公司江阴支公司机动车交通事故责任纠纷案",
 				"creators": [],
 				"dateDecided": "2013-06-21",
 				"court": "江苏省无锡市中级人民法院",
 				"docketNumber": "（2013）锡民终字第497号",
-				"extra": "Series: 最高人民法院指导案例\nSeries Number: 24\navailable-date: 2014-01-26\nIssue: 8\nGenre: 民事判决书\n法宝引证码: CLI.C.2125100",
+				"extra": "series: 最高人民法院指导案例\nseries number: 24\navailable-date: 2014-01-26\nissue: 8\ngenre: 民事判决书\n法宝引证码: CLI.C.2125100",
 				"language": "zh-CN",
 				"reporter": "最高人民法院公报",
-				"shortTitle": "指导案例24号：荣宝英诉王阳、永诚财产保险股份有限公司江阴支公司机动车交通事故责任纠纷案",
+				"shortTitle": "指导案例24号：荣宝英诉***、永诚财产保险股份有限公司江阴支公司机动车交通事故责任纠纷案",
 				"url": "https://www.pkulaw.com/gac/eee05e2473339b35799c78d539298795d5aa7be54a957fa0bdfb.html",
 				"attachments": [
 					{
@@ -813,11 +781,11 @@ var testCases = [
 		"items": [
 			{
 				"itemType": "case",
-				"caseName": "***诉***政府信息公开答复案",
+				"caseName": "陆红霞诉南通市发展和改革委员会政府信息公开答复案",
 				"creators": [],
 				"dateDecided": "2015-07-06",
 				"court": "江苏省南通市中级人民法院",
-				"extra": "available-date: 2015\nIssue: 11\nGenre: 行政裁定书\n法宝引证码: CLI.C.7997435",
+				"extra": "available-date: 2015\nissue: 11\ngenre: 行政裁定书\n法宝引证码: CLI.C.7997435",
 				"language": "zh-CN",
 				"reporter": "最高人民法院公报",
 				"url": "https://www.pkulaw.com/pfnl/a25051f3312b07f383ab74a250eadc412f753fb855fabeadbdfb.html",
@@ -870,12 +838,12 @@ var testCases = [
 		"items": [
 			{
 				"itemType": "case",
-				"caseName": "***与***合作勘查合同纠纷上诉案",
+				"caseName": "榆林市凯奇莱能源投资有限公司与西安地质矿产勘查开发院合作勘查合同纠纷上诉案",
 				"creators": [],
 				"dateDecided": "2017-12-16",
 				"court": "最高人民法院",
 				"docketNumber": "（2011）民一终字第81号",
-				"extra": "Genre: 民事判决书\n法宝引证码: CLI.C.10709337",
+				"extra": "genre: 民事判决书\n法宝引证码: CLI.C.10709337",
 				"language": "zh-CN",
 				"url": "https://www.pkulaw.com/pfnl/a25051f3312b07f33e89d5b6de18bc0a79dc89fed63cf848bdfb.html",
 				"attachments": [
@@ -1097,7 +1065,7 @@ var testCases = [
 					}
 				],
 				"dateEnacted": "2018-03-11",
-				"extra": "Edition: 2018年修正\n法宝引证码: CLI.1.311950",
+				"extra": "edition: 2018年修正\n法宝引证码: CLI.1.311950",
 				"language": "zh-CN",
 				"publicLawNumber": "中华人民共和国全国人民代表大会公告第1号",
 				"shortTitle": "宪法",
@@ -1130,7 +1098,7 @@ var testCases = [
 					}
 				],
 				"dateEnacted": "2024-05-24",
-				"extra": "Type: regulation\n法宝引证码: CLI.4.5193591",
+				"extra": "type: regulation\n法宝引证码: CLI.4.5193591",
 				"language": "zh-CN",
 				"publicLawNumber": "中国证券监督管理委员会令第224号",
 				"url": "https://law.pkulaw.com/bugui/88f5f4c9b697f89bbdfb.html",
