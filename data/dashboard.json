@@ -7086,6 +7086,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2025-04-10 16:17:26 +0800",
+        "message": "update helper function"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2025-04-08 06:39:12 +0000",
         "message": "fix #465"
       },
@@ -7093,11 +7098,6 @@
         "author": "seiuneko",
         "date": "2025-01-02 09:41:04 +0800",
         "message": "fix(CQVIP): typo in RegExp.test (#417)"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-09-19 15:11:09 +0800",
-        "message": "忽略url大小写"
       }
     ]
   },
@@ -16409,6 +16409,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2025-04-10 16:17:26 +0800",
+        "message": "update helper function"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2025-04-05 13:36:25 +0000",
         "message": "fix lost parameter in parseJson; update title selector"
       },
@@ -16416,11 +16421,6 @@
         "author": "jiaojiaodubai",
         "date": "2025-03-24 05:12:05 +0000",
         "message": "fix #461"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2025-02-12 22:50:23 +0800",
-        "message": "resolve: #357"
       }
     ]
   },
@@ -16863,6 +16863,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2025-04-10 16:17:26 +0800",
+        "message": "update helper function"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2025-04-08 06:04:38 +0000",
         "message": "fix #464"
       },
@@ -16870,11 +16875,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-08-26 13:55:20 +0800",
         "message": "close #374"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-08-19 17:42:48 +0800",
-        "message": "lint"
       }
     ]
   },
@@ -24006,6 +24006,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2025-04-10 16:17:26 +0800",
+        "message": "update helper function"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2025-03-11 00:21:12 +0000",
         "message": "add sanmin.com.tw.js, resolve #446"
       }
@@ -24169,7 +24174,12 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-04-09 03:10:19 +0800",
+        "date": "2025-04-10 16:17:26 +0800",
+        "message": "update helper function"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2025-04-08 19:10:41 +0000",
         "message": "resolve #462"
       }
     ]

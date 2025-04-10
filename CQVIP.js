@@ -218,7 +218,11 @@ function getLabeledData(rows, labelGetter, dataGetter, defaultElm) {
 		if (Array.isArray(labels)) {
 			for (const label of labels) {
 				const result = data(label, element);
-				if (result) return result;
+				if (
+					(element && /\S/.test(result.textContent)) ||
+					(!element && /\S/.test(result))) {
+					return result;
+				}
 			}
 			return element ? defaultElm : '';
 		}
