@@ -8,7 +8,7 @@
 	"priority": 99,
 	"inRepository": true,
 	"translatorType": 1,
-	"lastUpdated": "2024-06-14 12:51:45"
+	"lastUpdated": "2025-03-29 13:32:17"
 }
 
 /*
@@ -35,10 +35,10 @@
 */
 
 function detectImport() {
-	var fromCNKI = false;
-	var haveType = false;
-	var line;
-	var i = 0;
+	let fromCNKI = false;
+	let haveType = false;
+	let line;
+	let i = 0;
 	while ((line = Zotero.read()) !== false) {
 		line = line.replace(/^\s+/, '');
 		if (line != '') {
@@ -61,14 +61,16 @@ function detectImport() {
 
 
 async function doImport() {
-	var record = '';
-	var line;
-	var translator = Zotero.loadTranslator('import');
+	let record = '';
+	let line;
+	const cnkiRefer = Z.loadTranslator('import');
+	// CNKI Refer
+	cnkiRefer.setTranslator('7b6b135a-ed39-4d90-8e38-65516671c5bc');
+	const { detectLanguage, patentCountry } = await cnkiRefer.getTranslatorObject();
+	const refWrorks = Z.loadTranslator('import');
 	// RefWorks Tagged
-	translator.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86');
-	translator.setHandler('itemDone', (_obj, item) => {
-		Z.debug(item.itemType);
-		Z.debug(record);
+	refWrorks.setTranslator('1a3506da-a303-4b0a-a1cd-f216e6138d86');
+	refWrorks.setHandler('itemDone', (_obj, item) => {
 		const extra = new Extra();
 		item.language = detectLanguage(record);
 		switch (item.itemType) {
@@ -92,7 +94,7 @@ async function doImport() {
 				break;
 			case 'patent':
 				if (item.applicationNumber && !item.applicationNumber.includes('海外专利')) {
-					extra.set('Genre', item.applicationNumber, true);
+					extra.set('genre', item.applicationNumber, true);
 				}
 				item.patentNumber = tryMatch(record, /^ID (.*)/m, 1);
 				delete item.issuingAuthority;
@@ -152,7 +154,7 @@ async function doImport() {
 		}
 		item.url = tryMatch(record, /^LK (.*)/m, 1);
 		item.creators.forEach((creator) => {
-			if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
+			if (/\p{Unified_Ideograph}/u.test(creator.lastName)) {
 				creator.firstName = creator.firstName || '';
 				creator.lastName = creator.firstName + creator.lastName;
 				creator.firstName = '';
@@ -176,18 +178,16 @@ async function doImport() {
 		}
 		if (line.startsWith('RT ')) {
 			record = processRecord(record);
-			Z.debug(record);
-			translator.setString(record);
-			await translator.translate();
+			refWrorks.setString(record);
+			await refWrorks.translate();
 			record = '';
 		}
 		record += '\n' + line;
 	}
 	if (record) {
 		record = processRecord(record);
-		Z.debug(record);
-		translator.setString(record);
-		await translator.translate();
+		refWrorks.setString(record);
+		await refWrorks.translate();
 	}
 }
 
@@ -313,48 +313,12 @@ class Extra {
 	}
 }
 
-/**
- * Attempts to get the part of the pattern described from the character,
- * and returns an empty string if not match.
- * @param {String} string
- * @param {RegExp} pattern
- * @param {Number} index
- * @returns
- */
 function tryMatch(string, pattern, index = 0) {
 	if (!string) return '';
 	let match = string.match(pattern);
 	return (match && match[index])
 		? match[index]
 		: '';
-}
-
-function patentCountry(idNumber) {
-	return {
-		AD: '安道尔', AE: '阿拉伯联合酋长国', AF: '阿富汗', AG: '安提瓜和巴布达', AI: '安圭拉', AL: '阿尔巴尼亚', AM: '亚美尼亚', AN: '菏属安的列斯群岛', AO: '安哥拉', AR: '阿根廷', AT: '奥地利', AU: '澳大利亚', AW: '阿鲁巴', AZ: '阿塞拜疆', BB: '巴巴多斯', BD: '孟加拉国', BE: '比利时', BF: '布莱基纳法索', BG: '保加利亚', BH: '巴林', BI: '布隆迪', BJ: '贝宁', BM: '百慕大', BN: '文莱', BO: '玻利维亚', BR: '巴西', BS: '巴哈马', BT: '不丹', BU: '缅甸', BW: '博茨瓦纳', BY: '白俄罗斯', BZ: '伯利兹', CA: '加拿大', CF: '中非共和国', CG: '刚果', CH: '瑞士', CI: '科特迪瓦', CL: '智利', CM: '喀麦隆', CN: '中国', CO: '哥伦比亚', CR: '哥斯达黎加', CS: '捷克斯洛伐克', CU: '古巴', CV: '怫得角', CY: '塞浦路斯',
-		DE: '联邦德国', DJ: '吉布提', DK: '丹麦', DM: '多米尼加岛', DO: '多米尼加共和国', DZ: '阿尔及利亚', EC: '厄瓜多尔', EE: '爱沙尼亚', EG: '埃及', EP: '欧洲专利局', ES: '西班牙', ET: '埃塞俄比亚', FI: '芬兰', FJ: '斐济', FK: '马尔维纳斯群岛', FR: '法国',
-		GA: '加蓬', GB: '英国', GD: '格林那达', GE: '格鲁吉亚', GH: '加纳', GI: '直布罗陀', GM: '冈比亚', GN: '几内亚', GQ: '赤道几内亚', GR: '希腊', GT: '危地马拉', GW: '几内亚比绍', GY: '圭亚那', HK: '香港', HN: '洪都拉斯', HR: '克罗地亚', HT: '海地', HU: '匈牙利', HV: '上沃尔特', ID: '印度尼西亚', IE: '爱尔兰', IL: '以色列', IN: '印度', IQ: '伊拉克', IR: '伊朗', IS: '冰岛', IT: '意大利',
-		JE: '泽西岛', JM: '牙买加', JO: '约旦', JP: '日本', KE: '肯尼亚', KG: '吉尔吉斯', KH: '柬埔寨', KI: '吉尔伯特群岛', KM: '科摩罗', KN: '圣克里斯托夫岛', KP: '朝鲜', KR: '韩国', KW: '科威特', KY: '开曼群岛', KZ: '哈萨克', LA: '老挝', LB: '黎巴嫩', LC: '圣卢西亚岛', LI: '列支敦士登', LK: '斯里兰卡', LR: '利比里亚', LS: '莱索托', LT: '立陶宛', LU: '卢森堡', LV: '拉脱维亚', LY: '利比亚',
-		MA: '摩洛哥', MC: '摩纳哥', MD: '莫尔多瓦', MG: '马达加斯加', ML: '马里', MN: '蒙古', MO: '澳门', MR: '毛里塔尼亚', MS: '蒙特塞拉特岛', MT: '马耳他', MU: '毛里求斯', MV: '马尔代夫', MW: '马拉维', MX: '墨西哥', MY: '马来西亚', MZ: '莫桑比克', NA: '纳米比亚', NE: '尼日尔', NG: '尼日利亚', NH: '新赫布里底', NI: '尼加拉瓜', NL: '荷兰', NO: '挪威', NP: '尼泊尔', NR: '瑙鲁', NZ: '新西兰', OA: '非洲知识产权组织', OM: '阿曼',
-		PA: '巴拿马', PC: 'PCT', PE: '秘鲁', PG: '巴布亚新几内亚', PH: '菲律宾', PK: '巴基斯坦', PL: '波兰', PT: '葡萄牙', PY: '巴拉圭', QA: '卡塔尔', RO: '罗马尼亚', RU: '俄罗斯联邦', RW: '卢旺达',
-		SA: '沙特阿拉伯', SB: '所罗门群岛', SC: '塞舌尔', SD: '苏丹', SE: '瑞典', SG: '新加坡', SH: '圣赫勒拿岛', SI: '斯洛文尼亚', SL: '塞拉利昂', SM: '圣马利诺', SN: '塞内加尔', SO: '索马里', SR: '苏里南', ST: '圣多美和普林西比岛', SU: '苏联', SV: '萨尔瓦多', SY: '叙利亚', SZ: '斯威士兰', TD: '乍得', TG: '多哥', TH: '泰国', TJ: '塔吉克', TM: '土库曼', TN: '突尼斯', TO: '汤加', TR: '土耳其', TT: '特立尼达和多巴哥', TV: '图瓦卢', TZ: '坦桑尼亚', UA: '乌克兰', UG: '乌干达', US: '美国', UY: '乌拉圭', UZ: '乌兹别克',
-		VA: '梵蒂冈', VC: '圣文森特岛和格林纳达', VE: '委内瑞拉', VG: '维尔京群岛', VN: '越南', VU: '瓦努阿图', WO: '世界知识产权组织', WS: '萨摩亚', YD: '民主也门', YE: '也门', YU: '南斯拉夫', ZA: '南非', ZM: '赞比亚', ZR: '扎伊尔', ZW: '津巴布韦'
-	}[idNumber.substring(0, 2).toUpperCase()] || '';
-}
-
-function detectLanguage(text) {
-	// this list is compiled from cdtym's work, see https://github.com/cdtym/digital-table-of-general-standard-chinese-characters
-	const traCharList = '廠兒虧與億個廣門義衛飛習馬鄉開無專藝廳區車貝岡見氣長幣僅從侖倉風烏鳳爲憶計訂認譏隊辦鄧勸雙書擊撲節厲龍滅軋東盧業舊帥歸電號嘰嘆們儀叢爾樂處鳥務馮閃蘭頭漢寧討寫讓禮訓議訊記遼邊聖對糾絲動鞏執擴掃場揚亞機權過協壓厭頁奪達夾軌堯邁畢貞師塵嚇蟲嗎嶼歲豈則剛網遷喬偉傳優傷價倫華僞會殺衆爺傘創雜負壯妝莊慶劉齊産閉問闖關燈湯興講諱軍訝許訛論訟農諷設訪訣尋導孫陣陽階陰婦媽戲觀歡買紅馱馴約級紀馳紉壽麥瑪進遠違韌運撫壞摳擾貢掄搶墳護殻塊聲報擬蕪葦蒼嚴蘆勞極楊兩麗醫勵還殲來連軒堅時縣嘔園曠圍噸郵員聽嗆嗚嶇崗帳財針釘亂體傭徹鄰腸龜猶狽條島飯飲凍狀畝庫療應這廬閏閑間悶竈燦瀝淪滄溝滬懷憂窮證啓評補識詐訴診詞譯靈層遲張際陸陳墜勁鷄緯驅純紗綱納駁縱紛紙紋紡驢紐環責現規攏揀擔頂擁勢攔擰撥擇莖樞櫃槍楓構喪畫棗賣礬礦碼厠奮態歐毆壟轟頃轉斬輪軟齒虜腎賢國暢嚨鳴羅幟嶺凱敗賬販貶購貯圖釣俠僥偵側憑僑貨質徑覓貪貧膚腫脹骯脅魚獰備飾飽飼變龐廟瘧劑廢閘鬧鄭單爐淺濘瀉潑澤憐學寶寵審實試詩誠襯視話誕詭詢該詳肅録隸陝駕參艱綫練組紳細駛織駒終駐絆駝紹繹經貫貳幫項挾撓趙擋墊擠揮薦帶繭蕩榮葷熒蔭藥標棧棟欄檸樹磚硯牽鷗殘軸輕鴉戰點臨覽竪嘗啞顯貴蝦蟻螞雖駡勛嘩響喲峽罰賤貼貽鈣鈍鈔鋼鈉鑰欽鈞鈎鈕氈氫選適倆貸順儉劍朧膽勝狹獅獨獄貿餌饒蝕餃餅巒彎將奬瘡瘋親閨聞閩閥閣養類婁總煉爍爛窪潔灑澆濁測瀏濟渾濃惱舉覺憲竊誡誣語襖誤誘誨説誦墾晝費遜隕險嬌賀壘綁絨結繞驕繪給絢駱絡絶絞駭統艷蠶頑盞撈載趕鹽損撿摯熱搗壺聶萊蓮瑩鶯檔橋樺樁樣賈礫礎顧轎較頓斃慮監緊曬曉嘮鴨暈鴦罷圓賊賄賂贜錢鉗鑽鉀鐵鈴鉛犧敵積稱筆債傾賃艦艙聳愛頒頌臍膠腦膿鴕鴛皺餓餒戀槳漿齋離資競閲煩燒燭遞濤澇渦滌潤澗漲燙澀憫寬賓竅請諸諾讀誹襪課誰調諒諄談誼懇劇難預絹綉驗繼駿瑣擲摻職蘿螢營蕭薩夢檢醖碩聾襲輔輛顱懸躍囉嘯嶄邏嬰銬鐺鋁銅銘鏟銀矯穢籠償軀釁銜盤鴿斂領臉獵餡館癢閻闡蓋斷獸鴻漸淵漁滲慚懼驚慘慣謀諜謊諧禱禍謂諺謎彈墮隨隱嬸頗頸績緒續騎綽繩維綿綳綢綜綻緑綴瓊趨攬攙擱摟攪聯蔣韓橢確頰靂暫翹輩鑿輝賞睞噴疇踐遺鵑賦賭贖賜賠鑄鋪鏈銷鎖鋤鍋銹鋒鋅鋭鵝篩儲懲釋臘魯憊饋饞裝蠻闊糞滯濕潰濺灣憤竄窩褲禪謝謡謗謙屬屢緬纜緝緞緩締縷騙編騷緣鵡攝攤鵲藍獻欖樓賴礙尷霧輻輯輸頻齡鑒蹺蝸錯錨錫鑼錘錐錦鍵鋸錳辭頽籌簡膩鵬騰鮑穎觸雛饃餾醬謄糧數滿濾濫濱灘譽窺寢謹謬縛縫纏繽贅墻藹檻釀願轄輾顆踴蠟蠅蟬賺鍬鍛鍍穩籮簫輿鮮饅瀟賽譚譜騾縮攆聰藴櫻飄黴瞞題囑鎮鎬鎊簍鯉鯽癟癱顔鯊瀾額譴鶴繚顛轍鸚贈鏡贊籃鯨癮辯瀕懶繮繳矚贍鰐辮贏驟囂鐮鰭鷹巔顫癬鱉鬢鱗躪贛鑲韋閂訃勱芻鄺訐訌訕訖馭璣壙捫薌厙釔傴倀傖獷獁鳬鄔餳懺謳詎訥紆紂紇紈璵摶塢㩳藶莧萇蓯磯奩歟軔鄴嘸囈嚦暘唄幃峴嵐圇釗釙釕僉鳩鄒飩餼飪飫飭廡癤闈閎閔煬灃漚渢潙憮慪愾悵愴詁訶詛詆謅詔詒隴陘嫵嫗嬀剄紜紕紝綸紓瑋匭壚擓蘢蔦塋煢櫪梘棖樅碭甌郟軛鳶曇蟣黽嚀噝巋劌剴嶧釷釺釧釩釹釵儈儕儂劊慫糴戧膞邇梟餞飴癘瘍煒熰熗瀧瀘濼涇㥮懌誆誄詿詰詼鄆禕誅詵詬詮詣諍詫諢詡駑紺紲紱駟駙縐絀驛駘瓏頇埡撾撻賁壋撏莢貰蓽蕎薈薺堊滎犖蕁藎蓀蕒葤櫛櫳櫨櫟檉酈硨碸殤軲軻轤軼軫蠆覘瞘嘵嗶噦剮鄖噲噥嶢幀嶠貺鈈鈦鋇鈑鈐鎢鈁鈀篤儔儼儷腖臚脛鴇獪颮猻餉餄餎孿孌癧瘲颯闥閭闓閡熾烴浹澮滸潯濜慟懨愷惻惲誚禰誥誑鴆婭嬈懟絝驍驊絎絳駢頊璫琿塒塤堝贄蒔萵蕕鴣蒓橈楨榿檜邐礪礱軾輊輅鶇躉齔鸕矓嘜鴞蜆嗩嶗崍覬賅鈺鉦鈷鉢鈸鉞鉭鉬鈿鈾鉑鑠鉚鈰鉉鉈鉍鈮鈹鏺鐸氬筧頎徠膾鴟璽鴝獫裊餑欒攣癰痙頏閫鬮誾閬鄲燁燴燼淶漣潿慳諏諑禎諉諛諗諂誶媧嫻綆驪綃騁綏縧綈駸鷥燾璉麩擄摑鷙撣慤摜縈槤覡欞嗇匱硤磽鴯龔殞殮賚輒塹嘖囀嚙蹌蠣蠱蟶幘幗賕賑賒銠鉺鋏鐃銦鎧鍘銖銑鋌鏵銓鎩鉿銚鉻錚銫鉸銥銃銨銣鴰穠箋籩僨僂皚鴴艫龕玀獼餜餛鸞闍閾閹閶鬩閽閼羥糲燜漬瀆澠愜憚諶諫皸謔襠謁諤諭諼讒諳諦諞糶嬋綾騏綺緋緔騍緄騅綬綹綣綰驂緇靚輦黿頡撳蟄壪蔞櫝欏賫鵓鸝殫輥輞槧輟輜瞼躒蛺蟯螄蠐嘍嶸嶁賧鋙錸鏗鋥鋰鋯鋨銼鐧銻鋃鋦錒犢鵠篳牘儻儐儺嬃頜鵒魷魨魴潁颶觴熲餷餿褻臠癆癇賡頦鷳闌闃闋鵜憒嚳謨褳襇讜謖謚謐騭巰翬騖緙緗緘緹緲緦緱縋緡饗耮驁韞攄擯轂驀鶓薊蘺鎣頤櫚櫸磧磣鵪輳齟齙韙囁躂蹕躚躋噯鍺錛錡鍀錁錕錮鍁錈錠錙覦頷鮁鮃鮎鱸穌鮒鮐鵮颼饈鶉瘮闔闐闕灧瀅潷灤澦懾鱟騫竇謾謫嬡嬪縉縝縟轡騮縞縭縊縑騸覯韜靉攖薔藺鶘檳櫧釅殯霽轅齜齦瞜曖躊蟈鶚嚶羆賻罌鶻鍥鍇鍶鍔鍤鏘鎂鏤簀篋簞籙臏鮭鮪鱭鮫鱘饉鑾瘻闞鮝糝鷀瀲濰譖褸譙讕譎鶥嬙鶩驃縹縵縲纓驄繆繅耬瓔擷擼攛聵覲韃鞽蘄賾檣靨魘饜轆齬齪覷顒躓躑蠑螻顎嚕顓鑷鎘鎸鎳鎦鎰鎵鑌簣鷂鯁鱺鰱鰹鰣鯀鯇觶饊饌齏讞襤譫屨纈繕繒驏擻顳顢藪櫓櫞贋飆鏨轔蟎鐯鏢鏜鏝鏰鏞鏑鏃鏐氌穡魎鯪鯡鯤鯧鯝鯢鯛鯔獺鷓贇癭斕瀨顙繾繰繯蘚鷯齲齷躡蹣羈鐔鐝鐐鐓鑭鑹鏹鐙籪鷦鱝鰈鯷鰓鰍鰉鯿鷲懣鷸鰲韉顥鷺䴉髏鑊鐳鐲讎鰨鰥鰩癩攢靄躥髖髕鑔籟鰳鰾鱈鰻鱅讖驥纘瓚鼉黷黲鑣鑞臢鱖鱔鱒驤顰鱧癲灝鸛鑱趲顴躦饢戇戔訏訒釓俔閆澫訢訩詝紃纊瑒剗塸壢埨撝蔿榪軑軏咼㠣覎㑳颺閌潕湋澐浿諓禡詗詘詖屓彄紘馹馼紵紞駃紖瑲棡軝暐晛崬釴釤鍆鍚鄶獮飿嶨詷詪鄩鳲隑隮娙逕駓駔駉絅騶䮄紼紿瓅韍墶塏薘蕘蔄葒鳾龑軹軤轢軺睍曨噠鈃鈇鉅鋹釿錀鈧鈥鈄倈艤鶬颭餏湞溮滻褘絰駰絪駪綎綖驫勣璕𡑍䓣薟藭椏梜頍硜輄輈輇貲嗊曄暉鄳幬輋嶮贐鉥鉕鑪鉮鉊鉧僤鴒魛餗燖溳礐窵襏駼絺綌騂綄璡墠壼聹蘀勩罃檮棶厴䃮磑礄鴷齕頔蝀嘽鉶銈鉷銪鐽鋮鋣銍銱銩鐋鵂鵃貙腡魢廎鵁閿漍璗諲諴褌諟謏諝隤嫿綪綝騑騊綯綡綧驌騄縶塿蕆蕢櫍鵐鵏醱覿讋輗輬齗齘嵽嶔翽顗贔賙䥑鐒𨧀鋱銶鋗鋝鋶鐦鋐鋟頲簹頫膕頠䰾鵟餶廞闉燀濆濚漊斆襝毿騞騠緼線騤鶄赬蕷櫬醲磾輼輶輮齠鵾賵錆錤鍩鍈鑕鍃錞錇錟𨨏穇篢篔鵯鮋鮓鮊鮣鮈鮀鮍颸膢饁癉鶊闒闑灄襀謭鷫頵騵騱縗璊璦蘞檟欓鶠釃𥗽鮆鶪鶡鎝鎪鍠鍭鍰鎄鎡鐨鎇鶖籜鮚鮞鰤鮦鰂鮜鱠鮡鮠鮟飀鸑瘞鮺瀠窶譓縯麴靆鷊憖螮鏌鎛钂鎿鎓鎔鷉鶲鮸鰷鮶鯒鶹鶺鷁鶼瀂鶱譞驎豶䡵齮齯鹺巘鏏鐄䥕籛鯖鯕鯫鯴鰺饘嚲鷟黌鷚繶瓛蠨㘚𨭎鏷𨭆鐇鑥鐠鏻鐏鐩鐍鷭鰆鯻鰏鰊鱨鰛鰃鰁鱂襴鱀繻纁鬹虉鸏黶鐶鐿酇鰧鰟鰜鸌鸇囅鸊纆鰵鰶鱇䲁鰼彠顬鱚驦纕齼鱯鱤鱣鸘䲘鱲蔔幾幹纔萬韆豐雲歷曆僕鬥醜術葉衹隻鼕饑飢匯彙齣發髮臺颱檯樸誇劃當噹籲麯團糰迴硃嚮後閤衝盡儘纖縴壇罎壩垻摺蘇囌滷鹵裏睏彆餘穀係繫瀋錶範闆鬆鬱製颳捨捲簾彌瀰鬍鹹麵鐘鍾種鞦復複須鬚薑獲穫惡噁緻黨臟髒準癥塗傢據纍鏇澱築禦擺襬濛懞矇簽籤灕闢衊籬蕓蘋薴';
-	let traCount = 0;
-	for (const char of text) {
-		if (traCharList.includes(char)) traCount++;
-	}
-	return /[\u4e00-\u9fff]/.test(text)
-		// conservative estimation
-		? traCount / (text.match(/[\u4e00-\u9fff]/g) || []).length > 0.05
-			? 'zh-TW'
-			: 'zh-CN'
-		: 'en-US';
 }
 
 /** BEGIN TEST CASES **/
@@ -805,7 +769,7 @@ var testCases = [
 				"abstractNote": "本发明提供不锈钢管的制造方法,包括如下步骤：S1、管坯加工：将管坯加工成坯料,且坯料的化学组成质量百分比计为：C：0.04-0.06%；Cr：15-21%；Ti：0.1-0.3%；Ni：1.5-9%；Mn：0.1～1.3%；Cu：1.5～3.5%；S：0.002-0.004%；余量为Fe以及不可避免的杂质。本发明通过对坯料进行预热处理,将工件加热到预定温度,并保持一定的时间,将预热后的坯料分别采用两种不同的温度进行处理,且两次处理前后衔接,解决了现有的不锈钢管在生产工艺方面,缺乏对不锈钢管强度的提升,强度较低,导致其在使用过程中,局限性较大,在很多高强度的压力下,易出现折断,不仅大大缩短了不锈钢管的使用寿命,而且存在较大安全隐患的问题。",
 				"applicationNumber": "发明公开",
 				"country": "中国",
-				"extra": "Genre: 发明公开",
+				"extra": "genre: 发明公开",
 				"language": "zh-CN",
 				"patentNumber": "CN111020404A",
 				"place": "中国",

@@ -7,9 +7,9 @@
 	"maxVersion": "",
 	"priority": 150,
 	"inRepository": true,
-	"translatorType": 12,
+	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-10-04 22:36:27"
+	"lastUpdated": "2025-04-14 17:16:06"
 }
 
 /*
@@ -33,75 +33,9 @@
 // Whether user ip is in Chinese Mainland, default is true.
 let inMainland = true;
 
-// Platform of CNKI, default to the National Zong Ku Ping Tai(pin yin of "Total Database Platform").
+// Platform of CNKI, default to the National Zong Ku Ping Tai(pinyin of "Total Database Platform").
 // It may be modified when this Translator called by other translators.
 const platform = 'NZKPT';
-
-/*********************
- * search translator *
- *********************/
-
-function detectSearch(items) {
-	return (filterQuery(items).length > 0);
-}
-
-/**
- * @param {*} items items or string.
- * @returns an array of DOIs.
- */
-function filterQuery(items) {
-	Z.debug('input items:');
-	Z.debug(items);
-	if (!items) return [];
-
-	if (typeof items == 'string' || !items.length) items = [items];
-
-	// filter out invalid queries
-	let dois = [], doi;
-	for (let i = 0, n = items.length; i < n; i++) {
-		if (items[i].DOI && /(\/j\.issn|\/[a-z]\.cnki)/i.test(items[i].DOI) && (doi = ZU.cleanDOI(items[i].DOI))) {
-			dois.push(doi);
-		}
-		else if (typeof items[i] == 'string' && /(\/j\.issn|\/[a-z]\.cnki)/i.test(items[i]) && (doi = ZU.cleanDOI(items[i]))) {
-			dois.push(doi);
-		}
-	}
-	Z.debug('return dois:');
-	Z.debug(dois);
-	return dois;
-}
-
-async function doSearch(items) {
-	const respond = await fetch('https://chn.oversea.cnki.net/kns');
-	Z.debug(respond);
-	if (respond.ok) {
-		inMainland = false;
-	}
-	Z.debug(`inMainland: ${inMainland}`);
-	for (const doi of filterQuery(items)) {
-		const url = `https://doi.org/${encodeURIComponent(doi)}`;
-		Z.debug(`search url: ${url}`);
-		let doc = await requestDocument(url);
-		const mainlandLink = doc.querySelector('.feedbackresult tr:last-child a[href*="link.cnki.net"]');
-		Z.debug(`mainlandLink: ${!!mainlandLink}`);
-		const overseaLinnk = doc.querySelector('.feedbackresult tr:last-child a[href*="link.oversea.cnki.net"]');
-		Z.debug(`overseaLink: ${!!overseaLinnk}`);
-		if (mainlandLink && overseaLinnk) {
-			if (inMainland) {
-				doc = await requestDocument(mainlandLink.href);
-			}
-			else {
-				doc = await requestDocument(overseaLinnk.href);
-			}
-		}
-		Z.debug(doc.body);
-		await doWeb(doc, url);
-	}
-}
-
-/******************
- * web translator *
- ******************/
 
 /**
  * A mapping table of database code to item type.
@@ -216,7 +150,7 @@ class ID {
 		const frame = {
 			dbname: {
 				selector: 'input#paramdbname',
-				pattern: /[?&](?:db|table)[nN]ame=([^&#/]*)/i
+				pattern: /[?&](?:db|table)name=([^&#/]*)/i
 			},
 			filename: {
 				selector: 'input#paramfilename',
@@ -284,10 +218,11 @@ function detectWeb(doc, url) {
 		 */
 		/\/KNavi\//i
 	];
-	// #ModuleSearchResult for commom CNKI,
+	// #ModuleSearchResult for commom search and advanced search (mainland China),
+	// #briefBox for commom search and advanced search (Oversea),
 	// #contentPanel for journal/yearbook navigation,
 	// .main_sh for old version
-	const searchResult = doc.querySelector('#ModuleSearchResult, #contentPanel, .main_sh');
+	const searchResult = doc.querySelector('#ModuleSearchResult, #briefBox, #contentPanel, .main_sh');
 	if (searchResult) {
 		Z.monitorDOMChanges(searchResult, { childList: true, subtree: true });
 	}
@@ -393,7 +328,6 @@ function getSearchResults(doc, url, checkOnly) {
 		if (!header) continue;
 		itemKey.url = header.href;
 		const title = header.getAttribute('title') || ZU.trimInternal(header.textContent);
-		// Z.debug(`${href}\n${title}`);
 		if (!itemKey.url || !title) continue;
 		if (checkOnly) return true;
 		found = true;
@@ -408,12 +342,11 @@ function getSearchResults(doc, url, checkOnly) {
 			itemKey.download = text(rows[i], multiplePage.download);
 		}
 		catch (error) {
-			Z.debug('Failed to get CNKIcite or download.');
+			Z.debug('Failed to get CNKIcite or download');
 		}
 
 		/* Use the item key to store some useful information */
 		items[JSON.stringify(itemKey)] = `【${i + 1}】${title}`;
-		// Z.debug(items);
 	}
 	return found ? items : false;
 }
@@ -457,6 +390,7 @@ async function doWeb(doc, url) {
 async function scrapeMulti(items, doc) {
 	for (const key in items) {
 		const itemKey = JSON.parse(key);
+		Z.debug(itemKey);
 		try {
 			// During debugging, may manually throw an error to guide the program to run inward
 			// throw new Error('debug');
@@ -467,36 +401,18 @@ async function scrapeMulti(items, doc) {
 			}
 			await scrape(doc, itemKey);
 		}
-		catch (erro1) {
+		catch (error) {
 			Z.debug('Error encountered while scraping one by one:');
-			Z.debug(erro1);
-			try {
-				if (!Object.keys(items).some(itemKey => JSON.parse(itemKey).cookieName)) {
-					throw new Error('This page is not suitable for using batch export API');
-				}
-				const itemKeys = Object.keys(items)
-					.map(element => JSON.parse(element))
-					.filter(element => element.cookieName);
-				await scrapeWithShowExport(itemKeys, doc);
-				// batch export API can request all data at once.
-				break;
+			Z.debug(error);
+			if (!Object.keys(items).some(itemKey => JSON.parse(itemKey).cookieName)) {
+				throw new Error('This page is not suitable for using batch export API');
 			}
-
-			/*
-			Some older versions of CNKI may not support retrieving CookieName from search pages.
-			In these cases, CAPTCHA issue should be handled by the user.
-			*/
-			catch (erro2) {
-				Z.debug(erro2);
-				const debugItem = new Z.Item('webpage');
-				debugItem.title = `❌验证码错误！（CAPTCHA Erro!）❌`;
-				debugItem.url = itemKey.url;
-				debugItem.abstractNote
-					= '原始条目在批量抓取过程中遇到验证码，这通常是您向知网请求过于频繁导致的。原始条目的链接已经保存到本条目中，请考虑随后打开这个链接并重新抓取。\n'
-					+ 'Encountered CAPTCHA during batch scrape process with original item, which is usually caused by your frequent requests to CNKI. The link to original item has been saved to this entry. Please consider opening this link later and re scrap.';
-				debugItem.complete();
-				continue;
-			}
+			const itemKeys = Object.keys(items)
+				.map(element => JSON.parse(element))
+				.filter(element => element.cookieName);
+			await scrapeWithShowExport(itemKeys, doc);
+			// batch export API can request all data at once.
+			break;
 		}
 	}
 }
@@ -504,8 +420,6 @@ async function scrapeMulti(items, doc) {
 async function scrape(doc, itemKey = { url: '', cite: '', cookieName: '', downloadlink: '' }) {
 	const url = doc.location.href;
 	const ids = new ID(doc, url);
-	Z.debug('scrape single item with ids:');
-	Z.debug(ids);
 	if (exports.scholarLike.includes(ids.dbcode)) {
 		let translator = Zotero.loadTranslator('web');
 		// CNKI Scholar
@@ -571,40 +485,6 @@ async function scrape(doc, itemKey = { url: '', cite: '', cookieName: '', downlo
  */
 async function scrapeWithGetExport(doc, ids, itemKey) {
 	Z.debug('use API: GetExport');
-
-	/*
-	To avoid triggering anti crawlers due to frequent requests,
-	uncomment the object below during debugging to test functionality unrelated to requests.
-	*/
-
-	/*
-	referText = {
-		"code": 1,
-		"msg": "返回成功",
-		"data": [
-		  {
-			"key": "GB/T 7714-2015 格式引文",
-			"value": [
-			  "[1]陶金, 健康教育与新闻出版  表彰全国九亿农民健康教育行动先进集体和先进工作者. 刘新明;刘益清,中国卫生年鉴,人民卫生出版社,2001,241-242,CHKD年鉴网络出版总库."
-			]
-		  },
-		  {
-			"key": "知网研学（原E-Study）",
-			"value": [
-			  "DataType: 6<br>Title-题名: 健康教育与新闻出版  表彰全国九亿农民健康教育行动先进集体和先进工作者<br>Author-作者: 陶金<br>Source-文献来源: 中国卫生年鉴<br>Year-年鉴年份: 2001<br>PubTime-发表时间: 2001<br>Keyword-关键词: 表彰全国九亿农民健康教育行动先进集体和先进工作者<br>PageCount-页数: 2<br>Page-页码: 241-242<br>SrcDatabase-来源库: CHKD年鉴网络出版总库<br>Organ-出版者: 人民卫生出版社<br>Link-链接: https://kns.cnki.net/kcms2/detail?v=78ssZZiIu9aYur8TjixANLNB9wqzRDceLXMJjuCqyfxhh98oa9YMgKbWALMGlEL83g_zUCRcmBFFnNyzNcG9yhXWKxGVtFw64_2ieV3_sOq5RgLe_KKZfbU1nPWPoWK-2Xadr4yeP1U=&uniplatform=CHKD&language=CHS<br>"
-			]
-		  },
-		  {
-			"key": "EndNote",
-			"value": [
-			  "%0 Legal Rule or Regulation<br>%T 健康教育与新闻出版  表彰全国九亿农民健康教育行动先进集体和先进工作者<br>%V 7-117-04544-2<br>%K 表彰全国九亿农民健康教育行动先进集体和先进工作者<br>%~ CHKD年鉴网络出版总库<br>%P 241-242<br>%W CNKI<br>"
-			]
-		  }
-		],
-		"traceid": "a28ac92deccf46de8e2d1c7fc1b3d2cd.248.17074012330576441"
-	  }
-	*/
-
 	// During debugging, may manually throw an error to guide the program to run inward.
 	// throw new Error('debug');
 
@@ -618,8 +498,6 @@ async function scrapeWithGetExport(doc, ids, itemKey) {
 	// Although there are two data formats that are redundant,
 	// it can make the request more "ordinary" to server.
 	postData += '&displaymode=GBTREFER%2Celearning%2CEndNote';
-	Z.debug(postUrl);
-	Z.debug(postData);
 	let referText = await requestJSON(
 		postUrl,
 		{
@@ -630,14 +508,11 @@ async function scrapeWithGetExport(doc, ids, itemKey) {
 			}
 		}
 	);
-	Z.debug('get respond from API GetExport:');
-	Z.debug(referText);
 
 	if (!referText.data || !referText.data.length) {
 		throw new ReferenceError(`Failed to retrieve data from API: GetExport\n${JSON.stringify(ids)}\n${JSON.stringify(referText)}`);
 	}
 	referText = referText.data[2].value[0].replace(/<br>/g, '\n');
-	Z.debug(referText);
 	await parseRefer(referText, doc, ids.url, itemKey);
 }
 
@@ -647,33 +522,12 @@ async function scrapeWithGetExport(doc, ids, itemKey) {
  */
 async function scrapeWithShowExport(itemKeys, doc) {
 	Z.debug('use API: showExport');
-
-	/*
-	To avoid triggering anti crawlers due to frequent requests,
-	uncomment the expression below during debugging to test functionality unrelated to requests.
-	*/
-
-	/*
-	let referText = {
-		status: 200,
-		headers: {
-			connection: "close",
-			"content-encoding": "br",
-			"content-type": "text/plain;charset=utf-8",
-			date: "Sun,03 Dec 2023 14: 56: 40 GMT",
-			"transfer-encoding": "chunked"
-		},
-		body: "<ul class='literature-list'><li> %0 Journal Article<br> %A 贾玲 <br> %+ 晋中市太谷区北洸乡人民政府;<br> %T 抗旱转基因小麦的研究进展<br> %J 种子科技<br> %D 2023<br> %V 41<br>%N 17<br> %K 小麦;抗旱;转基因<br> %X 受气候复杂多变的影响，小麦生长期间干旱胁迫成为影响其产量的主要因素之一，利用基因工程技术提高小麦抗旱性非常必要。目前，已鉴定出一部分与小麦抗旱性相关并可以提高产量的基因，但与水稻、玉米和其他粮食作物相比，对抗旱转基因小麦的开发研究较少。文章重点关注小麦耐旱性的评价标准以及转基因小麦品种在提高抗旱性方面的进展，讨论了当前在转基因小麦方面取得的一些成就和发展中存在的问题，以期为小麦抗旱性基因工程育种提供理论依据。<br>%P 11-14<br> %@ 1005-2690<br> %U https: //link.cnki.net/doi/10.19904/j.cnki.cn14-1160/s.2023.17.004<br> %R 10.19904/j.cnki.cn14-1160/s.2023.17.004<br> %W CNKI<br> </li><li> %0 Journal Article<br> %A 刘志宏<br> %A 田媛<br> %A 陈红娜<br> %A 周志豪<br> %A 郑洁<br> %A 杨晓怀 <br> %+深圳市农业科技促进中心;暨南大学食品科学与工程系;<br> %T 水稻转基因育种的研究进展与应用现状<br> %J 中国种业<br> %D 2023<br> %V <br> %N 09<br> %K 转基因育种;水稻;病虫害;除草剂<br> %X 随着生物技术发展的不断深入，我国水稻种业的发展也面临着全新的机遇和挑战。目前，改善水稻品种质量的主要方法有分子标记技术、基因编辑技术和转基因技术。其中，转基因水稻是利用生物技术手段将外源基因转入到目标水稻的基因组中，通过外源基因的表达，获得具有抗病、抗虫、抗除草剂等优良性状的水稻品种。近年来，国内外在采用转基因技术进行水稻育种，提升水稻产量、改善水稻品质方面具有较多的研究进展。在阐述转基因技术工作原理的基础上，概述国内外利用转基因技术在优质水稻育种方面的研究进展，进一步探究转基因技术在我国水稻育种领域的发展前景。<br>%P 11-17<br> %@ 1671-895X<br> %U https: //link.cnki.net/doi/10.19462/j.cnki.1671-895x.2023.09.038<br> %R10.19462/j.cnki.1671-895x.2023.09.038<br> %W CNKI<br> </li><li> %0 Journal Article<br> %A 孙萌<br> %A 李荣田 <br> %+ 黑龙江大学生命科学学院/黑龙江省普通高等学校分子生物学重点实验室;黑龙江大学农业微生物技术教育部工程研究中心;<br> %T 基于文献计量学的中国水稻转录组研究进展<br> %J 环境工程<br> %D 2023<br> %V 41<br> %N S2<br> %K 水稻转录组;文献计量学;VOSviewer<br> %X 为了探究水稻转录组(Ricetranscriptome)研究的热点与趋势,本研究基于CNKI数据库,基于文献计量学的方法,对中国的发文量、关键词、研究机构、作者、基金、学科方向,进行相关分析。发现水稻转录组的研究进展与趋势动态,旨在为水稻转录组等领域的研究人员提供一定量的数据进行参考。结果显示:2003—2021年水稻转录组的研究论文数量共1512篇;文献的数量逐年增加,其中在2020年的产出数量最高;发文量前3的作者分别是刘向东、吴锦文、梁五生;华中农业大学,南京农业大学,浙江大学,中国农业科学院,华南农业大学发表的水稻转录组文献数量居全国前5位;该领域主要研究学科是,农作物、植物保护、园艺、生物学和林业等;国家自然科学基金是支持水稻转录组研究的主要项目。综合来看,中国在研究水稻转录组领域处于优势地位。<br>%P 1016-1019<br> %@ 1000-8942<br> %U https://kns.cnki.net/kcms2/article/abstract?v=ebrKgZyeBkxImzDUXjcVU04XYh7-VuK-twxFNRUx7mIL4CLVOe5VfbRl0TM7H3f_mb78up_-AjT2Rwgo5xU0wbsknYXBxlrO6GG-wlfR5dIIK8MKL8g8Vmc4O-Q3_qdDWz1MlRhZmckhhPAGlFwAFQ==&uniplatform=NZKPT&language=CHS<br>%W CNKI<br> </li></ul><input id='hidMode' type='hidden' value='BATCH_DOWNLOAD,EXPORT,CLIPYBOARD,PRINT'><input id='traceid' type='hidden'value='27077cd0510c4c989a7ac58b5541a910.173062.17016154007783847'>"
-	};
-	 */
-
 	// During debugging, may manually throw an error to guide the program to run inward
 	// throw new Error('debug');
 
 	const postUrl = inMainland
 		? 'https://kns.cnki.net/dm8/api/ShowExport'
 		: `${doc.location.protocol}//${doc.location.host}/kns/manage/ShowExport`;
-	Z.debug(postUrl);
 	const postData = `FileName=${itemKeys.map(key => key.cookieName).join(',')}`
 		+ '&DisplayMode=EndNote'
 		+ '&OrderParam=0'
@@ -681,7 +535,6 @@ async function scrapeWithShowExport(itemKeys, doc) {
 		+ '&SelectField='
 		+ `${inMainland ? `&PageIndex=1&PageSize=20&language=CHS&uniplatform=${exports.platform}` : ''}`
 		+ `&random=${Math.random()}`;
-	Z.debug(postData);
 	const refer = inMainland
 		? 'https://kns.cnki.net/dm8/manage/export.html?'
 		: `${doc.location.protocol}//${doc.location.host}/manage/export.html?displaymode=EndNote`;
@@ -695,8 +548,6 @@ async function scrapeWithShowExport(itemKeys, doc) {
 			}
 		}
 	);
-	Z.debug('get batch response from API ShowExport:');
-	Z.debug(`${JSON.stringify(referText)}`);
 	if (!referText.body || !referText.body.length) {
 		throw new ReferenceError('Failed to retrieve data from API: ShowExport');
 	}
@@ -710,7 +561,6 @@ async function scrapeWithShowExport(itemKeys, doc) {
 	for (let i = 0; i < referText.length; i++) {
 		let text = referText[i];
 		text = text.replace(/(^<li>\s*|\s*<\/li>$)/g, '').replace(/<br>/g, '\n');
-		Z.debug(text);
 		await parseRefer(
 			text,
 			doc,
@@ -767,9 +617,9 @@ async function scrapeDoc(doc, itemKey) {
 	if (!creators.length && doc.querySelector('h3 > span:only-child')) {
 		creators = ZU.trimInternal(doc.querySelector('h3 > span:only-child').textContent)
 			.replace(/\(.+?\)$/, '')
-			.replace(/([\u4e00-\u9fff]),\s?([\u4e00-\u9fff])/g, '$1；$2')
-			.split(/[;，；]/)
-			.filter(string => !(new RegExp([
+			// pure Chinese name or English name
+			.match(/[\p{Unified_Ideograph}+|[a-z .-]+/igu)
+			.filter(string => ![
 				'institute',
 				'institution',
 				'organization',
@@ -778,14 +628,11 @@ async function scrapeDoc(doc, itemKey) {
 				'firm',
 				'laboratory',
 				'lab',
-				'co\\.ltd',
+				'co.ltd',
 				'school',
 				'university',
 				'college'
-			].map(word => `\\b${word}\\b`)
-				.join('|'), 'i')
-				.test(string)))
-			.map(string => string.replace(/[\d\s,~-]*$/, ''));
+			].some(institution => string.toLowerCase().includes(institution)));
 	}
 	creators.forEach((string) => {
 		newItem.creators.push(cleanName(string, 'author'));
@@ -890,9 +737,13 @@ async function scrapeDoc(doc, itemKey) {
 				}));
 			extra.set('applyDate', labels.get(['实施日期', '實施日期']), true);
 			break;
-		case 'patent':
-			newItem.patentNumber = labels.get(['申请公布号', '申請公佈號', 'PublicationNo']);
+		case 'patent': {
+			newItem.patentNumber = labels.get(['授權公布号', '授權公佈號', '申请公布号', '申請公佈號', 'PublicationNo']);
 			newItem.applicationNumber = labels.get(['申请\\(专利\\)号', '申請\\(專利\\)號', 'ApplicationNumber']);
+			const translate = Z.loadTranslator('import');
+			// CNKI Refer
+			translate.setTranslator('7b6b135a-ed39-4d90-8e38-65516671c5bc');
+			const { patentCountry } = await translate.getTranslatorObject();
 			newItem.place = newItem.country = patentCountry(newItem.patentNumber || newItem.applicationNumber, newItem.language);
 			newItem.filingDate = labels.get(['申请日', '申請日', 'ApplicationDate']);
 			newItem.issueDate = labels.get(['授权公告日', '授權公告日', 'IssuanceDate']);
@@ -904,6 +755,7 @@ async function scrapeDoc(doc, itemKey) {
 					newItem.creators.push(cleanName(ZU.trimInternal(inventor), 'inventor'));
 				});
 			break;
+		}
 		case 'videoRecording':
 			newItem.abstractNote = labels.get(['视频简介', '視頻簡介']).replace(/\s*更多还原$/, '');
 			newItem.runningTime = labels.get(['时长', '時長']);
@@ -1192,33 +1044,28 @@ async function addPubDetail(item, extra, ids, doc) {
 						/^.+\('(.+?)',\s*'(.+?)'\).*$/,
 						'/KNavi/JournalDetail?pcode=$1&pykm=$2'
 					);
-				Z.debug(url);
 				pubDoc = await requestDocument(url);
 				break;
 			}
 			case 'conferencePaper': {
 				if (inMainland) {
 					url = doc.querySelector('.top-tip > a').href;
-					Z.debug(url);
 					url = 'https://kns.cnki.net/knavi/conferences/proceedings/catalog'
 						// “论文集”code
 						+ `?lwjcode=${tryMatch(url, /\/proceedings\/(\w+)\//, 1)}`
 						// “会议”code
 						+ `&hycode=&pIdx=0`;
-					Z.debug(url);
 					pubDoc = await requestDocument(url);
 					const id = attr(pubDoc, 'li[id]', 'id');
 					url = 'https://navi.cnki.net/knavi/conferences/baseinfo'
 						+ `?lwjcode=${id}`
 						+ '&pIdx=0';
-					Z.debug(url);
 				}
 				else {
 					url = attr(doc, '.top-tip > :first-child > a', 'onclick').replace(
 						/^.+\('(.+?)',\s*'(.+?)'\).*$/,
 						'/knavi/DpaperDetail/CreateDPaperBaseInfo?pcode=$1&lwjcode=$2&pIdx=0'
 					);
-					Z.debug(url);
 				}
 				pubDoc = await requestDocument(url);
 				break;
@@ -1237,7 +1084,6 @@ async function addPubDetail(item, extra, ids, doc) {
 					+ `&pageIndex=1&pageSize=10`;
 				pubDoc = await requestDocument(url);
 				const yearbookNumber = attr(pubDoc, `#${hidYearbookBH}`, 'value');
-				Z.debug(`yearbookNumber: ${yearbookNumber}`);
 				// Info
 				pubDoc = await requestDocument('https://navi.cnki.net/knavi/yearbookDetail/GetBaseInfo', {
 					method: 'POST',
@@ -1270,8 +1116,6 @@ async function addPubDetail(item, extra, ids, doc) {
 					: '';
 			}
 		};
-		Z.debug('publication details:');
-		Z.debug(container);
 		extra.set('original-container-title', container.originalContainerTitle, true);
 		switch (item.itemType) {
 			case 'journalArticle': {
@@ -1303,201 +1147,6 @@ async function addPubDetail(item, extra, ids, doc) {
 		Z.debug('Failed to add document details.');
 		Z.debug(error);
 	}
-}
-
-/**
- * Return the country name according to the patent number or patent application number.
- */
-function patentCountry(idNumber, lang = 'zh-CN') {
-	/* eslint-disable camelcase */
-	const country = {
-		AD: { zh_CN: '安道尔', en_US: 'Andorra', zh_TW: '安道爾' },
-		AE: { zh_CN: '阿拉伯联合酋长国', en_US: 'United Arab Emirates', zh_TW: '阿拉伯聯合酋長國' },
-		AF: { zh_CN: '阿富汗', en_US: 'Afghanistan', zh_TW: '阿富汗' },
-		AG: { zh_CN: '安提瓜和巴布达', en_US: 'Antigua and Barbuda', zh_TW: '安提瓜和巴布達' },
-		AI: { zh_CN: '安圭拉', en_US: 'Anguilla', zh_TW: '安圭拉' },
-		AL: { zh_CN: '阿尔巴尼亚', en_US: 'Albania', zh_TW: '阿爾巴尼亞' },
-		AM: { zh_CN: '亚美尼亚', en_US: 'Armenia', zh_TW: '亞美尼亞' },
-		AN: { zh_CN: '荷属安的列斯群岛', en_US: 'Netherlands Antilles', zh_TW: '荷屬安的列斯群島' },
-		AO: { zh_CN: '安哥拉', en_US: 'Angola', zh_TW: '安哥拉' },
-		AR: { zh_CN: '阿根廷', en_US: 'Argentina', zh_TW: '阿根廷' },
-		AT: { zh_CN: '奥地利', en_US: 'Austria', zh_TW: '奧地利' },
-		AU: { zh_CN: '澳大利亚', en_US: 'Australia', zh_TW: '澳大利亞' },
-		AW: { zh_CN: '阿鲁巴', en_US: 'Aruba', zh_TW: '阿魯巴' },
-		AZ: { zh_CN: '阿塞拜疆', en_US: 'Azerbaijan', zh_TW: '亞塞拜然' },
-		BB: { zh_CN: '巴巴多斯', en_US: 'Barbados', zh_TW: '巴貝多' },
-		BD: { zh_CN: '孟加拉国', en_US: 'Bangladesh', zh_TW: '孟加拉' },
-		BE: { zh_CN: '比利时', en_US: 'Belgium', zh_TW: '比利時' },
-		BF: { zh_CN: '布基纳法索', en_US: 'Burkina Faso', zh_TW: '布基納法索' },
-		BG: { zh_CN: '保加利亚', en_US: 'Bulgaria', zh_TW: '保加利亞' },
-		BH: { zh_CN: '巴林', en_US: 'Bahrain', zh_TW: '巴林' },
-		BI: { zh_CN: '布隆迪', en_US: 'Burundi', zh_TW: '布隆迪' },
-		BJ: { zh_CN: '贝宁', en_US: 'Benin', zh_TW: '貝寧' },
-		BM: { zh_CN: '百慕大', en_US: 'Bermuda', zh_TW: '百慕達' },
-		BN: { zh_CN: '文莱', en_US: 'Brunei', zh_TW: '汶萊' },
-		BO: { zh_CN: '玻利维亚', en_US: 'Bolivia', zh_TW: '玻利維亞' },
-		BR: { zh_CN: '巴西', en_US: 'Brazil', zh_TW: '巴西' },
-		BS: { zh_CN: '巴哈马', en_US: 'Bahamas', zh_TW: '巴哈馬' },
-		BT: { zh_CN: '不丹', en_US: 'Bhutan', zh_TW: '不丹' },
-		BW: { zh_CN: '博茨瓦纳', en_US: 'Botswana', zh_TW: '波札那' },
-		BY: { zh_CN: '白俄罗斯', en_US: 'Belarus', zh_TW: '白俄羅斯' },
-		BZ: { zh_CN: '伯利兹', en_US: 'Belize', zh_TW: '貝里斯' },
-		CA: { zh_CN: '加拿大', en_US: 'Canada', zh_TW: '加拿大' },
-		CF: { zh_CN: '中非共和国', en_US: 'Central African Republic', zh_TW: '中非共和國' },
-		CG: { zh_CN: '刚果', en_US: 'Congo', zh_TW: '剛果' },
-		CH: { zh_CN: '瑞士', en_US: 'Switzerland', zh_TW: '瑞士' },
-		CI: { zh_CN: '科特迪瓦', en_US: "Côte d'Ivoire", zh_TW: '科特迪瓦' },
-		CL: { zh_CN: '智利', en_US: 'Chile', zh_TW: '智利' },
-		CM: { zh_CN: '喀麦隆', en_US: 'Cameroon', zh_TW: '喀麥隆' },
-		CN: { zh_CN: '中国', en_US: 'China', zh_TW: '中國' },
-		CO: { zh_CN: '哥伦比亚', en_US: 'Colombia', zh_TW: '哥倫比亞' },
-		CR: { zh_CN: '哥斯达黎加', en_US: 'Costa Rica', zh_TW: '哥斯達黎加' },
-		CU: { zh_CN: '古巴', en_US: 'Cuba', zh_TW: '古巴' },
-		CV: { zh_CN: '佛得角', en_US: 'Cape Verde', zh_TW: '佛得角' },
-		CY: { zh_CN: '塞浦路斯', en_US: 'Cyprus', zh_TW: '塞浦路斯' },
-		DE: { zh_CN: '德国', en_US: 'Germany', zh_TW: '德國' },
-		DJ: { zh_CN: '吉布提', en_US: 'Djibouti', zh_TW: '吉布提' },
-		DK: { zh_CN: '丹麦', en_US: 'Denmark', zh_TW: '丹麥' },
-		DM: { zh_CN: '多米尼克', en_US: 'Dominica', zh_TW: '多米尼克' },
-		DO: { zh_CN: '多米尼加共和国', en_US: 'Dominican Republic', zh_TW: '多明尼加共和國' },
-		DZ: { zh_CN: '阿尔及利亚', en_US: 'Algeria', zh_TW: '阿爾及利亞' },
-		EC: { zh_CN: '厄瓜多尔', en_US: 'Ecuador', zh_TW: '厄瓜多爾' },
-		EE: { zh_CN: '爱沙尼亚', en_US: 'Estonia', zh_TW: '愛沙尼亞' },
-		EG: { zh_CN: '埃及', en_US: 'Egypt', zh_TW: '埃及' },
-		EP: { zh_CN: '欧洲专利局', en_US: 'European Patent Office', zh_TW: '歐洲專利局' },
-		ES: { zh_CN: '西班牙', en_US: 'Spain', zh_TW: '西班牙' },
-		ET: { zh_CN: '埃塞俄比亚', en_US: 'Ethiopia', zh_TW: '衣索比亞' },
-		FI: { zh_CN: '芬兰', en_US: 'Finland', zh_TW: '芬蘭' },
-		FJ: { zh_CN: '斐济', en_US: 'Fiji', zh_TW: '斐濟' },
-		FK: { zh_CN: '福克兰群岛', en_US: 'Falkland Islands', zh_TW: '福克蘭群島' },
-		FR: { zh_CN: '法国', en_US: 'France', zh_TW: '法國' },
-		GA: { zh_CN: '加蓬', en_US: 'Gabon', zh_TW: '加彭' },
-		GB: { zh_CN: '英国', en_US: 'United Kingdom', zh_TW: '英國' },
-		GD: { zh_CN: '格林纳达', en_US: 'Grenada', zh_TW: '格林納達' },
-		GE: { zh_CN: '格鲁吉亚', en_US: 'Georgia', zh_TW: '格魯吉亞' },
-		GH: { zh_CN: '加纳', en_US: 'Ghana', zh_TW: '迦納' },
-		GI: { zh_CN: '直布罗陀', en_US: 'Gibraltar', zh_TW: '直布羅陀' },
-		GM: { zh_CN: '冈比亚', en_US: 'Gambia', zh_TW: '甘比亞' },
-		GN: { zh_CN: '几内亚', en_US: 'Guinea', zh_TW: '幾內亞' },
-		GQ: { zh_CN: '赤道几内亚', en_US: 'Equatorial Guinea', zh_TW: '赤道幾內亞' },
-		GR: { zh_CN: '希腊', en_US: 'Greece', zh_TW: '希臘' },
-		GT: { zh_CN: '危地马拉', en_US: 'Guatemala', zh_TW: '瓜地馬拉' },
-		GW: { zh_CN: '几内亚比绍', en_US: 'Guinea-Bissau', zh_TW: '幾內亞比索' },
-		GY: { zh_CN: '圭亚那', en_US: 'Guyana', zh_TW: '蓋亞那' },
-		HK: { zh_CN: '香港特别行政区', en_US: 'Hong Kong', zh_TW: '香港' },
-		HN: { zh_CN: '洪都拉斯', en_US: 'Honduras', zh_TW: '宏都拉斯' },
-		HR: { zh_CN: '克罗地亚', en_US: 'Croatia', zh_TW: '克羅埃西亞' },
-		HT: { zh_CN: '海地', en_US: 'Haiti', zh_TW: '海地' },
-		HU: { zh_CN: '匈牙利', en_US: 'Hungary', zh_TW: '匈牙利' },
-		ID: { zh_CN: '印度尼西亚', en_US: 'Indonesia', zh_TW: '印尼' },
-		IE: { zh_CN: '爱尔兰', en_US: 'Ireland', zh_TW: '愛爾蘭' },
-		IL: { zh_CN: '以色列', en_US: 'Israel', zh_TW: '以色列' },
-		IN: { zh_CN: '印度', en_US: 'India', zh_TW: '印度' },
-		IQ: { zh_CN: '伊拉克', en_US: 'Iraq', zh_TW: '伊拉克' },
-		IR: { zh_CN: '伊朗', en_US: 'Iran', zh_TW: '伊朗' },
-		IS: { zh_CN: '冰岛', en_US: 'Iceland', zh_TW: '冰島' },
-		IT: { zh_CN: '意大利', en_US: 'Italy', zh_TW: '義大利' },
-		JM: { zh_CN: '牙买加', en_US: 'Jamaica', zh_TW: '牙買加' },
-		JO: { zh_CN: '约旦', en_US: 'Jordan', zh_TW: '約旦' },
-		JP: { zh_CN: '日本', en_US: 'Japan', zh_TW: '日本' },
-		KE: { zh_CN: '肯尼亚', en_US: 'Kenya', zh_TW: '肯亞' },
-		KG: { zh_CN: '吉尔吉斯斯坦', en_US: 'Kyrgyzstan', zh_TW: '吉爾吉斯' },
-		KH: { zh_CN: '柬埔寨', en_US: 'Cambodia', zh_TW: '柬埔寨' },
-		KI: { zh_CN: '基里巴斯', en_US: 'Kiribati', zh_TW: '基里巴斯' },
-		KM: { zh_CN: '科摩罗', en_US: 'Comoros', zh_TW: '科摩羅' },
-		KN: { zh_CN: '圣基茨和尼维斯', en_US: 'Saint Kitts and Nevis', zh_TW: '聖克里斯多福及尼維斯' },
-		KP: { zh_CN: '朝鲜', en_US: 'North Korea', zh_TW: '朝鮮' },
-		KR: { zh_CN: '韩国', en_US: 'South Korea', zh_TW: '韓國' },
-		KW: { zh_CN: '科威特', en_US: 'Kuwait', zh_TW: '科威特' },
-		KY: { zh_CN: '开曼群岛', en_US: 'Cayman Islands', zh_TW: '開曼群島' },
-		KZ: { zh_CN: '哈萨克斯坦', en_US: 'Kazakhstan', zh_TW: '哈薩克' },
-		LA: { zh_CN: '老挝', en_US: 'Laos', zh_TW: '寮國' },
-		LB: { zh_CN: '黎巴嫩', en_US: 'Lebanon', zh_TW: '黎巴嫩' },
-		LC: { zh_CN: '圣卢西亚', en_US: 'Saint Lucia', zh_TW: '聖露西亞' },
-		LI: { zh_CN: '列支敦士登', en_US: 'Liechtenstein', zh_TW: '列支敦斯登' },
-		LK: { zh_CN: '斯里兰卡', en_US: 'Sri Lanka', zh_TW: '斯里蘭卡' },
-		LR: { zh_CN: '利比里亚', en_US: 'Liberia', zh_TW: '賴比瑞亞' },
-		LS: { zh_CN: '莱索托', en_US: 'Lesotho', zh_TW: '賴索托' },
-		LT: { zh_CN: '立陶宛', en_US: 'Lithuania', zh_TW: '立陶宛' },
-		LU: { zh_CN: '卢森堡', en_US: 'Luxembourg', zh_TW: '盧森堡' },
-		LV: { zh_CN: '拉脱维亚', en_US: 'Latvia', zh_TW: '拉脫維亞' },
-		LY: { zh_CN: '利比亚', en_US: 'Libya', zh_TW: '利比亞' },
-		MA: { zh_CN: '摩洛哥', en_US: 'Morocco', zh_TW: '摩洛哥' },
-		MC: { zh_CN: '摩纳哥', en_US: 'Monaco', zh_TW: '摩納哥' },
-		MD: { zh_CN: '摩尔多瓦', en_US: 'Moldova', zh_TW: '摩爾多瓦' },
-		MG: { zh_CN: '马达加斯加', en_US: 'Madagascar', zh_TW: '馬達加斯加' },
-		ML: { zh_CN: '马里', en_US: 'Mali', zh_TW: '馬里' },
-		MN: { zh_CN: '蒙古', en_US: 'Mongolia', zh_TW: '蒙古' },
-		MO: { zh_CN: '澳门特别行政区', en_US: 'Macau', zh_TW: '澳門' },
-		MR: { zh_CN: '毛里塔尼亚', en_US: 'Mauritania', zh_TW: '毛里塔尼亞' },
-		MS: { zh_CN: '蒙特塞拉特', en_US: 'Montserrat', zh_TW: '蒙特塞拉特' },
-		MT: { zh_CN: '马耳他', en_US: 'Malta', zh_TW: '馬爾他' },
-		MU: { zh_CN: '毛里求斯', en_US: 'Mauritius', zh_TW: '毛里求斯' },
-		MV: { zh_CN: '马尔代夫', en_US: 'Maldives', zh_TW: '馬爾地夫' },
-		MW: { zh_CN: '马拉维', en_US: 'Malawi', zh_TW: '馬拉維' },
-		MX: { zh_CN: '墨西哥', en_US: 'Mexico', zh_TW: '墨西哥' },
-		MY: { zh_CN: '马来西亚', en_US: 'Malaysia', zh_TW: '馬來西亞' },
-		MZ: { zh_CN: '莫桑比克', en_US: 'Mozambique', zh_TW: '莫桑比克' },
-		NA: { zh_CN: '纳米比亚', en_US: 'Namibia', zh_TW: '納米比亞' },
-		NE: { zh_CN: '尼日尔', en_US: 'Niger', zh_TW: '尼日' },
-		NG: { zh_CN: '尼日利亚', en_US: 'Nigeria', zh_TW: '奈及利亞' },
-		NI: { zh_CN: '尼加拉瓜', en_US: 'Nicaragua', zh_TW: '尼加拉瓜' },
-		NL: { zh_CN: '荷兰', en_US: 'Netherlands', zh_TW: '荷蘭' },
-		NO: { zh_CN: '挪威', en_US: 'Norway', zh_TW: '挪威' },
-		NP: { zh_CN: '尼泊尔', en_US: 'Nepal', zh_TW: '尼泊爾' },
-		NR: { zh_CN: '瑙鲁', en_US: 'Nauru', zh_TW: '諾魯' },
-		NZ: { zh_CN: '新西兰', en_US: 'New Zealand', zh_TW: '紐西蘭' },
-		OM: { zh_CN: '阿曼', en_US: 'Oman', zh_TW: '阿曼' },
-		PA: { zh_CN: '巴拿马', en_US: 'Panama', zh_TW: '巴拿馬' },
-		PE: { zh_CN: '秘鲁', en_US: 'Peru', zh_TW: '秘魯' },
-		PG: { zh_CN: '巴布亚新几内亚', en_US: 'Papua New Guinea', zh_TW: '巴布亞紐幾內亞' },
-		PH: { zh_CN: '菲律宾', en_US: 'Philippines', zh_TW: '菲律賓' },
-		PK: { zh_CN: '巴基斯坦', en_US: 'Pakistan', zh_TW: '巴基斯坦' },
-		PL: { zh_CN: '波兰', en_US: 'Poland', zh_TW: '波蘭' },
-		PT: { zh_CN: '葡萄牙', en_US: 'Portugal', zh_TW: '葡萄牙' },
-		PY: { zh_CN: '巴拉圭', en_US: 'Paraguay', zh_TW: '巴拉圭' },
-		QA: { zh_CN: '卡塔尔', en_US: 'Qatar', zh_TW: '卡達' },
-		RO: { zh_CN: '罗马尼亚', en_US: 'Romania', zh_TW: '羅馬尼亞' },
-		RU: { zh_CN: '俄罗斯', en_US: 'Russia', zh_TW: '俄羅斯聯邦' },
-		RW: { zh_CN: '卢旺达', en_US: 'Rwanda', zh_TW: '盧安達' },
-		SA: { zh_CN: '沙特阿拉伯', en_US: 'Saudi Arabia', zh_TW: '沙烏地阿拉伯' },
-		SB: { zh_CN: '所罗门群岛', en_US: 'Solomon Islands', zh_TW: '索羅門群島' },
-		SC: { zh_CN: '塞舌尔', en_US: 'Seychelles', zh_TW: '塞席爾' },
-		SD: { zh_CN: '苏丹', en_US: 'Sudan', zh_TW: '蘇丹' },
-		SE: { zh_CN: '瑞典', en_US: 'Sweden', zh_TW: '瑞典' },
-		SG: { zh_CN: '新加坡', en_US: 'Singapore', zh_TW: '新加坡' },
-		SH: { zh_CN: '圣赫勒拿', en_US: 'Saint Helena', zh_TW: '聖赫勒拿島' },
-		SI: { zh_CN: '斯洛文尼亚', en_US: 'Slovenia', zh_TW: '斯洛維尼亞' },
-		SL: { zh_CN: '塞拉利昂', en_US: 'Sierra Leone', zh_TW: '塞拉利昂' },
-		SM: { zh_CN: '圣马力诺', en_US: 'San Marino', zh_TW: '聖馬利諾' },
-		SN: { zh_CN: '塞内加尔', en_US: 'Senegal', zh_TW: '塞內加爾' },
-		SO: { zh_CN: '索马里', en_US: 'Somalia', zh_TW: '索馬利亞' },
-		SR: { zh_CN: '苏里南', en_US: 'Suriname', zh_TW: '蘇里南' },
-		ST: { zh_CN: '圣多美和普林西比', en_US: 'São Tomé and Príncipe', zh_TW: '聖多美和普林西比' },
-		SV: { zh_CN: '萨尔瓦多', en_US: 'El Salvador', zh_TW: '薩爾瓦多' },
-		SY: { zh_CN: '叙利亚', en_US: 'Syria', zh_TW: '敘利亞' },
-		SZ: { zh_CN: '斯威士兰', en_US: 'Eswatini', zh_TW: '史瓦濟蘭' },
-		TD: { zh_CN: '乍得', en_US: 'Chad', zh_TW: '查德' },
-		TG: { zh_CN: '多哥', en_US: 'Togo', zh_TW: '多哥' },
-		TH: { zh_CN: '泰国', en_US: 'Thailand', zh_TW: '泰國' },
-		TJ: { zh_CN: '塔吉克斯坦', en_US: 'Tajikistan', zh_TW: '塔吉克' },
-		TM: { zh_CN: '土库曼斯坦', en_US: 'Turkmenistan', zh_TW: '土庫曼' },
-		TN: { zh_CN: '突尼斯', en_US: 'Tunisia', zh_TW: '突尼西亞' },
-		TO: { zh_CN: '汤加', en_US: 'Tonga', zh_TW: '東加' },
-		TR: { zh_CN: '土耳其', en_US: 'Turkey', zh_TW: '土耳其' },
-		TT: { zh_CN: '特立尼达和多巴哥', en_US: 'Trinidad and Tobago', zh_TW: '千里達及托巴哥' },
-		TV: { zh_CN: '图瓦卢', en_US: 'Tuvalu', zh_TW: '圖瓦盧' },
-		TZ: { zh_CN: '坦桑尼亚', en_US: 'Tanzania', zh_TW: '坦尚尼亞' },
-		UA: { zh_CN: '乌克兰', en_US: 'Ukraine', zh_TW: '烏克蘭' },
-		UG: { zh_CN: '乌干达', en_US: 'Uganda', zh_TW: '烏干達' },
-		US: { zh_CN: '美国', en_US: 'United States', zh_TW: '美國' },
-		UY: { zh_CN: '乌拉圭', en_US: 'Uruguay', zh_TW: '烏拉圭' },
-		UZ: { zh_CN: '乌兹别克斯坦', en_US: 'Uzbekistan', zh_TW: '烏茲別克' }
-	}[idNumber.substring(0, 2).toUpperCase()];
-	/* eslint-enable camelcase */
-	return country
-		? country[lang]
-		: '';
 }
 
 /** add pdf or caj to attachments, default is pdf */
@@ -1971,246 +1620,6 @@ var testCases = [
 					}
 				],
 				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "search",
-		"input": {
-			"DOI": "10.13374/j.issn2095-9389.2022.11.11.005"
-		},
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "生物质材料炭化的研究进展及其应用展望",
-				"creators": [
-					{
-						"firstName": "",
-						"lastName": "田学坤",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "王霞",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "苏凯",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "欧阳德泽",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "赵振毅",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "刘新红",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"date": "2023",
-				"DOI": "10.13374/j.issn2095-9389.2022.11.11.005",
-				"ISSN": "2095-9389",
-				"abstractNote": "生物质属于可再生资源，在我国含量丰富，生物质材料炭化后的产物在储能、吸附等领域得到了广泛应用.研究生物质材料的炭化过程，有利于生物质炭的有效利用.总结了生物质材料炭化过程中，生物质的种类和炭化条件（包括炭化温度、预处理等）对炭化产物中碳的结构、形态、性质的影响，期望为生物质炭化产物的有效利用提供理论基础.同时总结了在催化剂作用下，利用生物质材料炭化来制备碳纳米管，并分析了生物质材料中木质素和纤维素等组分对碳纳米管制备的影响.在此基础上，展望了生物质材料在含碳耐火材料中的应用前景，以期为制备低成本和高性能的新型含碳耐火材料提供思路.",
-				"extra": "original-container-title: Chinese Journal of Engineering\nfoundation: 国家自然科学基金资助项目（51872266,52172031）；\ndownload: 1164\nalbum: 工程科技Ⅱ辑;工程科技Ⅰ辑\nCLC: TB383.1;TQ175.7;TK6\ndbcode: CJFQ\ndbname: CJFDLAST2023\nfilename: BJKD202312004\npublicationTag: 北大核心, CA, JST, Pж(AJ), EI, CSCD, WJCI\nCIF: 3.295\nAIF: 2.29",
-				"issue": "12",
-				"language": "zh-CN",
-				"libraryCatalog": "CNKI",
-				"pages": "2026-2036",
-				"publicationTitle": "工程科学学报",
-				"url": "https://link.cnki.net/doi/10.13374/j.issn2095-9389.2022.11.11.005",
-				"volume": "45",
-				"attachments": [
-					{
-						"title": "Full Text PDF",
-						"mimeType": "application/pdf"
-					}
-				],
-				"tags": [
-					{
-						"tag": "含碳耐火材料"
-					},
-					{
-						"tag": "炭化条件"
-					},
-					{
-						"tag": "生物质材料"
-					},
-					{
-						"tag": "生物质炭"
-					},
-					{
-						"tag": "碳纳米管"
-					}
-				],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "search",
-		"input": {
-			"DOI": "10.19655/j.cnki.1005-4642.2020.09.009"
-		},
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "特斯拉阀性能的仿真研究",
-				"creators": [
-					{
-						"firstName": "",
-						"lastName": "周润中",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "乔宇杰",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "张钰翔",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "代珍兵",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"date": "2020",
-				"DOI": "10.19655/j.cnki.1005-4642.2020.09.009",
-				"ISSN": "1005-4642",
-				"abstractNote": "通过CAD软件建立几何模型,通过COMSOL软件建立数值模型并求解,与实验结果进行对比,并通过数值模拟讨论相关参量对阀门单向流通性的影响.研究结果表明:特斯拉阀门适用于低粘度高密度流体;本文所设计的特斯拉阀门在四阀门情况下dedicatee数能达到3.414;单阀门特斯拉阀的性能相较于多阀门更佳.",
-				"extra": "original-container-title: Physics Experimentation\ndownload: 2111\nalbum: 基础科学;工程科技Ⅱ辑\nCLC: TH134\ndbcode: CJFQ\ndbname: CJFDLAST2020\nfilename: WLSL202009009\npublicationTag: JST\nCIF: 0.755\nAIF: 0.562",
-				"issue": "9",
-				"language": "zh-CN",
-				"libraryCatalog": "CNKI",
-				"pages": "44-50",
-				"publicationTitle": "物理实验",
-				"url": "https://link.cnki.net/doi/10.19655/j.cnki.1005-4642.2020.09.009",
-				"volume": "40",
-				"attachments": [
-					{
-						"title": "Full Text PDF",
-						"mimeType": "application/pdf"
-					}
-				],
-				"tags": [
-					{
-						"tag": "diodicity数"
-					},
-					{
-						"tag": "数值模拟"
-					},
-					{
-						"tag": "特斯拉阀"
-					},
-					{
-						"tag": "阀门性能"
-					}
-				],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "search",
-		"input": {
-			"DOI": "10.13198/j.issn.1001-6929.2021.12.09"
-		},
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "燃煤锅炉协同处置油基岩屑碳排放核算及降碳贡献度分析",
-				"creators": [
-					{
-						"firstName": "",
-						"lastName": "崔长颢",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "刘美佳",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "葛金林",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "王铭玮",
-						"creatorType": "author",
-						"fieldMode": 1
-					},
-					{
-						"firstName": "",
-						"lastName": "闫大海",
-						"creatorType": "author",
-						"fieldMode": 1
-					}
-				],
-				"date": "2022",
-				"DOI": "10.13198/j.issn.1001-6929.2021.12.09",
-				"ISSN": "1001-6929",
-				"abstractNote": "我国电力行业CO_2排放量巨大，约占全国CO_2排放总量的50%.有效降低电力行业的碳排放，对我国按时实现“3060”碳达峰与碳中和的目标将起到有力支撑.石油和天然气开采过程中产生的油基岩屑因含有较高的热值可作为锅炉煤炭燃料的替代燃料使用.为探明利用燃煤锅炉协同处置油基岩屑的碳减排效果，选取某电站600 MW循环流化床锅炉，以30%的比例掺烧油基岩屑，并参照《温室气体排放核算与报告要求第1部分：发电企业》和《企业温室气体排放核算方法与报告指南发电设施(征求意见稿)》两种核算方法计算协同处置前后锅炉CO_2的排放量.结果表明：(1)在30%的掺加比下，油基岩屑协同处置具有碳减排效果.两种核算方法计算的降碳量分别为159.2和157.7 t，降碳比分别为0.543和0.538.(2)油基岩屑焚烧产生的CO_2排放量小于被替代的煤炭燃烧产生的碳排放量，是协同处置具有碳减排效益的主要原因.(3)核算法与检测法CO_2排放量的差异表明，企业源评估模型碳核算法最主要的不确定性来源于检测数据的精准度.研究显示，燃煤锅炉协同处置油基岩屑具有一定的CO_2减排效果，单位热值含碳量和消耗量是影响碳减排效果的两个关键因素，建议开展油基岩屑掺加比与碳减排量间的相关性研究，为规模化开展燃煤锅炉协同处置降碳工作提供参考.",
-				"extra": "original-container-title: Research of Environmental Sciences\nfoundation: 国家重点研发计划项目(No.2018YFC1900100)； 中央级公益性科研院所基本科研业务专项(No.2019YSKY-016)~~；\ndownload: 511\nalbum: 工程科技Ⅰ辑;工程科技Ⅱ辑\nCLC: X773;X741\ndbcode: CJFQ\ndbname: CJFDLAST2022\nfilename: HJKX202202025\npublicationTag: 北大核心, CA, JST, CSCD, WJCI, AMI扩展\nCIF: 4.747\nAIF: 3.657",
-				"issue": "2",
-				"language": "zh-CN",
-				"libraryCatalog": "CNKI",
-				"pages": "540-546",
-				"publicationTitle": "环境科学研究",
-				"url": "https://link.cnki.net/doi/10.13198/j.issn.1001-6929.2021.12.09",
-				"volume": "35",
-				"attachments": [
-					{
-						"title": "Full Text PDF",
-						"mimeType": "application/pdf"
-					}
-				],
-				"tags": [
-					{
-						"tag": "协同处置"
-					},
-					{
-						"tag": "循环流化床"
-					},
-					{
-						"tag": "油基岩屑"
-					},
-					{
-						"tag": "碳排放核算"
-					},
-					{
-						"tag": "降碳潜力"
-					}
-				],
 				"notes": [],
 				"seeAlso": []
 			}

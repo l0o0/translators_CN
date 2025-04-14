@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-03-01 18:41:50"
+	"lastUpdated": "2025-02-06 14:09:43"
 }
 
 /*
@@ -35,7 +35,7 @@
 	***** END LICENSE BLOCK *****
 */
 
-var typeMap = {
+const typeMap = {
 	journal: 'journalArticle',
 	book: 'book',
 	bookchapter: 'bookSection',
@@ -44,8 +44,7 @@ var typeMap = {
 };
 
 function detectWeb(doc, _url) {
-	let typeKey = text(doc, '#journal-summarize > span:first-of-type');
-	Z.debug(typeKey);
+	const typeKey = text(doc, '#journal-summarize > span:first-of-type');
 	if (typeMap[typeKey.toLowerCase()] == 'book') {
 		return doc.querySelector('#doc-chapters')
 			? 'multiple'
@@ -61,12 +60,12 @@ function detectWeb(doc, _url) {
 }
 
 function getSearchResults(doc, checkOnly) {
-	var items = {};
-	var found = false;
-	var rows = doc.querySelectorAll('.argicle-title > a, #doc-chapters .name > span > a');
-	for (let row of rows) {
-		let href = row.href;
-		let title = ZU.trimInternal(row.textContent);
+	const items = {};
+	let found = false;
+	const rows = doc.querySelectorAll('.argicle-title > a, #doc-chapters .name > span > a');
+	for (const row of rows) {
+		const href = row.href;
+		const title = ZU.trimInternal(row.textContent);
 		if (!href || !title) continue;
 		if (checkOnly) return true;
 		found = true;
@@ -77,9 +76,9 @@ function getSearchResults(doc, checkOnly) {
 
 async function doWeb(doc, url) {
 	if (detectWeb(doc, url) == 'multiple') {
-		let items = await Zotero.selectItems(getSearchResults(doc, false));
+		const items = await Zotero.selectItems(getSearchResults(doc, false));
 		if (!items) return;
-		for (let url of Object.keys(items)) {
+		for (const url in items) {
 			await scrape(await requestDocument(url));
 		}
 	}
@@ -90,6 +89,7 @@ async function doWeb(doc, url) {
 
 async function scrape(doc, url = doc.location.href) {
 	try {
+		// throw new Error('debug');
 		await scrapeSearch(doc);
 	}
 	catch (error) {
@@ -99,8 +99,8 @@ async function scrape(doc, url = doc.location.href) {
 	}
 }
 
-var selectors = {
-	labels: '[id*="doc-about"] .infoBox-item, div[class*="detail_item__"]',
+const selectors = {
+	labels: '[id*="doc-about"] .infoBox-item, div[class*="detail_doc-item__"]',
 	title: '#doc-title',
 	abstractNote: '#doc-summary-content-text',
 	publicationTitle: '[class*="detail_journal_name"]',
@@ -114,15 +114,12 @@ var selectors = {
 };
 
 async function scrapeSearch(doc) {
-	let labels = new Labels(doc, exports.selectors.labels);
+	const labels = new Labels(doc, exports.selectors.labels);
 	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
-	let doi = text(doc, exports.selectors.DOI) || labels.get('DOI');
-	let isbn = labels.get('ISBN');
-	Z.debug(`DOI: ${doi}`);
-	Z.debug(`ISBN: ${isbn}`);
-	// throw new Error('debug');
-	if (!doi && !isbn) throw new ReferenceError('no identifier available');
-	let translator = Zotero.loadTranslator('search');
+	const doi = text(doc, exports.selectors.DOI) || labels.get('DOI');
+	const isbn = labels.get('ISBN');
+	if (!doi && !isbn) throw new Error('no identifier available');
+	const translator = Zotero.loadTranslator('search');
 	translator.setSearch({ ISBN: isbn, DOI: doi });
 	translator.setHandler('translators', (_, translators) => {
 		translator.setTranslator(translators);
@@ -143,7 +140,7 @@ async function scrapeSearch(doc) {
 				doc.querySelectorAll(exports.selectors.tags)
 					.forEach(element => item.tags.push(ZU.trimInternal(element.textContent).replace(/;$/, '')));
 			}
-			let hightlights = text(doc, exports.selectors.hightlights);
+			const hightlights = text(doc, exports.selectors.hightlights);
 			if (hightlights) {
 				item.notes.push('<h1>Highlights / 研究要点</h1>\n' + hightlights);
 			}
@@ -156,20 +153,22 @@ async function scrapeSearch(doc) {
 }
 
 async function scrapeDoc(doc, url = doc.location.href) {
-	let labels = new Labels(doc, exports.selectors.labels);
+	const labels = new Labels(doc, exports.selectors.labels);
 	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
-	let extra = new Extra();
-	let doi = text(doc, exports.selectors.DOI) || labels.get('DOI');
-	let isbn = labels.get('ISBN');
-	Z.debug(`DOI: ${doi}`);
-	Z.debug(`ISBN: ${isbn}`);
-	var newItem = new Z.Item(typeMap[exports.typeKey.toLowerCase()] || detectWeb(doc, url));
-	let title = doc.querySelector(exports.selectors.title).cloneNode(true);
+	const extra = new Extra();
+	const newItem = new Z.Item(typeMap[exports.typeKey.toLowerCase()] || detectWeb(doc, url));
+	const title = doc.querySelector(exports.selectors.title).cloneNode(true);
 	if (title.querySelector(':not(sup):not(sub)')) {
 		title.removeChild(title.querySelector(':not(sup):not(sub)'));
 	}
 	newItem.title = ZU.trimInternal(title.innerHTML);
-	newItem.DOI = doi;
+	const doi = text(doc, exports.selectors.DOI) || labels.get('DOI');
+	if (ZU.fieldIsValidForType('DOI', newItem.itemType)) {
+		newItem.DOI = doi;
+	}
+	else {
+		extra.set('DOI', doi, true);
+	}
 	newItem.url = url;
 	if (/^en|英语/i.test(labels.get(['语种', 'Language']))) {
 		newItem.language = 'en-US';
@@ -183,14 +182,14 @@ async function scrapeDoc(doc, url = doc.location.href) {
 		doc.querySelectorAll(exports.selectors.tags).forEach((element) => {
 			newItem.tags.push(ZU.trimInternal(element.textContent).replace(/;$/, ''));
 		});
-		let hightlights = text(doc, exports.selectors.hightlights);
+		const hightlights = text(doc, exports.selectors.hightlights);
 		if (hightlights) {
 			newItem.notes.push('<h1>Highlights / 研究要点</h1>\n' + hightlights);
 		}
 		switch (newItem.itemType) {
 			case 'conferencePaper':
 			case 'journalArticle': {
-				let pubInfo = text(doc, exports.selectors.pubInfo);
+				const pubInfo = text(doc, exports.selectors.pubInfo);
 				newItem.publicationTitle = text(doc, exports.selectors.publicationTitle) || labels.get('journals?$');
 				newItem.volume = tryMatch(pubInfo, /Volume 0*([1-9]\d*)/, 1) || labels.get('volume');
 				newItem.issue = tryMatch(pubInfo, /Issue 0*([1-9]\d*)/, 1) || labels.get('issue');
@@ -201,7 +200,7 @@ async function scrapeDoc(doc, url = doc.location.href) {
 
 			/* thesis is only available on scholar.cnki.net */
 			case 'thesis': {
-				let pubInfo = labels.get('学位授予');
+				const pubInfo = labels.get('学位授予');
 				newItem.thesisType = {
 					Doctor: 'Doctoral dissertation',
 					Master: 'Master thesis'
@@ -229,10 +228,10 @@ async function scrapeDoc(doc, url = doc.location.href) {
 
 			/* book section is only available on scholar.cnki.net */
 			case 'bookSection': {
-				let pubInfo = text(doc, exports.selectors.pubInfo);
+				const pubInfo = text(doc, exports.selectors.pubInfo);
 				newItem.pages = tryMatch(pubInfo, /Page ([\d+, ~-]*)/, 1);
-				let bookDoc = await requestDocument(doc.querySelector(exports.selectors.book).href);
-				let bookTitle = bookDoc.querySelector('#doc-title').cloneNode(true);
+				const bookDoc = await requestDocument(doc.querySelector(exports.selectors.bookUrl).href);
+				const bookTitle = bookDoc.querySelector('#doc-title').cloneNode(true);
 				if (bookTitle.querySelector(':not(sup):not(sub)')) {
 					bookTitle.removeChild(bookTitle.querySelector(':not(sup):not(sub)'));
 				}
@@ -247,12 +246,12 @@ async function scrapeDoc(doc, url = doc.location.href) {
 }
 
 function patchBook(bookItem, extra, doc) {
-	let labels = new Labels(doc, '[id*="doc-about"] .infoBox-item');
+	const labels = new Labels(doc, '[id*="doc-about"] .infoBox-item');
 	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
 	bookItem.abstractNote = labels.get(['摘要', 'Abstract']);
 	bookItem.series = labels.get('书系');
 	bookItem.publisher = text(doc, exports.selectors.publisher);
-	let pubInfo = text(doc, exports.selectors.pubInfo);
+	const pubInfo = text(doc, exports.selectors.pubInfo);
 	bookItem.date = tryMatch(pubInfo, /(?:\.\s)?(\d{4})(?:\.\s)?/, 1);
 	bookItem.ISBN = labels.get('ISBN');
 	extra.set('subject', labels.get('学科分类'));
@@ -267,30 +266,28 @@ class Labels {
 	constructor(doc, selector) {
 		this.data = [];
 		this.emptyElm = doc.createElement('div');
-		Array.from(doc.querySelectorAll(selector))
+		const nodes = doc.querySelectorAll(selector);
+		for (const node of nodes) {
 			// avoid nesting
-			.filter(element => !element.querySelector(selector))
 			// avoid empty
-			.filter(element => !/^\s*$/.test(element.textContent))
-			.forEach((element) => {
-				const elmCopy = element.cloneNode(true);
-				// avoid empty text
-				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
-					// Z.debug(elementCopy.firstChild.textContent);
-					elmCopy.removeChild(elmCopy.firstChild);
-					// Z.debug(elementCopy.firstChild.textContent);
-				}
-				if (elmCopy.childNodes.length > 1) {
-					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
-					this.data.push([key, elmCopy]);
-				}
-				else {
-					const text = ZU.trimInternal(elmCopy.textContent);
-					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
-					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
-					this.data.push([key, elmCopy]);
-				}
-			});
+			if (node.querySelector(selector) || !/\S/.test(node.textContent)) continue;
+			const elmCopy = node.cloneNode(true);
+			// avoid empty text
+			while (![1, 3, 4].includes(elmCopy.firstChild.nodeType) || !/\S/.test(elmCopy.firstChild.textContent)) {
+				elmCopy.removeChild(elmCopy.firstChild);
+				if (!elmCopy.firstChild) break;
+			}
+			if (elmCopy.childNodes.length > 1) {
+				const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
+				this.data.push([key, elmCopy]);
+			}
+			else {
+				const text = ZU.trimInternal(elmCopy.textContent);
+				const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
+				elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
+				this.data.push([key, elmCopy]);
+			}
+		}
 	}
 
 	get(label, element = false) {
@@ -320,7 +317,7 @@ class Labels {
 
 function tryMatch(string, pattern, index = 0) {
 	if (!string) return '';
-	let match = string.match(pattern);
+	const match = string.match(pattern);
 	return (match && match[index])
 		? match[index]
 		: '';
@@ -336,7 +333,7 @@ class Extra {
 	}
 
 	set(key, val, csl = false) {
-		let target = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		const target = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
 		if (target) {
 			target.val = val;
 		}
@@ -346,7 +343,7 @@ class Extra {
 	}
 
 	get(key) {
-		let result = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		const result = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
 		return result
 			? result.val
 			: undefined;
@@ -436,24 +433,28 @@ var testCases = [
 				"title": "Climate Change and Edaphic Specialists: Irresistible Force Meets Immovable Object?",
 				"creators": [
 					{
+						"creatorType": "author",
 						"firstName": "Richard T.",
-						"lastName": "Corlett",
-						"creatorType": "author"
+						"lastName": "Corlett"
 					},
 					{
+						"creatorType": "author",
 						"firstName": "Kyle W.",
-						"lastName": "Tomlinson",
-						"creatorType": "author"
+						"lastName": "Tomlinson"
 					}
 				],
-				"date": "2020",
+				"date": "2020-04",
 				"DOI": "10.1016/j.tree.2019.12.007",
+				"ISSN": "01695347",
 				"abstractNote": "Species exposed to anthropogenic climate change can acclimate, adapt, move, or be extirpated. It is often assumed that movement will be the dominant response, with populations tracking their climate envelopes in space, but the numerous species restricted to specialized substrates cannot easily move. In warmer regions of the world, such edaphic specialists appear to have accumulated in situ over millions of years, persisting despite climate change by local movements, plastic responses, and genetic adaptation. However, past climates were usually cooler than today and rates of warming slower, while edaphic islands are now exposed to multiple additional threats, including mining. Modeling studies that ignore edaphic constraints on climate change responses may therefore give misleading results for a significant proportion of all taxa.",
 				"issue": "4",
-				"libraryCatalog": "CNKI Scholar",
+				"journalAbbreviation": "Trends in Ecology & Evolution",
+				"language": "en-US",
+				"libraryCatalog": "DOI.org (Crossref)",
 				"pages": "367-376",
 				"publicationTitle": "Trends in Ecology & Evolution",
 				"shortTitle": "Climate Change and Edaphic Specialists",
+				"url": "https://linkinghub.elsevier.com/retrieve/pii/S0169534719303520",
 				"volume": "35",
 				"attachments": [],
 				"tags": [
@@ -499,19 +500,36 @@ var testCases = [
 						"creatorType": "author"
 					}
 				],
-				"date": "2024",
-				"ISBN": "9781003469940",
-				"extra": "subject: 美术\nCLC: TU-8",
-				"language": "en-US",
-				"libraryCatalog": "CNKI Scholar",
-				"numPages": "288",
-				"publisher": "Taylor and Francis",
-				"series": "Routledge Environmental Anthropology",
+				"date": "2025",
+				"ISBN": "9781032745770 9781032745763",
+				"abstractNote": "\"This book applies a critical perspective to anthropogenic climate change and the global socio-ecological crisis. The book focuses on the critical anthropology of climate change by opening up a dialogue with the two main contending perspectives in the anthropology of climate change, namely the cultural ecological and the cultural interpretive perspectives. Guided by these, the authors take a firm stance on the types of changes that are needed to sustain life on earth as we know it. Within this framework, they explore issues of climate and social equity, the nature of the current era in earth's geohistory, the perspectives of the elite polluters driving climate change, and the regrettable contributions of anthropologists and other scholars to climate change. Engaging with perspectives from sociology, political science, and the geography of climate change, the book explores various approaches to thinking about and responding to the existential threat of an ever-warming climate. In doing so, it lays the foundation for a brave new sustainable world that is socially just, highly democratic, and climatically-safe for humans and other species. This book will be of interest to researchers and students studying environmental anthropology, climate change, human geography, sociology, and political science\"--",
+				"callNumber": "QC903 .B145 2025",
+				"libraryCatalog": "Library of Congress ISBN",
+				"numPages": "284",
+				"place": "London ; New York, NY",
+				"publisher": "Routledge, Taylor & Francis Group",
+				"series": "Routledge environmental anthropology",
 				"shortTitle": "Building the Critical Anthropology of Climate Change",
-				"url": "https://scholar.cnki.net/zn/Detail/index/GARBLAST/STBD74429B71BDFEE5C7EC72DB869CD0CC57",
 				"attachments": [],
-				"tags": [],
-				"notes": [],
+				"tags": [
+					{
+						"tag": "Climatic changes"
+					},
+					{
+						"tag": "Effect of climate on"
+					},
+					{
+						"tag": "Human beings"
+					},
+					{
+						"tag": "Social aspects"
+					}
+				],
+				"notes": [
+					{
+						"note": "Climate change, climate science, and anthropology -- Conflicting anthropological perspectives : cultural ecological/ecological anthropological, cultural interpretive, and critical anthropology perspectives of climate change -- Anthropocene, capitalocene, or whatever : rethinking our era of climate change production -- Social inequality and climate change -- Planetary health : a critical health anthropological perspective -- Toward a critical anthropology of climate refugees -- Can ecological modernization contain climate change? How the rich and powerful seek to address the ecological crisis -- The scholarly elephant in the sky : how can anthropologists and other scholars grapple with their heavy reliance on flying in the era of ecocrisis -- Two genres of the climate movement : climate action vs climate justice -- Towards a critical anthropology of the future : climate change and future scenarios -- Eco-socialism as the ultimate climate change mitigation strategy"
+					}
+				],
 				"seeAlso": []
 			}
 		]
@@ -532,7 +550,8 @@ var testCases = [
 				],
 				"date": "2006",
 				"ISBN": "9780889209688",
-				"bookTitle": "[object HTMLDivElement]",
+				"bookTitle": "Thinking the Unthinkable:Civilization and Rapid Climate Change",
+				"extra": "CLC: J42",
 				"libraryCatalog": "CNKI Scholar",
 				"pages": "55-64",
 				"publisher": "Wilfrid Laurier University Press",
@@ -551,19 +570,12 @@ var testCases = [
 			{
 				"itemType": "thesis",
 				"title": "The European Union's climate change mitigation action : an ongoing transition?",
-				"creators": [
-					{
-						"firstName": "Tolis",
-						"lastName": "Valeria",
-						"creatorType": "author"
-					}
-				],
+				"creators": [],
 				"abstractNote": "This project develops a Lacanian framework for analysing the EU’s climate change mitigation policymaking in a period that corresponds to the finalisation of the 2030 Clean energy package and the launch of the 2050 long-term decarbonization strategy. It empirically follows the work of the EU at its Brussels headquarters and at the level of the UNFCCC Conferences of the Parties between 2017 and 2018 and methodologically contributes to the poststructuralist strands of Global Environmental Politics in International Relations. This project aims to reflect on the nature of the EU’s current climate action and on the possibility of “change” in relation to scientifically informed climate warnings and recommendations on departing from the business as usual logic. The investigation is guided by the case studies of energy efficiency and renewables, and circular economy given their policy-relevance and given that these are considered desirable policy tools by the EU. It builds on Jacques Lacan’s theory of discourse which allows us to emphasise signification and its effects on the speaking subjects. This makes it possible to open a seemingly closed discourse and expose its inherent fractures through the speaking subjects by empirically exploring how energy efficiency, renewables and circular economy are spoken. It is demonstrated that energy efficiency, renewables and circular economy cannot be thought as a presupposition of sense that automatically delivers the desired and required emissions reductions. I argue that to understand the current EU’s climate action and any possibility of change, attention must be paid to the way in which any produced fractures are handled in signification by the subjects, as these can be either positively integrated into signification or can disrupt it and cause a change of paradigm. I conclude that except for a few potentially disruptive elements that leave room for a true rupture and possible change, the current EU’s climate mitigation action appears more as a fictitious change than as a real transition.",
 				"extra": "subject: 理论经济学",
 				"libraryCatalog": "CNKI Scholar",
 				"shortTitle": "The European Union's climate change mitigation action",
 				"thesisType": "Doctoral dissertation",
-				"university": "Cardiff University",
 				"url": "https://scholar.cnki.net/zn/Detail/index/GARELAST/STAAF1F9B76994BC80440DB513678E873E69",
 				"attachments": [],
 				"tags": [],
@@ -579,20 +591,12 @@ var testCases = [
 			{
 				"itemType": "thesis",
 				"title": "Neuromolecular signatures of fish social interactions under normal and climate change conditions",
-				"creators": [
-					{
-						"firstName": "Ramirez Calero Sandra",
-						"lastName": "Patricia",
-						"creatorType": "author"
-					}
-				],
-				"abstractNote": "Coral reef fish exhibit a large variety of behaviours crucial for fitness and survival. The cleaner wrasse Labroides dimidiatus displays cognitive abilities in its interaction with other species by providing services of ectoparasite cleaning. These features serve as a good model to understand the complex processes of social behaviour and how these interactions might be altered by changes in the marine environment due to ocean acidification (caused by elevated CO2) and warming (elevated temperature). In general, little is known about the functional molecular basis of cooperative behaviour between L. dimidiatus and its potential client fishes and how rapid environmental changes might affect it. Thus, here we investigate the molecular mechanisms responsible for the interaction behaviour using Acanthurus leucosternon as client. In addition, we exposed interacting fish species to three conditions representing predicted future climate change conditions (according to RCP8.0 2100) and compare with a control of present-day levels of temperature and CO2 :1) elevated levels of pCO2 (1000 μatm), 2) elevated temperature (32oC), and 3) a combined condition of elevated levels of CO2 and temperature. We dissected the fore-, mid-, and hindbrain regions of each fish to analyse specific differential gene expression, using transcriptomics, and we found that most of the variation and transcriptional response in both species was regulated in the hindbrain and forebrain regions. The interaction behaviour responses of L. dimidiatus during ambient environmental conditions involved immediate early gene alteration, dopaminergic and glutamatergic pathways, the expression of neurohormones (such as isotocin) and steroids (e.g. progesterone and estrogen), as well as social decision-making genes. In contrast, for the client, fewer molecular alterations were found, mostly involving pituitary hormone responses. However, the molecular signatures of L. dimidiatus were affected in all future climate change conditions with transcriptional changes observed in functions such as stress response (i.e. hypoxia, apoptosis, heat shock proteins), histone regulation, metabolism and the synapse. Key molecular processes, such as learning and memory activation in the cleaner wrasse and stress relief and reduced aggression in the client, were affected by the future climate change conditions. Genes involved in behaviour and memory were altered in expression under the elevated CO2 and temperature conditions, whereas the combined condition showed no expression changes related to behaviour, suggesting no additive effect on the cognitive abilities of L. dimidiatus with two simultaneous conditions. Hence, future environmental conditions influence the molecular programming involved in the mutualism maintenance for L. dimidiatus and its potential clients with possible large-scale effects on the coral reef ecosystems.C",
+				"creators": [],
+				"abstractNote": "Coral reef fish exhibit a large variety of behaviours crucial for fitness and survival. The cleaner wrasse Labroides dimidiatus displays cognitive abilities in its interaction with other species by providing services of ectoparasite cleaning. These features serve as a good model to understand the complex processes of social behaviour and how these interactions might be altered by changes in the marine environment due to ocean acidification (caused by elevated CO2) and warming (elevated temperature). In general, little is known about the functional molecular basis of cooperative behaviour between L. dimidiatus and its potential client fishes and how rapid environmental changes might affect it. Thus, here we investigate the molecular mechanisms responsible for the interaction behaviour using Acanthurus leucosternon as client. In addition, we exposed interacting fish species to three conditions representing predicted future climate change conditions (according to RCP8.0 2100) and compare with a control of present-day levels of temperature and CO2 :1) elevated levels of pCO2 (1000 μatm), 2) elevated temperature (32oC), and 3) a combined condition of elevated levels of CO2 and temperature. We dissected the fore-, mid-, and hindbrain regions of each fish to analyse specific differential gene expression, using transcriptomics, and we found that most of the variation and transcriptional response in both species was regulated in the hindbrain and forebrain regions. The interaction behaviour responses of L. dimidiatus during ambient environmental conditions involved immediate early gene alteration, dopaminergic and glutamatergic pathways, the expression of neurohormones (such as isotocin) and steroids (e.g. progesterone and estrogen), as well as social decision-making genes. In contrast, for the client, fewer molecular alterations were found, mostly involving pituitary hormone responses. However, the molecular signatures of L. dimidiatus were affected in all future climate change conditions with transcriptional changes observed in functions such as stress response (i.e. hypoxia, apoptosis, heat shock proteins), histone regulation, metabolism and the synapse. Key molecular processes, such as learning and memory activation in the cleaner wrasse and stress relief and reduced aggression in the client, were affected by the future climate change conditions. Genes involved in behaviour and memory were altered in expression under the elevated CO2 and temperature conditions, whereas the combined condition showed no expression changes related to behaviour, suggesting no additive effect on the cognitive abilities of L. dimidiatus with two simultaneous conditions. Hence, future environmental conditions influence the molecular programming involved in the mutualism maintenance for L. dimidiatus and its potential clients with possible large-scale effects on the coral reef ecosystems.",
 				"extra": "major: Philosophy\nsubject: 环境",
 				"language": "en-US",
 				"libraryCatalog": "CNKI Scholar",
-				"place": "Pokfulam, Hong Kong",
 				"thesisType": "Master thesis",
-				"university": "The University of Hong Kong",
 				"url": "https://scholar.cnki.net/zn/Detail/index/GARELAST/STAC996F5D363605965191098B0C2CF2EDEE",
 				"attachments": [],
 				"tags": [],
@@ -604,192 +608,46 @@ var testCases = [
 	{
 		"type": "web",
 		"url": "https://scholar.cnki.net/zn/Detail/index/GARCLAST/SPAGB666445D4FB9CA39DFFDF6EA2B4F5958",
+		"detectedItemType": "conferencePaper",
 		"items": [
 			{
-				"itemType": "conferencePaper",
+				"itemType": "bookSection",
 				"title": "Analysis of Existing Design Temperature for Heating in Sarajevo in Light of Climate Changes",
 				"creators": [
 					{
-						"firstName": "Blazevic",
-						"lastName": "Rejhana",
-						"creatorType": "author"
+						"creatorType": "editor",
+						"firstName": "Branko",
+						"lastName": "Katalinic"
 					},
 					{
-						"firstName": "Teskeredzic",
-						"lastName": "Armin",
-						"creatorType": "author"
+						"creatorType": "author",
+						"firstName": "Rejhana",
+						"lastName": "Blazevic"
 					},
 					{
-						"firstName": "Zecevic",
-						"lastName": "Melisa",
-						"creatorType": "author"
+						"creatorType": "author",
+						"firstName": "Armin",
+						"lastName": "Teskeredzic"
+					},
+					{
+						"creatorType": "author",
+						"firstName": "Melisa",
+						"lastName": "Zecevic"
 					}
 				],
 				"date": "2023",
-				"DOI": "10.2507/34TH.DAAAM.PROCEEDINGS.027",
-				"abstractNote": "Designers of heating systems and planners of the district heating consider large number of variables that influence the final proposal of the system which will meet the heating needs. Size of the system and investment costs depends on different parameters but are mostly influenced by the outside design temperature. Engineers are aware of the climate change influence but during design process they need either legal or scientific proof that they can use new/updated values of the design temperatures at the specific location. In this paper, an analysis of hourly air temperature values for the city of Sarajevo, Bosnia and Herzegovina (B&H) was conducted in the latest available 20 years dataset. Data on the outside air temperature were obtained by the Federal Hydrometeorological Institute of Bosnia and Herzegovina. Five different methods were briefly explained and used for determination of the new design temperature for Sarajevo based on the period 2001–2020. Results of the analysis demonstrate that the currently valid and official outside design temperature was low and needs to be revised. As a small-scale example, calculation of the heating needs of one residential unit was made in order to demonstrate the influence of different design outside temperature on the heating needs. These numbers were then extrapolated on the district heating system and the benefits of the proposed approach were underlined. Performed analysis suggest an urgent change in the design temperature for all cities in Bosnia and Herzegovina as it was demonstrated on the example of Sarajevo in this paper.",
-				"libraryCatalog": "CNKI Scholar",
-				"pages": "0209-0218",
-				"proceedingsTitle": "34th DAAAM International Symposium on Intelligent Manufacturing and Automation",
-				"url": "https://scholar.cnki.net/zn/Detail/index/GARCLAST/SPAGB666445D4FB9CA39DFFDF6EA2B4F5958",
-				"volume": "34",
-				"attachments": [],
-				"tags": [
-					{
-						"tag": "Climate Change"
-					},
-					{
-						"tag": "Heat Load"
-					},
-					{
-						"tag": "Heating System"
-					},
-					{
-						"tag": "Outside Desgin Temperature"
-					}
-				],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=phUvsea1i7YNS5znM1G66x3jDJpx3L1zcm6u9YthZbUuBFoxPotxkL56i7W1yfe0GoocNQkff_ksvrgOiypVY0vfWhsTm-7iAkVlpCzcDro0hBUuXajM1Snj4R10pMhHNxDTyQVdV9Z2DmNHQARAOYrNAlw18XlPLU3VAWMRKMKswIf3yAQryw==&uniplatform=NZKPT&language=CHS",
-		"items": [
-			{
-				"itemType": "book",
-				"title": "IMF Terminology Bulletin: Climate & the Environment, Fintech, Gender, and Related Acronyms: English to Arabic",
-				"creators": [],
-				"date": "10/2023",
-				"ISBN": "9798400251245",
-				"extra": "DOI: 10.5089/9798400251245.073",
-				"language": "ar",
+				"ISBN": "9783902734419",
+				"bookTitle": "DAAAM Proceedings",
+				"edition": "1",
+				"extra": "DOI: 10.2507/34th.daaam.proceedings.027",
 				"libraryCatalog": "DOI.org (Crossref)",
-				"place": "Washington, D.C.",
-				"publisher": "International Monetary Fund",
-				"shortTitle": "IMF Terminology Bulletin",
-				"url": "https://elibrary.imf.org/openurl?genre=book&isbn=9798400251245&cid=537460-com-dsp-crossref",
+				"pages": "0209-0218",
+				"publisher": "DAAAM International Vienna",
+				"url": "http://www.daaam.info/Downloads/Pdfs/proceedings/proceedings_2023/027.pdf",
+				"volume": "1",
 				"attachments": [],
 				"tags": [],
 				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://kns.cnki.net/kcms2/article/abstract?v=phUvsea1i7b0LBhQwIVxbNbzKBRWIJp8hSX7PW0Uh_sDA_1ULXt8qcyRECdNOTy3NcitPSkXnaQcN051Rb7NtmChDNB1pmvOBleSaIJ3VDSIkWqqqpOALLL5qZSSMkpkTokstP4K9tRA1TywWgO-2OW4Tod3_pUcHuq24TOLnp8x5uPR3hlvGA==&uniplatform=NZKPT&language=CHS",
-		"items": [
-			{
-				"itemType": "journalArticle",
-				"title": "Long-term analysis of microseism during extreme weather events: Medicanes and common storms in the Mediterranean Sea",
-				"creators": [
-					{
-						"creatorType": "author",
-						"firstName": "Alfio Marco",
-						"lastName": "Borzì"
-					},
-					{
-						"creatorType": "author",
-						"firstName": "Vittorio",
-						"lastName": "Minio"
-					},
-					{
-						"creatorType": "author",
-						"firstName": "Raphael",
-						"lastName": "De Plaen"
-					},
-					{
-						"creatorType": "author",
-						"firstName": "Thomas",
-						"lastName": "Lecocq"
-					},
-					{
-						"creatorType": "author",
-						"firstName": "Flavio",
-						"lastName": "Cannavò"
-					},
-					{
-						"creatorType": "author",
-						"firstName": "Giuseppe",
-						"lastName": "Ciraolo"
-					},
-					{
-						"creatorType": "author",
-						"firstName": "Sebastiano",
-						"lastName": "D'Amico"
-					},
-					{
-						"creatorType": "author",
-						"firstName": "Carlo Lo",
-						"lastName": "Re"
-					},
-					{
-						"creatorType": "author",
-						"firstName": "Carmelo",
-						"lastName": "Monaco"
-					},
-					{
-						"creatorType": "author",
-						"firstName": "Marco",
-						"lastName": "Picone"
-					},
-					{
-						"creatorType": "author",
-						"firstName": "Giovanni",
-						"lastName": "Scardino"
-					},
-					{
-						"creatorType": "author",
-						"firstName": "Giovanni",
-						"lastName": "Scicchitano"
-					},
-					{
-						"creatorType": "author",
-						"firstName": "Andrea",
-						"lastName": "Cannata"
-					}
-				],
-				"date": "2024-03",
-				"DOI": "10.1016/j.scitotenv.2024.169989",
-				"ISSN": "00489697",
-				"abstractNote": "本文从地震角度分析了2011年11月至2021年11月期间发生在地中海的12次气象事件。特别地,我们考虑了8个Medicanes和4个更常见的风暴。这些事件虽然有明显差异,但都造成了强降水、强阵风和强风暴潮,其有效波高通常> 3 ? m。我们利用两种不同的方法(基于幅度衰减的网格搜索和阵列技术)从频谱含量、振幅的时空变化和震源位置等方面处理了这些气象事件与微震(是地球上最连续、最广泛的地震信号)特征之间的关系。通过将微震震源位置与风暴潮显著区域进行对比,我们观察到在(两位医生在气象参数方面表现出很低的强度,微震振幅在这两次事件中没有表现出显著的变化)分析的12个事件中,有10个事件的微震位置与风暴潮的实际位置一致。我们还进行了两次分析,通过使用一种利用连续地震噪声相干性的方法来获得这些事件的地震特征,并从地震角度获得它们的强度,称为\"微震降低幅度\"。此外,通过整合这两种方法得到的结果,我们能够\"地震地\"区分Medicanes和普通风暴。因此,我们展示了通过将微震信息与其他常用的研究气象现象的技术结合起来,为地中海气象事件建立一个新的监测系统的可能性。将微震与海况监测(例如,波浪浮...",
-				"journalAbbreviation": "Science of The Total Environment",
-				"language": "en-US",
-				"libraryCatalog": "DOI.org (Crossref)",
-				"pages": "169989",
-				"publicationTitle": "Science of The Total Environment",
-				"shortTitle": "Long-term analysis of microseism during extreme weather events",
-				"url": "https://linkinghub.elsevier.com/retrieve/pii/S0048969724001232",
-				"volume": "915",
-				"attachments": [],
-				"tags": [
-					{
-						"tag": "Climate change"
-					},
-					{
-						"tag": "Common storms"
-					},
-					{
-						"tag": "Hindcast maps"
-					},
-					{
-						"tag": "Medicanes"
-					},
-					{
-						"tag": "Mediterranean Sea"
-					},
-					{
-						"tag": "Microseism"
-					},
-					{
-						"tag": "Monitoring sea state"
-					},
-					{
-						"tag": "Wave buoys"
-					}
-				],
 				"seeAlso": []
 			}
 		]
