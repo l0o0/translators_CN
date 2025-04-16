@@ -26,7 +26,7 @@ body:
     attributes:
       label: 链接
       description: 网站的网址，或文献交换格式的文档地址。
-      placeholder: https://wwww.cnki.net/
+      placeholder: 例如：https://wwww.cnki.net/
     validations:
       required: true
   - type: checkboxes
