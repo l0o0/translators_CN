@@ -3317,7 +3317,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-04-15 01:24:03 +0800",
+        "date": "2025-04-14 17:24:31 +0000",
         "message": "update CNKI family"
       },
       {
@@ -3691,7 +3691,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-04-15 01:24:03 +0800",
+        "date": "2025-04-14 17:24:31 +0000",
         "message": "update CNKI family"
       },
       {
@@ -4011,7 +4011,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-04-15 01:24:03 +0800",
+        "date": "2025-04-14 17:24:31 +0000",
         "message": "update CNKI family"
       },
       {
@@ -4841,7 +4841,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-04-15 01:24:03 +0800",
+        "date": "2025-04-14 17:24:31 +0000",
         "message": "update CNKI family"
       },
       {
@@ -6042,7 +6042,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-04-15 01:24:03 +0800",
+        "date": "2025-04-14 17:24:31 +0000",
         "message": "update CNKI family"
       },
       {
@@ -16029,6 +16029,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2025-04-18 20:15:31 +0800",
+        "message": "fix #502"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2025-04-10 08:17:53 +0000",
         "message": "update helper function"
       },
@@ -16036,11 +16041,6 @@
         "author": "jiaojiaodubai",
         "date": "2025-04-05 13:36:25 +0000",
         "message": "fix lost parameter in parseJson; update title selector"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2025-03-24 05:12:05 +0000",
-        "message": "fix #461"
       }
     ]
   },

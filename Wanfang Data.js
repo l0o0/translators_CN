@@ -175,7 +175,7 @@ async function scrapePage(doc, type, id) {
 	);
 	const extra = new Extra();
 	const newItem = new Zotero.Item(typeMap[type].itemType);
-	newItem.title = text(doc, '.detailTitleCN > :first-child') || text(doc, '.detailTitleCN');
+	newItem.title = text(doc, '.detailTitleCN > :first-child > span:first-child,.detailTitleCN > span:first-child');
 	extra.set('original-title', ZU.capitalizeTitle(text(doc, '.detailTitleEN')), true);
 	newItem.abstractNote = ZU.trimInternal(text(doc, '.summary > .item+*'));
 	doc.querySelectorAll('.author.detailTitle > .itemUrl > a').forEach((elm) => {
