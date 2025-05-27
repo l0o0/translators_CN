@@ -16889,7 +16889,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-06-20 16:34:51"
+      "lastUpdated": "2025-05-27 07:22:17"
     },
     "testCases": [
       {
@@ -16898,7 +16898,7 @@
         "items": [
           {
             "itemType": "journalArticle",
-            "title": "基于WGCNA算法的基因共表达网络构建理论及其R软件实现",
+            "title": "基于 WGCNA 算法的基因共表达网络构建理论及其 R 软件实现",
             "creators": [
               {
                 "firstName": "",
@@ -16921,25 +16921,15 @@
             ],
             "date": "2013-02-28",
             "ISSN": "1674-568X",
-            "abstractNote": "WGCNA(weighted geneco-expression network analysis)算法是一种构建基因共表达网络的典型系统生物学算法,该算法基于高通量的基因信使RNA(mRNA)表达芯片数据,被广泛应用于国际生物医学领域。本文旨在介绍WGCNA的基本数理原理,并依托R软件包WGNCA以实例的方式介绍其应用。WGCNA算法首先假定基因网络服从无尺度分布,并定义基因共表达相关矩阵、基因网络形成的邻接函数,然后计算不同节点的相异系数,并据此构建分层聚类树(hierarchical clusteringtree),该聚类树的不同分支代表不同的基因模块(module),模块内基因共表达程度高,而分数不同模块的基因共表达程度低。最后,探索模块与特定表型或疾病的关联关系,最终达到鉴定疾病治疗的靶点基因、基因网络的目的。",
-            "extra": "original-title: Gene Co-expression Network Analysis Based on WGCNA Algorithm-Theory and Implementation in R Software\nfund: 青海省135高层次人才培养基金资助",
+            "abstractNote": "WGCNA(weighted geneco-expression network analysis) 算法是一种构建基因共表达网络的典型系统生物学算法，该算法基于高通量的基因信使 RNA(mRNA) 表达芯片数据，被广泛应用于国际生物医学领域。本文旨在介绍 WGCNA 的基本数理原理，并依托 R 软件包 WGNCA 以实例的方式介绍其应用。WGCNA 算法首先假定基因网络服从无尺度分布，并定义基因共表达相关矩阵、基因网络形成的邻接函数，然后计算不同节点的相异系数，并据此构建分层聚类树 (hierarchical clusteringtree),该聚类树的不同分支代表不同的基因模块 (module),模块内基因共表达程度高，而分数不同模块的基因共表达程度低。最后，探索模块与特定表型或疾病的关联关系，最终达到鉴定疾病治疗的靶点基因、基因网络的目的。",
+            "extra": "original-title: Gene Co-expression Network Analysis Based on WGCNA Algorithm-Theory and Implementation in R Software\nfund: 青海省 135 高层次人才培养基金资助",
             "issue": "1",
             "libraryCatalog": "Wenjin",
             "pages": "143-149",
             "publicationTitle": "基因组学与应用生物学",
             "url": "http://find.nlc.cn/search/showDocDetails?docId=-8373230212045865087&dataSource=cjfd&query=wgcna",
             "attachments": [],
-            "tags": [
-              {
-                "tag": "R软件"
-              },
-              {
-                "tag": "WGCNA算法"
-              },
-              {
-                "tag": "基因共表达网络"
-              }
-            ],
+            "tags": [],
             "notes": [],
             "seeAlso": []
           }
@@ -16954,22 +16944,20 @@
             "title": "红星照耀中国",
             "creators": [
               {
-                "firstName": "",
                 "lastName": "埃德加·斯诺",
-                "creatorType": "author",
-                "fieldMode": 1
+                "fieldMode": 1,
+                "creatorType": "author"
               },
               {
-                "firstName": "",
                 "lastName": "董乐山",
-                "creatorType": "translator",
-                "fieldMode": 1
+                "fieldMode": 1,
+                "creatorType": "translator"
               }
             ],
             "date": "2012",
             "ISBN": "9787506361347",
             "abstractNote": "本书分为十二篇，内容包括：探寻红色中国、去红都的道路、在保安、一个共产党员的由来等。",
-            "extra": "original-author: Edgar Snow\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"埃德加·斯诺\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"Edgar Snow\"},{\"firstName\":\"\",\"lastName\":\"董乐山\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]",
+            "extra": "original-author: Snow || Edgar\ncreatorsExt: [{\"lastName\":\"埃德加·斯诺\",\"fieldMode\":1,\"creatorType\":\"author\",\"original\":\"Snow || Edgar\",\"country\":\"美\"},{\"lastName\":\"董乐山\",\"fieldMode\":1,\"creatorType\":\"translator\",\"country\":\"\"}]",
             "language": "zh-CN",
             "libraryCatalog": "Wenjin",
             "numPages": "338",
@@ -17064,7 +17052,7 @@
             ],
             "date": "2006-12-26",
             "libraryCatalog": "Wenjin",
-            "pages": "B04",
+            "pages": "4",
             "publicationTitle": "贵州政协报",
             "url": "http://find.nlc.cn/search/showDocDetails?docId=-4758410971070022650&dataSource=ccnd&query=%E6%96%B0%E5%8F%91%E5%B1%95%E7%90%86%E5%BF%B5",
             "attachments": [],
@@ -17080,7 +17068,7 @@
         "items": [
           {
             "itemType": "book",
-            "title": "钢琴金曲-理查德·克莱德曼",
+            "title": "钢琴金曲 - 理查德·克莱德曼",
             "creators": [
               {
                 "firstName": "",
@@ -17091,7 +17079,7 @@
             ],
             "date": "2008",
             "ISBN": "9787884737703",
-            "extra": "medium: CD\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"理查德·克莱德曼\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"法\",\"original\":\"\"}]",
+            "extra": "creatorsExt: [{\"firstName\":\"\",\"lastName\":\"理查德·克莱德曼\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"法\"}]\nmedium: CD",
             "libraryCatalog": "Wenjin",
             "place": "武汉",
             "publisher": "扬子江音像出版社",
@@ -17120,6 +17108,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2025-05-27 15:30:06 +0800",
+        "message": "modernize"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-20 13:22:33 +0800",
         "message": "fix typo"
       },
@@ -17127,11 +17120,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-06-20 17:04:42 +0800",
-        "message": "clean EOL, fix #351, fix #352"
       }
     ]
   },
@@ -24536,7 +24524,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-05-06 09:11:51 +0800",
+        "date": "2025-05-06 01:12:19 +0000",
         "message": "resolve #495"
       }
     ]
