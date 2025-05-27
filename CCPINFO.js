@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 12,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-11-11 05:42:47"
+	"lastUpdated": "2025-05-27 07:40:48"
 }
 
 /*
@@ -127,14 +127,17 @@ async function doWeb(doc, url) {
 
 async function scrape(doc, url = doc.location.href) {
 	const newItem = new Zotero.Item('book');
-	newItem.extra = '';
-	const labels = new Labels(doc, '.book_intro .fl.clearfix, .book_intro .fr.clearfix');
-	Z.debug(labels.data.map(arr => [arr[0], ZU.trimInternal(arr[1].innerText)]));
+	const data = getLabeledData(
+		doc.querySelectorAll('.book_intro .book_con > :where(.fr, .fl)'),
+		(row) => text(row, '.fl:first-child').replace(/：$/, ''),
+		(row) => row.querySelector('.val_txt'),
+		doc.createElement('div')
+	);
 	newItem.title = text(doc, '.book_intro > h2 > span');
 	newItem.abstractNote = text(doc, 'div.field_1 > p');
-	newItem.publisher = labels.get('出版社');
-	newItem.date = labels.get('出版时间').replace(/\D$/, '').replace(/(\d)\D(\d)/g, '$1-$2');
-	newItem.ISBN = labels.get('ISBN');
+	newItem.publisher = data('出版社');
+	newItem.date = data('出版时间').replace(/\D$/, '').replace(/(\d)\D(\d)/g, '$1-$2');
+	newItem.ISBN = data('ISBN');
 	if (newItem.ISBN) {
 		try {
 			const searchLang = await requestText(
@@ -160,10 +163,10 @@ async function scrape(doc, url = doc.location.href) {
 	}
 	newItem.url = url;
 	newItem.libraryCatalog = '国家出版发行信息公共服务平台';
-	newItem.extra += addExtra('CLC', labels.get('中图分类'));
-	newItem.extra += addExtra('price', labels.get('定价'));
+	newItem.setExtra('CLC', data('中图分类'));
+	newItem.setExtra('price', data('定价'));
 	function splitCreators(label, rolePattern, creatorType) {
-		return labels.get(label).replace(rolePattern, '').split(';')
+		return data(label).replace(rolePattern, '').split(/[;、]/)
 			.filter(string => string != '暂无')
 			.map((name) => {
 				// 方括号：https://book.cppinfo.cn/Encyclopedias/home/index?id=4483977
@@ -171,7 +174,7 @@ async function scrape(doc, url = doc.location.href) {
 				// 中文括号：https://book.cppinfo.cn/Encyclopedias/home/index?id=4557869
 				const country = tryMatch(name, /^[[(（](.+?)[\])）]/, 1);
 				const creator = ZU.cleanAuthor(name.replace(/^[[(（].+?[\])）]/, ''), creatorType);
-				if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
+				if (/\p{Unified_Ideograph}/u.test(creator.lastName)) {
 					creator.fieldMode = 1;
 				}
 				newItem.creators.push(JSON.parse(JSON.stringify(creator)));
@@ -185,77 +188,41 @@ async function scrape(doc, url = doc.location.href) {
 		...splitCreators('译者', /[等翻译]*$/, 'translator')
 	];
 	if (creatorsExt.some(creator => creator.country)) {
-		newItem.extra += addExtra('creatorsExt', JSON.stringify(creatorsExt));
+		newItem.setExtra('creatorsExt', JSON.stringify(creatorsExt));
 	}
 	doc.querySelectorAll('div.book_label > div.label_in > span').forEach(elm => newItem.tags.push(elm.innerText));
 	newItem.complete();
 }
 
 /* Util */
-class Labels {
-	constructor(doc, selector) {
-		this.data = [];
-		this.emptyElm = doc.createElement('div');
-		Array.from(doc.querySelectorAll(selector))
-			// avoid nesting
-			.filter(element => !element.querySelector(selector))
-			// avoid empty
-			.filter(element => !/^\s*$/.test(element.textContent))
-			.forEach((element) => {
-				const elmCopy = element.cloneNode(true);
-				// avoid empty text
-				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
-					// Z.debug(elementCopy.firstChild.textContent);
-					elmCopy.removeChild(elmCopy.firstChild);
-					// Z.debug(elementCopy.firstChild.textContent);
-				}
-				if (elmCopy.childNodes.length > 1) {
-					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
-					this.data.push([key, elmCopy]);
-				}
-				else {
-					const text = ZU.trimInternal(elmCopy.textContent);
-					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
-					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
-					this.data.push([key, elmCopy]);
-				}
-			});
+function getLabeledData(rows, labelGetter, dataGetter, defaultElm) {
+	const labeledElm = {};
+	for (const row of rows) {
+		labeledElm[labelGetter(row, rows)] = dataGetter(row, rows);
 	}
-
-	get(label, element = false) {
-		if (Array.isArray(label)) {
-			const results = label
-				.map(aLabel => this.get(aLabel, element));
-			const keyVal = element
-				? results.find(element => !/^\s*$/.test(element.textContent))
-				: results.find(string => string);
-			return keyVal
-				? keyVal
-				: element
-					? this.emptyElm
-					: '';
+	const data = (labels, element = false) => {
+		if (Array.isArray(labels)) {
+			for (const label of labels) {
+				const result = data(label, element);
+				if (
+					(element && /\S/.test(result.textContent)) ||
+					(!element && /\S/.test(result))) {
+					return result;
+				}
+			}
+			return element ? defaultElm : '';
 		}
-		const pattern = new RegExp(label, 'i');
-		const keyVal = this.data.find(arr => pattern.test(arr[0]));
-		return keyVal
-			? element
-				? keyVal[1]
-				: ZU.trimInternal(keyVal[1].textContent)
-			: element
-				? this.emptyElm
-				: '';
-	}
-}
-
-function addExtra(key, value) {
-	return value
-		? `${key}: ${value}\n`
-		: '';
+		const targetElm = labeledElm[labels];
+		return targetElm
+			? element ? targetElm : ZU.trimInternal(targetElm.textContent)
+			: element ? defaultElm : '';
+	};
+	return data;
 }
 
 function tryMatch(string, pattern, index = 0) {
 	if (!string) return '';
-	let match = string.match(pattern);
+	const match = string.match(pattern);
 	return (match && match[index])
 		? match[index]
 		: '';

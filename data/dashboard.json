@@ -844,7 +844,7 @@
       "inRepository": true,
       "translatorType": 12,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-11-11 05:42:47"
+      "lastUpdated": "2025-05-27 07:40:48"
     },
     "testCases": [
       {
@@ -1034,6 +1034,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2025-05-27 15:43:32 +0800",
+        "message": "modernize"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-11-26 14:36:51 +0800",
         "message": "fix #412"
       },
@@ -1041,11 +1046,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-08-20 13:22:33 +0800",
         "message": "fix typo"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-08-19 17:42:48 +0800",
-        "message": "lint"
       }
     ]
   },
@@ -17108,7 +17108,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-05-27 15:30:06 +0800",
+        "date": "2025-05-27 07:30:41 +0000",
         "message": "modernize"
       },
       {
