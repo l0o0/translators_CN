@@ -1,0 +1,76 @@
+name: Issue Opened/Edited
+
+on:
+  issues:
+    types:
+      - opened
+      - edited
+
+jobs:
+  validate:
+    name: Validate Issue with Custom Logic
+    runs-on: ubuntu-latest
+
+    # These permissions are required to read custom validator scripts and
+    # write/update issue comments.
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Install GitHub CLI
+        run: sudo apt-get install gh
+
+      - name: Validate Issue Title Format
+        id: title-check
+        run: |
+          if [[ ! "${{ github.event.issue.title }}" =~ ^\[New\]:\  ]]; then
+            gh issue comment ${{ github.event.issue.number }} --body "由于标题不符合要求，已自动关闭 issue。"
+            gh issue edit ${{ github.event.issue.number }} --add-label invalid --state closed
+            exit 0
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      # This is required to access the repository's files. Specifically, the
+      # issue forms template and the additional validation configuration.
+      - name: Checkout Repository
+        id: checkout
+        uses: actions/checkout@v4
+
+      # Install Node.js on the runner.
+      - name: Setup Node.js
+        id: setup-node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Install dependencies from `package.json`.
+      - name: Install Dependencies
+        id: install
+        run: npm install
+
+      # Parse the issue body and convert it to JSON.
+      - name: Parse Issue Body
+        id: parse
+        uses: issue-ops/parser@v4
+        with:
+          body: ${{ github.event.issue.body }}
+          issue-form-template: T3_new_translator.yml
+          workspace: ${{ github.workspace }}
+
+      # Validate the parsed issue body against the issue form template. This
+      # example does use custom validators.
+      - name: Validate Issue
+        id: validate
+        uses: issue-ops/validator@v3
+        with:
+          issue-form-template: T3_new_translator.yml
+          parsed-issue-body: ${{ steps.parse.outputs.json }}
+          workspace: ${{ github.workspace }}
+
+      - name: Output Validation Results
+        id: output
+        run: |
+          echo "Result: ${{ steps.validate.outputs.result }}"
+          echo "Errors: ${{ steps.validate.outputs.errors }}"
