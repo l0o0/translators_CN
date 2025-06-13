@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2025-04-05 13:27:58"
+	"lastUpdated": "2025-06-13 05:48:59"
 }
 
 /*
@@ -76,7 +76,7 @@ function detectWeb(doc, url) {
 		Z.monitorDOMChanges(dynamic, { childList: true });
 	}
 	for (const key in typeMap) {
-		if (url.includes(`/${key}/`)) {
+		if (new RegExp(`/${key}/`, 'i').test(url)) {
 			return typeMap[key].itemType;
 		}
 	}
@@ -126,7 +126,7 @@ function getSearchResults(doc, checkOnly) {
 		for (const row of rows) {
 			const title = text(row, '.title-link');
 			const href = attr(row, '.title-link', 'href');
-			const id = getIdFromUrl(href);
+			const { id } = getUrlParam(href);
 			if (!title || !id) continue;
 			if (checkOnly) return true;
 			found = true;
@@ -149,9 +149,9 @@ async function doWeb(doc, url) {
 		}
 	}
 	else {
-		// get attributes from bookmark button is always reliable and convenient
-		const type = attr(doc, '.collection > wf-favourite', 'literature_type');
-		const id = attr(doc, '.collection > wf-favourite', 'literature_id');
+		const pathParts = new URL(attr(doc, 'meta[property="og\\:url"]', 'content')).pathname.split('/');
+		const type = pathParts[2].toLowerCase();
+		const id = pathParts[3];
 		try {
 			// throw new Error('debug');
 			if (type === 'standard') {
@@ -260,7 +260,7 @@ async function scrapePage(doc, type, id) {
 			}
 			break;
 		case 'standard':
-			newItem.title = text(doc, '.detailTitleCN').replace(/([\u4e00-\u9fff])\s+([\u4e00-\u9fff])/, '$1　$2');
+			newItem.title = text(doc, '.detailTitleCN').replace(/(\p{Unified_Ideograph})\s+(\p{Unified_Ideograph})/u, '$1　$2');
 			newItem.number = text(doc, '.standardId > .itemUrl').replace('-', '—');
 			newItem.date = text(doc, '.issueDate > .itemUrl');
 			newItem.publisher = data('出版单位');
@@ -324,8 +324,8 @@ function getLabeledData(rows, labelGetter, dataGetter, defaultElm) {
 			for (const label of labels) {
 				const result = data(label, element);
 				if (
-					(element && /\S/.test(result.textContent)) ||
-					(!element && /\S/.test(result))) {
+					(element && /\S/.test(result.textContent))
+					|| (!element && /\S/.test(result))) {
 					return result;
 				}
 			}
@@ -613,7 +613,7 @@ function patentCountry(idNumber) {
 	}[idNumber.substring(0, 2).toUpperCase()] || '';
 }
 
-function getIdFromUrl(url) {
+function getUrlParam(url) {
 	const urlObj = new URL(url);
 	const pathParts = urlObj.pathname.split('/');
 	const deURI = decodeURIComponent(pathParts[2]);
@@ -622,7 +622,7 @@ function getIdFromUrl(url) {
 	const buffer = encoder.encode(deBase64);
 	// make a cocy to avoid Error: Accessing TypedArray data over Xrays is slow, and forbidden in order to encourage performant code.
 	const urlMsg = Url.decode(new Uint8Array(buffer));
-	return Url.toObject(urlMsg).id;
+	return Url.toObject(urlMsg);
 }
 
 /**

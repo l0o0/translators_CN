@@ -9306,7 +9306,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-06-03 09:57:46 +0800",
+        "date": "2025-06-03 01:58:19 +0000",
         "message": "rewrite"
       },
       {
@@ -15755,7 +15755,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2025-04-05 13:27:58"
+      "lastUpdated": "2025-06-13 05:48:59"
     },
     "testCases": [
       {
@@ -16314,6 +16314,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2025-06-13 13:52:43 +0800",
+        "message": "fix unavailable type and id"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2025-04-18 12:16:00 +0000",
         "message": "fix #502"
       },
@@ -16321,11 +16326,6 @@
         "author": "jiaojiaodubai",
         "date": "2025-04-10 08:17:53 +0000",
         "message": "update helper function"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2025-04-05 13:36:25 +0000",
-        "message": "fix lost parameter in parseJson; update title selector"
       }
     ]
   },
