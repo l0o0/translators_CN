@@ -18,6 +18,10 @@ jobs:
       issues: write
 
     steps:
+      - name: Checkout Repository
+        id: checkout
+        uses: actions/checkout@v4
+
       - name: Install GitHub CLI
         run: sudo apt-get install gh
 
@@ -25,18 +29,12 @@ jobs:
         id: title-check
         run: |
           if [[ ! "${{ github.event.issue.title }}" =~ ^\[New\]:\  ]]; then
-            gh issue comment ${{ github.event.issue.number }} --body "由于标题不符合要求，已自动关闭 issue。"
-            gh issue edit ${{ github.event.issue.number }} --add-label invalid --state closed
+            gh issue edit ${{ github.event.issue.number }} --add-label invalid
+            gh issue close ${{ github.event.issue.number }} --comment "由于标题不符合要求，已自动关闭 issue。" --reason "completed"
             exit 0
           fi
         env:
           GH_TOKEN: ${{ github.token }}
-
-      # This is required to access the repository's files. Specifically, the
-      # issue forms template and the additional validation configuration.
-      - name: Checkout Repository
-        id: checkout
-        uses: actions/checkout@v4
 
       # Install Node.js on the runner.
       - name: Setup Node.js
@@ -56,21 +54,23 @@ jobs:
         uses: issue-ops/parser@v4
         with:
           body: ${{ github.event.issue.body }}
-          issue-form-template: T3_new_translator.yml
+          issue-form-template: T3_new_translator.yaml
           workspace: ${{ github.workspace }}
 
       # Validate the parsed issue body against the issue form template. This
       # example does use custom validators.
-      - name: Validate Issue
+      - name: Validate Issue Forms
         id: validate
         uses: issue-ops/validator@v3
         with:
-          issue-form-template: T3_new_translator.yml
+          issue-form-template: T3_new_translator.yaml
           parsed-issue-body: ${{ steps.parse.outputs.json }}
           workspace: ${{ github.workspace }}
 
-      - name: Output Validation Results
-        id: output
+      - name: Handle Validation Errors
+        if: ${{ steps.validate.outputs.errors != '' }}
         run: |
-          echo "Result: ${{ steps.validate.outputs.result }}"
-          echo "Errors: ${{ steps.validate.outputs.errors }}"
+          gh issue edit ${{ github.event.issue.number }} --add-label invalid
+          gh issue close ${{ github.event.issue.number }} --comment "请仔细阅读 issue 模板中的说明。" --reason "completed"
+        env:
+          GH_TOKEN: ${{ github.token }}
