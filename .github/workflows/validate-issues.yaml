@@ -18,6 +18,10 @@ jobs:
       issues: write
 
     steps:
+      - name: Checkout Repository
+        id: checkout
+        uses: actions/checkout@v4
+
       - name: Install GitHub CLI
         run: sudo apt-get install gh
 
@@ -31,12 +35,6 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ github.token }}
-
-      # This is required to access the repository's files. Specifically, the
-      # issue forms template and the additional validation configuration.
-      - name: Checkout Repository
-        id: checkout
-        uses: actions/checkout@v4
 
       # Install Node.js on the runner.
       - name: Setup Node.js
