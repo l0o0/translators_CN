@@ -15755,7 +15755,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2025-06-13 05:48:59"
+      "lastUpdated": "2025-06-19 15:33:45"
     },
     "testCases": [
       {
@@ -16314,18 +16314,18 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-06-13 13:52:43 +0800",
+        "date": "2025-06-19 23:34:24 +0800",
+        "message": "fix index error"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2025-06-13 05:53:06 +0000",
         "message": "fix unavailable type and id"
       },
       {
         "author": "jiaojiaodubai",
         "date": "2025-04-18 12:16:00 +0000",
         "message": "fix #502"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2025-04-10 08:17:53 +0000",
-        "message": "update helper function"
       }
     ]
   },

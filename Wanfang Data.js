@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2025-06-13 05:48:59"
+	"lastUpdated": "2025-06-19 15:33:45"
 }
 
 /*
@@ -150,8 +150,8 @@ async function doWeb(doc, url) {
 	}
 	else {
 		const pathParts = new URL(attr(doc, 'meta[property="og\\:url"]', 'content')).pathname.split('/');
-		const type = pathParts[2].toLowerCase();
-		const id = pathParts[3];
+		const type = pathParts[1].toLowerCase();
+		const id = pathParts[2];
 		try {
 			// throw new Error('debug');
 			if (type === 'standard') {
