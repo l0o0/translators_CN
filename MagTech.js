@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2025-06-03 01:54:17"
+	"lastUpdated": "2025-06-21 22:17:45"
 }
 
 /*
@@ -48,7 +48,7 @@ function detectWeb(doc, _url) {
 	if (hasTitle && (isTypical || inSite)) {
 		return 'journalArticle';
 	}
-	else if (getSearchResults(doc, true)) {
+	else if (inSite && getSearchResults(doc, true)) {
 		return 'multiple';
 	}
 	return false;
@@ -62,7 +62,7 @@ function getSearchResults(doc, checkOnly) {
 	// e.g. .title > a, http://www.zgyxcx.com/CN/volumn/home.shtml
 	// e.g. a.txt_biaoti, a.biaoti, http://www.zgswfz.com.cn/CN/2095-039X/home.shtml
 	// e.g. .biaoti > a, https://www.ams.org.cn/CN/0412-1961/home.shtml
-	const rows = doc.querySelectorAll(':where([class$="title"], .biaoti) > a, a[class$="biaoti"]');
+	const rows = doc.querySelectorAll(':where(j-title, .title, .biaoti) > a, a:where(.text_biaoti, .biaoti)');
 	for (const row of rows) {
 		const href = row.href;
 		const title = ZU.trimInternal(row.textContent);

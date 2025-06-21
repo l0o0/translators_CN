@@ -9016,7 +9016,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2025-06-03 01:54:17"
+      "lastUpdated": "2025-06-21 22:17:45"
     },
     "testCases": [
       {
@@ -9306,6 +9306,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2025-06-21 22:20:19 +0800",
+        "message": "change detect condition"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2025-06-03 01:58:19 +0000",
         "message": "rewrite"
       },
@@ -9313,11 +9318,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-02-09 17:13:34 +0800",
-        "message": "按照官方指南更改优先级"
       }
     ]
   },
@@ -16314,7 +16314,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-06-19 23:34:24 +0800",
+        "date": "2025-06-19 15:36:14 +0000",
         "message": "fix index error"
       },
       {
