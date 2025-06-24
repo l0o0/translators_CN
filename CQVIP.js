@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2025-04-08 06:34:25"
+	"lastUpdated": "2025-06-24 14:49:12"
 }
 
 /*
@@ -93,8 +93,9 @@ async function doWeb(doc, url) {
 async function scrape(doc, url = doc.location.href) {
 	const data = getLabeledData(
 		doc.querySelectorAll('.horizontalData-f, .mainContainerDataList-item'),
-		row => text(row, '.Container-item-title').replace(/\s/g, ''),
-		row => row.querySelector(':nth-child(2)')
+		row => text(row, '.horizontalData-name, .Container-item-title').replace(/\s/g, '').replace(/：$/, ''),
+		row => row.querySelector('.horizontalData-content, .Container-item-title+*'),
+		doc.createElement('div')
 	);
 	const doi = data('DOI');
 	if (doi) {
@@ -219,8 +220,8 @@ function getLabeledData(rows, labelGetter, dataGetter, defaultElm) {
 			for (const label of labels) {
 				const result = data(label, element);
 				if (
-					(element && /\S/.test(result.textContent)) ||
-					(!element && /\S/.test(result))) {
+					(element && /\S/.test(result.textContent))
+					|| (!element && /\S/.test(result))) {
 					return result;
 				}
 			}

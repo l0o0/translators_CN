@@ -6310,7 +6310,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2025-04-08 06:34:25"
+      "lastUpdated": "2025-06-24 14:49:12"
     },
     "testCases": [
       {
@@ -6706,6 +6706,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2025-06-24 22:50:31 +0800",
+        "message": "update selector; add fallback element"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2025-04-10 08:17:53 +0000",
         "message": "update helper function"
       },
@@ -6713,11 +6718,6 @@
         "author": "jiaojiaodubai",
         "date": "2025-04-08 06:39:12 +0000",
         "message": "fix #465"
-      },
-      {
-        "author": "seiuneko",
-        "date": "2025-01-02 09:41:04 +0800",
-        "message": "fix(CQVIP): typo in RegExp.test (#417)"
       }
     ]
   },
@@ -9306,7 +9306,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-06-21 22:20:19 +0800",
+        "date": "2025-06-21 14:21:33 +0000",
         "message": "change detect condition"
       },
       {
