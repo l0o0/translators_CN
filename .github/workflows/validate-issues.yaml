@@ -28,7 +28,7 @@ jobs:
       - name: Validate Issue Title Format
         id: title-check
         run: |
-          if [[ ! "${{ github.event.issue.title }}" =~ ^\[New\]:\  ]]; then
+          if [[ ! "${{ github.event.issue.title }}" =~ ^\[(New|Bug|Enhancement)\]:\  ]]; then
             gh issue edit ${{ github.event.issue.number }} --add-label invalid
             gh issue close ${{ github.event.issue.number }} --comment "由于标题不符合要求，已自动关闭 issue。" --reason "completed"
             exit 0
