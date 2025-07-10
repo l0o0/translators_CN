@@ -1,7 +1,7 @@
 name: 请求支持新功能💪
 description: 为现有转换器添加新功能。
 title: "[Enhancement]: "
-labels: ["enhancement"]
+labels: ["enhancement", "from template"]
 assignees:
   - jiaojiaodubai
 body:

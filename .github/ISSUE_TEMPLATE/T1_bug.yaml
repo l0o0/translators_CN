@@ -1,7 +1,7 @@
 name: 报告转换器错误❌
 description: 使用转换器时遇到问题？请告诉我们！
 title: "[Bug]: "
-labels: ["bug"]
+labels: ["bug", "from template"]
 body:
   - type: checkboxes
     id: what-happened

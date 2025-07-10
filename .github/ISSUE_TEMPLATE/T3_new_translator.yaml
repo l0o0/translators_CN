@@ -1,7 +1,7 @@
 name: 申请新转换器🙋‍♂️
 description: 申请新的转换器，使Zotero能够从新的网站或文献交换格式导入，或者导出为新的文献交换格式。
 title: "[New]: "
-labels: ["new translator"]
+labels: ["new translator", "from template"]
 body:
   - type: markdown
     attributes:
