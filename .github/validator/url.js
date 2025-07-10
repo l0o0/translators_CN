@@ -3,6 +3,16 @@ import path from 'path';
 import { json } from 'stream/consumers';
 
 export function url(inputUrl) {
+    if (!inputUrl) {
+        throw new Error('请输入 URL');
+    }
+    if (/\.(edu|vpn)(\/|\.|$)/.test(inputUrl)) {
+        throw new Error('请勿提交机构代理的 URL');
+    }
+    if (/\.cnki\./.test(inputUrl)) {
+        throw new Error('该 url 已通过 CNKI.js 适配。');
+    }
+
     const rootDir = path.resolve(__dirname, '../../..');
     const files = fs.readdirSync(rootDir).filter(f => f.endsWith('.js'));
     let matched = false;
@@ -18,7 +28,8 @@ export function url(inputUrl) {
                     matched = true;
                 }
             } catch (e) {
-                // 忽略解析错误
+                console.error(`Error parsing JSON in ${file}:`, e);
+                continue;
             }
         }
         if (matched) {
