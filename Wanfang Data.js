@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2025-06-19 15:33:45"
+	"lastUpdated": "2025-07-11 03:58:04"
 }
 
 /*
@@ -71,9 +71,9 @@ const typeMap = {
 };
 
 function detectWeb(doc, url) {
-	const dynamic = doc.querySelector('body, .container-flex, .periodical');
+	const dynamic = doc.querySelector('#app, .container-flex, .periodical');
 	if (dynamic) {
-		Z.monitorDOMChanges(dynamic, { childList: true });
+		Z.monitorDOMChanges(dynamic, { childList: true, subtree: true });
 	}
 	for (const key in typeMap) {
 		if (new RegExp(`/${key}/`, 'i').test(url)) {
@@ -191,7 +191,7 @@ async function scrapePage(doc, type, id) {
 			newItem.date = tryMatch(pubInfo, /^\d{4}/);
 			newItem.volume = tryMatch(pubInfo, /,0*(\d+)\(/, 1);
 			newItem.issue = tryMatch(pubInfo, /\((.+?)\)/, 1).replace(/0*(\d+)/, '$1');
-			newItem.publicationTitle = text(doc, '.periodicalName');
+			newItem.publicationTitle = text(doc, '.periodicalName').replace(/\(([^)]+)\)$/, '（$1）');
 			newItem.pages = tryMatch(data('页数'), /\((.+)\)/, 1)
 				.replace(/\b0*(\d+)/, '$1')
 				.replace(/\+/g, ',')
@@ -419,7 +419,7 @@ function parseJson(json, type, id) {
 	}[json.language] || 'zh-CN';
 	switch (newItem.itemType) {
 		case 'journalArticle': {
-			newItem.publicationTitle = json.periodicaltitleList[0];
+			newItem.publicationTitle = json.periodicaltitleList[0].replace(/\(([^)]+)\)$/, '（$1）');
 			extra.set('original-container-title', json.periodicaltitleList[1], true);
 			newItem.volume = json.volum;
 			newItem.issue = json.issue;
