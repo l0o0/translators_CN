@@ -49,13 +49,14 @@ jobs:
                 template="T2_enhancement.yaml"
               elif [[ "$label" == "new translator" ]]; then
                 template="T3_new_translator.yaml"
+              fi
             done
             if [[ "$template" == "unknown" ]]; then
               echo "This issue does not use a recognized template, skipping validation."
               exit 0
             fi
             echo "template=${template}" >> $GITHUB_ENV
-          else [[ "$is_from_template" == "false" ]]; then
+          else
             echo "This issue does not use a template, skipping validation."
             exit 0
           fi
