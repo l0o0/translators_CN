@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-09-30 10:33:44"
+	"lastUpdated": "2025-07-14 15:08:15"
 }
 
 /*
@@ -114,14 +114,35 @@ async function scrapeMeta(doc, url = doc.location.href) {
 			en: 'en-US'
 		}[item.language];
 		extra.set('original-title', ZU.capitalizeTitle(attr(doc, 'meta[name="citation_title"]', 'content', 1) || text(doc, '#EnTitleValue')), true);
-		const creators = doc.querySelector('meta[name="citation_author"]')
-			? Array.from(doc.querySelectorAll('meta[name="citation_author"]')).map(element => element.content)
-			: attr(doc, 'meta[name="citation_authors"]', 'content', 0).split(/[,;，；]/);
-		item.creators = creators
+		const zhNames = doc.querySelector('meta[name="citation_author"]')
+			? Array.from(doc.querySelectorAll('meta[name="citation_author"]')).map(element => element.getAttribute('content'))
+			: attr(doc, 'meta[name="citation_authors"]', 'content').split(/[,;，；]/);
+		const zhCreators = zhNames
 			.map(creator => creator.replace(/(<.+>)?[\d,\s]+(<.+>)?$/, ''))
-			.filter(creator => creator)
+			.filter(Boolean)
 			.map(creator => cleanAuthor(creator));
-		const enCreators = attr(doc, 'meta[name="citation_authors"]', 'content', 1).split(/[,;，；]/);
+		const enCreators = attr(doc, 'meta[name="citation_authors"][xml\\:lang="en"]', 'content')
+			.split(/[,;，；]/)
+			.map(name => cleanAuthor(name));
+		const creatorsExt = [];
+		zhCreators.forEach((creator, i) => {
+			const enCcreator = enCreators[i];
+			item.creators.push(creator);
+			if (enCreator) {
+				const enCreatorStr = `${enCcreator.lastName} || ${enCcreator.firstName}`;
+				extra.push('original-creator', enCreatorStr, true);
+				creatorsExt.push({
+					firstName: creator.firstName,
+					lastName: creator.lastName,
+					creatorType: creator.creatorType,
+					fieldMode: creator.fieldMode,
+					original: enCreatorStr
+				});
+			}
+		});
+		if (creatorsExt.length) {
+			extra.set('creatorsExt', JSON.stringify(creatorsExt));
+		}
 		if (enCreators.length) {
 			const creatorsExt = JSON.parse(JSON.stringify(item.creators));
 			for (let i = 0; i < item.creators.length; i++) {
@@ -238,14 +259,14 @@ class Extra {
 }
 
 function cleanAuthor(name) {
-	// https://zkxb.hnust.edu.cn/ch/reader/view_abstract.aspx?file_no=202303007&flag=1
-	const creator = ZU.cleanAuthor(name.replace(/[(（]?[\d,*]*[）)]?$/, ''), 'author');
-	if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
-		creator.lastName = creator.firstName + creator.lastName;
-		creator.firstName = '';
-		creator.fieldMode = 1;
-	}
-	return creator;
+	return /\p{Unified_Ideograph}/u.test(name)
+		? {
+			firstName: '',
+			lastName: name,
+			creatorType: 'author',
+			fieldMode: 1
+		}
+		: ZU.cleanAuthor(ZU.capitalizeName(name), 'author');
 }
 
 function cleanPages(page) {

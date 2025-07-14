@@ -6706,7 +6706,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-06-24 22:50:31 +0800",
+        "date": "2025-06-24 14:50:57 +0000",
         "message": "update selector; add fallback element"
       },
       {
@@ -8517,7 +8517,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-09-30 10:33:44"
+      "lastUpdated": "2025-07-14 15:08:15"
     },
     "testCases": [
       {
@@ -8785,6 +8785,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2025-07-14 15:08:54 +0800",
+        "message": "better original author handle"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-09-30 18:35:05 +0800",
         "message": "close #365"
       },
@@ -8792,11 +8797,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-06-20 17:04:42 +0800",
         "message": "clean EOL, fix #351, fix #352"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-02-09 17:13:34 +0800",
-        "message": "按照官方指南更改优先级"
       }
     ]
   },
@@ -15755,7 +15755,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2025-06-19 15:33:45"
+      "lastUpdated": "2025-07-11 03:58:04"
     },
     "testCases": [
       {
@@ -16314,6 +16314,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2025-07-11 12:00:03 +0800",
+        "message": "update monitor params"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2025-06-19 15:36:14 +0000",
         "message": "fix index error"
       },
@@ -16321,11 +16326,6 @@
         "author": "jiaojiaodubai",
         "date": "2025-06-13 05:53:06 +0000",
         "message": "fix unavailable type and id"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2025-04-18 12:16:00 +0000",
-        "message": "fix #502"
       }
     ]
   },
