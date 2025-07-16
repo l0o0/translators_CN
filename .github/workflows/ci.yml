@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: true
       
@@ -19,13 +19,8 @@ jobs:
       - name: Install Node
         uses: actions/setup-node@v2
         with:
-          node-version: 17
-      
-      # Local via act
-      - name: Install packages for act
-        if: env.ACT == 'true'
-        run: apt update && apt install -y xvfb git rsync
-      
+          node-version: 22
+
       - name: Get current connector hash
         id: get-connector-hash
         run: |
@@ -42,13 +37,8 @@ jobs:
       - name: Install node packages
         run: npm ci
       
-      #- name: Debugging with tmate
-      #  uses: mxschmitt/action-tmate@v3.1
-      
       - name: Test pull request
         if: github.event_name == 'pull_request'
-        env:
-          BROWSER_EXECUTABLE: /home/runner/work/translators_CN/translators_CN/.ci/pull-request-check/xvfb-run-chrome
         run: ./check-pull-request.sh
         working-directory: .ci/pull-request-check
       

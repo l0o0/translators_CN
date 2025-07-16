@@ -33,9 +33,7 @@ export CHROME_EXTENSION_KEY="MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDllBS5q+Z9T9t
 ./build.sh -p b -d
 cd ..
 
-npm explore chromedriver -- npm run install --detect_chromedriver_version
 echo "::endgroup::"
 
-get_translators_to_check
-./selenium-test.js "$TRANSLATORS_TO_CHECK"
+./selenium-test.js "$(get_translators_to_check)"
 

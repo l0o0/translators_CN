@@ -1,2 +1,0 @@
-#!/bin/sh
-/usr/bin/xvfb-run /usr/bin/google-chrome $@

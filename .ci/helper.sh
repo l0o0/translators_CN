@@ -19,43 +19,11 @@ get_translator_id() {
 }
 
 get_translators_to_check() {
-	# If a PR branch has no conflicts with the master then git
-	# creates a custom merge commit where it merges PR into master.
-	# Travis-CI tests on that commit instead of the HEAD of the PR branch.
-	#
-	# Thus below we first determine if HEAD is a merge commit by checking how
-	# many parents the current HEAD has. If number of parents > 1, then it's a merge commit
-	# in which case we need to diff translator names between HEAD^2 and PR split commit from master.
-	# The above will generally only be the case in CI or if using a custom PR pulling script which
-	# pulls the merge PR commit instead of just the PR branch.
-	#
-	# If the HEAD commit is not a merge then we diff HEAD with PR split commit from master. This is the case
-	# when running from a local development PR branch
-	#
-	# The branching point hash retrieval logic is based on https://stackoverflow.com/a/12185115/3199106
-	#
-	# We get the set of modified files with git diff, passing --diff-filter=d to exclude deleted files.
-	
-	TRANSLATORS_TO_CHECK=""
-	
-	# Push to master
-	if [ "${GITHUB_REF:-}" = "refs/heads/master" ]; then
-		before_commit=$(jq -r '.before' $(echo $GITHUB_EVENT_PATH))
-		TRANSLATORS_TO_CHECK=$(git diff $before_commit --name-only --diff-filter=d | { grep -e "^[^/]*.js$" || true; })
-	# Pull request
-	else
-		# Gets parent commits. Either one or two hashes
-		parent_commits=($(git show --no-patch --format="%P" HEAD))
-		# Size of $parent_commits array
-		num_parent_commits=${#parent_commits[@]}
-		if [ $num_parent_commits -gt 1 ]; then
-			first_parent=$(git rev-list --first-parent ^master HEAD^2 | tail -n1)
-			branch_point=$(git rev-list "$first_parent^^!")
-			TRANSLATORS_TO_CHECK=$(git diff HEAD^2 $branch_point --name-only --diff-filter=d | { grep -e "^[^/]*.js$" || true; })
-		else
-			first_parent=$(git rev-list --first-parent ^master HEAD | tail -n1)
-			branch_point=$(git rev-list "$first_parent^^!")
-			TRANSLATORS_TO_CHECK=$(git diff $branch_point --name-only --diff-filter=d | { grep -e "^[^/]*.js$" || true; })
-		fi
-	fi
+	# Get the last commit on the target branch before this branch diverged
+    # Fall back to translators changed on the last commit in case there's no GITHUB_BASE_REF
+    # and no upstream/master (CI runs on push)
+	local fork_point=$(git merge-base --fork-point ${GITHUB_BASE_REF:-upstream/master} HEAD 2>/dev/null || echo HEAD~)
+	# Get translator scripts changed between that commit and now, excluding deleted files
+	local all_translator_scripts="$(git rev-parse --show-toplevel)"/*.js
+	git diff --name-only --diff-filter=d $fork_point -- $all_translator_scripts
 }

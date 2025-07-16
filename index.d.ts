@@ -1607,7 +1607,7 @@ declare namespace Zotero {
 		items: Record<string, string>,
 		callback: (items: Record<string, string> | null) => void
 	): void;
-	function monitorDOMChanges(target: Node, config: MutationObserverInit): void;
+	function monitorDOMChanges(target: Node, config?: MutationObserverInit): void;
 
 	// import & export
 	function setProgress(value: number): void;
