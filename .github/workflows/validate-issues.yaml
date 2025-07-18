@@ -20,77 +20,44 @@ jobs:
         id: checkout
         uses: actions/checkout@v4
 
-      - name: Install GitHub CLI
-        run: sudo apt-get install gh
-
-      - name: Validate Title
-        run: |
-          labels=(${{ toJSON(github.event.issue.labels) }})
-          is_from_template=false
-          for label in "${labels[@]}"
-          do
-            if [[ "$label" == "from template" ]]; then
-              is_from_template=true
-              if [[ ! "${{ github.event.issue.title }}" =~ ^\[(New|Bug|Enhancement)\]:\  ]]; then
-                gh issue edit ${{ github.event.issue.number }} --add-label invalid
-                gh issue close ${{ github.event.issue.number }} --comment "由于标题不符合要求，已自动关闭 issue。" --reason "completed"
-                exit 0
-              fi
-            fi
-          done
-
-          if [[ "$is_from_template" == "true" ]]; then
-            template="unknown"
-            for label in "${labels[@]}"
-            do
-              if [[ "$label" == "bug" ]]; then
-                template="T1_bug.yaml"
-              elif [[ "$label" == "enhancement" ]]; then
-                template="T2_enhancement.yaml"
-              elif [[ "$label" == "new translator" ]]; then
-                template="T3_new_translator.yaml"
-              fi
-            done
-            if [[ "$template" == "unknown" ]]; then
-              echo "This issue does not use a recognized template, skipping validation."
-              exit 0
-            fi
-            echo "template=${template}" >> $GITHUB_ENV
-          else
-            echo "This issue does not use a template, skipping validation."
-            exit 0
-          fi
-        env:
-          GH_TOKEN: ${{ github.token }}
-
-      - name: Setup Node.js
-        id: setup-node
+      - name: Setup Node.js for Scripts
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
+      - name: Validate Issue Title and Template
+        id: validate-title
+        run: |
+          cd .github/scripts
+          node validate-issue.js "${{ github.event.issue.title }}" '${{ toJSON(github.event.issue.labels) }}'
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - name: Install Dependencies
         id: install
+        if: steps.validate-title.outputs.should-continue == 'true'
         run: npm install
 
       - name: Parse Issue Body
         id: parse
+        if: steps.validate-title.outputs.should-continue == 'true'
         uses: issue-ops/parser@v4
         with:
           body: ${{ github.event.issue.body }}
-          issue-form-template: ${{ env.template }}
+          issue-form-template: ${{ steps.validate-title.outputs.template }}
           workspace: ${{ github.workspace }}
 
       - name: Validate Issue Forms
         id: validate
+        if: steps.validate-title.outputs.should-continue == 'true'
         uses: issue-ops/validator@v3
         with:
-          issue-form-template: ${{ env.template }}
+          issue-form-template: ${{ steps.validate-title.outputs.template }}
           parsed-issue-body: ${{ steps.parse.outputs.json }}
           workspace: ${{ github.workspace }}
 
       - name: Handle Validation Errors
-        if: ${{ steps.validate.outputs.errors != '' }}
+        if: steps.validate-title.outputs.should-continue == 'true' && steps.validate.outputs.errors != ''
         run: |
           gh issue edit ${{ github.event.issue.number }} --add-label invalid
           gh issue close ${{ github.event.issue.number }} --comment "请仔细阅读 issue 模板中的说明。" --reason "completed"

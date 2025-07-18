@@ -1,0 +1,1 @@
+{  "type": "module",  "name": "issue-validation-scripts",  "version": "1.0.0",  "description": "Scripts for validating GitHub issues using ES modules"}
