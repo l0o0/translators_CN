@@ -22,7 +22,7 @@ body:
     validations:
       required: true
   - type: input
-    id: url
+    id: new-translator-url
     attributes:
       label: 链接
       description: 网站的网址，或文献交换格式的文档地址。

@@ -17,7 +17,7 @@ body:
     validations:
       required: true
   - type: input
-    id: url
+    id: bug-url
     attributes:
       label: 链接
       description: 网站的网址，或文献交换格式的文档地址，请填写具体的链接，不要填网站主页。
@@ -60,8 +60,9 @@ body:
         required: true
       - label: 我尝试过清除浏览器缓存（Cookies、Local Storage等）
         required: true
-      - label: 我尝试过使用校园网直接访问网站，或者为 VPN 代理过的网站 [配置 Proxy](https://zotero-chinese.com/user-guide/faqs/off-campus-access)
+      - label: 对于 PDF 无法下载的问题，我阅读过这个[说明](https://github.com/l0o0/translators_CN/issues/252)
         required: true
+
   - type: textarea
     id: attachments
     attributes:

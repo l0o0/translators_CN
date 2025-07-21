@@ -98,7 +98,7 @@ async function main() {
       if (issueNumber) {
         try {
           execSync(`gh issue edit ${issueNumber} --add-label invalid`, { stdio: 'inherit' });
-          execSync(`gh issue close ${issueNumber} --comment "由于标题不符合要求，已自动关闭 issue。" --reason "completed"`, { stdio: 'inherit' });
+          execSync(`gh issue close ${issueNumber} --comment "由于标题不符合要求，已自动关闭 issue。\n${result.message}" --reason "completed"`, { stdio: 'inherit' });
         } catch (error) {
           console.error('Failed to close issue:', error.message);
         }
