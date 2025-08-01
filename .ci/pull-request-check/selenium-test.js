@@ -98,6 +98,7 @@ var allPassed = false;
 		await translatorServer.serve();
 
 		let options = new chrome.Options();
+		options.addArguments('--disable-features=DisableLoadExtensionCommandLineSwitch');
 		options.addArguments(`load-extension=${chromeExtensionDir}`);
 		if (CI) {
 			options.addArguments('headless=new');
