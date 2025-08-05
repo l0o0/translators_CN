@@ -17784,7 +17784,7 @@
     "trends": [
       {
         "author": "Wings236",
-        "date": "2025-07-15 13:26:41 +0800",
+        "date": "2025-07-15 05:26:59 +0000",
         "message": "Zhihu update (#605)"
       },
       {
@@ -24668,6 +24668,53 @@
         "author": "jiaojiaodubai",
         "date": "2025-05-06 01:12:19 +0000",
         "message": "resolve #495"
+      }
+    ]
+  },
+  "KouShare.js": {
+    "header": {
+      "translatorID": "484ef84b-5c00-4564-be1d-d0c034885750",
+      "label": "KouShare",
+      "creator": "jiaojiaodubai",
+      "target": "^https://www\\.koushare\\.com",
+      "minVersion": "5.0",
+      "maxVersion": "",
+      "priority": 100,
+      "inRepository": true,
+      "translatorType": 4,
+      "browserSupport": "gcsibv",
+      "lastUpdated": "2025-08-05 08:41:48"
+    },
+    "testCases": [
+      {
+        "type": "web",
+        "url": "https://www.koushare.com/video/details/27469",
+        "defer": true,
+        "items": [
+          {
+            "itemType": "report",
+            "title": "量子信息物理与技术",
+            "creators": [],
+            "date": "2022-05-21",
+            "abstractNote": "量子信息是量子力学与信息科学交叉的新兴学科。量子信息技术可以突破现有信息技术的物理局限，使人类社会从经典技术迈入量子技术新时代。本报告将阐述导致量子信息技术超越经典技术性能的物理基础——量子世界的不确定性和非局域性两大特征。正是这些量子特性使量子世界呈现出人们难于理解的奇奇怪怪的量子现象，帮助人们开发出服务于人类社会的量子信息技术。量子计算是这些技术中其中最具有颠覆性的，报告将介绍量子计算发展的状况。",
+            "institution": "中国科学技术大学",
+            "libraryCatalog": "KouShare",
+            "place": "中国科学技术大学",
+            "url": "https://www.koushare.com/video/details/27469",
+            "attachments": [],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      }
+    ],
+    "zhLabel": "蔻享学术",
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2025-08-05 16:47:10 +0800",
+        "message": "resolve #530"
       }
     ]
   }
