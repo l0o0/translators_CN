@@ -189,7 +189,7 @@
   },
   "Ncpssd.js": {
     "label": "国家哲学社会科学文献中心",
-    "lastUpdated": "2024-02-10 13:18:05"
+    "lastUpdated": "2025-08-31 19:39:38"
   },
   "PKULaw.js": {
     "label": "北大法宝",
@@ -294,6 +294,10 @@
   "Wanfang Med.js": {
     "label": "万方医疗",
     "lastUpdated": "2025-04-08 06:03:31"
+  },
+  "Web of Science Tagged.js": {
+    "label": "Web of Science Tagged",
+    "lastUpdated": "2025-07-04 14:41:41"
   },
   "Weixin.js": {
     "label": "微信",

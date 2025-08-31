@@ -4,7 +4,7 @@ const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-const excepts = ['BibTeX.js', 'RefWorks Tagged.js'];
+const excepts = [];
 
 async function getRecentCommits(filepath, count = 3) {
 	const cmd = `git log -n ${count} --pretty=format:"{\\"author\\": \\"%an\\", \\"date\\": \\"%ci\\", \\"message\\": \\"%s\\"}" -- "${filepath}"`;

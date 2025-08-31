@@ -1,7 +1,7 @@
 {
 	"translatorID": "5b731187-04a7-4256-83b4-3f042fa3eaa4",
 	"label": "Ncpssd",
-	"creator": "018<lyb018@gmail.com>,l0o0<linxzh1989@gmail.com>",
+	"creator": "jiaojiaodubai",
 	"target": "^https?://([^/]+\\.)?ncpssd\\.(org|cn)",
 	"minVersion": "3.0",
 	"maxVersion": "",
@@ -9,13 +9,13 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-02-10 13:18:05"
+	"lastUpdated": "2025-08-31 19:39:38"
 }
 
 /*
 	***** BEGIN LICENSE BLOCK *****
 
-	Copyright © 2020 018<lyb018@gmail.com>
+	Copyright © 2020 018<lyb018@gmail.com>, l0o0<linxzh1989@gmail.com>
 	
 	This file is part of Zotero.
 
@@ -60,28 +60,19 @@ class ID {
 			collectionsArticle: '集刊'
 		}[datatype];
 	}
-
-	static toUrl(ids) {
-		return encodeURI(
-			'https://www.ncpssd.cn/Literature/articleinfo'
-			+ `?id=${ids.id}`
-			+ `&type=${ids.datatype}`
-			+ `&typename=${ids.typename}`
-			+ `&nav=0`
-			+ `+&barcodenum=${ids.barcodenum}`
-		);
-	}
-
-	toBoolean() {
-		return (this.id && this.datatype);
-	}
 }
 
+const typeMap = {
+	中文期刊文章: 'journalArticle',
+	外文期刊文章: 'journalArticle',
+	古籍: 'book',
+	集刊: 'journalArticle'
+};
+
 function detectWeb(doc, url) {
-	let ids = new ID(url);
-	Z.debug(ids);
-	if (ids.toBoolean()) {
-		return ids.toItemType();
+	if (url.includes('/articleinfo?')) {
+		const typeKey = text(doc, 'h1 > i');
+		return typeMap[typeKey];
 	}
 	else if (getSearchResults(doc, true)) {
 		return 'multiple';
@@ -90,19 +81,19 @@ function detectWeb(doc, url) {
 }
 
 function getSearchResults(doc, checkOnly) {
-	var items = {};
-	var found = false;
-	var rows = doc.querySelectorAll('#ul_articlelist li .julei-list a:first-of-type, a[onclick*="/Literature/"]');
-	for (let row of rows) {
-		let title = ZU.trimInternal(row.textContent);
-		let datatype = {
+	const items = {};
+	let found = false;
+	const rows = doc.querySelectorAll('#ul_articlelist li .julei-list a:first-of-type, a[onclick*="/Literature/"]');
+	for (const row of rows) {
+		const title = ZU.trimInternal(row.textContent);
+		const datatype = {
 			中文期刊文章: 'journalArticle',
 			外文期刊文章: 'eJournalArticle',
 			古籍: 'Ancient',
 			外文图书: 'Book'
 		}[row.getAttribute('data-type')];
-		let url = datatype
-			? ID.toUrl({
+		const url = datatype
+			? genUrl({
 				id: row.getAttribute('data-id'),
 				// 这里没有填反
 				datatype: datatype,
@@ -119,130 +110,95 @@ function getSearchResults(doc, checkOnly) {
 
 async function doWeb(doc, url) {
 	if (detectWeb(doc, url) == 'multiple') {
-		let items = await Zotero.selectItems(getSearchResults(doc, false));
+		let items = await Z.selectItems(getSearchResults(doc, false));
 		if (!items) return;
-		for (let url of Object.keys(items)) {
-			await scrape(url);
+		for (const url in items) {
+			await scrapeAPI(url);
 		}
 	}
 	else {
-		await scrape(url);
+		await scrape(doc, url);
 	}
 }
 
-async function scrape(url) {
+async function scrape(doc, url = doc.location.href) {
+	if (url.includes('/secure/')) {
+		await scrapeDoc(doc, url);
+	}
+	else {
+		await scrapeAPI(url);
+	}
+}
+
+async function scrapeDoc(doc, url) {
+	function getContent(suffix) {
+		const p = doc.querySelector(`#p_${suffix}`);
+		const content = removeChild(p, 'strong:first-child');
+		return content.textContent.trim();
+	}
+	const newItem = new Z.Item(detectWeb(doc, url));
+	const extra = new Extra();
+	const titleElm = doc.querySelector('#h2_title_c');
+	const titleCopy = removeChild(titleElm, 'i');
+	newItem.title = ZU.trimInternal(titleCopy.textContent);
+	switch (newItem.itemType) {
+		case 'journalArticle': {
+			newItem.abstractNote = getContent('remark');
+			const publication = getContent('media');
+			newItem.publicationTitle = tryMatch(publication, /《(.+?)》/, 1);
+			extra.set('original-publication-title', tryMatch(publication, /\((.+?)\)$/, 1));
+			const pubInfo = getContent('year');
+			newItem.issue = tryMatch(pubInfo, /第(.+?)期$/i, 1).replace(/([A-Z]?)0*([1-9]\d*)/i, '$1$2');
+			newItem.pages = getContent('page').replace(/页$/, '');
+			getContent('creator').split('\n').forEach(name => newItem.creators.push(cleanAuthor(name)));
+			break;
+		}
+		case 'book':
+			newItem.publisher = getContent('media');
+			newItem.date = getContent('year');
+			newItem.edition = getContent('remark');
+			getContent('imburse').split('\n').forEach(name => newItem.creators.push(cleanAuthor(name.slice(3, -1))));
+			extra.set('type', 'classic', true);
+			break;
+	}
+	if (text(doc, 'h1 > i').includes('中文')) {
+		newItem.language = 'zh-CN';
+	}
+	newItem.libraryCatalog = '国家哲学社会科学文献中心';
+	newItem.extra = extra.toString();
+	doc.querySelectorAll('#p_keyword > font').forEach(elm => newItem.tags.push(elm.textContent.trim()));
+	newItem.complete();
+}
+
+
+async function scrapeAPI(url) {
 	const ids = new ID(url);
-	Z.debug(ids);
-	var newItem = new Z.Item(ids.toItemType());
-	newItem.extra = '';
-	let postData = { type: ID.toTypeName(ids.datatype) };
+	const newItem = new Z.Item(ids.toItemType());
+	const extra = new Extra();
+	const postData = { type: ID.toTypeName(ids.datatype) };
 	if (ids.datatype == 'Ancient') {
 		postData.barcodenum = ids.barcodenum;
 	}
 	else {
 		postData.lngid = ids.id;
 	}
-	postData = JSON.stringify(postData);
-	Z.debug(postData);
-	var json = {};
-	const debug = false;
-	if (debug) {
-		json = {
-			result: true,
-			code: 200,
-			data: {
-				lngid: "7101551591",
-				mediac: "心理学报",
-				mediae: null,
-				years: 2020,
-				vol: "52",
-				num: "5",
-				volumn: "2020",
-				specialnum: "B",
-				subjectnum: "5",
-				gch: "90117X",
-				titlec: "长时联结表征对工作记忆的抑制效应",
-				titlee: "The inhibitory effect of long-term associative representation on working memory",
-				keywordc: "长时记忆;工作记忆;联结记忆;alpha震荡",
-				keyworde: "long-term memory;working memory;associative memory;alpha power",
-				remarkc: "本研究通过两个实验探讨了长时记忆联结表征如何影响当下工作记忆任务的加工。长时记忆联结表征采用无语义联系、无视觉相似性的Emoji图片对,提前一天让被试完成联结表征的建立,正式工作记忆任务采用独立探测的变化觉察范式。实验1控制呈现时间(500 ms/1000 ms)与呈现方式(联结/独立),发现两种呈现时间均显示出联结条件的正确率与记忆容量显著低于独立条件,说明长时记忆联结表征抑制了当前工作记忆的加工。实验2设置了记忆项目数(2/4/6项)与呈现方式(联结/独立),采用alpha震荡作为脑电指标,考察长时联结表征在工作记忆维持阶段的作用。结果发现在维持阶段,独立条件的alpha震荡随着记忆项目数量的增加而增大(2项<4项<6项),而联结条件在4项已经到达顶点(2项<4项=6项)。实验2进一步说明长时联结表征在维持阶段降低了当前工作记忆容量。本研究的两个实验结果表明,长时记忆联结表征对当前的工作记忆任务有一定的抑制作用,这种抑制作用产生的机制可能来自于联结表征干扰了维持阶段的注意分配。",
-				remarke: "Studies on how long-term memory affects working memory(WM) have found that long-term memory can enhance WM processing. However, these studies only use item memory as the representation of long-term memory. In addition to item memory, associative memory is also an essential part of long-term memory. The associative memory and item memory involve different cognitive mechanisms and brain areas. The purpose of the present study was to investigate how associative memory affects WM processing. Before the WM task, participants were asked to store 16 pairs of dissimilar pictures into long-term memory. The participants would obtain the associative memory of these pairs of pictures in the long-term memory. The WM task was a change detection paradigm. Memory pictures in the memory array appeared in pairs(associative condition) or out of pairs(independent condition). In Experiment 1, the memory array with 6 items(3 pairs) was presented for 500 ms or 1000 ms. After a 1000 ms interval, participants needed to determine whether the probe item was the same as the memory array. The design and procedure of Experiment 2 were similar to those of Experiment 1, except that memory array was presented for only 500 ms, and 2 items(1 pairs) and 4 terms(2 pairs) were added in set size condition. Alpha power of electroencephalogram(EEG) was also collected and analyzed in Experiment 2. The results in Experiment 1 showed that WM capacity and accuracy were significantly lower in the associative condition than in the independent condition(for both presentation-time conditions: 500 ms and 1000 ms). The results in Experiment 2 showed that the alpha power in the independent condition increased as the memory set size increased(2 items < 4 items < 6 items), while the alpha power in the associative condition reached the asymptote when the set size was 4(2 items < 4 items = 6 items). Both of these two experiments’ results showed that WM capacity in the associative condition was lower than that in the independent condition. In conclusion, long-term associative representations inhibit the current WM processing and decrease WM capacity. This inhibitory effect is not affected by the length of encoding time. It implies that the reason for the increase of WM load by associative memory may come from the disorder of attention distribution.",
-				clazz: "B842",
-				beginpage: "562",
-				endpage: "571",
-				pagecount: 10,
-				showwriter: "张引[1,2];梁腾飞[1,2];叶超雄[1,3];刘强[1,2]",
-				showorgan: "[1]四川师范大学脑与心理科学研究院,成都610000;[2]辽宁师范大学脑与认知神经科学研究中心,大连116029;[3]于韦斯屈莱大学心理学系,芬兰于韦斯屈莱,40014",
-				imburse: null,
-				mediasQk: "2020年第5期,共10页",
-				processdate: "2020-07-13",
-				refercount: 0,
-				referidsReal: null,
-				range: "核心刊;BDHX2011;BDHX2004;BDHX2000;JST;CSSCI2010_2011;CSSCI2004_2005;CSSCI1999;BDHX1996;CSSCI2012_2013;CSC",
-				fstorgan: 0,
-				fstwriter: 0,
-				firstwriter: "张引",
-				firstorgan: "四川师范大学脑与心理科学研究院,成都610000",
-				language: 1,
-				type: 1,
-				issn: "0439-755X",
-				firstclass: "B842",
-				publishdate: "2020-05-01",
-				source: "nssd",
-				pdfsize: 3097857,
-				pdfurl: "http://www.nssd.org/articles/article_down.aspx?id=7101551591",
-				isshield: false,
-				isdelete: false,
-				authore: "ZHANG Yin;LIANG Tengfei;YE Chaoxiong;LIU Qiang(Institute of Brain and Psychological Sciences,Sichuan Normal University,Chengdu 610000,China;Research Center of Brain and Cognitive Neuroscience,Liaoning Normal University,Dalian 116029,China;Department of Psychology,University of Jyvaskyla,Jyvaskyla,40014,Finland)",
-				lagtype: null,
-				coverPic: null,
-				lngCollectIDs: null,
-				lngids: null,
-				lngidList: null,
-				synUpdateType: null,
-				id: null,
-				title: null,
-				author: null,
-				pagenum: null,
-				fileaddress: null,
-				journalShieldRemark: null,
-				periodShieldRemark: null,
-				addtime: null,
-				gchId: null,
-				batchDate: null,
-				sortId: null,
-				month: null,
-				isRecom: null,
-				replaceId: null,
-				top: null,
-				publishDateTime: null,
-				titleAcronym: null,
-				iscollect: null,
-				linkUrl: null,
-				collections: null,
-			},
-			succee: true,
-		};
-	}
-	else {
-		let postUrl = `https://www.ncpssd.cn/articleinfoHandler/${ids.datatype == 'Ancient' ? 'getancientbooktable' : 'getjournalarticletable'}`;
-		Z.debug(postUrl);
-		json = await requestJSON(
-			postUrl,
-			{
-				method: 'POST',
-				body: postData,
-				headers: {
-					// 以下是必需的
-					'Content-Type': 'application/json',
-					Referer: encodeURI(url)
-				}
+	let json = {};
+	let postUrl = `https://www.ncpssd.cn/articleinfoHandler/${ids.datatype == 'Ancient' ? 'getancientbooktable' : 'getjournalarticletable'}`;
+	json = await requestJSON(
+		postUrl,
+		{
+			method: 'POST',
+			body: JSON.stringify(postData),
+			headers: {
+				// 以下是必需的
+				'Content-Type': 'application/json',
+				Referer: encodeURI(url)
 			}
-		);
-	}
-	let data = {
+		}
+	);
+	const data = {
 		innerData: json.data,
-		getWith: function (label) {
+		get: function (label) {
 			let result = this.innerData[label];
 			return result
 				? result
@@ -250,54 +206,37 @@ async function scrape(url) {
 		}
 	};
 	Z.debug(json);
-	newItem.title = data.getWith('titlec');
-	newItem.abstractNote = data.getWith('remarkc');
-	newItem.publicationTitle = data.getWith('mediac');
+	newItem.title = data.get('titlec');
+	extra.set('original-title', data.get('titlee'), true);
+	newItem.publicationTitle = data.get('mediac');
 	switch (newItem.itemType) {
 		case 'journalArticle':
-			newItem.volume = tryMatch(data.getWith('vol'), /0*([1-9]\d*)/, 1);
-			newItem.issue = data.getWith('num').replace(/([A-Z]?)0*([1-9]\d*)/i, '$1$2');
+			newItem.abstractNote = data.get('remarkc');
+			newItem.volume = tryMatch(data.get('vol'), /0*([1-9]\d*)/, 1);
+			newItem.issue = data.get('num').replace(/([A-Z]?)0*([1-9]\d*)/i, '$1$2');
 			newItem.pages = Array.from(
-				new Set([data.getWith('beginpage'), data.getWith('endpage')].filter(page => page))
+				new Set([data.get('beginpage'), data.get('endpage')].filter(page => page))
 			).join('-');
-			newItem.date = data.getWith('publishdate');
-			newItem.ISSN = data.getWith('issn');
-			data.getWith('showwriter').split(';').forEach((string) => {
-				let creator = ZU.cleanAuthor(string.replace(/\[.*\]$/, ''), 'author');
-				if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
-					creator.lastName = creator.firstName + creator.lastName;
-					creator.firstName = '';
-					creator.fieldMode = 1;
-				}
-				newItem.creators.push(creator);
-			});
+			newItem.date = data.get('publishdate');
+			newItem.ISSN = data.get('issn');
+			data.get('showwriter').split(';').forEach(name => newItem.creators.push(cleanAuthor(name)));
 			break;
 		case 'book':
-			newItem.abstractNote = '';
-			newItem.publisher = data.getWith('press');
-			newItem.date = data.getWith('pubdate');
-			newItem.edition = data.getWith('section');
-			data.getWith('authorc').split(';').forEach((string) => {
-				let creator = ZU.cleanAuthor(string.slice(3, -1), 'author');
-				if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
-					creator.lastName = creator.firstName + creator.lastName;
-					creator.firstName = '';
-					creator.fieldMode = 1;
-				}
-				newItem.creators.push(creator);
-			});
-			extra.add('classify', data.getWith('classname'));
-			extra.add('remark', data.getWith('remarkc'));
-			extra.add('barcode', data.getWith('barcodenum'));
-			extra.add('Type', 'classic', true);
+			newItem.publisher = data.get('press');
+			newItem.date = data.get('pubdate');
+			newItem.edition = data.get('section');
+			data.get('authorc').split(';').forEach(name => newItem.creators.push(cleanAuthor(name.slice(3, -1))));
+			extra.set('type', 'classic', true);
 			break;
 	}
-	newItem.language = ['zh-CN', 'en-US'][data.getWith('language') - 1];
+	if (ids.datatype != 'eJournalArticle') {
+		newItem.language = 'zh-CN';
+	}
 	newItem.url = ID.toUrl(ids);
 	newItem.libraryCatalog = '国家哲学社会科学文献中心';
-	extra.add('original-title', data.getWith('titlee'), true);
-	data.getWith('keywordc').split(';').forEach(tag => newItem.tags.push(tag));
-	let pdfLink = data.getWith('pdfurl');
+	newItem.extra = extra.toString();
+	data.get('keywordc').split(';').forEach(tag => newItem.tags.push(tag));
+	let pdfLink = data.get('pdfurl');
 	if (pdfLink) {
 		newItem.attachments.push({
 			url: pdfLink,
@@ -305,34 +244,85 @@ async function scrape(url) {
 			title: 'Full Text PDF',
 		});
 	}
-	newItem.extra = extra.toString();
 	newItem.complete();
 }
 
-const extra = {
-	clsFields: [],
-	elseFields: [],
-	add: function (key, value, cls = false) {
-		if (value && cls) {
-			this.clsFields.push([key, value]);
-		}
-		else if (value) {
-			this.elseFields.push([key, value]);
-		}
-	},
-	toString: function () {
-		return [...this.clsFields, ...this.elseFields]
-			.map(entry => `${entry[0]}: ${entry[1]}`)
-			.join('\n');
+function genUrl(params) {
+	return encodeURI(
+		'https://www.ncpssd.cn/Literature/articleinfo'
+		+ `?id=${params.id}`
+		+ `&type=${params.datatype}`
+		+ `&typename=${params.typename}`
+		+ `&nav=0`
+		+ `+&barcodenum=${params.barcodenum}`
+	);
+}
+
+function removeChild(parent, childSelector) {
+	const copy = parent.cloneNode(true);
+	const child = copy.querySelector(childSelector);
+	if (child) {
+		copy.removeChild(child);
 	}
-};
+	return copy;
+}
 
 function tryMatch(string, pattern, index = 0) {
 	if (!string) return '';
-	let match = string.match(pattern);
+	const match = string.match(pattern);
 	return (match && match[index])
 		? match[index]
 		: '';
+}
+
+function cleanAuthor(name, creatorType = 'author') {
+	name = name.replace(/\[.*\]$/, '');
+	if (/\p{Unified_Ideograph}/u.test(name)) {
+		return {
+			lastName: name,
+			creatorType,
+			fieldMode: 1
+		};
+	}
+	else {
+		return ZU.cleanAuthor(ZU.capitalizeName(name), creatorType);
+	}
+}
+
+class Extra {
+	constructor() {
+		this.fields = [];
+	}
+
+	push(key, val, csl = false) {
+		this.fields.push({ key: key, val: val, csl: csl });
+	}
+
+	set(key, val, csl = false) {
+		let target = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		if (target) {
+			target.val = val;
+		}
+		else {
+			this.push(key, val, csl);
+		}
+	}
+
+	get(key) {
+		let result = this.fields.find(obj => new RegExp(`^${key}$`, 'i').test(obj.key));
+		return result
+			? result.val
+			: '';
+	}
+
+	toString(history = '') {
+		this.fields = this.fields.filter(obj => obj.val);
+		return [
+			this.fields.filter(obj => obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n'),
+			history,
+			this.fields.filter(obj => !obj.csl).map(obj => `${obj.key}: ${obj.val}`).join('\n')
+		].filter(obj => obj).join('\n');
+	}
 }
 
 /** BEGIN TEST CASES **/
