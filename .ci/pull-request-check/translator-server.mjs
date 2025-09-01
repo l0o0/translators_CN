@@ -1,6 +1,6 @@
-const http = require("http");
-const fs = require('fs').promises;
-const path = require('path');
+import http from 'http';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 const host = 'localhost';
 const port = 8085;
@@ -9,7 +9,7 @@ var server;
 var translators = [];
 var idToTranslator = {};
 var filenameToTranslator = {};
-const rootPath = path.join(__dirname, '../..');
+const rootPath = path.join(import.meta.dirname, '../..');
 const infoRe = /^\s*{[\S\s]*?}\s*?[\r\n]/;
 
 async function loadTranslators() {
@@ -19,11 +19,17 @@ async function loadTranslators() {
 			const fullPath = path.join(rootPath, file);
 			if (!fullPath.endsWith('.js') || !(await fs.stat(fullPath)).isFile()) continue;
 			let content = await fs.readFile(fullPath);
-			let translatorInfo = JSON.parse(infoRe.exec(content)[0]);
-			let translator = { metadata: translatorInfo, content };
+			let translator;
+			try {
+				let translatorInfo = JSON.parse(infoRe.exec(content)[0]);
+				translator = { metadata: translatorInfo, content };
+				idToTranslator[translatorInfo.translatorID] = translator;
+			}
+			catch (e) {
+				translator = { metadata: null, content };
+			}
 			translators.push(translator);
 			filenameToTranslator[file] = translator;
-			idToTranslator[translatorInfo.translatorID] = translator;
 		}
 	}
 }
@@ -56,17 +62,16 @@ async function requestListener(req, res) {
 	res.end();
 }
 
-module.exports = {
-	serve: async function() {
-		await loadTranslators();
-		server = http.createServer(requestListener);
-		server.listen(port, host, () => {
-			console.log(`Translator server is running on http://${host}:${port}`);
-		});
-	},
-	stopServing: function() {
-		server.close();
-	},
-	filenameToTranslator,
-	translators
-};
+async function serve() {
+	await loadTranslators();
+	server = http.createServer(requestListener);
+	server.listen(port, host, () => {
+		console.log(`Translator server is running on http://${host}:${port}`);
+	});
+}
+
+function stopServing() {
+	server.close();
+}
+
+export { serve, stopServing, filenameToTranslator, translators };

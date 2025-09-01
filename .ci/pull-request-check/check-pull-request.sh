@@ -35,5 +35,5 @@ cd ..
 
 echo "::endgroup::"
 
-./selenium-test.js "$(get_translators_to_check)"
+node selenium-test.mjs "$(get_translators_to_check)"
 
