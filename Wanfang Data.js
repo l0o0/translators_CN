@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2025-07-11 03:58:04"
+	"lastUpdated": "2025-09-19 16:19:33"
 }
 
 /*
@@ -303,7 +303,6 @@ async function scrapePage(doc, type, id) {
 		newItem.attachments.push({
 			url: encodeURI('https://oss.wanfangdata.com.cn/www/'
 				+ `${doc.title}.ashx?`
-				+ 'isread=true'
 				+ `&type=${attachmentType}`
 				+ `&resourceId=${id}`),
 			title: 'Full Text PDF',

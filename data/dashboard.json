@@ -11554,7 +11554,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-09-01 03:43:31 +0800",
+        "date": "2025-08-31 19:43:53 +0000",
         "message": "fix #647; fix #665; clean"
       },
       {
@@ -15755,7 +15755,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2025-07-11 03:58:04"
+      "lastUpdated": "2025-09-19 16:19:33"
     },
     "testCases": [
       {
@@ -16314,6 +16314,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2025-09-19 16:23:02 +0800",
+        "message": "update Wanfang, close #681; update WOS Tagged Format"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2025-07-11 12:00:03 +0800",
         "message": "update monitor params"
       },
@@ -16321,11 +16326,6 @@
         "author": "jiaojiaodubai",
         "date": "2025-06-19 15:36:14 +0000",
         "message": "fix index error"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2025-06-13 05:53:06 +0000",
-        "message": "fix unavailable type and id"
       }
     ]
   },
@@ -24733,7 +24733,7 @@
       },
       "inRepository": true,
       "translatorType": 3,
-      "lastUpdated": "2025-07-04 14:41:41"
+      "lastUpdated": "2025-09-09 16:38:04"
     },
     "testCases": [
       {
@@ -25487,7 +25487,12 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-09-01 03:43:31 +0800",
+        "date": "2025-09-19 16:23:02 +0800",
+        "message": "update Wanfang, close #681; update WOS Tagged Format"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2025-08-31 19:43:53 +0000",
         "message": "fix #647; fix #665; clean"
       }
     ]

@@ -12,7 +12,7 @@
 	},
 	"inRepository": true,
 	"translatorType": 3,
-	"lastUpdated": "2025-07-04 14:41:41"
+	"lastUpdated": "2025-09-09 16:38:04"
 }
 
 /*
@@ -304,6 +304,9 @@ function saveRecord(record) {
 				}
 			}
 		}
+    else if (field == 'DOI') {
+      value = ZU.cleanDOI(value);
+    }
 		else if (field == 'filingDate') {
 			value = ZU.strToISO(value);
 		}
