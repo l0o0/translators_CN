@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2025-05-27 07:22:17"
+	"lastUpdated": "2025-09-23 02:30:37"
 }
 
 /*
@@ -94,7 +94,7 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.title = text(doc, '.book_name');
 	const data = getLabeledData(
 		doc.querySelectorAll('.book_item'),
-		row => innerText(row, ':where(.book_type, .book_val):first-child').replace(/：$/, ''),
+		row => innerText(row, ':where(.book_type, .book_val):first-child').replace(/\s*：\s*$/, ''),
 		row => row.querySelector(':where(.book_type, .book_val)+*'),
 		doc.createElement('div')
 	);

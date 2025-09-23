@@ -16314,7 +16314,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-09-19 16:23:02 +0800",
+        "date": "2025-09-19 08:32:50 +0000",
         "message": "update Wanfang, close #681; update WOS Tagged Format"
       },
       {
@@ -16944,7 +16944,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2025-05-27 07:22:17"
+      "lastUpdated": "2025-09-23 02:30:37"
     },
     "testCases": [
       {
@@ -17163,6 +17163,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2025-09-23 10:37:42 +0800",
+        "message": "fix #691"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2025-05-27 07:30:41 +0000",
         "message": "modernize"
       },
@@ -17170,11 +17175,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-08-20 13:22:33 +0800",
         "message": "fix typo"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-08-19 17:42:48 +0800",
-        "message": "lint"
       }
     ]
   },
@@ -25487,7 +25487,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-09-19 16:23:02 +0800",
+        "date": "2025-09-19 08:32:50 +0000",
         "message": "update Wanfang, close #681; update WOS Tagged Format"
       },
       {
