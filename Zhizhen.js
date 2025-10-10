@@ -2,14 +2,14 @@
 	"translatorID": "6cb129d7-5c8d-4a3a-8ded-7c21650a44e4",
 	"label": "Zhizhen",
 	"creator": "jiaojiaodubai",
-	"target": "^https://www\\.zhizhen\\.com",
+	"target": "^https://(www|ss)\\.zhizhen\\.com",
 	"minVersion": "5.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-12-18 04:20:14"
+	"lastUpdated": "2025-10-10 05:34:03"
 }
 
 /*
@@ -76,9 +76,9 @@ function getSearchResults(doc, checkOnly) {
 
 async function doWeb(doc, url) {
 	if (detectWeb(doc, url) == 'multiple') {
-		let items = await Zotero.selectItems(getSearchResults(doc, false));
+		const items = await Z.selectItems(getSearchResults(doc, false));
 		if (!items) return;
-		for (let url of Object.keys(items)) {
+		for (const url in items) {
 			await scrape(await requestDocument(url));
 		}
 	}
@@ -88,10 +88,14 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url = doc.location.href) {
-	const labels = new Labels(doc, '.savelist_con > .card_line');
+	const data = getLabeledData(
+		doc.querySelectorAll('.savelist_con > .card_line'),
+		(row) => ZU.trimInternal(text(row, 'dt > span')),
+		(row) => row.querySelector('dd'),
+		doc.createElement('div')
+	);
 	const extra = new Extra();
 	const newItem = new Z.Item(detectWeb(doc, url));
-	// const newItem = new Z.Item('thesis');
 	newItem.title = text(doc, '.card_name > h3').replace(/^\[.+?\]/, '');
 	newItem.abstractNote = text(doc, '#detailAllAbstractId > dd').replace(/收起$/, '');
 	let countries = [];
@@ -99,16 +103,16 @@ async function scrape(doc, url = doc.location.href) {
 	let creatorsEn = [];
 	switch (newItem.itemType) {
 		case 'journalArticle':
-			newItem.publicationTitle = labels.get('期刊名').replace(/\((\W+)\)$/, '（$1）');
-			extra.set('original-container-title', ZU.capitalizeTitle(labels.get('英文期刊名')), true);
-			newItem.volume = labels.get('卷号').replace(/(?:第|Vol\.)(.+?)卷?$/, '$1');
-			newItem.issue = labels.get('期号').replace(/(?:第|No\.)(.+?)期?$/, '$1');
+			newItem.publicationTitle = data('期刊名').replace(/\((\W+)\)$/, '（$1）');
+			extra.set('original-container-title', ZU.capitalizeTitle(data('英文期刊名')), true);
+			newItem.volume = data('卷号').replace(/(?:第|Vol\.)(.+?)卷?$/, '$1');
+			newItem.issue = data('期号').replace(/(?:第|No\.)(.+?)期?$/, '$1');
 			// https://www.zhizhen.com/detail_38502727e7500f26adbb62c85e93dcf440908530063747a41921b0a3ea255101fc1cf1fbb4666ae684170ac2ce35bb93a0bba90fa339b227513108c1aa078282ab270c9f25fd7eba8a87a94da8848658?&apistrclassfy=0_14_2
-			newItem.pages = labels.get('页码').substring(1).replace(/，/g, ', ');
-			newItem.date = labels.get('年份');
-			newItem.DOI = labels.get('doi');
-			newItem.ISSN = labels.get('ISSN');
-			creatorsZh = Array.from(labels.get('作者', true).querySelectorAll('a')).map((elm) => {
+			newItem.pages = data('页码').replace(/^P/, '').replace(/，/g, ', ');
+			newItem.date = data('年份');
+			newItem.DOI = data('doi');
+			newItem.ISSN = data('ISSN');
+			creatorsZh = Array.from(data('作者', true).querySelectorAll('a')).map((elm) => {
 				const elmCopy = elm.cloneNode(true);
 				const sup = elmCopy.querySelector('sup');
 				if (sup) {
@@ -116,16 +120,16 @@ async function scrape(doc, url = doc.location.href) {
 				}
 				return { name: elmCopy.textContent.trim() };
 			});
-			creatorsEn = labels.get('英文作者').replace(/\([^)]+\)/g, '').split(/[,，]\s*/);
+			creatorsEn = data('英文作者').replace(/\([^)]+\)/g, '').split(/[,，]\s*/);
 			break;
 		case 'book': {
-			const pubInfo = labels.get('出版社');
+			const pubInfo = data('出版社');
 			newItem.place = tryMatch(pubInfo, /^([^：])：/, 1);
 			newItem.publisher = tryMatch(pubInfo, /：(.+)$/, 1);
-			newItem.date = ZU.strToISO(labels.get('出版日期'));
-			newItem.numPages = tryMatch(labels.get('页码'), /\d+/);
-			newItem.ISBN = labels.get('ISBN');
-			labels.get('作者').split('；').forEach((group) => {
+			newItem.date = ZU.strToISO(data('出版日期'));
+			newItem.numPages = tryMatch(data('页码'), /\d+/);
+			newItem.ISBN = data('ISBN');
+			data('作者').split('；').forEach((group) => {
 				let creatorType = 'author';
 				if (/翻?译$/.test(group)) {
 					creatorType = 'translator';
@@ -143,18 +147,18 @@ async function scrape(doc, url = doc.location.href) {
 			break;
 		}
 		case 'newspaperArticle':
-			newItem.publicationTitle = labels.get('报纸名称');
-			newItem.date = ZU.strToISO(labels.get('出版日期'));
-			newItem.pages = tryMatch(labels.get('版次'), /0*(\d+)/, 1);
-			creatorsZh = Array.from(labels.get('作者', true).querySelectorAll('a')).map(elm => ({ name: elm.textContent.trim().replace(/^\S* /, '') }));
+			newItem.publicationTitle = data('报纸名称');
+			newItem.date = ZU.strToISO(data('出版日期'));
+			newItem.pages = tryMatch(data('版次'), /0*(\d+)/, 1);
+			creatorsZh = Array.from(data('作者', true).querySelectorAll('a')).map(elm => ({ name: elm.textContent.trim().replace(/^\S* /, '') }));
 			break;
 		case 'thesis': {
-			const dgree = labels.get('学位名称');
+			const dgree = data('学位名称');
 			newItem.thesisType = `${dgree}${/[\u4e00-\u9fff]/.test(dgree) ? '学位论文' : ' thesis'}`;
-			newItem.university = labels.get('学位授予单位');
-			newItem.date = labels.get('学位年度');
-			creatorsZh.push({ name: labels.get('作者'), type: 'author' });
-			labels.get('导师姓名', true).querySelectorAll('a').forEach((elm) => {
+			newItem.university = data('学位授予单位');
+			newItem.date = data('学位年度');
+			creatorsZh.push({ name: data('作者'), type: 'author' });
+			data('导师姓名', true).querySelectorAll('a').forEach((elm) => {
 				creatorsZh.push({
 					name: elm.textContent.trim(),
 					type: 'contributor'
@@ -163,50 +167,50 @@ async function scrape(doc, url = doc.location.href) {
 			break;
 		}
 		case 'conferencePaper':
-			newItem.date = labels.get('召开年');
-			newItem.proceedingTitle = labels.get('会议录');
-			newItem.conferenceName = labels.get('会议名称');
-			newItem.publisher = labels.get('出版社');
-			creatorsZh = Array.from(labels.get('作者', true).querySelectorAll('a')).map(elm => ({ name: elm.textContent.trim() }));
+			newItem.date = data('召开年');
+			newItem.proceedingTitle = data('会议录');
+			newItem.conferenceName = data('会议名称');
+			newItem.publisher = data('出版社');
+			creatorsZh = Array.from(data('作者', true).querySelectorAll('a')).map(elm => ({ name: elm.textContent.trim() }));
 			break;
 		case 'standard':
-			extra.set('original-title', ZU.capitalizeTitle(labels.get('英文题名')), true);
-			newItem.type = labels.get('标准类型');
-			newItem.number = labels.get('标准号').replace(/-(\d+)$/, '—$1');
-			newItem.date = labels.get('发布日期');
-			newItem.status = labels.get('标准状态');
-			extra.set('applyDate', labels.get('实施日期'));
+			extra.set('original-title', ZU.capitalizeTitle(data('英文题名')), true);
+			newItem.type = data('标准类型');
+			newItem.number = data('标准号').replace(/-(\d+)$/, '—$1');
+			newItem.date = data('发布日期');
+			newItem.status = data('标准状态');
+			extra.set('applyDate', data('实施日期'));
 			break;
 		case 'patent':
-			newItem.assingnee = labels.get('申请人');
-			newItem.patentNumber = labels.get('公开号');
-			newItem.applicationNumber = labels.get('申请号');
+			newItem.assingnee = data('申请人');
+			newItem.patentNumber = data('公开号');
+			newItem.applicationNumber = data('申请号');
 			newItem.place = newItem.country = patentCountry(newItem.patentNumber || newItem.applicationNumber);
-			newItem.filingDate = ZU.strToISO(labels.get('申请日期'));
-			newItem.issueDate = ZU.strToISO(labels.get('公开日期'));
-			extra.set('genre', labels.get('专利类型'), true);
-			creatorsZh = Array.from(labels.get('发明人', true).querySelectorAll('a')).map(elm => ({ name: elm.textContent.trim(), type: 'inventor' }));
+			newItem.filingDate = ZU.strToISO(data('申请日期'));
+			newItem.issueDate = ZU.strToISO(data('公开日期'));
+			extra.set('genre', data('专利类型'), true);
+			creatorsZh = Array.from(data('发明人', true).querySelectorAll('a')).map(elm => ({ name: elm.textContent.trim(), type: 'inventor' }));
 			break;
 		case 'report':
-			newItem.reportNumber = labels.get('项目年度编号');
-			newItem.data = ZU.strToISO(labels.get(['公布年份', '日期']));
-			creatorsZh = Array.from(labels.get(['完成人', '作者'], true).querySelectorAll('a')).map(elm => ({ name: elm.textContent.trim() }));
+			newItem.reportNumber = data('项目年度编号');
+			newItem.data = ZU.strToISO(data(['公布年份', '日期']));
+			creatorsZh = Array.from(data(['完成人', '作者'], true).querySelectorAll('a')).map(elm => ({ name: elm.textContent.trim() }));
 			break;
 		case 'statute':
-			newItem.publicLawNumber = labels.get('文号');
-			newItem.dateEnacted = labels.get('颁布日期');
-			if (!labels.get('效力范围').includes('法律')) {
+			newItem.publicLawNumber = data('文号');
+			newItem.dateEnacted = data('颁布日期');
+			if (!data('效力范围').includes('法律')) {
 				extra.set('type', 'regulation', true);
 			}
-			extra.set('applyDate', labels.get('实施日期'));
-			creatorsZh = labels.get('颁布单位').split('；').map(str => ({ name: str }));
+			extra.set('applyDate', data('实施日期'));
+			creatorsZh = data('颁布单位').split('；').map(str => ({ name: str }));
 			break;
 		case 'case':
-			newItem.abstractNote = labels.get('判决结果');
-			newItem.court = labels.get('审理法院');
-			newItem.dateDecided = labels.get('日期');
-			newItem.docketNumber = labels.get('文号').replace(/^\((\d+)\)/, '（$1）');
-			extra.set('genre', `${labels.get('案由').split('>')[0]}判决书`, true);
+			newItem.abstractNote = data('判决结果');
+			newItem.court = data('审理法院');
+			newItem.dateDecided = data('日期');
+			newItem.docketNumber = data('文号').replace(/^\((\d+)\)/, '（$1）');
+			extra.set('genre', `${data('案由').split('>')[0]}判决书`, true);
 			break;
 		case '':
 			break;
@@ -215,7 +219,7 @@ async function scrape(doc, url = doc.location.href) {
 	// Z.debug(creatorsZh);
 	newItem.url = url;
 	newItem.libraryCatalog = '超星发现';
-	labels.get('关键词', true).querySelectorAll('a').forEach(elm => newItem.tags.push(elm.textContent.trim()));
+	data('关键词', true).querySelectorAll('a').forEach(elm => newItem.tags.push(elm.textContent.trim()));
 	const creators = [];
 	for (let i = 0; i < creatorsZh.length; i++) {
 		const nameZh = creatorsZh[i];
@@ -241,59 +245,29 @@ async function scrape(doc, url = doc.location.href) {
 	newItem.complete();
 }
 
-class Labels {
-	constructor(doc, selector) {
-		this.data = [];
-		this.emptyElm = doc.createElement('div');
-		Array.from(doc.querySelectorAll(selector))
-			// avoid nesting
-			.filter(element => !element.querySelector(selector))
-			// avoid empty
-			.filter(element => !/^\s*$/.test(element.textContent))
-			.forEach((element) => {
-				const elmCopy = element.cloneNode(true);
-				// avoid empty text
-				while (/^\s*$/.test(elmCopy.firstChild.textContent)) {
-					// Z.debug(elementCopy.firstChild.textContent);
-					elmCopy.removeChild(elmCopy.firstChild);
-					// Z.debug(elementCopy.firstChild.textContent);
-				}
-				if (elmCopy.childNodes.length > 1) {
-					const key = elmCopy.removeChild(elmCopy.firstChild).textContent.replace(/\s/g, '');
-					this.data.push([key, elmCopy]);
-				}
-				else {
-					const text = ZU.trimInternal(elmCopy.textContent);
-					const key = tryMatch(text, /^[[【]?.+?[】\]:：]/).replace(/\s/g, '');
-					elmCopy.textContent = tryMatch(text, /^[[【]?.+?[】\]:：]\s*(.+)/, 1);
-					this.data.push([key, elmCopy]);
-				}
-			});
+function getLabeledData(rows, labelGetter, dataGetter, defaultElm) {
+	const labeledElm = {};
+	for (const row of rows) {
+		labeledElm[labelGetter(row, rows)] = dataGetter(row, rows);
 	}
-
-	get(label, element = false) {
-		if (Array.isArray(label)) {
-			const results = label
-				.map(aLabel => this.get(aLabel, element));
-			const keyVal = element
-				? results.find(element => !/^\s*$/.test(element.textContent))
-				: results.find(string => string);
-			return keyVal
-				? keyVal
-				: element
-					? this.emptyElm
-					: '';
+	const data = (labels, element = false) => {
+		if (Array.isArray(labels)) {
+			for (const label of labels) {
+				const result = data(label, element);
+				if (
+					(element && /\S/.test(result.textContent)) ||
+					(!element && /\S/.test(result))) {
+					return result;
+				}
+			}
+			return element ? defaultElm : '';
 		}
-		const pattern = new RegExp(label, 'i');
-		const keyVal = this.data.find(arr => pattern.test(arr[0]));
-		return keyVal
-			? element
-				? keyVal[1]
-				: ZU.trimInternal(keyVal[1].textContent)
-			: element
-				? this.emptyElm
-				: '';
-	}
+		const targetElm = labeledElm[labels];
+		return targetElm
+			? element ? targetElm : ZU.trimInternal(targetElm.textContent)
+			: element ? defaultElm : '';
+	};
+	return data;
 }
 
 class Extra {
@@ -342,7 +316,7 @@ function tryMatch(string, pattern, index = 0) {
 
 function cleanAuthor(name, creatorType = 'author') {
 	const creator = ZU.cleanAuthor(name, creatorType);
-	if (/[\u4e00-\u9fa5]/.test(creator.lastName)) {
+	if (/\p{Unified_Ideograph}/u.test(creator.lastName)) {
 		creator.lastName = creator.lastName.replace(/\.\s*/g, '. ');
 		creator.fieldMode = 1;
 	}
@@ -860,6 +834,36 @@ var testCases = [
 		"type": "web",
 		"url": "https://www.zhizhen.com/nav/mag/infos?mags=6b5c39b3dd84352b52fd8d450fc38fa4",
 		"items": "multiple"
+	},
+	{
+		"type": "web",
+		"url": "https://ss.zhizhen.com/detail_38502727e7500f267044c544c33fa18c37959df4ca791e7d1921b0a3ea255101c944b624736f9e85555228c913e55e3d2d38e0b740b9f3ce63d991ac6224c4f393d8a3d2827d8435f48220d48126f9d7?&apistrclassfy=1_4_6,1_10_10,1_3_10,1_3_8",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "Translating Indigenous Affect in the Comedia",
+				"creators": [
+					{
+						"firstName": "Ben",
+						"lastName": "Post",
+						"creatorType": "author"
+					}
+				],
+				"date": "2025",
+				"DOI": "10.2307/27384054",
+				"ISSN": "0145-8973",
+				"issue": "1",
+				"libraryCatalog": "超星发现",
+				"pages": "9-30",
+				"publicationTitle": "Chasqui",
+				"url": "https://ss.zhizhen.com/detail_38502727e7500f267044c544c33fa18c37959df4ca791e7d1921b0a3ea255101c944b624736f9e85555228c913e55e3d2d38e0b740b9f3ce63d991ac6224c4f393d8a3d2827d8435f48220d48126f9d7?&apistrclassfy=1_4_6,1_10_10,1_3_10,1_3_8",
+				"volume": "54",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
 	}
 ]
 /** END TEST CASES **/

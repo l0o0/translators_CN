@@ -17163,7 +17163,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-09-23 10:37:42 +0800",
+        "date": "2025-09-23 02:48:45 +0000",
         "message": "fix #691"
       },
       {
@@ -22571,14 +22571,14 @@
       "translatorID": "6cb129d7-5c8d-4a3a-8ded-7c21650a44e4",
       "label": "Zhizhen",
       "creator": "jiaojiaodubai",
-      "target": "^https://www\\.zhizhen\\.com",
+      "target": "^https://(www|ss)\\.zhizhen\\.com",
       "minVersion": "5.0",
       "maxVersion": "",
       "priority": 100,
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-12-18 04:20:14"
+      "lastUpdated": "2025-10-10 05:34:03"
     },
     "testCases": [
       {
@@ -23077,10 +23077,45 @@
         "type": "web",
         "url": "https://www.zhizhen.com/nav/mag/infos?mags=6b5c39b3dd84352b52fd8d450fc38fa4",
         "items": "multiple"
+      },
+      {
+        "type": "web",
+        "url": "https://ss.zhizhen.com/detail_38502727e7500f267044c544c33fa18c37959df4ca791e7d1921b0a3ea255101c944b624736f9e85555228c913e55e3d2d38e0b740b9f3ce63d991ac6224c4f393d8a3d2827d8435f48220d48126f9d7?&apistrclassfy=1_4_6,1_10_10,1_3_10,1_3_8",
+        "items": [
+          {
+            "itemType": "journalArticle",
+            "title": "Translating Indigenous Affect in the Comedia",
+            "creators": [
+              {
+                "firstName": "Ben",
+                "lastName": "Post",
+                "creatorType": "author"
+              }
+            ],
+            "date": "2025",
+            "DOI": "10.2307/27384054",
+            "ISSN": "0145-8973",
+            "issue": "1",
+            "libraryCatalog": "超星发现",
+            "pages": "9-30",
+            "publicationTitle": "Chasqui",
+            "url": "https://ss.zhizhen.com/detail_38502727e7500f267044c544c33fa18c37959df4ca791e7d1921b0a3ea255101c944b624736f9e85555228c913e55e3d2d38e0b740b9f3ce63d991ac6224c4f393d8a3d2827d8435f48220d48126f9d7?&apistrclassfy=1_4_6,1_10_10,1_3_10,1_3_8",
+            "volume": "54",
+            "attachments": [],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
       }
     ],
     "zhLabel": "超星发现",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2025-10-10 13:34:55 +0800",
+        "message": "fix #717"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2024-12-18 13:57:18 +0800",
