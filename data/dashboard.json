@@ -8085,7 +8085,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-11-15 03:30:15"
+      "lastUpdated": "2025-10-11 03:38:54"
     },
     "testCases": [
       {
@@ -8490,6 +8490,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2025-10-11 11:39:52 +0800",
+        "message": "fix #716"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-11-26 14:36:51 +0800",
         "message": "fix #412"
       },
@@ -8497,11 +8502,6 @@
         "author": "Amniotic3",
         "date": "2024-11-12 14:17:23 +0800",
         "message": "修复 读秀bookurl不可访问 (#413)"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-10-28 16:37:52 +0800",
-        "message": "优化声明语句；优化专利日期格式更新测试用例"
       }
     ]
   },
@@ -23113,7 +23113,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-10-10 13:34:55 +0800",
+        "date": "2025-10-10 05:36:54 +0000",
         "message": "fix #717"
       },
       {
