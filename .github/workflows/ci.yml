@@ -36,7 +36,10 @@ jobs:
       
       - name: Install node packages
         run: npm ci
-      
+
+      - name: Install Chromium
+        run: npx playwright install chromium
+
       - name: Test pull request
         if: github.event_name == 'pull_request'
         run: ./check-pull-request.sh
