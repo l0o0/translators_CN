@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2025-09-19 16:19:33"
+	"lastUpdated": "2025-11-02 09:14:00"
 }
 
 /*
@@ -464,9 +464,11 @@ function parseJson(json, type, id) {
 			newItem.patentNumber = json.publicationno;
 			newItem.applicationNumber = json.patentcode;
 			newItem.place = newItem.country = patentCountry(newItem.patentNumber || newItem.applicationNumber);
-			newItem.assignee = json.applicantList.json(', ');
+			newItem.assignee = json.applicantList.join(', ');
 			newItem.filingDate = ZU.strToISO(json.applicationdate);
-			newItem.priorityNumbers = json.priorityList.join(', ');
+			if (json.priorityList) {
+				newItem.priorityNumbers = json.priorityList.join(', ');
+			}
 			newItem.issueDate = ZU.strToISO(json.publicationdate);
 			newItem.legalStatus = json.legalstatus;
 			extra.set('genre', json.patenttype, true);

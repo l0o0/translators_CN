@@ -8490,7 +8490,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-10-11 11:39:52 +0800",
+        "date": "2025-10-11 03:40:15 +0000",
         "message": "fix #716"
       },
       {
@@ -15755,7 +15755,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2025-09-19 16:19:33"
+      "lastUpdated": "2025-11-02 09:14:00"
     },
     "testCases": [
       {
@@ -16314,6 +16314,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2025-11-02 17:15:12 +0800",
+        "message": "fix #759"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2025-09-19 08:32:50 +0000",
         "message": "update Wanfang, close #681; update WOS Tagged Format"
       },
@@ -16321,11 +16326,6 @@
         "author": "jiaojiaodubai",
         "date": "2025-07-11 12:00:03 +0800",
         "message": "update monitor params"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2025-06-19 15:36:14 +0000",
-        "message": "fix index error"
       }
     ]
   },
