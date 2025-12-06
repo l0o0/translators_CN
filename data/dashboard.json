@@ -15755,7 +15755,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2025-11-02 09:14:00"
+      "lastUpdated": "2025-12-06 01:59:00"
     },
     "testCases": [
       {
@@ -16314,18 +16314,18 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-11-02 17:15:12 +0800",
+        "date": "2025-12-06 10:02:17 +0800",
+        "message": "fix: #783"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2025-11-02 09:16:52 +0000",
         "message": "fix #759"
       },
       {
         "author": "jiaojiaodubai",
         "date": "2025-09-19 08:32:50 +0000",
         "message": "update Wanfang, close #681; update WOS Tagged Format"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2025-07-11 12:00:03 +0800",
-        "message": "update monitor params"
       }
     ]
   },

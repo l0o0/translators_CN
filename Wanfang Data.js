@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2025-11-02 09:14:00"
+	"lastUpdated": "2025-12-06 01:59:00"
 }
 
 /*
@@ -175,7 +175,12 @@ async function scrapePage(doc, type, id) {
 	);
 	const extra = new Extra();
 	const newItem = new Zotero.Item(typeMap[type].itemType);
-	newItem.title = text(doc, '.detailTitleCN > :first-child > span:first-child,.detailTitleCN > span:first-child');
+	const titleElm = doc.querySelector('.detailTitleCN').cloneNode(true);
+	const icon = titleElm.querySelector('.miner');
+	if (icon) {
+		icon.remove();
+	}
+	newItem.title = ZU.trimInternal(titleElm.textContent);
 	extra.set('original-title', ZU.capitalizeTitle(text(doc, '.detailTitleEN')), true);
 	newItem.abstractNote = ZU.trimInternal(text(doc, '.summary > .item+*'));
 	doc.querySelectorAll('.author.detailTitle > .itemUrl > a').forEach((elm) => {
