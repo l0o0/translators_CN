@@ -12423,7 +12423,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-11-26 05:51:41"
+      "lastUpdated": "2025-12-16 02:28:14"
     },
     "testCases": [
       {
@@ -12551,6 +12551,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2025-12-16 10:30:03 +0800",
+        "message": "fix patent numer mismatch"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-11-26 14:36:51 +0800",
         "message": "fix #412"
       },
@@ -12558,11 +12563,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-08-20 13:22:33 +0800",
         "message": "fix typo"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-08-19 17:42:48 +0800",
-        "message": "lint"
       }
     ]
   },
@@ -16314,7 +16314,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-12-06 10:02:17 +0800",
+        "date": "2025-12-06 02:02:51 +0000",
         "message": "fix: #783"
       },
       {

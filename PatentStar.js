@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-11-26 05:51:41"
+	"lastUpdated": "2025-12-16 02:28:14"
 }
 
 /*
@@ -79,12 +79,12 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url) {
-	var newItem = new Zotero.Item('patent');
-	let ide = tryMatch(url, /[AP]NE=([A-Z\d]+)/, 1);
+	const newItem = new Zotero.Item('patent');
+	const ide = tryMatch(url, /[AP]NE=([A-Z\d]+)/, 1);
 	Z.debug(ide);
 	try {
-		let dataUrl = "/Search/GetPatentByIDE";
-		let postData = `IDE=${ide}${/ANE=/.test(url) ? '' : '&type=1'}`;
+		const dataUrl = "/Search/GetPatentByIDE";
+		const postData = `IDE=${ide}${/ANE=/.test(url) ? '' : '&type=1'}`;
 		Z.debug(postData);
 		let citationDetail = await requestJSON(
 			dataUrl,
@@ -95,14 +95,14 @@ async function scrape(doc, url) {
 		);
 		Z.debug(citationDetail);
 		if (citationDetail.Ret != 200) throw new Error('连接异常');
-		var jsonData = citationDetail.Data.Patent;
+		const jsonData = citationDetail.Data.Patent;
 		newItem.title = jsonData.TI;
 		newItem.abstractNote = jsonData.AB;
 		// newItem.place = jsonData.DZ;
 		newItem.place = jsonData.GJ;
 		newItem.country = jsonData.GJ;
 		newItem.assignee = jsonData.FP;
-		newItem.patentNumber = jsonData.AN;
+		newItem.patentNumber = jsonData.GN || jsonData.PN;
 		newItem.filingDate = toISODate(jsonData.AD);
 		newItem.applicationNumber = jsonData.AN;
 		newItem.priorityNumbers = jsonData.PR;
@@ -131,7 +131,7 @@ async function scrape(doc, url) {
 		newItem.place = labels.get('国家/省市');
 		newItem.country = labels.get('国家/省市');
 		newItem.assignee = labels.get('当前权利人');
-		newItem.patentNumber = labels.get('申请号');
+		newItem.patentNumber = labels.get(['授权公告号', '公开号']);
 		newItem.filingDate = labels.get('申请日').replace(/\./g, '-');
 		newItem.applicationNumber = labels.get('申请号');
 		newItem.priorityNumbers = labels.get('优先权');
