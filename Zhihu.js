@@ -135,7 +135,7 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.abstractNote = ZU.cleanTags(noteContent).slice(0, 150) + '...';
 			newItem.forumTitle = '知乎';
 			newItem.postType = '知乎回答';
-			newItem.date = ZU.strToISO(innerText(doc, 'span[data-tooltip]'));
+			newItem.date = ZU.strToISO(innerText(doc, '.ContentItem-time a[data-tooltip]'));
 			newItem.notes.push({ note: noteContent });
 			break;
 		}

@@ -12551,7 +12551,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2025-12-16 10:30:03 +0800",
+        "date": "2025-12-16 02:30:24 +0000",
         "message": "fix patent numer mismatch"
       },
       {
@@ -17783,6 +17783,11 @@
     "zhLabel": "知乎",
     "trends": [
       {
+        "author": "wkxu2024",
+        "date": "2025-12-29 17:31:11 +0800",
+        "message": "fix: date selector in forum post"
+      },
+      {
         "author": "Wings236",
         "date": "2025-07-15 05:26:59 +0000",
         "message": "Zhihu update (#605)"
@@ -17791,11 +17796,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-07-19 23:42:50 +0800",
         "message": "fix: use variable before declare"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-07-14 17:05:37 +0800",
-        "message": "fix #360; update test cases; use edited time as date; improve async loaded results; lint"
       }
     ]
   },
