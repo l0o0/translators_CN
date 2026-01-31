@@ -25,13 +25,56 @@ jobs:
         with:
           node-version: 20
 
-      - name: Validate Issue Title and Template
-        id: validate-title
+      - name: Check Issue Title Format
         run: |
-          cd .github/scripts
-          node validate-issue.js "${{ github.event.issue.title }}" "$(echo '${{ toJSON(github.event.issue.labels) }}')"
+          if ! echo "${{ github.event.issue.title }}" | grep -Eq '^\[(New|Bug|Enhancement)\]: .+'; then
+            gh issue edit ${{ github.event.issue.number }} --add-label invalid
+            gh issue close ${{ github.event.issue.number }} --comment "标题格式不正确，已自动关闭 issue。\nTitle format is invalid. Expected format: [New|Bug|Enhancement]: description" --reason "completed"
+            exit 0
+          fi
         env:
           GH_TOKEN: ${{ github.token }}
+
+      - name: Set Template Output or Skip
+        id: set-template
+        run: |
+          if ! ${{ contains(github.event.issue.labels.*.name, 'from template') }}; then
+            echo "This issue does not use a template, skipping validation."
+            echo "template=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          TEMPLATE=""
+          if ${{ contains(github.event.issue.labels.*.name, 'bug') }}; then
+            TEMPLATE="T1_bug.yaml"
+          elif ${{ contains(github.event.issue.labels.*.name, 'enhancement') }}; then
+            TEMPLATE="T2_enhancement.yaml"
+          elif ${{ contains(github.event.issue.labels.*.name, 'new translator') }}; then
+            TEMPLATE="T3_new_translator.yaml"
+          fi
+          echo "template=$TEMPLATE" >> $GITHUB_OUTPUT
+
+      - name: Install Dependencies
+        id: install
+        if: steps.set-template.outputs.template != ''
+        run: npm install
+
+      - name: Parse Issue Body
+        id: parse
+        if: steps.set-template.outputs.template != ''
+        uses: issue-ops/parser@v4
+        with:
+          body: ${{ github.event.issue.body }}
+          issue-form-template: ${{ steps.set-template.outputs.template }}
+          workspace: ${{ github.workspace }}
+
+      - name: Validate Issue Forms
+        id: validate
+        if: steps.set-template.outputs.template != ''
+        uses: issue-ops/validator@v3
+        with:
+          issue-form-template: ${{ steps.set-template.outputs.template }}
+          parsed-issue-body: ${{ steps.parse.outputs.json }}
+          workspace: ${{ github.workspace }}
 
       - name: Install Dependencies
         id: install
