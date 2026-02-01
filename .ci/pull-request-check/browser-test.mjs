@@ -109,7 +109,7 @@ let context;
 try {
 	await translatorServer.serve();
 
-	context = await chromium.launchPersistentContext('/tmp/chromium-user-data-dir', {
+	context = await chromium.launchPersistentContext('', {
 		channel: 'chromium',
 		headless: CI,
 		args: [

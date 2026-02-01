@@ -42,11 +42,11 @@ async function serveMetadata(req, res) {
 
 async function serveCode(req, res) {
 	const id = decodeURI(req.url.split('/')[2].split('?')[0]);
-	try {
+	if (idToTranslator[id]) {
 		res.writeHead(200);
 		res.end(idToTranslator[id].content);
 	}
-	catch (e) {
+	else {
 		res.writeHead(404);
 		res.end();
 	}
