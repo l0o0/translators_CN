@@ -69,7 +69,12 @@ You may want to consider adding '[ci skip]' in the commit message.`
 	return Array.from(toTestTranslatorIDs);
 }
 
-function report(results) {
+function report(results, translatorsToTest) {
+	if (Object.keys(results).length < translatorsToTest.length) {
+		console.log(chalk.yellow("Tests for some translators did not run"));
+		return false;
+	}
+
 	var allPassed = true;
 	for (let translatorID in results) {
 		let translatorResults = results[translatorID];
@@ -145,7 +150,7 @@ try {
 		});
 
 	let testResults = await page.evaluate(() => window.seleniumOutput);
-	allPassed = report(testResults);
+	allPassed = report(testResults, translatorsToTest);
 }
 catch (e) {
 	console.error(e);
