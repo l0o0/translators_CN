@@ -33,7 +33,7 @@
   },
   "CNKI CHKD.js": {
     "label": "中国医院知识总库",
-    "lastUpdated": "2024-07-12 13:05:37"
+    "lastUpdated": "2026-03-14 07:06:41"
   },
   "CNKI Gongjushu.js": {
     "label": "中国知网工具书总库",
@@ -47,6 +47,10 @@
     "label": "中国法律知识资源总库",
     "lastUpdated": "2024-02-25 17:21:32"
   },
+  "CNKI Oversea.js": {
+    "label": "CNKI Oversea",
+    "lastUpdated": "2026-03-18 17:50:29"
+  },
   "CNKI RefWorks.js": {
     "label": "中国知网RefWorks导出格式",
     "lastUpdated": "2025-03-29 13:32:17"
@@ -57,7 +61,7 @@
   },
   "CNKI Scholar.js": {
     "label": "中国知网外文总库",
-    "lastUpdated": "2025-02-06 14:09:43"
+    "lastUpdated": "2026-03-16 09:04:18"
   },
   "CNKI TIKS.js": {
     "label": "中国知网科技创新知识服务平台",
@@ -73,7 +77,7 @@
   },
   "CNKI.js": {
     "label": "中国知网",
-    "lastUpdated": "2025-04-14 17:16:06"
+    "lastUpdated": "2026-03-18 07:51:29"
   },
   "CNSDA.js": {
     "label": "中国学术调查数据资料库",
