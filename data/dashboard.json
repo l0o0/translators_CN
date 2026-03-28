@@ -1770,18 +1770,18 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-03-19 01:52:53 +0800",
+        "date": "2026-03-29 02:44:51 +0800",
+        "message": "improve compatiblity"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2026-03-18 17:53:23 +0000",
         "message": "rewrite CNKI; update CNKI KHD, CNKI Scholar; add CNKI Oversea"
       },
       {
         "author": "jiaojiaodubai",
         "date": "2024-07-12 21:27:30 +0800",
         "message": "向上兼容CNKI.js的改动"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-02-08 23:41:49 +0800",
-        "message": "新增CHKD；新增CNKI Refworks；改善CNKI Refer对年鉴、报告、报纸、标准的支持，优化url显示；CNKI和Scholar暴露接口，完全支持所有条目类型，增加部分出版信息，完整的双语支持"
       }
     ]
   },
@@ -3920,7 +3920,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-03-19 01:52:53 +0800",
+        "date": "2026-03-18 17:53:23 +0000",
         "message": "rewrite CNKI; update CNKI KHD, CNKI Scholar; add CNKI Oversea"
       },
       {
@@ -5581,18 +5581,18 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-03-19 01:52:53 +0800",
+        "date": "2026-03-29 02:44:51 +0800",
+        "message": "improve compatiblity"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2026-03-18 17:53:23 +0000",
         "message": "rewrite CNKI; update CNKI KHD, CNKI Scholar; add CNKI Oversea"
       },
       {
         "author": "jiaojiaodubai",
         "date": "2025-04-14 17:24:31 +0000",
         "message": "update CNKI family"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-10-04 22:37:03 +0800",
-        "message": "fix typo"
       }
     ]
   },
@@ -15294,7 +15294,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2025-12-06 01:59:00"
+      "lastUpdated": "2026-03-28 16:37:37"
     },
     "testCases": [
       {
@@ -15853,6 +15853,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2026-03-29 02:44:51 +0800",
+        "message": "improve compatiblity"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2025-12-06 02:02:51 +0000",
         "message": "fix: #783"
       },
@@ -15860,11 +15865,6 @@
         "author": "jiaojiaodubai",
         "date": "2025-11-02 09:16:52 +0000",
         "message": "fix #759"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2025-09-19 08:32:50 +0000",
-        "message": "update Wanfang, close #681; update WOS Tagged Format"
       }
     ]
   },
@@ -23560,6 +23560,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2026-03-29 02:44:51 +0800",
+        "message": "improve compatiblity"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2025-04-10 08:17:53 +0000",
         "message": "update helper function"
       },
@@ -24238,6 +24243,11 @@
     ],
     "zhLabel": "法源法律網",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2026-03-29 02:44:51 +0800",
+        "message": "improve compatiblity"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2025-05-06 01:12:19 +0000",
@@ -25761,7 +25771,12 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-03-19 01:52:53 +0800",
+        "date": "2026-03-29 02:44:51 +0800",
+        "message": "improve compatiblity"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2026-03-18 17:53:23 +0000",
         "message": "rewrite CNKI; update CNKI KHD, CNKI Scholar; add CNKI Oversea"
       }
     ]

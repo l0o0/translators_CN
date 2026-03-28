@@ -120,7 +120,8 @@ async function scrape(doc, url = doc.location.href) {
 		}
 		case 'case': {
 			const data = getLabeledData(
-				doc.querySelectorAll('.DataRow:has(.itemName)'),
+				// Compatiblity with old browser that doesn't support `:has()` selector
+				Array.from(doc.querySelectorAll('.DataRow')).filter(row => row.querySelector('.itemName')),
 				row => text(row, '.itemName').slice(0, -1).replace(/\s/g, ''),
 				row => row.querySelector('.itemContent'),
 				emptyElm
@@ -173,7 +174,8 @@ async function scrape(doc, url = doc.location.href) {
 		}
 		case 'report': {
 			const data = getLabeledData(
-				doc.querySelectorAll('.DataRow:has(.itemName)'),
+				// Compatiblity with old browser that doesn't support `:has()` selector
+				Array.from(doc.querySelectorAll('.DataRow')).filter(row => row.querySelector('.itemName')),
 				row => text(row, '.itemName').slice(0, -1).replace(/\s/g, ''),
 				row => row.querySelector('.itemContent'),
 				emptyElm

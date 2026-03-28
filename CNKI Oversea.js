@@ -74,7 +74,8 @@ function getSearchResults(doc, checkOnly) {
 			path: /\/knavi\/detail\?/,
 			dynamicElm: '#rightCatalog',
 			// `dd > .name` for journal, conference, newspaper;`tr > .name` for thesis
-			row: '#rightCatalog dd:has(.name)',
+			row: '#rightCatalog dd',
+			filter: row => row.querySelector('.name'),
 			title: row => innerText(row, '.name'),
 			href: row => attr(row, '.name > a', 'href')
 		},
@@ -87,10 +88,13 @@ function getSearchResults(doc, checkOnly) {
 			}
 			const items = {};
 			let found = false;
-			const rows = target.querySelectorAll(page.row);
-			for (const row of rows) {
+			// Compatiblity with old browser that doesn't support `:has()` selector
+			const rows = Array.from(doc.querySelectorAll(page.row))
+				.filter(row => !page.filter || page.filter(row));
+			for (let i = 0; i < rows.length; i++) {
+				const row = rows[i];
 				const href = page.href(row);
-				const title = page.title(row);
+				const title = `【${i + 1}】 ${page.title(row)}`;
 				if (!href || !title) continue;
 				if (checkOnly) return true;
 				found = true;
@@ -187,11 +191,26 @@ async function scrapeSearch(item) {
 
 async function scrapeMain(doc, url) {
 	const itemType = detectWeb(doc, url);
+	let rows = [];
+	try {
+		rows = doc.querySelectorAll('.main .container :has(>[class^="rowtit"])');
+	}
+	catch (e) {
+		// Compatibility with old browser that doesn't support `:has()` selector
+		const titles = doc.querySelectorAll('.main .container [class^="rowtit"]');
+		const uniqueRows = new Set();
+		for (const title of titles) {
+			if (title.parentElement) {
+				uniqueRows.add(title.parentElement);
+			}
+		}
+		rows = Array.from(uniqueRows);
+	}
 	const data = getLabeledData(
 		// 1. Most case: .row > .rowtit
 		// 2. Patent and standard: .row > .row-2 > .rowtit2
 		// 3. Journal article: .row > ul > li.top-space > .rowtit
-		doc.querySelectorAll('.main .container :has(>[class^="rowtit"])'),
+		rows,
 		row => innerText(row, '[class^="rowtit"]').replace(/：$/, ''),
 		row => removeNode(row, '[class^="rowtit"]'),
 		doc.createElement('div')

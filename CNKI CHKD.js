@@ -128,11 +128,26 @@ async function scrapePubMed(doc, url) {
 	catch (e) {
 		Z.debug('Failed to use search translator, falling back to page scraping');
 		Z.debug(e);
+		let rows = [];
+		try {
+			rows = doc.querySelectorAll('.main .container :has(>[class^="rowtit"])');
+		}
+		catch (e) {
+			// Compatibility with old browser that doesn't support `:has()` selector
+			const titles = doc.querySelectorAll('.main .container [class^="rowtit"]');
+			const uniqueRows = new Set();
+			for (const title of titles) {
+				if (title.parentElement) {
+					uniqueRows.add(title.parentElement);
+				}
+			}
+			rows = Array.from(uniqueRows);
+		}
 		const data = getLabeledData(
 			// 1. Most case: .row > .rowtit
 			// 2. Patent and standard: .row > .row-2 > .rowtit2
 			// 3. Journal article: .row > ul > li.top-space > .rowtit
-			doc.querySelectorAll('.main .container :has(>[class^="rowtit"])'),
+			rows,
 			row => innerText(row, '[class^="rowtit"]').replace(/：$/, ''),
 			row => removeNode(row, '[class^="rowtit"]'),
 			doc.createElement('div')

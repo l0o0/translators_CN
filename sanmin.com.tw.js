@@ -85,7 +85,8 @@ async function scrape(doc, url = doc.location.href) {
 		});
 	newItem.abstractNote = text(doc, '#Intro1+.SectionBody');
 	const data = getLabeledData(
-		doc.querySelectorAll('.ProductInfo ul > li:has(.Bold)'),
+		// Compatiblity with old browser that doesn't support `:has()` selector
+		Array.from(doc.querySelectorAll('.ProductInfo ul > li')).filter(row => row.querySelector('.Bold')),
 		row => text(row, 'h3 > .Bold').slice(0, -1),
 		(row) => {
 			try {
@@ -170,8 +171,8 @@ function getLabeledData(rows, labelGetter, dataGetter, defaultElm) {
 			for (const label of labels) {
 				const result = data(label, element);
 				if (
-					(element && /\S/.test(result.textContent)) ||
-					(!element && /\S/.test(result))) {
+					(element && /\S/.test(result.textContent))
+					|| (!element && /\S/.test(result))) {
 					return result;
 				}
 			}
