@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2025-10-11 03:38:54"
+	"lastUpdated": "2026-04-03 16:29:14"
 }
 
 /*
@@ -76,9 +76,9 @@ function getSearchResults(doc, checkOnly) {
 async function doWeb(doc, url) {
 	const itemType = detectWeb(doc, url);
 	if (itemType == 'multiple') {
-		const items = await Zotero.selectItems(getSearchResults(doc, false));
+		const items = await Z.selectItems(getSearchResults(doc, false));
 		if (!items) return;
-		for (const url of Object.keys(items)) {
+		for (const url in items) {
 			// browser needed
 			// 不支持图书章节，因为图书章节的页面是动态加载
 			const itemDoc = await requestDocument(url);
@@ -97,7 +97,7 @@ async function doWeb(doc, url) {
 async function scrape(doc, url = doc.location.href) {
 	const data = getLabeledData(
 		doc.querySelectorAll('.card_text > dl > dd'),
-		row => text(row, '.card_text-dd-label').replace(/:$/, ''),
+		row => innerText(row, '.card_text-dd-label').replace(/:$/, ''),
 		(row) => {
 			const copy = row.cloneNode(true);
 			['.card_text-dd-label+span', '.card_text-dd-label'].forEach((selector) => {
@@ -112,7 +112,7 @@ async function scrape(doc, url = doc.location.href) {
 	);
 	const extra = new Extra();
 	const newItem = new Z.Item(detectWeb(doc, url));
-	newItem.title = ZU.trimInternal(text(doc, '.card_text > dl > dt'));
+	newItem.title = ZU.trimInternal(innerText(doc, '.card_text > dl > dt'));
 	newItem.abstractNote = data(['摘要', '内容提要', '简介']).replace(/^： |\s*隐藏更多$/g, '');
 	const creatorsExt = [];
 	data(['作者', '发明人']).split(/[;；]\s*/)
@@ -136,8 +136,8 @@ async function scrape(doc, url = doc.location.href) {
 				creator = creator.replace(/（.+?）$/, '');
 				if (original) extra.push('original-author', ZU.capitalizeName(original), true);
 				creator = ZU.cleanAuthor(creator, creatorType);
-				if (/[\u4e00-\u9fff]/.test(creator.lastName)) {
-					creator.lastName = (creator.firstName + creator.lastName).replace(/([\u4e00-\u9fff])\s?([A-Z])/g, '$1·$2').replace(/([A-Z])\.(\S)/g, '$1. $2');
+				if (/\p{Unified_Ideograph}/u.test(creator.lastName)) {
+					creator.lastName = (creator.firstName + creator.lastName).replace(/(\p{Unified_Ideograph})\s?([A-Z])/gu, '$1·$2').replace(/([A-Z])\.(\S)/g, '$1. $2');
 					creator.firstName = '';
 					creator.fieldMode = 1;
 				}
@@ -160,7 +160,7 @@ async function scrape(doc, url = doc.location.href) {
 				: pubInfo;
 			newItem.date = ZU.strToISO(tryMatch(pubInfo, /[\d.-]*$/));
 			newItem.numPages = data('页数');
-			newItem.ISBN = data('I S B N号');
+			newItem.ISBN = data('I S B N 号');
 			// newItem.shortTitle = 短标题;
 			break;
 		}
@@ -250,7 +250,7 @@ async function scrapeBookSection(doc, url = doc.location.href) {
 	let bookItem = await scrape(await requestDocument(bookUrl));
 	Z.debug(bookItem);
 	const sectionItem = new Z.Item('bookSection');
-	sectionItem.title = text(doc, 'title');
+	sectionItem.title = innerText(doc, 'title');
 	sectionItem.pages = tryMatch(attr(doc, '#saveAs', 'href'), /PageRanges=([\d-]+)&/i, 1);
 	sectionItem.url = url;
 	bookItem.bookTitle = bookItem.title;
@@ -391,9 +391,10 @@ var testCases = [
 					}
 				],
 				"date": "2022-07",
-				"abstractNote": "： 本书由2017年图灵奖的两位得主撰写，是计算机体系结构领域的经典教材。第6版在保留计算机组成方面传统论题并延续前5版特点的基础上，引入了许多近几年计算机领域发展中的新论题，如领域专用体系结构（DSA）、硬件安全攻击等。另外，在实例方面也与时俱进地采用新的ARMCortex-A53微体系结构和IntelCorei76700Skylake微体系结构等现代设计对计算机组成的基本原理进行说明。在关于处理器的一章中，在单周期处理器和流水线处理器之间增加了对多周期处理器的介绍，使读者更易理解流水线处理器产生的必然性。",
+				"ISBN": "9787111708865",
+				"abstractNote": "本书由2017年图灵奖的两位得主撰写，是计算机体系结构领域的经典教材。第6版在保留计算机组成方面传统论题并延续前5版特点的基础上，引入了许多近几年计算机领域发展中的新论题，如领域专用体系结构（DSA）、硬件安全攻击等。另外，在实例方面也与时俱进地采用新的ARMCortex-A53微体系结构和IntelCorei76700Skylake微体系结构等现代设计对计算机组成的基本原理进行说明。在关于处理器的一章中，在单周期处理器和流水线处理器之间增加了对多周期处理器的介绍，使读者更易理解流水线处理器产生的必然性。",
 				"edition": "MIPS版 原书第6版",
-				"extra": "original-author: David A. Patterson\noriginal-author: John L. Hennessy\noriginal-title: COMPUTER ORGANNIZATION AND DESIGN THE HARDWARE/SOFTWARE INTERFACE，MIPS EDITION，SIXTH EDITION\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"戴维·A. 帕特森\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"David A. Patterson\"},{\"firstName\":\"\",\"lastName\":\"约翰·L. 亨尼斯\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"John L. Hennessy\"},{\"firstName\":\"\",\"lastName\":\"王党辉\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"安建峰\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"张萌\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"王继禾\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]\nprice: 149.00\nciteAs: （美）戴维·A.帕特森（David A. Patterson），（美）约翰 L.亨尼斯（John L. Hennessy）著；王党辉，安建峰，张萌，王继禾译. 计算机组成与设计 硬件/软件接口 MIPS版 原书第6版[M]. 北京：机械工业出版社, 2022.07.\nCLC: TP301 ( 工业技术->自动化技术、计算机技术->计算技术、计算机技术->一般性问题 )",
+				"extra": "original-author: David A.Patterson\noriginal-author: John L.Hennessy\noriginal-title: COMPUTER ORGANNIZATION AND DESIGN THE HARDWARE/SOFTWARE INTERFACE，MIPS EDITION，SIXTH EDITION\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"戴维·A. 帕特森\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"David A.Patterson\"},{\"firstName\":\"\",\"lastName\":\"约翰·L. 亨尼斯\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"John L.Hennessy\"},{\"firstName\":\"\",\"lastName\":\"王党辉\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"安建峰\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"张萌\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"王继禾\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]\nprice: 149.00\nciteAs: （美）戴维·A.帕特森（David A.Patterson），（美）约翰·L.亨尼斯（John L.Hennessy）著；王党辉，安建峰，张萌，王继禾译. 计算机组成与设计 硬件/软件接口 MIPS版 原书第6版[M]. 北京：机械工业出版社, 2022.07.\nCLC: TP301 ( 工业技术->自动化技术、计算机技术->计算技术、计算机技术->一般性问题 )",
 				"libraryCatalog": "Duxiu",
 				"numPages": "580",
 				"place": "北京",

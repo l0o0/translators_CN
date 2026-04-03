@@ -1770,7 +1770,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-03-29 02:44:51 +0800",
+        "date": "2026-03-28 18:45:18 +0000",
         "message": "improve compatiblity"
       },
       {
@@ -5581,7 +5581,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-03-29 02:44:51 +0800",
+        "date": "2026-03-28 18:45:18 +0000",
         "message": "improve compatiblity"
       },
       {
@@ -7624,7 +7624,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2025-10-11 03:38:54"
+      "lastUpdated": "2026-04-03 16:29:14"
     },
     "testCases": [
       {
@@ -7673,9 +7673,10 @@
               }
             ],
             "date": "2022-07",
-            "abstractNote": "： 本书由2017年图灵奖的两位得主撰写，是计算机体系结构领域的经典教材。第6版在保留计算机组成方面传统论题并延续前5版特点的基础上，引入了许多近几年计算机领域发展中的新论题，如领域专用体系结构（DSA）、硬件安全攻击等。另外，在实例方面也与时俱进地采用新的ARMCortex-A53微体系结构和IntelCorei76700Skylake微体系结构等现代设计对计算机组成的基本原理进行说明。在关于处理器的一章中，在单周期处理器和流水线处理器之间增加了对多周期处理器的介绍，使读者更易理解流水线处理器产生的必然性。",
+            "ISBN": "9787111708865",
+            "abstractNote": "本书由2017年图灵奖的两位得主撰写，是计算机体系结构领域的经典教材。第6版在保留计算机组成方面传统论题并延续前5版特点的基础上，引入了许多近几年计算机领域发展中的新论题，如领域专用体系结构（DSA）、硬件安全攻击等。另外，在实例方面也与时俱进地采用新的ARMCortex-A53微体系结构和IntelCorei76700Skylake微体系结构等现代设计对计算机组成的基本原理进行说明。在关于处理器的一章中，在单周期处理器和流水线处理器之间增加了对多周期处理器的介绍，使读者更易理解流水线处理器产生的必然性。",
             "edition": "MIPS版 原书第6版",
-            "extra": "original-author: David A. Patterson\noriginal-author: John L. Hennessy\noriginal-title: COMPUTER ORGANNIZATION AND DESIGN THE HARDWARE/SOFTWARE INTERFACE，MIPS EDITION，SIXTH EDITION\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"戴维·A. 帕特森\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"David A. Patterson\"},{\"firstName\":\"\",\"lastName\":\"约翰·L. 亨尼斯\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"John L. Hennessy\"},{\"firstName\":\"\",\"lastName\":\"王党辉\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"安建峰\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"张萌\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"王继禾\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]\nprice: 149.00\nciteAs: （美）戴维·A.帕特森（David A. Patterson），（美）约翰 L.亨尼斯（John L. Hennessy）著；王党辉，安建峰，张萌，王继禾译. 计算机组成与设计 硬件/软件接口 MIPS版 原书第6版[M]. 北京：机械工业出版社, 2022.07.\nCLC: TP301 ( 工业技术->自动化技术、计算机技术->计算技术、计算机技术->一般性问题 )",
+            "extra": "original-author: David A.Patterson\noriginal-author: John L.Hennessy\noriginal-title: COMPUTER ORGANNIZATION AND DESIGN THE HARDWARE/SOFTWARE INTERFACE，MIPS EDITION，SIXTH EDITION\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"戴维·A. 帕特森\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"David A.Patterson\"},{\"firstName\":\"\",\"lastName\":\"约翰·L. 亨尼斯\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"John L.Hennessy\"},{\"firstName\":\"\",\"lastName\":\"王党辉\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"安建峰\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"张萌\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"},{\"firstName\":\"\",\"lastName\":\"王继禾\",\"creatorType\":\"translator\",\"fieldMode\":1,\"country\":\"\",\"original\":\"\"}]\nprice: 149.00\nciteAs: （美）戴维·A.帕特森（David A.Patterson），（美）约翰·L.亨尼斯（John L.Hennessy）著；王党辉，安建峰，张萌，王继禾译. 计算机组成与设计 硬件/软件接口 MIPS版 原书第6版[M]. 北京：机械工业出版社, 2022.07.\nCLC: TP301 ( 工业技术->自动化技术、计算机技术->计算技术、计算机技术->一般性问题 )",
             "libraryCatalog": "Duxiu",
             "numPages": "580",
             "place": "北京",
@@ -8029,6 +8030,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2026-04-04 00:54:49 +0800",
+        "message": "fix: #836"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2025-10-11 03:40:15 +0000",
         "message": "fix #716"
       },
@@ -8036,11 +8042,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-11-26 14:36:51 +0800",
         "message": "fix #412"
-      },
-      {
-        "author": "Amniotic3",
-        "date": "2024-11-12 14:17:23 +0800",
-        "message": "修复 读秀bookurl不可访问 (#413)"
       }
     ]
   },
@@ -15853,7 +15854,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-03-29 02:44:51 +0800",
+        "date": "2026-03-28 18:45:18 +0000",
         "message": "improve compatiblity"
       },
       {
@@ -22117,7 +22118,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2025-10-10 05:34:03"
+      "lastUpdated": "2026-04-03 16:53:22"
     },
     "testCases": [
       {
@@ -22210,7 +22211,7 @@
             "date": "1980-10",
             "extra": "original-author: T. S. || Kuhn\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"库恩\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"T. S. Kuhn\"},{\"firstName\":\"\",\"lastName\":\"李宝恒\",\"creatorType\":\"translator\",\"fieldMode\":1}]",
             "libraryCatalog": "超星发现",
-            "numPages": "156",
+            "numPages": "144",
             "publisher": "上海科学技术出版社",
             "url": "https://www.zhizhen.com/detail_38502727e7500f2685813c708ce0786a0a5f4caf2dc451221921b0a3ea25510134114c969f2eae5c55b7335ecf9fc8fc4f4222011bb1b78ff07c4958a9f82935fdd611d4c2ae8548edb346ddf669cf76?&apistrclassfy=0_12_1",
             "attachments": [],
@@ -22650,6 +22651,11 @@
     ],
     "zhLabel": "超星发现",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2026-04-04 00:54:49 +0800",
+        "message": "fix: #836"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2025-10-10 05:36:54 +0000",
@@ -23560,7 +23566,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-03-29 02:44:51 +0800",
+        "date": "2026-03-28 18:45:18 +0000",
         "message": "improve compatiblity"
       },
       {
@@ -24245,7 +24251,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-03-29 02:44:51 +0800",
+        "date": "2026-03-28 18:45:18 +0000",
         "message": "improve compatiblity"
       },
       {
@@ -25771,7 +25777,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-03-29 02:44:51 +0800",
+        "date": "2026-03-28 18:45:18 +0000",
         "message": "improve compatiblity"
       },
       {

@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2025-10-10 05:34:03"
+	"lastUpdated": "2026-04-03 16:53:22"
 }
 
 /*
@@ -90,7 +90,7 @@ async function doWeb(doc, url) {
 async function scrape(doc, url = doc.location.href) {
 	const data = getLabeledData(
 		doc.querySelectorAll('.savelist_con > .card_line'),
-		(row) => ZU.trimInternal(text(row, 'dt > span')),
+		(row) => innerText(row, 'dt > span'),
 		(row) => row.querySelector('dd'),
 		doc.createElement('div')
 	);
@@ -128,7 +128,7 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.publisher = tryMatch(pubInfo, /：(.+)$/, 1);
 			newItem.date = ZU.strToISO(data('出版日期'));
 			newItem.numPages = tryMatch(data('页码'), /\d+/);
-			newItem.ISBN = data('ISBN');
+			newItem.ISBN = data('I S B N');
 			data('作者').split('；').forEach((group) => {
 				let creatorType = 'author';
 				if (/翻?译$/.test(group)) {
@@ -428,7 +428,7 @@ var testCases = [
 				"date": "1980-10",
 				"extra": "original-author: T. S. || Kuhn\ncreatorsExt: [{\"firstName\":\"\",\"lastName\":\"库恩\",\"creatorType\":\"author\",\"fieldMode\":1,\"country\":\"美\",\"original\":\"T. S. Kuhn\"},{\"firstName\":\"\",\"lastName\":\"李宝恒\",\"creatorType\":\"translator\",\"fieldMode\":1}]",
 				"libraryCatalog": "超星发现",
-				"numPages": "156",
+				"numPages": "144",
 				"publisher": "上海科学技术出版社",
 				"url": "https://www.zhizhen.com/detail_38502727e7500f2685813c708ce0786a0a5f4caf2dc451221921b0a3ea25510134114c969f2eae5c55b7335ecf9fc8fc4f4222011bb1b78ff07c4958a9f82935fdd611d4c2ae8548edb346ddf669cf76?&apistrclassfy=0_12_1",
 				"attachments": [],
