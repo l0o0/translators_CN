@@ -116,8 +116,9 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.url = url;
 		}
 		newItem.language = {
+			Chinese: 'zh-CN',
 			English: 'en-US',
-		}[data.articleeLanguage] ?? 'en-US';
+		}[data.articleLanguage] ?? 'en-US';
 		switch (newItem.itemType) {
 			case 'journalArticle':
 				newItem.publicationTitle = data.journal;
@@ -170,11 +171,11 @@ async function scrape(doc, url = doc.location.href) {
 							}
 						);
 					}
-					catch (error) {
-						bookJson.articleAuthor?.forEach((name) => {
-							newItem.creators.push(ZU.cleanAuthor(name, 'bookAuthor'));
-						});
-					}
+						catch (error) {
+							bookData.articleAuthor?.forEach((name) => {
+								newItem.creators.push(ZU.cleanAuthor(name, 'bookAuthor'));
+							});
+						}
 				}
 				break;
 			}
@@ -203,9 +204,9 @@ async function scrape(doc, url = doc.location.href) {
 		data.articleAuthor?.forEach((name) => {
 			newItem.creators.push(ZU.cleanAuthor(name, 'author'));
 		});
-		data.articleKeywords?.forEach((word) => {
-			newItem.tags(word.trim());
-		});
+			data.articleKeywords?.forEach((word) => {
+				newItem.tags.push(word.trim());
+			});
 		newItem.complete();
 	}
 }
