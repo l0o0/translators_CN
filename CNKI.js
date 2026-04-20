@@ -277,7 +277,7 @@ async function scrapeMain(doc, url) {
 			+ `&filename=${params.filename}`;
 	}
 	newItem.language = detectLanguage(params.dbcode);
-	setExtra(newItem, 'CNKICite', innerText(doc, '#RefAuthorArea .num') || innerText(doc, '#citations+span').substring(1, -1));
+	setExtra(newItem, 'CNKICite', innerText(doc, '#RefAuthorArea .num') || innerText(doc, '#citations+span').slice(1, -1));
 	setExtra(newItem, 'dbcode', params.dbcode);
 	setExtra(newItem, 'dbname', params.dbname);
 	setExtra(newItem, 'filename', params.filename);
