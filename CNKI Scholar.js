@@ -171,11 +171,11 @@ async function scrape(doc, url = doc.location.href) {
 							}
 						);
 					}
-						catch (error) {
-							bookData.articleAuthor?.forEach((name) => {
-								newItem.creators.push(ZU.cleanAuthor(name, 'bookAuthor'));
-							});
-						}
+					catch (error) {
+						bookData.articleAuthor?.forEach((name) => {
+							newItem.creators.push(ZU.cleanAuthor(name, 'bookAuthor'));
+						});
+					}
 				}
 				break;
 			}
@@ -204,9 +204,9 @@ async function scrape(doc, url = doc.location.href) {
 		data.articleAuthor?.forEach((name) => {
 			newItem.creators.push(ZU.cleanAuthor(name, 'author'));
 		});
-			data.articleKeywords?.forEach((word) => {
-				newItem.tags.push(word.trim());
-			});
+		data.articleKeywords?.forEach((word) => {
+			newItem.tags.push(word.trim());
+		});
 		newItem.complete();
 	}
 }
