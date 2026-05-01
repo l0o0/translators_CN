@@ -13,24 +13,26 @@ const rootPath = path.join(import.meta.dirname, '../..');
 const infoRe = /^\s*{[\S\s]*?}\s*?[\r\n]/;
 
 async function loadTranslators() {
-	if (!translators.length) {
-		const files = await fs.readdir(rootPath);
-		for (const file of files) {
-			const fullPath = path.join(rootPath, file);
-			if (!fullPath.endsWith('.js') || !(await fs.stat(fullPath)).isFile()) continue;
-			let content = await fs.readFile(fullPath);
-			let translator;
-			try {
-				let translatorInfo = JSON.parse(infoRe.exec(content)[0]);
-				translator = { metadata: translatorInfo, content };
-				idToTranslator[translatorInfo.translatorID] = translator;
-			}
-			catch (e) {
-				translator = { metadata: null, content };
-			}
-			translators.push(translator);
-			filenameToTranslator[file] = translator;
+	// Always reload from disk to pick up newly created/modified translators
+	translators = [];
+	idToTranslator = {};
+	filenameToTranslator = {};
+	const files = await fs.readdir(rootPath);
+	for (const file of files) {
+		const fullPath = path.join(rootPath, file);
+		if (!fullPath.endsWith('.js') || !(await fs.stat(fullPath)).isFile()) continue;
+		let content = await fs.readFile(fullPath, 'utf-8');
+		let translator;
+		try {
+			let translatorInfo = JSON.parse(infoRe.exec(content)[0]);
+			translator = { metadata: translatorInfo, content };
+			idToTranslator[translatorInfo.translatorID] = translator;
 		}
+		catch (e) {
+			translator = { metadata: null, content };
+		}
+		translators.push(translator);
+		filenameToTranslator[file] = translator;
 	}
 }
 
@@ -57,6 +59,15 @@ async function requestListener(req, res) {
 		return serveMetadata(req, res);
 	} else if (req.url.startsWith('/code')) {
 		return serveCode(req, res);
+	} else if (req.url === '/blank') {
+		// Blank page with permissive CSP for import/search translator tests.
+		// Content scripts injected here can eval() translator code.
+		res.writeHead(200, {
+			'Content-Type': 'text/html',
+			'Content-Security-Policy': "script-src * 'unsafe-eval' 'unsafe-inline'",
+		});
+		res.end('<!DOCTYPE html><html><head><title>Translator Test</title></head><body></body></html>');
+		return;
 	}
 	res.writeHead(404);
 	res.end();
@@ -65,13 +76,28 @@ async function requestListener(req, res) {
 async function serve() {
 	await loadTranslators();
 	server = http.createServer(requestListener);
-	server.listen(port, host, () => {
-		console.log(`Translator server is running on http://${host}:${port}`);
+	return new Promise((resolve, reject) => {
+		server.on('error', (err) => {
+			if (err.code === 'EADDRINUSE') {
+				// Port in use from a previous run - that's fine, the old server
+				// has our translators (or close enough). But we should warn.
+				console.error(`Warning: port ${port} already in use, reusing existing server`);
+				server = null;
+				resolve();
+			}
+			else {
+				reject(err);
+			}
+		});
+		server.listen(port, host, () => {
+			console.log(`Translator server is running on http://${host}:${port}`);
+			resolve();
+		});
 	});
 }
 
 function stopServing() {
-	server.close();
+	if (server) server.close();
 }
 
 export { serve, stopServing, filenameToTranslator, translators };

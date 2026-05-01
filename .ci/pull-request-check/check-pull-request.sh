@@ -28,9 +28,10 @@ else
 	npm ci
 fi
 
-export ZOTERO_REPOSITORY_URL="http://localhost:8085/"
+# Read constants from the shared JS constants file
+export CHROME_EXTENSION_KEY=$(node -e "import('$ROOT_DIR/constants.mjs').then(m => process.stdout.write(m.CHROME_EXTENSION_KEY))")
+export ZOTERO_REPOSITORY_URL=$(node -e "import('$ROOT_DIR/constants.mjs').then(m => process.stdout.write(m.TRANSLATOR_SERVER_URL))")
 export ZOTERO_ALWAYS_FETCH_FROM_REPOSITORY=1
-export CHROME_EXTENSION_KEY="MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDllBS5q+Z9T9tPgYwRN+/8T9wzyjo9tRo03Wy8zP2DQ5Iy+3q0Tjq2vKXGiMCxC/ZVuEMC68Ekv+jNT43VxPbEXI4dzpK1GMBqPJpAcEOB8B1ROBouQMbGGTG7fOdQVlmpdTTPVndVwysJ02CrDMn96IG2ytOq2PO7GR2xleCudQIDAQAB"
 ./build.sh -p b -d
 cd ..
 

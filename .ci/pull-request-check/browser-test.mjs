@@ -3,11 +3,11 @@ import path from 'path';
 import process from 'process';
 import { chromium } from 'playwright';
 import * as translatorServer from './translator-server.mjs';
+import { EXTENSION_ID } from '../constants.mjs';
 
 const chromeExtensionDir = path.join(import.meta.dirname, 'connectors', 'build', 'manifestv3');
 const KEEP_BROWSER_OPEN = 'KEEP_BROWSER_OPEN' in process.env;
 const CI = 'CI' in process.env;
-const ZOTERO_CONNECTOR_EXTENSION_ID = 'ekhagklcjbdpajgpjgmbionohlpdbjgc';
 
 async function getTranslatorsToTest() {
 	const translatorFilenames = process.argv[2].split('\n').filter(filename => filename.trim().length > 0);
@@ -127,7 +127,7 @@ try {
 	const translatorsToTest = await getTranslatorsToTest();
 	await new Promise(resolve => setTimeout(resolve, 500));
 
-	let testUrl = `chrome-extension://${ZOTERO_CONNECTOR_EXTENSION_ID}/tools/testTranslators/testTranslators.html#translators=${translatorsToTest.join(',')}`;
+	let testUrl = `chrome-extension://${EXTENSION_ID}/tools/testTranslators/testTranslators.html#translators=${translatorsToTest.join(',')}`;
 	let page = await context.newPage();
 	await page.goto(testUrl);
 
