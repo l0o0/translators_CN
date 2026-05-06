@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2026-03-18 07:51:29"
+	"lastUpdated": "2026-05-06 05:49:57"
 }
 
 /*
@@ -707,6 +707,9 @@ function extractTitle(elm) {
 		const content = ZU.trimInternal(node.textContent);
 		if (node.nodeType === Node.ELEMENT_NODE) {
 			const tag = node.tagName.toLowerCase();
+			if (node.id === 'corr-video') {
+				continue;
+			}
 			if (node.style.display === 'none') {
 				continue;
 			}
@@ -721,6 +724,7 @@ function extractTitle(elm) {
 			parts.push(content);
 		}
 	}
+	Z.debug(parts);
 	// Fix Chinese colon
 	return parts.join('').replace(/(\p{Unified_Ideograph}):(\p{Unified_Ideograph})/u, '$1：$2');
 }

@@ -4777,7 +4777,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2026-03-18 07:51:29"
+      "lastUpdated": "2026-05-06 05:49:57"
     },
     "testCases": [
       {
@@ -5581,6 +5581,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2026-05-06 14:04:29 +0800",
+        "message": "fix: title contains hiddenly element's text due to unable to read node.style.display attribute in Chromium"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2026-03-28 18:45:18 +0000",
         "message": "improve compatiblity"
       },
@@ -5588,11 +5593,6 @@
         "author": "jiaojiaodubai",
         "date": "2026-03-18 17:53:23 +0000",
         "message": "rewrite CNKI; update CNKI KHD, CNKI Scholar; add CNKI Oversea"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2025-04-14 17:24:31 +0000",
-        "message": "update CNKI family"
       }
     ]
   },
@@ -8030,7 +8030,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-04-04 00:54:49 +0800",
+        "date": "2026-04-03 16:56:24 +0000",
         "message": "fix: #836"
       },
       {
@@ -22653,7 +22653,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-04-04 00:54:49 +0800",
+        "date": "2026-04-03 16:56:24 +0000",
         "message": "fix: #836"
       },
       {
@@ -25099,7 +25099,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2026-03-18 17:50:29"
+      "lastUpdated": "2026-05-06 05:49:57"
     },
     "testCases": [
       {
@@ -25775,6 +25775,11 @@
     ],
     "zhLabel": "CNKI Oversea",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2026-05-06 14:04:29 +0800",
+        "message": "fix: title contains hiddenly element's text due to unable to read node.style.display attribute in Chromium"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2026-03-28 18:45:18 +0000",
