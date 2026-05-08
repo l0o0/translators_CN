@@ -5581,7 +5581,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-05-06 14:04:29 +0800",
+        "date": "2026-05-06 06:05:15 +0000",
         "message": "fix: title contains hiddenly element's text due to unable to read node.style.display attribute in Chromium"
       },
       {
@@ -20593,7 +20593,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2024-10-28 07:28:41"
+      "lastUpdated": "2026-05-08 17:38:03"
     },
     "testCases": [
       {
@@ -20875,6 +20875,11 @@
     ],
     "zhLabel": "方正鸿云",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2026-05-09 01:39:31 +0800",
+        "message": "fix: API respond with en data by default"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2024-10-28 15:40:36 +0800",
@@ -25777,7 +25782,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-05-06 14:04:29 +0800",
+        "date": "2026-05-06 06:05:15 +0000",
         "message": "fix: title contains hiddenly element's text due to unable to read node.style.display attribute in Chromium"
       },
       {

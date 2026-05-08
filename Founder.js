@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2024-10-28 07:28:41"
+	"lastUpdated": "2026-05-08 17:38:03"
 }
 
 /*
@@ -47,6 +47,8 @@ async function doWeb(doc, url) {
 		await scrapeAPI(doc, url);
 	}
 	catch (error) {
+		Z.debug('Fail to scrape from API');
+		Z.debug(error);
 		await scrapeDoc(doc);
 	}
 }
@@ -56,10 +58,18 @@ async function scrapeAPI(doc, url) {
 	const columnId = tryMatch(url, /\/thesisDetails\?columnId=([^&]+)/i, 1) || tryMatch(url, /\/article\/([^/]+)/i, 1);
 	let respond;
 	if (doi) {
-		respond = await requestJSON(`/rc-pub/front/front-article/getArticleByDoi?doi=${doi}&timestamps=${Date.now()}`);
+		respond = await requestJSON(`/rc-pub/front/front-article/getArticleByDoi?doi=${doi}&timestamps=${Date.now()}`, {
+			headers: {
+				language: 'zh'
+			}
+		});
 	}
 	else if (columnId) {
-		respond = await requestJSON(`/rc-pub/front/front-article/${columnId}?timestamps=${Date.now()}`);
+		respond = await requestJSON(`/rc-pub/front/front-article/${columnId}?timestamps=${Date.now()}`, {
+			headers: {
+				language: 'zh'
+			}
+		});
 	}
 	if (!respond) throw new Error('no respond');
 	const handler = {
@@ -88,8 +98,6 @@ async function scrapeAPI(doc, url) {
 	newItem.DOI = proxy.doi;
 	newItem.ISSN = attr(doc, 'meta[name="citation_issn"]', 'content');
 	newItem.url = url;
-	extra.set('view', proxy.visits);
-	extra.set('download', proxy.downloads);
 	const creatorsZh = proxy.authors.split(';');
 	const creatorsEn = proxy.enAuthors.split(';');
 	newItem.creators = creatorsZh.map(name => cleanAuthor(name));
