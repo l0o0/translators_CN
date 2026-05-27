@@ -3920,7 +3920,7 @@
     "trends": [
       {
         "author": "kasc0206",
-        "date": "2026-05-27 13:34:37 +0800",
+        "date": "2026-05-27 05:34:55 +0000",
         "message": "[codex] fix CNKI fallback metadata handling (#886)"
       },
       {
@@ -5581,7 +5581,7 @@
     "trends": [
       {
         "author": "kasc0206",
-        "date": "2026-05-27 13:34:37 +0800",
+        "date": "2026-05-27 05:34:55 +0000",
         "message": "[codex] fix CNKI fallback metadata handling (#886)"
       },
       {
@@ -5849,7 +5849,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2025-06-24 14:49:12"
+      "lastUpdated": "2026-05-27 06:03:40"
     },
     "testCases": [
       {
@@ -6245,6 +6245,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2026-05-27 14:04:59 +0800",
+        "message": "fix: #878"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2025-06-24 14:50:57 +0000",
         "message": "update selector; add fallback element"
       },
@@ -6252,11 +6257,6 @@
         "author": "jiaojiaodubai",
         "date": "2025-04-10 08:17:53 +0000",
         "message": "update helper function"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2025-04-08 06:39:12 +0000",
-        "message": "fix #465"
       }
     ]
   },
@@ -25782,7 +25782,7 @@
     "trends": [
       {
         "author": "kasc0206",
-        "date": "2026-05-27 13:34:37 +0800",
+        "date": "2026-05-27 05:34:55 +0000",
         "message": "[codex] fix CNKI fallback metadata handling (#886)"
       },
       {

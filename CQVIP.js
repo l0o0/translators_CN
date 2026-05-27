@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2025-06-24 14:49:12"
+	"lastUpdated": "2026-05-27 06:03:40"
 }
 
 /*
@@ -109,10 +109,10 @@ async function scrape(doc, url = doc.location.href) {
 	}
 	const ids = tryMatch(url, /\/doc\/[a-z]+\/(\d+)/, 1) || tryMatch(ZU.xpathText(doc, '//script[contains(.,"__NUXT__")]'), /vipdc:(\d+)/, 1);
 	Z.debug(`ids: ${ids}`);
-	const refURL = `https://wwwv3.cqvip.com/website/literature/base/ref/download?ids=${ids}&types=1&style=RefMan`;
-	let refText = await requestText(refURL);
-	Z.debug(refText);
-	refText = refText
+	const refURL = `newsite/literature/base/ref/export?ids=${ids}&types=1&styles=RefMan`;
+	const respond = await requestText(refURL);
+	Z.debug(respond);
+	const refText = JSON.parse(respond).data[0].refText
 		.replace(/^{?([A-Z](\d|[A-Z]{1,4}))}?: /gm, '$1 ')
 		.replace(/^(A[1-6]|K1) .+/gm, (match, tag) => match.replace(/;/g, `\n${tag} `))
 		.replace(/^(IS|VO|SP) .+/gm, match => match.replace(/0*(\d+)/g, '$1'))
