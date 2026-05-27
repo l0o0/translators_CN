@@ -3919,6 +3919,11 @@
     "zhLabel": "中国知网外文总库",
     "trends": [
       {
+        "author": "kasc0206",
+        "date": "2026-05-27 13:34:37 +0800",
+        "message": "[codex] fix CNKI fallback metadata handling (#886)"
+      },
+      {
         "author": "jiaojiaodubai",
         "date": "2026-03-18 17:53:23 +0000",
         "message": "rewrite CNKI; update CNKI KHD, CNKI Scholar; add CNKI Oversea"
@@ -3927,11 +3932,6 @@
         "author": "jiaojiaodubai",
         "date": "2025-04-14 17:24:31 +0000",
         "message": "update CNKI family"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-08-20 13:22:33 +0800",
-        "message": "fix typo"
       }
     ]
   },
@@ -5580,6 +5580,11 @@
     "zhLabel": "中国知网",
     "trends": [
       {
+        "author": "kasc0206",
+        "date": "2026-05-27 13:34:37 +0800",
+        "message": "[codex] fix CNKI fallback metadata handling (#886)"
+      },
+      {
         "author": "jiaojiaodubai",
         "date": "2026-05-06 06:05:15 +0000",
         "message": "fix: title contains hiddenly element's text due to unable to read node.style.display attribute in Chromium"
@@ -5588,11 +5593,6 @@
         "author": "jiaojiaodubai",
         "date": "2026-03-28 18:45:18 +0000",
         "message": "improve compatiblity"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2026-03-18 17:53:23 +0000",
-        "message": "rewrite CNKI; update CNKI KHD, CNKI Scholar; add CNKI Oversea"
       }
     ]
   },
@@ -20877,7 +20877,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-05-09 01:39:31 +0800",
+        "date": "2026-05-08 17:40:00 +0000",
         "message": "fix: API respond with en data by default"
       },
       {
@@ -25781,6 +25781,11 @@
     "zhLabel": "CNKI Oversea",
     "trends": [
       {
+        "author": "kasc0206",
+        "date": "2026-05-27 13:34:37 +0800",
+        "message": "[codex] fix CNKI fallback metadata handling (#886)"
+      },
+      {
         "author": "jiaojiaodubai",
         "date": "2026-05-06 06:05:15 +0000",
         "message": "fix: title contains hiddenly element's text due to unable to read node.style.display attribute in Chromium"
@@ -25789,11 +25794,6 @@
         "author": "jiaojiaodubai",
         "date": "2026-03-28 18:45:18 +0000",
         "message": "improve compatiblity"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2026-03-18 17:53:23 +0000",
-        "message": "rewrite CNKI; update CNKI KHD, CNKI Scholar; add CNKI Oversea"
       }
     ]
   }
