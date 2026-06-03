@@ -801,7 +801,15 @@ var exports = {
 	data: undefined,
 	typeMap,
 	scrapeMain,
-	getItemFromAPI
+	getItemFromAPI,
+	// Shared utility functions — used by CNKI Oversea, CNKI CHKD, and other CNKI sub-translators
+	getLabeledData,
+	removeNode,
+	extractTitle,
+	setExtra,
+	cleanAuthor,
+	detectLanguage,
+	addAttachments
 };
 
 /** BEGIN TEST CASES **/

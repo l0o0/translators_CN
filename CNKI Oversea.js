@@ -565,6 +565,8 @@ const typeMap = {
 	zh: zhTypeMap
 };
 
+// NOTE: This function is duplicated in CNKI.js (the canonical source).
+// If modifying, please update CNKI.js's exports.getLabeledData as well.
 function getLabeledData(rows, labelGetter, dataGetter, defaultElm) {
 	const labeledElm = {};
 	for (const row of rows) {
