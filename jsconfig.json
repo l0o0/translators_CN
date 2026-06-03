@@ -4,7 +4,7 @@
     "allowSyntheticDefaultImports": true,
     "noEmit": true,
     "checkJs": true,
-    "lib": ["dom", "es2017"],
-    "types": ["index.d.ts"]
-  }
+    "lib": ["dom", "es2017"]
+  },
+  "include": ["**/*.js", "index.d.ts"]
 }
