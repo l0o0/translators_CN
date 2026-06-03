@@ -228,7 +228,8 @@ async function scrapeMain(doc, url) {
 	let rows = [];
 	try {
 		rows = doc.querySelectorAll('.main .container :has(>[class^="rowtit"])');
-	} catch (e) {
+	}
+	catch (e) {
 		// Compatibility with old browser that doesn't support `:has()` selector
 		const titles = doc.querySelectorAll('.main .container [class^="rowtit"]');
 		const uniqueRows = new Set();

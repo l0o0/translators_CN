@@ -126,10 +126,10 @@ async function scrapeMeta(doc, url = doc.location.href) {
 			.map(name => cleanAuthor(name));
 		const creatorsExt = [];
 		zhCreators.forEach((creator, i) => {
-			const enCcreator = enCreators[i];
+			const enCreator = enCreators[i];
 			item.creators.push(creator);
 			if (enCreator) {
-				const enCreatorStr = `${enCcreator.lastName} || ${enCcreator.firstName}`;
+				const enCreatorStr = `${enCreator.lastName} || ${enCreator.firstName}`;
 				extra.push('original-creator', enCreatorStr, true);
 				creatorsExt.push({
 					firstName: creator.firstName,
