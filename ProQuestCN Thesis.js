@@ -36,10 +36,9 @@
 */
 function detectWeb(doc, url) {
 	if (url.includes('/thesisDetails/')) {
-		
 		return 'thesis';
 	}
-	else if (getSearchResults(doc,true)) {
+	else if (getSearchResults(doc, true)) {
 		return 'multiple';
 	}
 	return false;
@@ -50,34 +49,32 @@ function getSearchResults(doc, checkOnly) {
 	var found = false;
 	var rows = ZU.xpath(doc, "//div[@id='basic_search']/table[@class='table']");
 	if (checkOnly) {
-		
 		return rows.length ? 'multiple' : false;
 	}
-	for (let i=0; i < rows.length; i++) {
+	for (let i = 0; i < rows.length; i++) {
 		//Z.debug(rows[0]);
 		let title = ZU.xpath(rows[i], ".//td[@colspan='3']/a")[0];
 		//Z.debug(title.innerText);
 		//let click = title.;
 		//Z.debug(click);
 		let href = title.getAttribute('href');
-		href = "http://www.pqdtcn.com/"+href;
+		href = "http://www.pqdtcn.com/" + href;
 		//Z.debug(href);
 		title = ZU.trimInternal(title.textContent);
 		if (!href || !title) continue;
 		found = true;
-		items[href] = (i+1) + " " + title;
+		items[href] = (i + 1) + " " + title;
 		//Z.debug(items[href]);
 	}
 	return found ? items : false;
 }
 
 function doWeb(doc, url) {
-	
 	if (detectWeb(doc, url) == "multiple") {
 		Zotero.selectItems(getSearchResults(doc, false), function (items) {
 			if (items) {
-					processURL(Object.keys(items));
-				}
+				processURL(Object.keys(items));
+			}
 		});
 	}
 	else {
@@ -89,7 +86,7 @@ function processURL(urls) {
 	var url = urls.pop();
 	//Z.debug(url);
 	//ZU.doGet(url, function(text) {
-	ZU.processDocuments(url,function(doc){
+	ZU.processDocuments(url, function (doc) {
 		//Z.debug(text);
 		//var parser = new DOMParser();
 		//var doc = parser.parseFromString(text, "text/html");
@@ -98,16 +95,16 @@ function processURL(urls) {
 		if (urls.length) {
 			processURL(urls);
 		}
-	})
+	});
 }
-function scrape(doc,url){
-	var newItem=new Zotero.Item('thesis');
+function scrape(doc, url) {
+	var newItem = new Zotero.Item('thesis');
 	
-	var note=ZU.xpath(doc,"//div[@id='summary']/div/span");
-	if(note.length){
-		newItem.abstractNote=ZU.trimInternal(note[0].innerText);
+	var note = ZU.xpath(doc, "//div[@id='summary']/div/span");
+	if (note.length) {
+		newItem.abstractNote = ZU.trimInternal(note[0].innerText);
 	}
-	var index=ZU.xpath(doc,"//div[@style='margin-top: 9px;']");
+	var index = ZU.xpath(doc, "//div[@style='margin-top: 9px;']");
 	
 	//将所有的信息合并在一起后根据关键词找到对应的信息
 	//但是如果某一个关键词是空的话，整个列表的结构会乱
@@ -186,110 +183,108 @@ function scrape(doc,url){
 	//分析发现，论文的关键词信息是固定的，可以直接通过索引号来实现对应信息的提取
 	//Z.debug(index);
 	//Z.debug(index[0].children);
-	if(index.length){
-		var title=index[0].children[1].innerText.split(":")[1];
-		if(title.length){
-			newItem.title=ZU.trimInternal(title);
+	if (index.length) {
+		var title = index[0].children[1].innerText.split(":")[1];
+		if (title.length) {
+			newItem.title = ZU.trimInternal(title);
 		}
 		
-		var authors=index[0].children[2].innerText.split(":")[1];
+		var authors = index[0].children[2].innerText.split(":")[1];
 		//Z.debug(authors);
-		if(authors.length){
+		if (authors.length) {
 			//Z.debug(authors);
-			authors=new Array(ZU.trimInternal(authors));
-			authors = handleName(authors,false);
+			authors = new Array(ZU.trimInternal(authors));
+			authors = handleName(authors, false);
 			//Z.debug(authors);
 		}
-		var supervisor=index[0].children[11].innerText.split(":")[1];
-		if(supervisor.length){
-			
+		var supervisor = index[0].children[11].innerText.split(":")[1];
+		if (supervisor.length) {
 			//导师可能有多个,具体以什么符号分割还未核实
-			supervisor=ZU.trimInternal(supervisor).split(";");
+			supervisor = ZU.trimInternal(supervisor).split(";");
 			//Z.debug(supervisor);
-			supervisor=handleName(supervisor,true);
+			supervisor = handleName(supervisor, true);
 			//Z.debug(supervisor);
 		}
-		if(supervisor.length || authors.length){
-			newItem.creators=authors.concat(supervisor);
+		if (supervisor.length || authors.length) {
+			newItem.creators = authors.concat(supervisor);
 		}
 		
-		var pages=index[0].children[3].innerText.split(":")[1];
-		if(pages.length){
-			newItem.numPages=ZU.trimInternal(pages);
+		var pages = index[0].children[3].innerText.split(":")[1];
+		if (pages.length) {
+			newItem.numPages = ZU.trimInternal(pages);
 		}
 		
-		var date=index[0].children[4].innerText.split(":")[1];
-		if(date.length){
-			newItem.date=ZU.trimInternal(date);
+		var date = index[0].children[4].innerText.split(":")[1];
+		if (date.length) {
+			newItem.date = ZU.trimInternal(date);
 		}
 		
-		var university=index[0].children[6].innerText.split(":")[1];
-		if(university.length){
-			newItem.university=ZU.trimInternal(university);
+		var university = index[0].children[6].innerText.split(":")[1];
+		if (university.length) {
+			newItem.university = ZU.trimInternal(university);
 		}
 		
-		var place=index[0].children[9].innerText.split(":")[1];
-		if(place.length){
-			newItem.place=ZU.trimInternal(place);
+		var place = index[0].children[9].innerText.split(":")[1];
+		if (place.length) {
+			newItem.place = ZU.trimInternal(place);
 		}
 		
-		var ISBN=index[0].children[10].innerText.split(":")[1];
-		if(ISBN.length){
-			newItem.ISBN=ZU.trimInternal(ISBN);
+		var ISBN = index[0].children[10].innerText.split(":")[1];
+		if (ISBN.length) {
+			newItem.ISBN = ZU.trimInternal(ISBN);
 		}
 		
-		var type=index[0].children[13].innerText.split(":")[1];
-		if(type.length){
-			newItem.thesisType=ZU.trimInternal(type);
+		var type = index[0].children[13].innerText.split(":")[1];
+		if (type.length) {
+			newItem.thesisType = ZU.trimInternal(type);
 		}
 		
-		var language=index[0].children[14].innerText.split(":")[1];
-		if(language.length){
-			newItem.language=ZU.trimInternal(language);
+		var language = index[0].children[14].innerText.split(":")[1];
+		if (language.length) {
+			newItem.language = ZU.trimInternal(language);
 		}
 		
 		
 		var webType = detectWeb(doc, url);
 		if (webType && webType != 'multiple') {
-			var domain="http://www.pqdtcn.com/";
+			var domain = "http://www.pqdtcn.com/";
 			//var domain="http://2253809.rm.cglhub.com/"
-			ZU.doGet(domain+"thesis/downloadControl",function(text){
-				Z.debug(domain+"thesis/downloadControl");	
+			ZU.doGet(domain + "thesis/downloadControl", function (text) {
+				Z.debug(domain + "thesis/downloadControl");
 				Z.debug(text);
 				//succ=text.split(",")[0].split(":")[1];
 		
 				//Z.debug(succ);
-				if(!text.length){
+				if (!text.length) {
 					newItem.url = url;
 					newItem.complete();
 					return;
 				}
-				var data=JSON.parse(text);
+				var data = JSON.parse(text);
 				
-				//accesToken=text.split(",")[1].split(":")[1];
-				//accesToken=accesToken.slice(1,accesToken.length-2);
-				accesToken=data.accessToken;
+				//accessToken=text.split(",")[1].split(":")[1];
+				//accessToken=accessToken.slice(1,accessToken.length-2);
+				var accesToken = data.accessToken; // eslint-disable-line no-var
 				
-				var code=(ZU.xpath(doc,"//input[@id='thesisEncryptCode']"))[0].getAttribute("value");
-				var sites = ZU.xpath(doc,"//li[@role='presentation']");
+				var code = (ZU.xpath(doc, "//input[@id='thesisEncryptCode']"))[0].getAttribute("value");
+				var sites = ZU.xpath(doc, "//li[@role='presentation']");
 				//获取可供下载pdf的服务器编号
-				var remoteSites=[];
-				if(sites.length){
-				for (let site of sites){
+				var remoteSites = [];
+				if (sites.length) {
+					for (let site of sites) {
 					//Z.debug(site.innerText);
-					remoteSites.push(site.getElementsByTagName("a")[0].getAttribute("value"));
+						remoteSites.push(site.getElementsByTagName("a")[0].getAttribute("value"));
 					}
 				}
-				if(!remoteSites.length){
+				if (!remoteSites.length) {
 					newItem.url = url;
 					newItem.complete();
 					return;
 				}
 				Z.debug(remoteSites);
-				var pdfurl=domain+"thesis/download/"+remoteSites[Math.floor(Math.random()*remoteSites.length)]+"/"+code+"?accessToken="+accesToken;
+				var pdfurl = domain + "thesis/download/" + remoteSites[Math.floor(Math.random() * remoteSites.length)] + "/" + code + "?accessToken=" + accesToken;
 				//Z.debug(pdfurl);
 		
-				var attachments = [];
 				Z.debug(pdfurl);
 				if (pdfurl) {
 					newItem.attachments.push({
@@ -300,26 +295,25 @@ function scrape(doc,url){
 				}
 				newItem.url = url;
 				newItem.complete();
-			})
+			});
 		}
 	}
-	
 }
-function getNextItem(index,item){
-	return index[index.indexOf(item)+1];
-}
-function handleName(authors,isContri){
-	var creators=[];
+// getNextItem is unused — kept for reference
+// function getNextItem(index,item){
+// 	return index[index.indexOf(item)+1];
+// }
+function handleName(authors, isContri) {
+	var creators = [];
 	for (let author of authors) {
-		
 		var creator = {};
 		var lastSpace = author.lastIndexOf(',');
-		if (author.search(/[A-Za-z]/) !== -1 && lastSpace !== -1) {
+		if (/[A-Za-z]/.test(author) && lastSpace !== -1) {
 			// English
 			creator.lastName = author.slice(0, lastSpace);
-			creator.firstName = author.slice(lastSpace+1);
+			creator.firstName = author.slice(lastSpace + 1);
 		}
-		if(isContri){
+		if (isContri) {
 			creator.creatorType = "contributor";
 		}
 	}
