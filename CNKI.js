@@ -452,7 +452,7 @@ async function scrapeMain(doc, url) {
 			newItem.filingDate = data('申请日');
 			newItem.issueDate = data('授权公告日');
 			newItem.rights = ZU.trimInternal(innerText(doc, '.claim > h5 + div'));
-			setExtra('Genre', data('专利类型'));
+			setExtra(newItem, 'Genre', data('专利类型'));
 			data('发明人', true)
 				.querySelectorAll('a')
 				.forEach((elm) => {
