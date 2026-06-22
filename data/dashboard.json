@@ -5581,6 +5581,11 @@
     "trends": [
       {
         "author": "kasc0206",
+        "date": "2026-06-22 23:51:27 +0800",
+        "message": "fix(CNKI): add missing newItem argument in setExtra call (#908)"
+      },
+      {
+        "author": "kasc0206",
         "date": "2026-05-27 05:34:55 +0000",
         "message": "[codex] fix CNKI fallback metadata handling (#886)"
       },
@@ -5588,11 +5593,6 @@
         "author": "jiaojiaodubai",
         "date": "2026-05-06 06:05:15 +0000",
         "message": "fix: title contains hiddenly element's text due to unable to read node.style.display attribute in Chromium"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2026-03-28 18:45:18 +0000",
-        "message": "improve compatiblity"
       }
     ]
   },
@@ -6245,7 +6245,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-05-27 14:04:59 +0800",
+        "date": "2026-05-27 06:05:25 +0000",
         "message": "fix: #878"
       },
       {
