@@ -1033,6 +1033,11 @@
     "zhLabel": "国家出版发行信息公共服务平台",
     "trends": [
       {
+        "author": "kasc0206",
+        "date": "2026-06-23 00:03:05 +0800",
+        "message": "style: run eslint --fix and fix auto-fixable code quality issues (#910)"
+      },
+      {
         "author": "jiaojiaodubai",
         "date": "2025-05-27 07:43:56 +0000",
         "message": "modernize"
@@ -1041,11 +1046,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-11-26 14:36:51 +0800",
         "message": "fix #412"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-08-20 13:22:33 +0800",
-        "message": "fix typo"
       }
     ]
   },
@@ -5581,6 +5581,11 @@
     "trends": [
       {
         "author": "kasc0206",
+        "date": "2026-06-23 00:03:05 +0800",
+        "message": "style: run eslint --fix and fix auto-fixable code quality issues (#910)"
+      },
+      {
+        "author": "kasc0206",
         "date": "2026-06-22 15:51:46 +0000",
         "message": "fix(CNKI): add missing newItem argument in setExtra call (#908)"
       },
@@ -5588,11 +5593,6 @@
         "author": "kasc0206",
         "date": "2026-05-27 05:34:55 +0000",
         "message": "[codex] fix CNKI fallback metadata handling (#886)"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2026-05-06 06:05:15 +0000",
-        "message": "fix: title contains hiddenly element's text due to unable to read node.style.display attribute in Chromium"
       }
     ]
   },
@@ -8325,7 +8325,7 @@
     "trends": [
       {
         "author": "kasc0206",
-        "date": "2026-06-22 23:56:46 +0800",
+        "date": "2026-06-22 15:57:35 +0000",
         "message": "fix(E-Tiller): fix enCreator variable name typo and download extra field bug (#909)"
       },
       {
@@ -12775,6 +12775,11 @@
     "zhLabel": "ProQuest学位论文(中国)",
     "trends": [
       {
+        "author": "kasc0206",
+        "date": "2026-06-23 00:03:05 +0800",
+        "message": "style: run eslint --fix and fix auto-fixable code quality issues (#910)"
+      },
+      {
         "author": "Linxzh",
         "date": "2023-07-31 17:26:21 +0800",
         "message": "refactor: reorganized the directory structure to use Zotero Translator eslint and ci test"
@@ -16307,6 +16312,11 @@
     "zhLabel": "万方医疗",
     "trends": [
       {
+        "author": "kasc0206",
+        "date": "2026-06-23 00:03:05 +0800",
+        "message": "style: run eslint --fix and fix auto-fixable code quality issues (#910)"
+      },
+      {
         "author": "jiaojiaodubai",
         "date": "2025-04-10 08:17:53 +0000",
         "message": "update helper function"
@@ -16315,11 +16325,6 @@
         "author": "jiaojiaodubai",
         "date": "2025-04-08 06:04:38 +0000",
         "message": "fix #464"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-08-26 13:55:20 +0800",
-        "message": "close #374"
       }
     ]
   },
@@ -17323,6 +17328,11 @@
     "zhLabel": "知乎",
     "trends": [
       {
+        "author": "kasc0206",
+        "date": "2026-06-23 00:03:05 +0800",
+        "message": "style: run eslint --fix and fix auto-fixable code quality issues (#910)"
+      },
+      {
         "author": "wkxu2024",
         "date": "2025-12-29 09:31:26 +0000",
         "message": "fix: date selector in forum post"
@@ -17331,11 +17341,6 @@
         "author": "Wings236",
         "date": "2025-07-15 05:26:59 +0000",
         "message": "Zhihu update (#605)"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-07-19 23:42:50 +0800",
-        "message": "fix: use variable before declare"
       }
     ]
   },
@@ -20158,6 +20163,11 @@
     "zhLabel": "维普期刊",
     "trends": [
       {
+        "author": "kasc0206",
+        "date": "2026-06-23 00:03:05 +0800",
+        "message": "style: run eslint --fix and fix auto-fixable code quality issues (#910)"
+      },
+      {
         "author": "jiaojiaodubai",
         "date": "2024-11-01 22:33:35 +0800",
         "message": "不再尝试下载PDF；close #410"
@@ -20166,11 +20176,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-10-16 21:17:16 +0800",
         "message": "fix 412 error caused by invalid post  parameter; clean title"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-08-21 15:10:38 +0800",
-        "message": "WeiPu -> CQVIP Qikan; CQVIP -> CQVIP Knowledge; add CQVIP"
       }
     ]
   },
@@ -22657,6 +22662,11 @@
     "zhLabel": "超星发现",
     "trends": [
       {
+        "author": "kasc0206",
+        "date": "2026-06-23 00:03:05 +0800",
+        "message": "style: run eslint --fix and fix auto-fixable code quality issues (#910)"
+      },
+      {
         "author": "jiaojiaodubai",
         "date": "2026-04-03 16:56:24 +0000",
         "message": "fix: #836"
@@ -22665,11 +22675,6 @@
         "author": "jiaojiaodubai",
         "date": "2025-10-10 05:36:54 +0000",
         "message": "fix #717"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-12-18 13:57:18 +0800",
-        "message": "add Zhizhen.js"
       }
     ]
   },
@@ -23742,6 +23747,11 @@
     ],
     "zhLabel": "中国知网电子书",
     "trends": [
+      {
+        "author": "kasc0206",
+        "date": "2026-06-23 00:03:05 +0800",
+        "message": "style: run eslint --fix and fix auto-fixable code quality issues (#910)"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2025-04-10 08:17:53 +0000",
@@ -25080,6 +25090,11 @@
     ],
     "zhLabel": "Web of Science Tagged",
     "trends": [
+      {
+        "author": "kasc0206",
+        "date": "2026-06-23 00:03:05 +0800",
+        "message": "style: run eslint --fix and fix auto-fixable code quality issues (#910)"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2025-09-19 08:32:50 +0000",

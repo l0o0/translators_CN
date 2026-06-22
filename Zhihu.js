@@ -47,7 +47,7 @@ function detectWeb(doc, url) {
 	else if (url.includes('/p/')) {
 		return 'blogPost';
 	}
-	else if (url.includes('/collection/') || url.includes('/column/') || url.includes('/posts') || url.includes('/answers')){
+	else if (url.includes('/collection/') || url.includes('/column/') || url.includes('/posts') || url.includes('/answers')) {
 		return 'multiple';
 	}
 	else if (url.includes('/search?') && !url.includes('type=content')) {
@@ -123,11 +123,13 @@ async function scrape(doc, url = doc.location.href) {
 						const decodedTarget = decodeURIComponent(target);
 						// 返回解码后的 URL 和原来的分隔符
 						return decodedTarget + quoteOrDelimiter;
-					} else {
+					}
+					else {
 						// 如果没有 target 参数，返回原始匹配
 						return match;
 					}
-				} catch (e) {
+				}
+				catch (e) {
 					// 如果 href 不是有效的 URL，返回原始匹配
 					return match;
 				}
@@ -139,7 +141,7 @@ async function scrape(doc, url = doc.location.href) {
 			newItem.notes.push({ note: noteContent });
 			break;
 		}
-		case 'blogPost':
+		case 'blogPost': {
 			newItem.title = attr(doc, 'meta[property="og:title"]', 'content');
 			let noteContent = doc.querySelector('div.RichText').innerHTML;
 			// 图片
@@ -161,11 +163,13 @@ async function scrape(doc, url = doc.location.href) {
 						const decodedTarget = decodeURIComponent(target);
 						// 返回解码后的 URL 和原来的分隔符
 						return decodedTarget + quoteOrDelimiter;
-					} else {
+					}
+					else {
 						// 如果没有 target 参数，返回原始匹配
 						return match;
 					}
-				} catch (e) {
+				}
+				catch (e) {
 					// 如果 href 不是有效的 URL，返回原始匹配
 					return match;
 				}
@@ -178,6 +182,7 @@ async function scrape(doc, url = doc.location.href) {
 			// optimal DOM for zhuanlan post
 			optimalDOM(doc);
 			break;
+		}
 	}
 	newItem.url = url;
 	newItem.language = 'zh-CN';

@@ -200,15 +200,15 @@ function cleanAuthor(name) {
 	return creator;
 }
 
-async function getPDF(id, key) {
-	const postUrl = '/Qikan/Article/ArticleDown';
-	const postData = `id=${id}&info=${key}&ts=${(new Date).getTime()}`;
-	const respond = await requestJSON(postUrl, {
-		method: 'POST',
-		body: postData
-	});
-	return respond.url;
-}
+// async function getPDF(id, key) {
+// 	const postUrl = '/Qikan/Article/ArticleDown';
+// 	const postData = `id=${id}&info=${key}&ts=${(new Date).getTime()}`;
+// 	const respond = await requestJSON(postUrl, {
+// 		method: 'POST',
+// 		body: postData
+// 	});
+// 	return respond.url;
+// }
 
 function richTextTitle(item, doc) {
 	let title = doc.querySelector('.article-title > h1');

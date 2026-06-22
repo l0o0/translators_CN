@@ -304,9 +304,9 @@ function saveRecord(record) {
 				}
 			}
 		}
-    else if (field == 'DOI') {
-      value = ZU.cleanDOI(value);
-    }
+		else if (field == 'DOI') {
+			value = ZU.cleanDOI(value);
+		}
 		else if (field == 'filingDate') {
 			value = ZU.strToISO(value);
 		}

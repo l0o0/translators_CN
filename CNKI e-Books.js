@@ -142,8 +142,8 @@ function getLabeledData(rows, labelGetter, dataGetter, defaultElm) {
 			for (const label of labels) {
 				const result = data(label, element);
 				if (
-					(element && /\S/.test(result.textContent)) ||
-					(!element && /\S/.test(result))) {
+					(element && /\S/.test(result.textContent))
+					|| (!element && /\S/.test(result))) {
 					return result;
 				}
 			}

@@ -90,8 +90,8 @@ async function doWeb(doc, url) {
 async function scrape(doc, url = doc.location.href) {
 	const data = getLabeledData(
 		doc.querySelectorAll('.savelist_con > .card_line'),
-		(row) => innerText(row, 'dt > span'),
-		(row) => row.querySelector('dd'),
+		row => innerText(row, 'dt > span'),
+		row => row.querySelector('dd'),
 		doc.createElement('div')
 	);
 	const extra = new Extra();
@@ -255,8 +255,8 @@ function getLabeledData(rows, labelGetter, dataGetter, defaultElm) {
 			for (const label of labels) {
 				const result = data(label, element);
 				if (
-					(element && /\S/.test(result.textContent)) ||
-					(!element && /\S/.test(result))) {
+					(element && /\S/.test(result.textContent))
+					|| (!element && /\S/.test(result))) {
 					return result;
 				}
 			}
