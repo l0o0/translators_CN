@@ -126,10 +126,10 @@ async function scrapeMeta(doc, url = doc.location.href) {
 			.map(name => cleanAuthor(name));
 		const creatorsExt = [];
 		zhCreators.forEach((creator, i) => {
-			const enCcreator = enCreators[i];
+			const enCreator = enCreators[i];
 			item.creators.push(creator);
 			if (enCreator) {
-				const enCreatorStr = `${enCcreator.lastName} || ${enCcreator.firstName}`;
+				const enCreatorStr = `${enCreator.lastName} || ${enCreator.firstName}`;
 				extra.push('original-creator', enCreatorStr, true);
 				creatorsExt.push({
 					firstName: creator.firstName,
@@ -197,7 +197,7 @@ async function scrapeText(doc, url = doc.location.href) {
 	const urlElm = doc.querySelector('a#URL');
 	urlElm && (newItem.url = urlElm.href);
 	extra.set('view', text(doc, '#ClickNum'));
-	extra.set('download', '#PDFClickNum');
+	extra.set('download', text(doc, '#PDFClickNum'));
 	newItem.extra = extra.toString();
 	let creators = doc.querySelector('#Author td > a[href*="field=author"]')
 		? Array.from(doc.querySelectorAll('#Author td > a[href*="field=author"]')).map(elm => ZU.trimInternal(elm.textContent))

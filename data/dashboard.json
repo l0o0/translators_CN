@@ -5581,7 +5581,7 @@
     "trends": [
       {
         "author": "kasc0206",
-        "date": "2026-06-22 23:51:27 +0800",
+        "date": "2026-06-22 15:51:46 +0000",
         "message": "fix(CNKI): add missing newItem argument in setExtra call (#908)"
       },
       {
@@ -8324,6 +8324,11 @@
     "zhLabel": "勤云科技",
     "trends": [
       {
+        "author": "kasc0206",
+        "date": "2026-06-22 23:56:46 +0800",
+        "message": "fix(E-Tiller): fix enCreator variable name typo and download extra field bug (#909)"
+      },
+      {
         "author": "jiaojiaodubai",
         "date": "2025-07-14 07:10:40 +0000",
         "message": "better original author handle"
@@ -8332,11 +8337,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-09-30 18:35:05 +0800",
         "message": "close #365"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-06-20 17:04:42 +0800",
-        "message": "clean EOL, fix #351, fix #352"
       }
     ]
   },
