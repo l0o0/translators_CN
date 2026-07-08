@@ -17,7 +17,8 @@ export default function validate(inputUrl) {
     return '该 url 已通过 CNKI.js 适配。';
   }
 
-  const rootDir = path.resolve(__dirname, '../../..');
+  // .github/validator -> repository root
+  const rootDir = path.resolve(__dirname, '../..');
   let files;
   try {
     files = fs.readdirSync(rootDir).filter(f => f.endsWith('.js'));
