@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2026-07-10 23:00:00"
+	"lastUpdated": "2026-07-10 21:30:06"
 }
 
 /*
@@ -144,7 +144,7 @@ function normalizeUrl(url) {
 
 function parseBookTemplate(wikitext) {
 	var params = {};
-	var match = wikitext.match(/\{\{\s*Book\s*([\s\S]*?)\n?\}\}/i);
+	var match = wikitext.match(/\{\{\s*Book\s*([\s\S]*?)\n\s*\}\}/i);
 	if (!match) return params;
 
 	var lines = match[1].split('\n');
@@ -165,7 +165,7 @@ function parseBookTemplate(wikitext) {
 
 function parseInformationTemplate(wikitext) {
 	var params = {};
-	var match = wikitext.match(/\{\{\s*Information\s*([\s\S]*?)\n?\}\}/i);
+	var match = wikitext.match(/\{\{\s*Information\s*([\s\S]*?)\n\s*\}\}/i);
 	if (!match) return params;
 
 	var lines = match[1].split('\n');
@@ -188,7 +188,8 @@ function cleanDescription(desc) {
 	if (!desc) return '';
 	desc = desc.replace(/\{\{\s*[a-z]{2,3}(?:-[a-zA-Z]+)?\s*\|\s*\d*\s*=\s*([^}]+)\}\}/g, '$1');
 	desc = desc.replace(/\{\{[^}]+\}\}/g, '');
-	return desc.trim();
+	var lines = desc.split('\n').map(function (l) { return l.trim(); }).filter(function (l) { return l; });
+	return lines.length ? lines[0] : '';
 }
 
 function cleanWikitextLink(text) {
