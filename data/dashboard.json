@@ -26006,8 +26006,32 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-07-10 11:46:49 +0800",
+        "date": "2026-07-10 03:47:20 +0000",
         "message": "resolve: #541"
+      }
+    ]
+  },
+  "ttbz.org.js": {
+    "header": {
+      "translatorID": "decbdc8b-6d65-46dc-b198-da39f34c306c",
+      "label": "ttbz.org",
+      "creator": "jiaojiaodubai",
+      "target": "^https://www\\.ttbz\\.org\\.cn",
+      "minVersion": "5.0",
+      "maxVersion": "",
+      "priority": 100,
+      "inRepository": true,
+      "translatorType": 4,
+      "browserSupport": "gcsibv",
+      "lastUpdated": "2026-07-10 05:25:12"
+    },
+    "testCases": [],
+    "zhLabel": "全国团体标准信息平台",
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2026-07-10 13:29:14 +0800",
+        "message": "resolve: #874"
       }
     ]
   }
