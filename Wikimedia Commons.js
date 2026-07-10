@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2026-07-10 22:10:00"
+	"lastUpdated": "2026-07-10 23:00:00"
 }
 
 /*
@@ -163,6 +163,47 @@ function parseBookTemplate(wikitext) {
 	return params;
 }
 
+function parseInformationTemplate(wikitext) {
+	var params = {};
+	var match = wikitext.match(/\{\{\s*Information\s*([\s\S]*?)\n?\}\}/i);
+	if (!match) return params;
+
+	var lines = match[1].split('\n');
+	var currentKey = null;
+	for (var i = 0; i < lines.length; i++) {
+		var line = lines[i];
+		var paramMatch = line.match(/^\s*\|\s*([^\n=]+?)\s*=\s*(.*)$/);
+		if (paramMatch) {
+			currentKey = paramMatch[1].trim().toLowerCase();
+			params[currentKey] = paramMatch[2].trim();
+		}
+		else if (currentKey && line.trim() && !/^\s*\|/.test(line)) {
+			params[currentKey] += '\n' + line.trim();
+		}
+	}
+	return params;
+}
+
+function cleanDescription(desc) {
+	if (!desc) return '';
+	desc = desc.replace(/\{\{\s*[a-z]{2,3}(?:-[a-zA-Z]+)?\s*\|\s*\d*\s*=\s*([^}]+)\}\}/g, '$1');
+	desc = desc.replace(/\{\{[^}]+\}\}/g, '');
+	return desc.trim();
+}
+
+function cleanWikitextLink(text) {
+	if (!text) return '';
+	var linkMatch = text.match(/\[\[[^\]|]+\|([^\]]+)\]\]/);
+	if (linkMatch) return linkMatch[1].trim();
+	linkMatch = text.match(/\[\[([^\]]+)\]\]/);
+	if (linkMatch) return linkMatch[1].trim();
+	return text.trim();
+}
+
+function isChineseName(name) {
+	return /[\u4e00-\u9fa5]/.test(name);
+}
+
 function getInfoField(wikitext, fieldName) {
 	var regex = new RegExp('\\{\\{\\s*Information field\\s*\\|\\s*name\\s*=\\s*' + fieldName + '\\s*\\|\\s*value\\s*=\\s*([^}]+)\\}\\}', 'i');
 	var m = wikitext.match(regex);
@@ -200,13 +241,19 @@ function parseCreators(authorString, defaultType) {
 				name = name.replace(/^[\(（][^\)）]+[\)）]\s*/, '').trim();
 			}
 
-			if (name) {
+			if (!name) continue;
+
+			if (isChineseName(name)) {
 				creators.push({
 					firstName: '',
 					lastName: name,
 					creatorType: creatorType,
 					fieldMode: 1
 				});
+			}
+			else {
+				var cleaned = Zotero.Utilities.cleanAuthor(name, creatorType, false);
+				if (cleaned && cleaned.lastName) creators.push(cleaned);
 			}
 		}
 	}
@@ -239,33 +286,44 @@ function scrapeBook(doc, url, doneCallback) {
 		}
 
 		var wikitext = data && data.parse && data.parse.wikitext && data.parse.wikitext['*'] || '';
-		var params = parseBookTemplate(wikitext);
+		var bookParams = parseBookTemplate(wikitext);
+		var infoParams = parseInformationTemplate(wikitext);
 
 		var item = new Zotero.Item('book');
 		item.url = url;
 		item.libraryCatalog = 'Wikimedia Commons';
 
-		item.title = params.Title || textContent(doc, 'h1#firstHeading') || '';
-		item.title = item.title.replace(/^File:/, '').replace(BOOK_EXT_REGEX, '').trim();
+		var title = bookParams.Title;
+		if (!title && infoParams.description) title = cleanDescription(infoParams.description);
+		if (!title) title = textContent(doc, 'h1#firstHeading') || '';
+		item.title = title.replace(/^File:/, '').replace(BOOK_EXT_REGEX, '').trim();
 
-		addCreators(item, params.Author, 'author');
-		addCreators(item, params.Translator, 'author');
-		addCreators(item, params.Editor, 'author');
-		addCreators(item, params.Illustrator, 'author');
+		addCreators(item, bookParams.Author, 'author');
+		if (!item.creators.length && infoParams.author) {
+			addCreators(item, cleanWikitextLink(infoParams.author), 'author');
+		}
+		addCreators(item, bookParams.Translator, 'author');
+		addCreators(item, bookParams.Editor, 'author');
+		addCreators(item, bookParams.Illustrator, 'author');
 
-		if (params.Publisher) item.publisher = params.Publisher;
-		if (params['Publication date']) item.date = params['Publication date'];
-		if (params.City) item.place = params.City;
-		if (params.Edition) item.edition = params.Edition;
-		if (params.Language) item.language = mapLanguage(params.Language);
+		if (bookParams.Publisher) item.publisher = bookParams.Publisher;
+		if (bookParams['Publication date']) item.date = bookParams['Publication date'];
+		else if (infoParams.date) item.date = infoParams.date;
+		if (bookParams.City) item.place = bookParams.City;
+		if (bookParams.Edition) item.edition = bookParams.Edition;
+		if (bookParams.Language) item.language = mapLanguage(bookParams.Language);
+		else if (infoParams.description && /\{\{\s*en\s*\|/.test(infoParams.description)) item.language = 'en';
 
-		var pages = params.Pages || getInfoField(wikitext, 'Pages');
+		var pages = bookParams.Pages || getInfoField(wikitext, 'Pages');
 		if (pages) item.numPages = String(pages);
 
-		var source = params.Source;
+		var source = bookParams.Source;
 		if (source) {
 			source = source.replace(/\{\{[^}]+\}\}/g, '').trim();
 			item.archive = source;
+		}
+		else if (infoParams.source) {
+			item.archive = cleanWikitextLink(infoParams.source);
 		}
 
 		var attachMeta = getBookAttachmentMeta(filename);
