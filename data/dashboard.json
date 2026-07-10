@@ -25910,8 +25910,104 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-06-23 08:29:54 +0800",
+        "date": "2026-06-23 00:33:14 +0000",
         "message": "add CSRES, resolve #538"
+      }
+    ]
+  },
+  "Taiwan eBook.js": {
+    "header": {
+      "translatorID": "9f7194d8-785e-4aec-b85c-63126f0f5368",
+      "label": "Taiwan eBook",
+      "creator": "jiaojiaodubai",
+      "target": "^https://taiwanebook\\.ncl\\.edu\\.tw",
+      "minVersion": "5.0",
+      "maxVersion": "",
+      "priority": 100,
+      "inRepository": true,
+      "translatorType": 4,
+      "browserSupport": "gcsibv",
+      "lastUpdated": "2026-07-09 09:30:22"
+    },
+    "testCases": [
+      {
+        "type": "web",
+        "url": "https://taiwanebook.ncl.edu.tw/zh-tw/book/NCL-9900011541",
+        "items": [
+          {
+            "itemType": "book",
+            "title": "三角法 : 二角和差之三角函數",
+            "creators": [
+              {
+                "lastName": "林鶴一",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "lastName": "矢袋喜一",
+                "creatorType": "author",
+                "fieldMode": 1
+              },
+              {
+                "lastName": "駱師曾",
+                "creatorType": "translator",
+                "fieldMode": 1
+              }
+            ],
+            "date": "1929",
+            "libraryCatalog": "Taiwan eBook",
+            "numPages": "166",
+            "place": "上海市",
+            "publisher": "商務",
+            "shortTitle": "三角法",
+            "attachments": [],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://taiwanebook.ncl.edu.tw/zh-tw/book/NCL-9900012351",
+        "items": [
+          {
+            "itemType": "book",
+            "title": "1923等待的季節",
+            "creators": [
+              {
+                "lastName": "蔡幸妤",
+                "creatorType": "author",
+                "fieldMode": 1
+              }
+            ],
+            "date": "2015",
+            "ISBN": "9789860459982",
+            "archiveLocation": "國家圖書館",
+            "libraryCatalog": "Taiwan eBook",
+            "numPages": "37",
+            "place": "雲林縣斗六市",
+            "publisher": "雲林縣文化處",
+            "attachments": [],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
+      },
+      {
+        "type": "web",
+        "url": "https://taiwanebook.ncl.edu.tw/zh-tw/category/agriculture/maintitle/asc/grid",
+        "defer": true,
+        "items": "multiple"
+      }
+    ],
+    "zhLabel": "臺灣華文電子書",
+    "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2026-07-10 11:46:49 +0800",
+        "message": "resolve: #541"
       }
     ]
   }
