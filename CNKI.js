@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2026-05-06 05:49:57"
+	"lastUpdated": "2026-07-23 07:36:44"
 }
 
 /*
@@ -756,6 +756,16 @@ function cleanAuthor(string, creatorType = 'author') {
 		: ZU.cleanAuthor(ZU.capitalizeName(string), creatorType);
 }
 
+function getDownloadLink(doc, selectors) {
+	for (const selector of selectors) {
+		const node = doc.querySelector(selector);
+		if (!node) continue;
+		const resolvedURL = node.href || '';
+		if (/^https?:\/\//i.test(resolvedURL)) return resolvedURL;
+	}
+	return '';
+}
+
 function addAttachments(item, doc) {
 	// If you want CAJ instead of PDF, set keepPDF = false
 	// 如果你想将PDF文件替换为CAJ文件，将下面一行 keepPDF 设为 false
@@ -777,22 +787,32 @@ function addAttachments(item, doc) {
 			});
 		}
 	}
-	const pdfLink = attr(doc, '.btn-dlpdf > a', 'href');
+	const pdfLink = getDownloadLink(doc, [
+		'a#pdfDown',
+		'a[name="pdfDown"]',
+		'.btn-dlpdf > a'
+	]);
 	Z.debug(`get PDF Link:\n${pdfLink}`);
-	const cajLink = attr(doc, '.btn-dlcaj > a', 'href');
+	const cajLink = getDownloadLink(doc, [
+		'a#cajDown',
+		'a[name="cajDown"]',
+		'.btn-dlcaj > a'
+	]);
 	Z.debug(`get CAJ link:\n${cajLink}`);
 	if (keepPDF && pdfLink) {
 		item.attachments.push({
 			title: 'Full Text PDF',
 			mimeType: 'application/pdf',
-			url: pdfLink
+			url: pdfLink,
+			proxy: false
 		});
 	}
 	else if (cajLink) {
 		item.attachments.push({
 			title: 'Full Text CAJ',
 			mimeType: 'application/caj',
-			url: cajLink
+			url: cajLink,
+			proxy: false
 		});
 	}
 }
