@@ -4777,7 +4777,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2026-05-06 05:49:57"
+      "lastUpdated": "2026-09-26 18:28:59"
     },
     "testCases": [
       {
@@ -5580,6 +5580,11 @@
     "zhLabel": "中国知网",
     "trends": [
       {
+        "author": "jiaojiaodubai",
+        "date": "2026-09-27 02:31:21 +0800",
+        "message": "add dbcode"
+      },
+      {
         "author": "kasc0206",
         "date": "2026-06-22 16:03:28 +0000",
         "message": "style: run eslint --fix and fix auto-fixable code quality issues (#910)"
@@ -5588,11 +5593,6 @@
         "author": "kasc0206",
         "date": "2026-06-22 15:51:46 +0000",
         "message": "fix(CNKI): add missing newItem argument in setExtra call (#908)"
-      },
-      {
-        "author": "kasc0206",
-        "date": "2026-05-27 05:34:55 +0000",
-        "message": "[codex] fix CNKI fallback metadata handling (#886)"
       }
     ]
   },
@@ -11025,7 +11025,7 @@
     "trends": [
       {
         "author": "l0o0",
-        "date": "2026-09-01 00:25:31 +0800",
+        "date": "2026-08-31 16:26:00 +0000",
         "message": "fix: Update ncpssd translator for author, url, volumn, issue for journal item"
       },
       {

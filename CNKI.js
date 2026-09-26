@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2026-05-06 05:49:57"
+	"lastUpdated": "2026-09-26 18:28:59"
 }
 
 /*
@@ -594,6 +594,8 @@ const zhTypeMap = {
 	CJFN: 'journalArticle',
 	// 中国学术辑刊全文数据库（China Collected Journal Database）
 	CCJD: 'journalArticle',
+	ZHYX: 'journalArticle',
+	CJTL: 'journalArticle',
 
 	/* thesis */
 	// 中国博硕士学位论文全文数据库（China Doctoral Dissertations and Master’s Theses Full-text Database）
