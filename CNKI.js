@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2026-09-26 18:28:59"
+	"lastUpdated": "2026-09-29 02:39:33"
 }
 
 /*
@@ -61,7 +61,7 @@ function getSearchResults(doc, checkOnly) {
 			row: '.result-table-list > tbody > tr',
 			// Yearbook titles use `.yearbook-title`; current selector is sufficient as yearbooks are not handled
 			title: row => innerText(row, '.name'),
-			href: row => attr(row, '.name > a', 'href')
+			href: row => attr(row, '.name a', 'href')
 		},
 
 		/* Navigation of publication */
@@ -72,7 +72,7 @@ function getSearchResults(doc, checkOnly) {
 			row: '#rightCatalog :is(dd, tr)',
 			filter: row => row.querySelector('.name'),
 			title: row => innerText(row, '.name'),
-			href: row => attr(row, '.name > a', 'href')
+			href: row => attr(row, '.name a', 'href')
 		},
 
 		/* Author profile */

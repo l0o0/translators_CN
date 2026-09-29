@@ -4777,7 +4777,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2026-09-26 18:28:59"
+      "lastUpdated": "2026-09-29 02:39:33"
     },
     "testCases": [
       {
@@ -5581,18 +5581,18 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-09-27 02:31:21 +0800",
+        "date": "2026-09-29 10:42:48 +0800",
+        "message": "feat: better handling for filtered search results"
+      },
+      {
+        "author": "jiaojiaodubai",
+        "date": "2026-09-26 18:31:48 +0000",
         "message": "add dbcode"
       },
       {
         "author": "kasc0206",
         "date": "2026-06-22 16:03:28 +0000",
         "message": "style: run eslint --fix and fix auto-fixable code quality issues (#910)"
-      },
-      {
-        "author": "kasc0206",
-        "date": "2026-06-22 15:51:46 +0000",
-        "message": "fix(CNKI): add missing newItem argument in setExtra call (#908)"
       }
     ]
   },
