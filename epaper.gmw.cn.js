@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2025-04-08 08:07:01"
+	"lastUpdated": "2026-10-26 19:11:55"
 }
 
 /*
@@ -37,8 +37,12 @@
 
 
 function detectWeb(doc, url) {
-	// publicationCode_yyyyMMdd_page_order
+	// publicationCode_yyyyMMdd_page
 	if (/[a-z]+_\d{8}_\d+-\d+.htm/.test(url)) {
+		return 'newspaperArticle';
+	}
+	// content/yyyyMM/page/content_id
+	if (/content\/\d+\/\d+\/content_\d+.html/.test(url)) {
 		return 'newspaperArticle';
 	}
 	else if (getSearchResults(doc, true)) {
@@ -76,7 +80,7 @@ async function doWeb(doc, url) {
 }
 
 async function scrape(doc, url = doc.location.href) {
-	if (url.includes('/gmrb/')) {
+	if (url.includes('/content/') && /\/gmrb|zhdsb\//.test(url)) {
 		await scrapeGmrb(doc, url);
 	}
 	else if (url.includes('/zhdsb/')) {
@@ -86,16 +90,18 @@ async function scrape(doc, url = doc.location.href) {
 
 async function scrapeGmrb(doc, url) {
 	const newItem = new Z.Item('newspaperArticle');
-	newItem.title = text(doc, 'h1');
-	const pubInfo = text(doc, '.lai > b');
+	newItem.title = innerText(doc, 'h1');
+	const pubInfo = innerText(doc, '.lai > b, .m-article-version');
 	newItem.publicationTitle = tryMatch(pubInfo, /^《(.+)》/, 1);
 	newItem.place = '北京';
+	newItem.publisher = '光明日报社';
 	newItem.date = tryMatch(pubInfo, /\d{4}年\d{2}月\d{2}/).replace(/\D/g, '-');
+	newItem.pages = tryMatch(pubInfo, /[1-9]\d*(?=版)/);
 	newItem.attachments.push({
 		title: 'Snapshot',
 		document: doc
 	});
-	text(doc, '.lai > :first-child').substring(2).split(' ')
+	innerText(doc, '.lai > :first-child, .m-article-author').replace(/^作者：/, '').split(' ')
 		.filter(name => !name.includes('记者'))
 		.forEach(name => newItem.creators.push(cleanAuthor(name)));
 	newItem.url = url;
@@ -104,16 +110,17 @@ async function scrapeGmrb(doc, url) {
 
 async function scrapeZhdsb(doc, url) {
 	const newItem = new Z.Item('newspaperArticle');
-	newItem.title = text(doc, 'h1');
-	const pubInfo = ZU.trimInternal(text(doc, '.lai'));
+	newItem.title = innerText(doc, 'h1');
+	const pubInfo = ZU.trimInternal(innerText(doc, '.lai'));
 	newItem.publicationTitle = tryMatch(pubInfo, /^《(.+)》/, 1);
 	newItem.place = '北京';
+	newItem.publisher = '光明日报社';
 	newItem.date = tryMatch(pubInfo, /\d{4}年\d{2}月\d{2}/).replace(/\D/g, '-');
 	newItem.attachments.push({
 		title: 'Snapshot',
 		document: doc
 	});
-	const content = text(doc, '#articleContent');
+	const content = innerText(doc, '#articleContent');
 	const names = tryMatch(content, /^本报讯（([^）]+)）/, 1)
 		|| tryMatch(content, /^■([\p{Unified_Ideograph} ·]+)/u, 1)
 		|| tryMatch(content, /（([\p{Unified_Ideograph} ·]+)）$/u, 1);
@@ -134,10 +141,9 @@ function tryMatch(string, pattern, index = 0) {
 
 function cleanAuthor(name, creatorType = 'author') {
 	return {
-		firstName: '',
 		lastName: name,
 		creatorType,
-		fildMode: 1
+		fieldMode: 1
 	};
 }
 
@@ -270,6 +276,39 @@ var testCases = [
 				"place": "北京",
 				"publicationTitle": "中华读书报",
 				"url": "https://epaper.gmw.cn/zhdsb/html/2025-04/02/nw.D110000zhdsb_20250402_2-01.htm",
+				"attachments": [
+					{
+						"title": "Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://epaper.gmw.cn/gmrb/html/content/202601/02/content_4134.html",
+		"items": [
+			{
+				"itemType": "newspaperArticle",
+				"title": "为梦想奋斗 为幸福打拼",
+				"creators": [
+					{
+						"lastName": "本报评论员",
+						"creatorType": "author",
+						"fieldMode": 1
+					}
+				],
+				"date": "2026-01-02",
+				"libraryCatalog": "epaper.gmw.cn",
+				"pages": "1",
+				"place": "北京",
+				"publicationTitle": "光明日报",
+				"publisher": "光明日报社",
+				"url": "https://epaper.gmw.cn/gmrb/html/content/202601/02/content_4134.html",
 				"attachments": [
 					{
 						"title": "Snapshot",

@@ -5581,7 +5581,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-09-29 10:42:48 +0800",
+        "date": "2026-09-29 02:45:51 +0000",
         "message": "feat: better handling for filtered search results"
       },
       {
@@ -23046,7 +23046,7 @@
       "inRepository": true,
       "translatorType": 4,
       "browserSupport": "gcsibv",
-      "lastUpdated": "2025-04-08 08:07:01"
+      "lastUpdated": "2026-10-26 19:11:55"
     },
     "testCases": [
       {
@@ -23187,10 +23187,48 @@
             "seeAlso": []
           }
         ]
+      },
+      {
+        "type": "web",
+        "url": "https://epaper.gmw.cn/gmrb/html/content/202601/02/content_4134.html",
+        "items": [
+          {
+            "itemType": "newspaperArticle",
+            "title": "为梦想奋斗 为幸福打拼",
+            "creators": [
+              {
+                "lastName": "本报评论员",
+                "creatorType": "author",
+                "fieldMode": 1
+              }
+            ],
+            "date": "2026-01-02",
+            "libraryCatalog": "epaper.gmw.cn",
+            "pages": "1",
+            "place": "北京",
+            "publicationTitle": "光明日报",
+            "publisher": "光明日报社",
+            "url": "https://epaper.gmw.cn/gmrb/html/content/202601/02/content_4134.html",
+            "attachments": [
+              {
+                "title": "Snapshot",
+                "mimeType": "text/html"
+              }
+            ],
+            "tags": [],
+            "notes": [],
+            "seeAlso": []
+          }
+        ]
       }
     ],
     "zhLabel": "光明网（电子版）",
     "trends": [
+      {
+        "author": "jiaojiaodubai",
+        "date": "2026-10-27 10:06:58 +0800",
+        "message": "fix: #995"
+      },
       {
         "author": "jiaojiaodubai",
         "date": "2025-04-08 08:12:20 +0000",
