@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2026-08-31 16:23:07"
+	"lastUpdated": "2026-11-15 05:10:58"
 }
 
 /*
@@ -165,8 +165,9 @@ async function scrapeDoc(doc, url) {
 	function getCreators() {
 		const p = doc.querySelector("#p_creator");
 		if (p.querySelectorAll("font").length > 0) {
-			return Array.from(p.querySelectorAll("font")).map( e => e.textContent.trim())
-		} else {
+			return Array.from(p.querySelectorAll("font")).map(e => e.textContent.trim());
+		}
+		else {
 			return p.innerText.split("\n")[1].split(";");
 		}
 	}
@@ -273,14 +274,6 @@ async function scrapeAPI(url) {
 	newItem.libraryCatalog = '国家哲学社会科学文献中心';
 	newItem.extra = extra.toString();
 	data.get('keywordc').split(';').forEach(tag => newItem.tags.push(tag));
-	let pdfLink = data.get('pdfurl');
-	if (pdfLink) {
-		newItem.attachments.push({
-			url: pdfLink,
-			mimeType: 'application/pdf',
-			title: 'Full Text PDF',
-		});
-	}
 	newItem.complete();
 }
 
