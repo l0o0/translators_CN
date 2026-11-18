@@ -126,7 +126,7 @@ async function scrapeSearch(doi) {
 }
 
 const translatorMap = {
-	'kns.cnki.net': '5c95b67b-41c5-4f55-b71a-48d5d7183063',
+	'kns.cnki.net': '9b2409a0-34b1-480c-a9e0-1bda74eadcd7',
 	'qikan.cqvip.com': 'dd9efb0b-ca1d-4634-b480-9aabc84213c0',
 	'sciencedirect.com': 'b6d0a7a-d076-48ae-b2f0-b6de28b194e',
 	'onlinelibrary.wiley.com': 'fe728bc9-595a-4f03-98fc-766f1d8d0936',

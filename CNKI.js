@@ -1,5 +1,5 @@
 {
-	"translatorID": "5c95b67b-41c5-4f55-b71a-48d5d7183063",
+	"translatorID": "9b2409a0-34b1-480c-a9e0-1bda74eadcd7",
 	"label": "CNKI",
 	"creator": "Aurimas Vinckevicius, Xingzhong Lin, jiaojiaodubai",
 	"target": "https?://.*?(cnki\\.net)?/(kns8?s?|kcms2?|KNavi)/",

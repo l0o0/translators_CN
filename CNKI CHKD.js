@@ -92,7 +92,7 @@ async function scrape(doc, url = doc.location.href) {
 	else {
 		const translator = Z.loadTranslator('web');
 		// CNKI
-		translator.setTranslator('5c95b67b-41c5-4f55-b71a-48d5d7183063');
+		translator.setTranslator('9b2409a0-34b1-480c-a9e0-1bda74eadcd7');
 		translator.setDocument(doc);
 		const cnki = await translator.getTranslatorObject();
 		cnki.uniplatform = 'CHKD';

@@ -370,6 +370,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2026-11-19 01:43:03 +0800",
+        "message": "Change translatorID for CNKI.js"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2024-08-24 23:44:50 +0800",
         "message": "close #376"
       },
@@ -377,11 +382,6 @@
         "author": "jiaojiaodubai",
         "date": "2024-08-19 17:42:48 +0800",
         "message": "lint"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-06-21 12:54:49 +0800",
-        "message": "lint; replace launch.json with tasks.json"
       }
     ]
   },
@@ -1770,6 +1770,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2026-11-19 01:43:03 +0800",
+        "message": "Change translatorID for CNKI.js"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2026-03-28 18:45:18 +0000",
         "message": "improve compatiblity"
       },
@@ -1777,11 +1782,6 @@
         "author": "jiaojiaodubai",
         "date": "2026-03-18 17:53:23 +0000",
         "message": "rewrite CNKI; update CNKI KHD, CNKI Scholar; add CNKI Oversea"
-      },
-      {
-        "author": "jiaojiaodubai",
-        "date": "2024-07-12 21:27:30 +0800",
-        "message": "向上兼容CNKI.js的改动"
       }
     ]
   },
@@ -4767,7 +4767,7 @@
   },
   "CNKI.js": {
     "header": {
-      "translatorID": "5c95b67b-41c5-4f55-b71a-48d5d7183063",
+      "translatorID": "9b2409a0-34b1-480c-a9e0-1bda74eadcd7",
       "label": "CNKI",
       "creator": "Aurimas Vinckevicius, Xingzhong Lin, jiaojiaodubai",
       "target": "https?://.*?(cnki\\.net)?/(kns8?s?|kcms2?|KNavi)/",
@@ -5581,6 +5581,11 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
+        "date": "2026-11-19 01:43:03 +0800",
+        "message": "Change translatorID for CNKI.js"
+      },
+      {
+        "author": "jiaojiaodubai",
         "date": "2026-09-29 02:45:51 +0000",
         "message": "feat: better handling for filtered search results"
       },
@@ -5588,11 +5593,6 @@
         "author": "jiaojiaodubai",
         "date": "2026-09-26 18:31:48 +0000",
         "message": "add dbcode"
-      },
-      {
-        "author": "kasc0206",
-        "date": "2026-06-22 16:03:28 +0000",
-        "message": "style: run eslint --fix and fix auto-fixable code quality issues (#910)"
       }
     ]
   },
@@ -23226,7 +23226,7 @@
     "trends": [
       {
         "author": "jiaojiaodubai",
-        "date": "2026-10-27 10:06:58 +0800",
+        "date": "2026-10-27 02:07:20 +0000",
         "message": "fix: #995"
       },
       {
