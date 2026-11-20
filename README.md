@@ -40,3 +40,22 @@
 ## 🎈问题交流
 
 如果有问题的，可以加QQ群 913637964，一起交流。
+
+---
+
+## 📚 本仓库新增翻译器（@Daxoel）
+
+以下翻译器由 [@Daxoel](https://github.com/4965898) 开发并维护，均已按 Zotero 现代规范编写（使用 `const`/`let`、现代 Promise API，不使用已废弃的 FW 框架与 `ZU.processDocuments` 等旧 API）。
+
+| 翻译器 | 抓取网站 | 说明 |
+|--------|---------|------|
+| [CADAL.js](./CADAL.js) | [CADAL 大学数字图书馆](https://cadal.edu.cn) | 抓取图书/学位论文/标准/期刊/会议/专利详情页与搜索结果，支持多类型条目 |
+| [CNBKSY V2.js](./CNBKSY%20V2.js) | [中国近代报刊数据库 V2](https://www.cnbksy.com/v2) | 抓取期刊文章/报纸文章详情页与搜索结果，支持 PDF 附件 |
+| [China National Library - Republic Era.js](./China%20National%20Library%20-%20Republic%20Era.js) | [国家图书馆民国文献](https://read.nlc.cn) | 抓取民国图书详情页与搜索结果，中文作者单字段保存 |
+| [China National Library - Modern Newspaper Database.js](./China%20National%20Library%20-%20Modern%20Newspaper%20Database.js) | [中国历史文献总库·近代报纸数据库](https://bz-nlcpress-com-s-*.ycfw.library.hb.cn) | 抓取近代报纸篇目与报纸信息，支持 PDF 附件 |
+| [ShuKui.js](./ShuKui.js) | [书葵网](https://www.shukui.net) | 抓取图书详情页与搜索结果，支持封面图片与 MD5/文件大小信息 |
+| [Wikimedia Commons.js](./Wikimedia%20Commons.js) | [Wikimedia Commons](https://commons.wikimedia.org) | 解析图书文件页（`{{Book}}`/`{{Information}}` 模板）与搜索/画廊，支持 PDF/DjVu 附件；特别支持超星爬取的中文民国书籍与古籍 |
+
+### 更新日志
+
+详见 [CHANGELOG.md](./CHANGELOG.md)。
